@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#trying-out-the-confluent-beta-in-redhat-6">Trying out the confluent beta in RedHat 6:</a><ul>
+<li><a href="#using-the-web-interface">Using the web interface:</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#trying-out-the-confluent-beta-in-redhat-6">Trying out the confluent beta in RedHat 6:</a></li>
+<li><a href="#using-the-web-interface">Using the web interface:</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h1 id="trying-out-the-confluent-beta-in-redhat-6"><a href="#TOC">Trying out the confluent beta in RedHat 6:</a></h1>
+<ol style="list-style-type: decimal">
+<li>Select a server with access to the BMC IP addresses (does not need to be any particular existing system or can be xCAT node)</li>
+</ol>
+<ul>
+<li>Install all rpms from https://sourceforge.net/projects/xcat/files/confluent_dep/rhels6/</li>
+<li>Install all rpms from https://sourceforge.net/projects/xcat/files/confluent/</li>
+<li>service conserver stop</li>
+<li>service confluent start</li>
+<li>service httpd restart (or start depending on the circumstance)</li>
+<li><p>Example to create a group to reflect the fact that you use node1-bmc to manage node1 (adjust according to your scheme) &gt; /opt/confluent/bin/confetty create /nodegroups/mygroup secret.hardwaremanagementpassword=YOURPASSWORDHERE secret.hardwaremanagementuser=USERID hardwaremanagement.manager={nodename}-bmc</p></li>
+<li><p>Define nodes to confluent: &gt; for node in <code>nodels noderange</code>; do # or just paste in the list of nodes to loop through &gt; /opt/confluent/bin/confetty create /nodes/$node groups=mygroup &gt; done</p></li>
+<li><p>Test it out (should behave like 'rcons'): &gt; /opt/confluent/bin/confetty start /nodes/node1/console/session</p></li>
+<li>Enabling user(s) for web or TLS, select one of two ways:
+<ul>
+<li><h2><a href="#TOC">PAM:</a></h2>
+If there is a pam configuration for 'confluent', it will be used. Any user passing that module will be granted full access. This is subject to change in an update. For example, to granted any user that has ssh access confluent access: &gt; cp /etc/pam.d/sshd /etc/pam.d/confluent</li>
+</ul>
+<p>At that point any ssh-able account can get console access to any managed node</p>
+<h2><a href="#TOC">* Independent user database:</a></h2>
+<p>Do not bother with this method if using pam instead. If no pam service 'confluent' exists, then the independent user database will be used. To create a user: &gt; /opt/confluent/bin/confetty create /users/usernamehere password=passwordhere</p></li>
+</ul>
+<h2 id="using-the-web-interface"><a href="#TOC">Using the web interface:</a></h2>
+<p>Go to: https://confluentserver/confluent/consoles.html http without ssl can also of course work but understand that sensitive data would be in the clear including passwords. https set up in the typical way of setting up https would suffice.</p>
+</body>
+</html>

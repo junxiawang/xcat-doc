@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcatexport-input-args">xcatexport Input Args</a></li>
+<li><a href="#xcatexport-function">xcatexport Function</a></li>
+<li><a href="#xcatimport-input-args">xcatimport Input Args</a></li>
+<li><a href="#xcatimport-function">xcatimport Function</a></li>
+<li><a href="#restrictions-and-assumptions">Restrictions and Assumptions</a></li>
+<li><a href="#optional-behaviour-or-uses">Optional Behaviour or Uses</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcatexport-input-args">xcatexport Input Args</a></li>
+<li><a href="#xcatexport-function">xcatexport Function</a></li>
+<li><a href="#xcatimport-input-args">xcatimport Input Args</a></li>
+<li><a href="#xcatimport-function">xcatimport Function</a></li>
+<li><a href="#restrictions-and-assumptions">Restrictions and Assumptions</a></li>
+<li><a href="#optional-behaviour-or-uses">Optional Behaviour or Uses</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>The purpose of these new cmds is to be able to take a picture/snapshot of an xcat mgmt node (everything but the base distro) and put it on a usb stick (or dvd, or directory) and be able to restore it to another machine with a single cmd. One use for this is if manufacturing set up a customer cluster config (to configure and test all of the hw), then before breaking it down and sending to the customer, they could do xcatexport to a usb stick. Then at the customer site, they physically hook up the hw, install the distro on the mn, put the usb stick in and run xcatimport, and then deploy the nodes. (There have been some schemes in the past that people have tried that included the whole os in the snapshot, but this gets into legal problems i don't want to deal with.) This would also be useful for the many solutions that will be using xcat. And could even be useful if you just want to replace the hw of your mn.</p>
+<h2 id="xcatexport-input-args"><a href="#TOC">xcatexport Input Args</a></h2>
+<ul>
+<li>the location of xcat rpms (including deps) that were used to install xcat on the MN. Need to handle the case in which the admin has placed them in an otherpkgs dir under /install. If the MN was installed directly from SF, then point to the specific URL that was used.</li>
+<li>Where to put the snapshot (usb drive, dir, etc.)</li>
+</ul>
+<h2 id="xcatexport-function"><a href="#TOC">xcatexport Function</a></h2>
+<ul>
+<li>tar up: rpms, db, /install, /tftpboot, /etc/xcat, all the conf files (dhcp, dns, conserver, etc), keys/certs (what else)
+<ul>
+<li>probably need to exclude the diskless image initrds, kernels, and rootimgs (for both size and legal reasons)</li>
+</ul></li>
+<li>is there anything else in /opt/xcat that users can modify/customize that needs to be save?</li>
+<li>dumpxCATdb</li>
+<li>on the usb stick, probably have 3 files: xcatimport cmd (stand alone), xcat rpm tarball, tarball of the dirs/files/db</li>
+</ul>
+<h2 id="xcatimport-input-args"><a href="#TOC">xcatimport Input Args</a></h2>
+<ul>
+<li>It has been suggested that we add an arg specific putting to the config on a backup MN for HA (like skip the db). But i'm not sure we need to support this if MN pools will be our primary HA approach.</li>
+</ul>
+<h2 id="xcatimport-function"><a href="#TOC">xcatimport Function</a></h2>
+<ul>
+<li>untar rpms, set up yum repos in /etc/yum.repos.d or in zypper, and install them (the user must have previously set up a yum repo for the distro rpms)</li>
+<li>untar other dirs</li>
+<li>run db setup script (needs to be made tolerant of cfgloc being there)</li>
+<li>restorexCATdb</li>
+<li>what make/mk cmds need to be run? If we capture the config files from the original MN, might not have to do this</li>
+<li>start daemons (are there any that don't get auto started during installation?)</li>
+</ul>
+<h2 id="restrictions-and-assumptions"><a href="#TOC">Restrictions and Assumptions</a></h2>
+<ul>
+<li>export/import must be done on same distro level and arch</li>
+<li>the user has to get the xcat &amp; dep rpms. Either they should have originally installed from the downloaded tarballs, or they have to make sure they grab the same rpms they installed from the internet, or point to the correct SF URL. xcatimport must be run with the same version of xcat as xcatexport, altho a different snap build within the same version is probably ok.</li>
+<li>we won't tar up /opt/xcat, so patches are not supported and all modified files (templates, pkg lists, etc.) must be in /install/custom</li>
+</ul>
+<h2 id="optional-behaviour-or-uses"><a href="#TOC">Optional Behaviour or Uses</a></h2>
+<ul>
+<li>Integrate with PCM for their MN upgrade procedure</li>
+<li>Use to install the secondary MN in an HA environment? (Probably don't need this for MN pool.)</li>
+<li>Have a separate utility to automate changing hostnames &amp; ip addrs of nodes, that can be run after xcatimport.</li>
+</ul>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>:</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

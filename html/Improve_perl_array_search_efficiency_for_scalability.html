@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#section">============================================</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#">============================================</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<p>There are a lot of &quot;grep(/something/, @arrayname)&quot; in xCAT code, actually this is not an efficient way to search the array, especially in the scaling environment, we have been seeing significant performance problems in DBObjectdefs.pm in scaling environment caused by the &quot;grep(/something/, @arrayname)&quot;, we need to go through xCAT code to improve the &quot;grep(/something/, @arrayname)&quot; if necessary.</p>
+<p>Here is a mail got from Jarrod about the solution:</p>
+<h6 id="section"><a href="#TOC">============================================</a></h6>
+<p>I can suggest two things to try when faced with a circumstance where you do have a massive dataset to repeatedly grep through. You already did the most significant improvement by identifying and skipping when not needed, but for situations where you are in that position: -If it makes sense, you may want to have the list as a hash, i.e., a structure like: @arr = (2, 3, 4 );</p>
+<pre><code>Takes a lot more time to figure out if 3 is in there than:</code></pre>
+<p>%arr = (2=&gt;1,3=&gt;1,4=&gt;1);</p>
+<pre><code>Note that the value in this use of a hash I always do as one, as I&#39;m just taking advantage of whatever hashing algorithm perl things best for this sort of thing.  That is doing the most generic thing when I don&#39;t need to care about ordering or preserving duplicates for the sake of comparison.  I haven&#39;t looked at the code, you may even be able to iterate through the loop once and reorginize the flat list into a hash of lists with objtype as a key, meaning a single hash lookup gets you a list reference with all the items.  There are a few ways to go about it that cause a relatively small penalty for small datasets, but scale exceptionally well for large datasets.</code></pre>
+<p>-If the above is not applicable or non-trivial to do, changing: grep /^<span class="math"><em>t</em><em>y</em><em>p</em><em>e</em></span>/,@list</p>
+<pre><code>to</code></pre>
+<p>grep { $_ eq $type },@list</p>
+<pre><code>Will be faster as eq is faster than a regex.</code></pre>
+<p>There are a few places in xcat that uses one of the above two best practices.</p>
+</body>
+</html>

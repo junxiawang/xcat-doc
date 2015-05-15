@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-2-overall-architecture">xCAT 2 Overall Architecture</a><ul>
+<li><a href="#clientserver">Client/Server</a></li>
+<li><a href="#flow">Flow</a></li>
+<li><a href="#xcatd-plugins">xcatd Plugins</a></li>
+<li><a href="#additional-notes">Additional notes</a></li>
+<li><a href="#database">Database</a></li>
+<li><a href="#portability">Portability</a></li>
+</ul></li>
+<li><a href="#node-deployment">Node Deployment</a></li>
+<li><a href="#hpc-stack-install-config-monitor">HPC Stack Install, Config, Monitor</a></li>
+<li><a href="#monitoring">Monitoring</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-2-overall-architecture">xCAT 2 Overall Architecture</a></li>
+<li><a href="#clientserver">Client/Server</a></li>
+<li><a href="#flow">Flow</a></li>
+<li><a href="#xcatd-plugins">xcatd Plugins</a></li>
+<li><a href="#additional-notes">Additional notes</a></li>
+<li><a href="#database">Database</a></li>
+<li><a href="#portability">Portability</a></li>
+<li><a href="#node-deployment">Node Deployment</a></li>
+<li><a href="#hpc-stack-install-config-monitor">HPC Stack Install, Config, Monitor</a></li>
+<li><a href="#monitoring">Monitoring</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="xcat-2-overall-architecture"><a href="#TOC">xCAT 2 Overall Architecture</a></h2>
+<p>An overview and architecture of xCAT from a user's perspective can be found at [XCAT_Overview,<em>Architecture,</em>and_Planning].</p>
+<p>The rest of this document is oriented toward the xCAT developer...</p>
+<p>The heart of the xCAT architecture is the xCAT daemon (xcatd) on the management node. This receives requests from the client, validates the requests, and then invokes the operation. The xcatd daemon also receives status and inventory info from the nodes as they are being discovered and installed/booted.<br />[File:xCAT-Architecture.png]</p>
+<h3 id="clientserver"><a href="#TOC">Client/Server</a></h3>
+<h3 id="flow"><a href="#TOC">Flow</a></h3>
+<ul>
+<li>User invokes an xcat cmd on the client</li>
+<li>The cmd can either be a sym link to xcatclient/xcatclientnnr or a thin wrapper that calls xCAT::Client::submit_request().</li>
+<li>The xcatclient cmd packages the info into xml and passes it to xcatd</li>
+<li>xcatd receives the request and forks to process the request</li>
+<li>The ACL/Role Policy Engine determines whether this person is allowed to execute this request. It evaluates the following info:
+<ul>
+<li>The cmd name and args</li>
+<li>Who executed the cmd on the client machine</li>
+<li>The hostname/IP address of the client machine</li>
+<li>The node range passed to the cmd</li>
+</ul></li>
+<li>If the ACL check is approved, the cmd is passed to the Queue (this part is not yet fully implemented):
+<ul>
+<li>The queue can run the action in either of 2 modes. The client cmd wrapper decides which mode to use (although it can give the user a flag to specify):</li>
+<li>Keep the socket connection with the client open for the life of the action and continue to send back the output of the action as it is produced.</li>
+<li>Initiate the action, pass the action ID back to the client, and close the connection. At any subsequent time, the client can use the action ID to request the status and output of the action. This is intended long running cmds. <strong>This mode hasn't been implemented yet.</strong></li>
+<li>The Queue logs every action performed, including date/time, cmd name, arguments, who, etc. <strong>Not implemented yet.</strong></li>
+<li>In phase 2, the Queue will support locking (semaphores) to serialize actions that should not be run simultaneously.</li>
+</ul></li>
+<li>To invoke the action, the xml is passed to the appropriate plugin pm, which performs the action and returns results to the client</li>
+</ul>
+<h3 id="xcatd-plugins"><a href="#TOC">xcatd Plugins</a></h3>
+<ul>
+<li>When xcatd starts, it loads all of the plugins from /opt/xcat/lib/perl/xCAT_plugin and invokes handled_commands() to see which cmds each pm handles.</li>
+<li>When a command is run by the user, xcatd passes it to the corresponding plugin by 1st calling preprocess_request() to determine if this request should also be sent to some service nodes</li>
+<li>Next it calls process_request() of the plugin on each machine indicated by the return structure of preprocess_request().</li>
+<li>The plugin is passed a callback that it uses to return output to the client.</li>
+<li>Bypass Mode:
+<ul>
+<li>If a user is running as root on the Management Node, the client/server daemon communication can be bypassed by setting an environment variable. If the XCATBYPASS environment variable is set, the connection to the server/daemon will be bypassed and the plugin will be called directly by Client.pm. If it is set to a directory, all perl modules in that directory will be loaded in as plugins. If it is set to any other value (e.g. &quot;yes&quot;, &quot;default&quot;, whatever string you want) the default plugin directory will be used.</li>
+</ul></li>
+</ul>
+<h3 id="additional-notes"><a href="#TOC">Additional notes</a></h3>
+<ul>
+<li>The p cmds have the option of not going thru xcatd (i.e. going straight from the client to the nodes) so that they can run as the real user invoking the cmd (not as root).</li>
+<li>Reasons for client/server split:
+<ul>
+<li>implement access controls and roles for non-root users</li>
+<li>don't require non-root users to have ids on the mgmt node</li>
+<li>access to xcat mgmt server info from the nodes w/o nfs</li>
+<li>ability to run the web server for the UI on a different machine from the mgmt svr</li>
+</ul></li>
+<li>Performance/scaling of xcatd:
+<ul>
+<li>xcatd must listen on a different port for node requests vs. user/client/cmd requests</li>
+</ul></li>
+</ul>
+<h3 id="database"><a href="#TOC">Database</a></h3>
+<ul>
+<li>xCAT will use perl dbi to access the database, so that any database can be used to store the xCAT tables. SQLite is the default database.</li>
+<li>The tabedit cmd is provided to simulate the 1.x table format.</li>
+<li>All xCAT code should use Table.pm to access the tables. Table.pm will implement the following features:
+<ul>
+<li>Notifications for table changes (triggers): There will be a separate table (called subscriptions?) that lists the table name (or \*) and a cmd that will be run whenever that table is changed. When the cmd is run, the changed rows will be piped into its stdin.</li>
+<li>A begin/end mechanism that xCAT code can use when it knows it will be updating a lot of rows. This can allow Table.pm to optimize the update to the database and call the notifications just once for all the updates.</li>
+</ul></li>
+<li>Need to support other non-perl programs reading the database using packages like ODBC (for C program access).</li>
+</ul>
+<h3 id="portability"><a href="#TOC">Portability</a></h3>
+<ul>
+<li>Need to localize the HW and OS differences into a few pm's and files.
+<ul>
+<li>Examples of this from CSM are OSDefs.pm and Pkgdefs.pm</li>
+<li>Still discussing this design...</li>
+</ul></li>
+</ul>
+<h2 id="node-deployment"><a href="#TOC">Node Deployment</a></h2>
+<ul>
+<li><strong>This section is not entirely accurate.</strong></li>
+<li>Will use our own boot kernel (based on CentOS 5) and kexec for deployment booting on all platforms that will support this. In exception cases, will stick to essentially the xCAT 1.3 model.</li>
+<li>Need a standard way to represent image definitions across platforms, and some common image management commands. Have set up an osimage table in the DB for this.</li>
+<li>2.0 will use its own diskless/stateless node support.</li>
+<li>Need to describe the features of fault tolerant install - Egan</li>
+<li>During node deployment, the boot kernel can collect HW inventory info and send it back to xcatd to have it stored in the database.</li>
+<li>Discovery:
+<ul>
+<li>Use SLP (Service Location Protocol) for finding hw ctrl points (e.g. MMs, RSAs, HMC, FSPs)</li>
+<li>Use querying of hw ctrl points or autonode to discover nodes and automatically add them to the database.</li>
+</ul></li>
+</ul>
+<p>[Image:Xcat-deployment-framework.gif]</p>
+<h2 id="hpc-stack-install-config-monitor"><a href="#TOC">HPC Stack Install, Config, Monitor</a></h2>
+<ul>
+<li>HPC Stack Install: handled through image management using xCAT IBM HPC Integration. See</li>
+</ul>
+<p>[IBM_HPC_Stack_in_an_xCAT_Cluster]</p>
+<ul>
+<li>STAB/SCAB - can use for AIX HPC benchmarking</li>
+</ul>
+<h2 id="monitoring"><a href="#TOC">Monitoring</a></h2>
+<ul>
+<li>xCAT will support a monitoring plug-in framework so that users will have a choice about which monitoring subsystem to use with xCAT (or none at all). Plugin wrappers will be provided for RMC, Ganglia, Nagios, and maybe others.</li>
+<li>xCAT needs some basic built in monitoring (state monitor) for ping status, sshd status, install state, etc.</li>
+<li>See the <a href="http://xcat.svn.sourceforge.net/svnroot/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2-Monitoring.pdf">Monitoring howto</a> for more info.</li>
+</ul>
+</body>
+</html>

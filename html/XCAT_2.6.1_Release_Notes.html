@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-and-changes-in-behavior-in-2.6.1-since-2.6">New Function and Changes in Behavior in 2.6.1 Since 2.6</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-and-changes-in-behavior-in-261-since-26">New Function and Changes in Behavior in 2.6.1 Since 2.6</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the <a href="XCAT_2.6_Release_Notes">2.6 release</a>.</p>
+<h2 id="new-function-and-changes-in-behavior-in-2.6.1-since-2.6"><a href="#TOC">New Function and Changes in Behavior in 2.6.1 Since 2.6</a></h2>
+<ul>
+<li>Improved support for installing new kernels in stateless image. See [XCAT_pLinux_Clusters#Installing_a_new_Kernel_in_the_stateless_image].</li>
+<li><p>ddns plugin is the default dns handler.</p>
+<p>The optional ddns plugin available for dynamic DNS support from xCAT 2.5 is not optional anymore. It is the only one shipped, and supported as of 2.6. The bind.pm plugin has been removed. A new option makedns -n has been added, see man makedns. If you want to use the Dynamic DNS feature then you must run &quot;makedns -n&quot; to refresh the DNS settings.</p></li>
+<li><p>xCAT sets site.dnshandler to ddns automatically for two scenarios:</p>
+<p>1. Fresh install for xCAT 2.6 2. Update install for xCAT 2.6 from an existing lower level xCAT version.</p></li>
+<li>If you restored xCATdb from a earlier backup(xCAT 2.5.x or earlier) after xCAT 2.6 is installed, it would overwrite or remove site.dnshandler, you need to manually set site.dnshandler=ddns after the restore, otherwise, makedns can not work.</li>
+<li><p>makedns needs the /etc/resolv.conf on management node has the mn's IP address specified as nameserver and cluster domain as search path. If the compute nodes also needs to have name resolution to hosts outside the cluster, add the external nameservers addresses to the site table forwarders attribute.</p></li>
+<li>A new <a href="http://xcat.sourceforge.net/man5/site.5.html">site attribute</a> &quot;vsftp&quot; to control if the vsftpd daemon will be started automatically when xcatd is started. (The default is 1.)</li>
+<li>A new postscript &quot;setupscratch&quot; to setup a scratch area on local disk for stateless nodes</li>
+<li><p>Implement -t argument for blade plugin to update vpd table with mtm/serial/uuid</p></li>
+</ul>
+<h2 id="known-issues-and-work-arounds"><a href="#TOC">Known Issues and Work Arounds</a></h2>
+<ul>
+<li>&quot;makedhcp -n&quot; reports error 'Can't call method &quot;brsft&quot; ...' - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3323752&amp;group_id=208749&amp;atid=1006945">bug 3323752</a></li>
+<li><p>makedns can not work on SLES - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3365678&amp;group_id=208749&amp;atid=1006945">bug 3365678</a> - <a href="https://bugzilla.linux.ibm.com/show_bug.cgi?id=73119">SuSE bugzilla 73119</a></p>
+<p>workaround - run &quot;chown root:name /var/lib/named&quot; on management node. Fixed in xCAT svn truck revision 10094.</p></li>
+<li><p>makedns hangs a while and reports &quot;Unable to find zone to hold xxx&quot;. - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3369831&amp;group_id=208749&amp;atid=1006945">bug 3369831</a></p>
+<p>workaround - define a corresponding network entry in xcat networks table for the reported hosts. Fixed in xCAT 2.6.2.</p></li>
+<li><p>makedns with no flag does not work - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3379381&amp;group_id=208749&amp;atid=1006945">bug 3379381</a></p>
+<p>workaround - use &quot;makedns -n&quot;. Fixed in xcat 2.6.2.</p></li>
+<li><p>For x86/x86_64 xCAT management node, some Perl modules (bpa.pm fsp.pm hmc.pm ivm.pm) cannot be loaded when starting the xcatd. <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3380912&amp;group_id=208749&amp;atid=1006945">bug 1006945</a></p>
+<p>workaround - Just ignore it as warning message. Or download the latest dependency package and reinstall the perl-IO-Tty-1.07-1 package.</p></li>
+</ul>
+</body>
+</html>

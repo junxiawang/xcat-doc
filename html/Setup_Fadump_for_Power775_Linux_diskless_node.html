@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#changes-of-xcat-interface">Changes of xCAT Interface</a><ul>
+<li><a href="#modify-the-pkglist-file">Modify the pkglist file</a></li>
+<li><a href="#download-the-dracut-dracut-network-dracut-kernel-and-kexec-tools">Download the dracut, dracut-network, dracut-kernel and kexec-tools</a></li>
+<li><a href="#modify-the-other-package-list-file">Modify the other package list file</a></li>
+<li><a href="#the-exclude-file">The exclude file</a></li>
+<li><a href="#define-dump-attribute">Define dump attribute</a></li>
+<li><a href="#the-crashkernelsize-attribute">The <em>crashkernelsize</em> attribute</a></li>
+<li><a href="#the-enablekdump-postscript">The enablekdump postscript</a></li>
+<li><a href="#provision">Provision</a></li>
+<li><a href="#notes">Notes</a></li>
+<li><a href="#testing">Testing</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#changes-of-xcat-interface">Changes of xCAT Interface</a></li>
+<li><a href="#modify-the-pkglist-file">Modify the pkglist file</a></li>
+<li><a href="#download-the-dracut-dracut-network-dracut-kernel-and-kexec-tools">Download the dracut, dracut-network, dracut-kernel and kexec-tools</a></li>
+<li><a href="#modify-the-other-package-list-file">Modify the other package list file</a></li>
+<li><a href="#the-exclude-file">The exclude file</a></li>
+<li><a href="#define-dump-attribute">Define dump attribute</a></li>
+<li><a href="#the-_crashkernelsize_-attribute">The <em>crashkernelsize</em> attribute</a></li>
+<li><a href="#the-enablekdump-postscript">The enablekdump postscript</a></li>
+<li><a href="#provision">Provision</a></li>
+<li><a href="#notes">Notes</a></li>
+<li><a href="#testing">Testing</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>This document illustrates how to configure and use fadump on the RHEL6 diskless nodes on power 775 by xCAT.</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>Fadump means &quot;Firmware-Assisted Dump&quot;. The goal of firmware-assisted dump is to enable the dump of a crashed system, and to do so from a fully-reset system, and to minimize the total elapsed time until the system is back in production use. Can refer <a href="http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob_plain;f=Documentation/powerpc/firmware-assisted-dump.txt;hb=HEAD">Firmware-Assisted Dump</a> for more introduction.</p>
+<h2 id="changes-of-xcat-interface"><a href="#TOC">Changes of xCAT Interface</a></h2>
+<h3 id="modify-the-pkglist-file"><a href="#TOC">Modify the pkglist file</a></h3>
+<p>For RHEL6, there're two rpm packages should be <strong>deleted</strong>:</p>
+<ul>
+<li>dracut</li>
+<li>dracut-network</li>
+</ul>
+<p>The pkglist file location is defined as an attribute in osimage object, can fetch it by</p>
+<pre><code>lsdef -t osimage -o &amp;lt;osimage name&amp;gt;</code></pre>
+<p>The default location is <strong>/opt/xcat/share/xcat/netboot/rh/&lt;profile&gt;.&lt;os&gt;.&lt;arch&gt;.pkglist</strong>. You can create the customeized pkglist file, and change the pkglist attribute in osimage object with</p>
+<pre><code>chdef -t osimage -o &amp;lt;osimage name&amp;gt; pkglist=&amp;lt;the customized pkglist file path&amp;gt;</code></pre>
+<h3 id="download-the-dracut-dracut-network-dracut-kernel-and-kexec-tools"><a href="#TOC">Download the dracut, dracut-network, dracut-kernel and kexec-tools</a></h3>
+<p>Download the [dracut], [dracut-network], [dracut-kernel] and [kexec-tools]. Save all of these 4 rpms into other packages directory. Run the createrepo to create yum repo:</p>
+<pre><code>createrepo  &amp;lt;the rpms save path&amp;gt;</code></pre>
+<p>The other packages directory is defined as the <strong>otherpkgdir</strong>attribute in osimage object. It can be got and changed by xCAT command like the paglist file.</p>
+<h3 id="modify-the-other-package-list-file"><a href="#TOC">Modify the other package list file</a></h3>
+<p>Create a other packages list file, like /install/custom/netboot/rh/fadump.otherpkgs.pkglist. Add the 4 rpms into this file:</p>
+<pre><code>dracut
+dracut-kernel
+dracut-network
+kexec-tools</code></pre>
+<p>The other packages list file is defined as the <strong>otherpkglist</strong>attribute in osimage object. It can be got and changed by xCAT command like the paglist file.</p>
+<h3 id="the-exclude-file"><a href="#TOC">The exclude file</a></h3>
+<p>The base diskless image excludes the <strong>/boot</strong> directory, but it is required for kdump. Update the <em>&lt;profile&gt;.exlist</em> and remove the entry for <strong>/boot</strong>. Usually, the <em>&lt;profile&gt;.exlist</em> file is located in <em>/opt/xcat/share/xcat/netboot/&lt;platform&gt;</em>, and the user-customized <em>&lt;profile&gt;.exlist</em> should be located in <em>/install/custom/netboot/&lt;platform&gt;/</em>. Then run <em>packimage</em> or <em>liteimg</em> command.</p>
+<h3 id="define-dump-attribute"><a href="#TOC">Define dump attribute</a></h3>
+<p>Change the <strong>dump</strong> attribute in osimage object:</p>
+<pre><code>chdef -t osimage -o &amp;lt;osimage name&amp;gt; dump=fadump:nfs://&amp;lt;nfs_server_ip&amp;gt;/&amp;lt;fadump_path&amp;gt;</code></pre>
+<p>The <strong>&lt;nfs_server_ip&gt;</strong> can be excluded if the destination NFS server is the service or management node.</p>
+<pre><code>chdef -t osimage -o &amp;lt;osimage name&amp;gt; dump=fadump:nfs:///&amp;lt;fadump_path&amp;gt;</code></pre>
+<h3 id="the-crashkernelsize-attribute"><a href="#TOC">The <em>crashkernelsize</em> attribute</a></h3>
+<p>If you do not set this attribute, the default value will be</p>
+<pre><code> 256M@32M</code></pre>
+<p>When your node start, and meet the kdump start error like this</p>
+<pre><code> Your running kernel is using more than 70% of the amount of space you reserved for kdump, you should consider increasing your crashkernel</code></pre>
+<p>You should modify this attribute by chdef command:</p>
+<pre><code> chdef -t osimage &amp;lt;image name&amp;gt; crashkernelsize=512M@32M</code></pre>
+<p>If 512M@32M is not large enough, you should change the crashkernelsize larger like 1024M untill the error message disappear. For Power775, the suggested size is 3072M@32M.</p>
+<h3 id="the-enablekdump-postscript"><a href="#TOC">The enablekdump postscript</a></h3>
+<p>This postscript <em>enablekdump</em> is used to start the kdump service when the node is booting up.</p>
+<pre><code> chdef -t node &amp;lt;node range&amp;gt; -p postscripts=enablekdump</code></pre>
+<h3 id="provision"><a href="#TOC">Provision</a></h3>
+<p>Run <strong>genimage &lt;osimage name&gt;</strong>, <strong>packimage &lt;osimage name&gt;</strong>, <strong>nodeset &lt;node range&gt; osimage=&lt;osimage name&gt;</strong> to deploy the nodes.</p>
+<h3 id="notes"><a href="#TOC">Notes</a></h3>
+<p>Currently, only <em>NFS</em> is supported for the setup of kdump.</p>
+<p>If the <em>dump</em> attribute is not set, the fadump service will not be enabled.</p>
+<p>Please make sure the NFS remote path(<strong>fadump:nfs://&lt;nfs_server_ip&gt;/&lt;kdump_path&gt;</strong>) is exported and it is read-writeable to the node where fadump service is enabled.</p>
+<h3 id="testing"><a href="#TOC">Testing</a></h3>
+<p>Fadump testing method is same with fadump, refer <a href="Kdump_over_Ethernet/HFI_for_Linux_diskless_nodes#How_to_trigger_kernel_panic_on_Linux_">How to trigger kernel panic on Linux</a></p>
+</body>
+</html>

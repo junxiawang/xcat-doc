@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#serial-console-settings">Serial Console Settings</a><ul>
+<li><a href="#ibm-idataplex-dx360">IBM iDataPlex dx360</a></li>
+<li><a href="#ibm-idataplex-dx360-m2">IBM iDataPlex dx360 M2</a></li>
+<li><a href="#kvm">KVM</a></li>
+<li><a href="#ibm-bladecenter-hs21xmls22hs22">IBM BladeCenter HS21xM/LS22/HS22</a></li>
+<li><a href="#ibm-x3650">IBM x3650</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#serial-console-settings">Serial Console Settings</a></li>
+<li><a href="#ibm-idataplex-dx360">IBM iDataPlex dx360</a></li>
+<li><a href="#ibm-idataplex-dx360-m2">IBM iDataPlex dx360 M2</a></li>
+<li><a href="#kvm">KVM</a></li>
+<li><a href="#ibm-bladecenter-hs21xmls22hs22">IBM BladeCenter HS21xM/LS22/HS22</a></li>
+<li><a href="#ibm-x3650">IBM x3650</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<h2 id="serial-console-settings"><a href="#TOC">Serial Console Settings</a></h2>
+<p>xCAT provides a way to monitor the output of devices on a serial port. Many hardware manufacturers have settings that are different across their hardware platforms. This list hopes to give information on how to set the nodehm table as well as how to set the BIOS settings on certain platforms.</p>
+<h3 id="ibm-idataplex-dx360"><a href="#TOC">IBM iDataPlex dx360</a></h3>
+<ul>
+<li>nodehm.mgt=ipmi</li>
+<li>nodehm.serialport=1</li>
+<li>nodehm.serialspeed=19200</li>
+<li>nodehm.serialflow=&quot;&quot;</li>
+<li>noderes.netboot=pxe # xnba seems to fail on reboot on windows install.</li>
+</ul>
+<p>BIOS settings:</p>
+<pre><code>-Console Redirection
+  Console Redirection      [Serial Port B]
+  Flow Control      [RTS/CTS]
+  Baud Rate        [19.2k]
+  Terminal Type      [PC-ANSI]
+  Legacy OS Redirection    [Enabled]</code></pre>
+<h3 id="ibm-idataplex-dx360-m2"><a href="#TOC">IBM iDataPlex dx360 M2</a></h3>
+<ul>
+<li>nodehm.mgt=ipmi</li>
+<li>nodehm.serialport=0</li>
+<li>nodehm.serialspeed=115200</li>
+<li>nodehm.serialflow=hard</li>
+</ul>
+<h3 id="kvm"><a href="#TOC">KVM</a></h3>
+<ul>
+<li>nodehm.mgt=kvm</li>
+<li>nodehm.serialport=0</li>
+<li>nodehm.serialspeed=115200</li>
+<li>nodehm.serialflow=&quot;&quot;</li>
+</ul>
+<h3 id="ibm-bladecenter-hs21xmls22hs22"><a href="#TOC">IBM BladeCenter HS21xM/LS22/HS22</a></h3>
+<ul>
+<li>nodehm.mgt=blade</li>
+<li>nodehm.serialport=1</li>
+<li>nodehm.serialspeed=19200</li>
+<li>nodehm.serialflow=hard</li>
+</ul>
+<h3 id="ibm-x3650"><a href="#TOC">IBM x3650</a></h3>
+<ul>
+<li>nodehm.mgt=ipmi</li>
+<li>nodehm.serialport=0</li>
+<li>nodehm.serialspeed=19200</li>
+<li>nodehm.serialflow=hard</li>
+</ul>
+</body>
+</html>

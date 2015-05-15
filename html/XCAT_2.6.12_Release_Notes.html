@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#key-bugs-fixed">Key Bugs Fixed</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#key-bugs-fixed">Key Bugs Fixed</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><strong>Note! This version has not been released yet!!!!!!!!!!!!!!!!</strong></p>
+<p>This is the summary of what's new in this release. Or you can go straight to [Download_xCAT].</p>
+<h2 id="new-function-and-changes-in-behavior"><a href="#TOC">New Function and Changes in Behavior</a></h2>
+<p>None.</p>
+<h2 id="key-bugs-fixed"><a href="#TOC">Key Bugs Fixed</a></h2>
+<ul>
+<li>For additional bugs fixed, see <a href="http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945">Tracker Bugs</a></li>
+</ul>
+<h2 id="restrictions-and-known-problems"><a href="#TOC">Restrictions and Known Problems</a></h2>
+<ul>
+<li>Upgrading the management node (MN) and the service node (SN) to xCAT 2.6.12 from xCAT 2.6.11 and below will need some extra work. This is because one dependency rpm is replaced with a new one: conserver is replaced by conserver-xcat. You need to follow the following instructions to do the upgrade:</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Remove conserver from both MN and SN using <strong>rpm -e --nodeps conserver</strong> command.</li>
+<li>Locate any customized otherpks.pkglist files under /install/custom/... directory. Replace conserver with conserver-xcat.</li>
+<li>To upgrade MN, run <strong>yum/zypper update '<em>xCAT</em>'</strong></li>
+<li>To upgrade SN, untar the latest xcat-core and xcat-dep tarballs into /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/xcat and then run <strong>updatenode service -P otherpkgs</strong></li>
+</ol>
+</body>
+</html>

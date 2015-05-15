@@ -1,0 +1,445 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#cluster-name-resolution">Cluster Name Resolution</a><ul>
+<li><a href="#set-the-site-domain-attribute"><strong>Set the site domain Attribute</strong></a></li>
+<li><a href="#create-xcat-network-definitions"><strong>Create xCAT Network Definitions</strong></a></li>
+<li><a href="#populate-the-etchosts-file"><strong>Populate the /etc/hosts File</strong></a></li>
+<li><a href="#preparing-for-using-a-dns"><strong>Preparing for Using a DNS</strong></a></li>
+<li><a href="#option-1-running-dns-on-your-management-node"><strong>Option #1: Running DNS on Your Management Node</strong></a></li>
+<li><a href="#option-2-use-a-dns-that-is-outside-of-the-cluster"><strong>Option #2: Use a DNS That is Outside of the Cluster</strong></a></li>
+<li><a href="#option-3-run-dns-on-management-node-and-service-nodes"><strong>Option #3: Run DNS on Management Node and Service Nodes</strong></a></li>
+<li><a href="#creating-node-resolv.conf-files-on-aix---overview"><strong>Creating node resolv.conf files on AIX - Overview</strong></a><ul>
+<li><a href="#providing-domain-and-nameservers-values---aix"><strong>Providing &quot;domain&quot; and &quot;nameservers&quot; values - AIX</strong></a></li>
+</ul></li>
+<li><a href="#option-4-using-etchosts-throughout-the-cluster"><strong>Option #4: Using /etc/hosts Throughout the Cluster</strong></a></li>
+</ul></li>
+<li><a href="#specifying-additional-network-interfaces-for-cluster-nodes">Specifying additional network interfaces for cluster nodes</a><ul>
+<li><a href="#managing-additional-interface-information-using-the-xcat-defs-commands">**Managing additional interface information using the xCAT <em>defs commands</em>*</a><ul>
+<li><a href="#expanded-format-for-nic-attributes"><strong>Expanded format for nic* attributes</strong></a></li>
+<li><a href="#setting-individual-nic-attribute-values"><strong>Setting individual nic attribute values</strong></a></li>
+<li><a href="#add-additional-nic-information-for-a-single-cluster-node">Add additional NIC information for a single cluster node</a></li>
+<li><a href="#add-additional-nic-information-for-a-group-of-nodes">Add additional NIC information for a group of nodes</a></li>
+<li><a href="#using-expanded-stanza-file-format"><strong>Using expanded stanza file format</strong></a></li>
+<li><a href="#using-lsdef-to-display-nic-attributes"><strong>Using lsdef to display nic* attributes</strong></a></li>
+</ul></li>
+<li><a href="#otherinterfaces-vs.-nic-attributes"><strong>&quot;otherinterfaces&quot; vs. nic* attributes</strong></a></li>
+<li><a href="#setting-addition-interface-information-using-the-xcat-tabedit-command."><strong>Setting addition interface information using the xCAT tabedit command.</strong></a></li>
+</ul></li>
+<li><a href="#limited-support-for-user-application-networks">Limited support for user application networks</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#cluster-name-resolution">Cluster Name Resolution</a></li>
+<li><a href="#set-the-site-domain-attribute"><strong>Set the site domain Attribute</strong></a></li>
+<li><a href="#create-xcat-network-definitions"><strong>Create xCAT Network Definitions</strong></a></li>
+<li><a href="#populate-the-etchosts-file"><strong>Populate the /etc/hosts File</strong></a></li>
+<li><a href="#preparing-for-using-a-dns"><strong>Preparing for Using a DNS</strong></a></li>
+<li><a href="#option-#1-running-dns-on-your-management-node"><strong>Option #1: Running DNS on Your Management Node</strong></a></li>
+<li><a href="#option-#2-use-a-dns-that-is-outside-of-the-cluster"><strong>Option #2: Use a DNS That is Outside of the Cluster</strong></a></li>
+<li><a href="#option-#3-run-dns-on-management-node-and-service-nodes"><strong>Option #3: Run DNS on Management Node and Service Nodes</strong></a></li>
+<li><a href="#creating-node-resolvconf-files-on-aix---overview"><strong>Creating node resolv.conf files on AIX - Overview</strong></a>
+<ul>
+<li><a href="#providing-domain-and-nameservers-values---aix"><strong>Providing &quot;domain&quot; and &quot;nameservers&quot; values - AIX</strong></a></li>
+</ul></li>
+<li><a href="#option-#4-using-etchosts-throughout-the-cluster"><strong>Option #4: Using /etc/hosts Throughout the Cluster</strong></a></li>
+<li><a href="#specifying-additional-network-interfaces-for-cluster-nodes">Specifying additional network interfaces for cluster nodes</a></li>
+<li><a href="#managing-additional-interface-information-using-the-xcat-defs-commands">**Managing additional interface information using the xCAT <em>defs commands</em>*</a>
+<ul>
+<li><a href="#expanded-format-for-nic-attributes"><strong>Expanded format for nic* attributes</strong></a></li>
+<li><a href="#setting-individual-nic-attribute-values"><strong>Setting individual nic attribute values</strong></a></li>
+<li><a href="#add-additional-nic-information-for-a-single-cluster-node">Add additional NIC information for a single cluster node</a></li>
+<li><a href="#add-additional-nic-information-for-a-group-of-nodes">Add additional NIC information for a group of nodes</a></li>
+<li><a href="#using-expanded-stanza-file-format"><strong>Using expanded stanza file format</strong></a></li>
+<li><a href="#using-lsdef-to-display-nic-attributes"><strong>Using lsdef to display nic* attributes</strong></a></li>
+</ul></li>
+<li><a href="#otherinterfaces-vs-nic-attributes"><strong>&quot;otherinterfaces&quot; vs. nic* attributes</strong></a></li>
+<li><a href="#setting-addition-interface-information-using-the-xcat-tabedit-command"><strong>Setting addition interface information using the xCAT tabedit command.</strong></a></li>
+<li><a href="#limited-support-for-user-application-networks">Limited support for user application networks</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h3 id="cluster-name-resolution"><a href="#TOC">Cluster Name Resolution</a></h3>
+<p>Setting up name resolution and having the nodes resolve to IP addresses is required in xCAT clusters.</p>
+<p>There are many different ways to configure name resolution in your cluster. Four of the common choices will be described in this section (look for <strong>Option #:</strong> headings):</p>
+<ol style="list-style-type: decimal">
+<li>In a basic (non-hierarchical) cluster, point all nodes to a DNS running on the management node. This is the most common setup.</li>
+<li>In a basic (non-hierarchical) cluster, point all nodes to an external DNS running at your site. This requires that all of your nodes have network connectivity to your site.</li>
+<li>In a hierarchical cluster, point all compute nodes to their service node. This is the common setup for hierarchical clusters.</li>
+<li>Don't use DNS, just distribute the /etc/hosts file to every node. If you choose this you will have to distribute new versions of the /etc/hosts file to all the cluster nodes whenever you add new nodes to the cluster, and you will have to specify site.master and all other server attributes in the database as IP addresses.</li>
+</ol>
+<p>But before any of those options are chosen, there some things that must be done for all of the options...</p>
+<h4 id="set-the-site-domain-attribute"><a href="#TOC"><strong>Set the site domain Attribute</strong></a></h4>
+<p>First set the domain attribute in the xCAT site table to the hostname domain you want to use for your cluster nodes:</p>
+<pre><code>    chdef -t site domain=mycluster.com</code></pre>
+<h4 id="create-xcat-network-definitions"><a href="#TOC"><strong>Create xCAT Network Definitions</strong></a></h4>
+<p>When you installed xCAT, it ran <a href="http://xcat.sourceforge.net/man8/makenetworks.8.html">makenetworks</a> to create network definitions for the networks that the management node is connected to (i.e. has NICs configured for). If the cluster-facing NICs were not configured when xCAT was installed, or if there are more networks in the cluster that are only available via the service nodes or compute nodes, create the new network definitions now.</p>
+<p>Use the mkdef command to add additional networks to the xCAT database. (See the <a href="http://xcat.sourceforge.net/man7/network.7.html">network</a> for information about each attribute.) For example:</p>
+<pre><code>    mkdef -t network clusternet net=11.0.0.0 mask=255.255.0.0 gateway=11.0.0.254 domain=app.cluster.com</code></pre>
+<p><strong>Note</strong>: The <strong>makedns</strong> command (mentioned below) will only add nodes into the DNS configuration if the network for the node is defined.</p>
+<p>If you want to use a different hostname domain or a different set of nameservers for nodes that are on a particular network, set those attributes in the corresponding network object:</p>
+<pre><code>    mkdef -t network clusternet domain=app.cluster.com nameservers=1.2.3.4</code></pre>
+<p><strong>Note:</strong> the domain setting specific to a network is only supported in xCAT 2.8 and above.</p>
+<h4 id="populate-the-etchosts-file"><a href="#TOC"><strong>Populate the /etc/hosts File</strong></a></h4>
+<p>All of the management node interfaces and all of the nodes need to be added to the /etc/hosts file on the xCAT management node (whether you are using the DNS option or not). You can either edit the /etc/hosts file by hand, or use <a href="http://xcat.sourceforge.net/man8/makehosts.8.html">makehosts</a>.</p>
+<p>If you edit the file by hand, it should look similar to:</p>
+<pre><code>    127.0.0.1  localhost localhost.localdomain
+    50.1.2.3  mgmtnode-public mgmtnode-public.cluster.com
+    10.0.0.100  mgmtnode mgmtnode.cluster.com
+    10.0.0.1  node1 node1.cluster.com
+    10.0.0.2  node2 node2.cluster.com</code></pre>
+<p>Support for multiple network domain names is available starting in the xCAT 2.8 release.</p>
+<p>Verify that your /etc/hosts file contains entries for all of your management node interfaces. Manually add any that are missing.</p>
+<p>If your node names and IP addresses follow a regular pattern, you can easily populate /etc/hosts by putting a regular expression in the xCAT hosts table and then running <strong>makehosts</strong>. To do this, you need to first create an initial definition of the nodes in the database, if you haven't done that already:</p>
+<pre><code>    mkdef node[01-80] groups=compute,all</code></pre>
+<p>Next, put a regular expression in the hosts table. The following example will associate IP address 10.0.0.1 with node1, 10.0.0.2 with node2, etc:</p>
+<pre><code>    chdef -t group compute ip=&#39;|node(\d+)|10.0.0.($1+0)|&#39;</code></pre>
+<p>(For an explanation of the regular expressions, see the <a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xcatdb</a> man page.) Then run:</p>
+<pre><code>    makehosts compute</code></pre>
+<p>and the following entries will be added to /etc/hosts:</p>
+<pre><code>    10.0.0.1 node01 node01.cluster.com
+    10.0.0.2 node02 node02.cluster.com
+    10.0.0.3 node03 node03.cluster.com</code></pre>
+<p>Starting with xCAT release 2.8 you may also specify additional network interface information in the xCAT node or group definitions.</p>
+<p>This information is used by the <strong>makehosts</strong> command to add the additional interface hostnames etc. to the /etc/hosts file. It is also used by xCAT adapter configuration postscripts to automatically configure the additional network interfaces on the node. See the section <a href="Cluster_Name_Resolution/#specifying-additional-network-interfaces-for-cluster-nodes">Cluster_Name_Resolution/#specifying-additional-network-interfaces-for-cluster-nodes</a> for more information.</p>
+<p>Note that it is a convention of xCAT that for Linux systems the short hostname is the primary hostname for the node, and the long hostname is an alias. On AIX the order is typically reversed. To have the long hostname be the primary hostname, you can use the -l option on the <a href="http://xcat.sourceforge.net/man8/makehosts.8.html">makehosts</a> command.</p>
+<h4 id="preparing-for-using-a-dns"><a href="#TOC"><strong>Preparing for Using a DNS</strong></a></h4>
+<p>If you are choosing any of the options for using DNS, follow these steps:</p>
+<p><strong>NOTE</strong>: This documentation only applies to the xCAT <strong>makedns</strong> command using the ddns.pm plugin, which is the new default dnshandler in xCAT 2.6.2 and above. The ddns.pm plugin is based on named9/bind9, and can not support named8/bind8 due to syntax difference. For example, if you are using AIX 6.1, named points to named8 by default, so you need to link named to named9 before makedns is issued.</p>
+<ul>
+<li>Set the &quot;nameservers&quot; and &quot;forwarders&quot; attributes in the xCAT <a href="http://xcat.sourceforge.net/man5/site.5.html">site</a> table. The nameservers attribute identifies the DNS's that the nodes to point to in their /etc/resolv.conf files. The forwarders attribute are the DNS's that can resolve external hostnames. If you are running a DNS on the xCAT MN, it will use the forwarders DNS's to resolve any hostnames it can't.</li>
+</ul>
+<p>For example:</p>
+<pre><code>    chdef -t site nameservers=10.0.0.100 forwarders=9.14.8.1,9.14.8.2</code></pre>
+<ul>
+<li>Create an /etc/resolv.conf file on the management node</li>
+</ul>
+<p>Edit &quot;/etc/resolv.conf&quot; to contain the cluster domain value you set in the site table above, and to point to the same DNS you will be using for your nodes (if you are using DNS). Although using the same DNS on your management node and compute nodes is not strictly required in xCAT 2.7 and above, it is a good idea, because you find name resolution problems more quickly.</p>
+<h4 id="option-1-running-dns-on-your-management-node"><a href="#TOC"><strong>Option #1: Running DNS on Your Management Node</strong></a></h4>
+<p>This is the most common set up. In this configuration, a DNS running on the management node handles all name resolution requests for cluster node names. A separate DNS in your site handles requests for non-cluster hostnames.</p>
+<p>There are several bits of information that must be included in the xCAT database before running the <a href="http://xcat.sourceforge.net/man8/makedns.8.html">makedns</a> command.</p>
+<p>You must set the &quot;forwarders&quot; attribute in the xCAT cluster &quot;site&quot; definition. The &quot;forwarders&quot; value should be set to the IP address of one or more nameservers at your site that can resolve names outside of your cluster. With this set up, all nodes ask the local nameserver to resolve names, and if it is a name that the management node DNS does not know about, it will try the forwarder names.</p>
+<p>An xCAT &quot;network&quot; definition must be defined for each management network used in the cluster. The &quot;net&quot; and &quot;mask&quot; attributes will be used by the <strong>makedns</strong> command.</p>
+<p>A network &quot;domain&quot; and &quot;nameservers&quot; value must be provided either in the network definiton corresponding to the nodes or in the site definition.</p>
+<p>For example, if the cluster domain is &quot;mycluster.com&quot;, the IP address of the management node, (as known by the cluster nodes), is &quot;100.0.0.41&quot; and the site DNS servers are &quot;50.1.2.254,50.1.3.254&quot; then you would run the following command.</p>
+<pre><code>    chdef -t site domain=mycluster.com nameservers=100.0.0.41 forwarders=50.1.2.254,50.1.3.254</code></pre>
+<p>Once /etc/hosts is populated with all of the nodes' hostnames and IP addresses, configure DNS on the management node and start it:</p>
+<pre><code>    makedns -n
+    chkconfig named on     # linux
+    startsrc -s named      # AIX</code></pre>
+<p>The resolv.conf files for the compute nodes will be created automatically using the &quot;domain&quot; and &quot;nameservers&quot; values set in the xCAT &quot;network&quot; or &quot;site&quot; definition.</p>
+<p>If you add nodes or change node names or IP addresses later on, rerun <strong>makedns</strong> which will automatically restart <strong>named</strong>.</p>
+<p>To verify the DNS service on management node is working or not:</p>
+<pre><code>    nslookup &lt;host&gt; &lt;mn&#39;s ip&gt;</code></pre>
+<p>For example:</p>
+<pre><code>    nslookup node1 100.0.0.41</code></pre>
+<h4 id="option-2-use-a-dns-that-is-outside-of-the-cluster"><a href="#TOC"><strong>Option #2: Use a DNS That is Outside of the Cluster</strong></a></h4>
+<p>If you already have a DNS on your site network and you want to use it to solve the node name in your cluster, follow the steps in this section to configure your external dns (against your local dns on xCAT MN/SN).</p>
+<ul>
+<li>Set the site &quot;nameservers&quot; value to the IP address of the external name server.</li>
+</ul>
+<pre><code>    chdef -t site nameservers=&lt;external dns IP&gt;</code></pre>
+<ul>
+<li>Set the correct information of external dns into the /etc/resolv.conf on your xCAT MN.</li>
+</ul>
+<p>The &quot;domain&quot; and &quot;nameservers&quot; values must be set correctly in /etc/resolv.conf. Which should have the same values with the ones your set in the site table.</p>
+<ul>
+<li>Manually set up your external dns server with correct named.conf and correct zone files</li>
+<li>Add the TSIG to the named.conf of your external dns for makedns command to update external dns</li>
+</ul>
+<pre><code>    tabdump -w key==omapi passwd
+      get the key like &quot;omapi&quot;,&quot;xcat_key&quot;,&quot;MFRCeHJybnJxeVBNaE1YT1BFTFJzN2JuREFMeEMwU0U=&quot;,,,,
+    Add it to your named.conf
+      key xcat_key {
+           algorithm hmac-md5;
+           secret &quot;MFRCeHJybnJxeVBNaE1YT1BFTFJzN2JuREFMeEMwU0U=&quot;;
+      };
+    Then change each zone to make your zones to allow this key to update.
+      zone &quot;1.168.192.IN-ADDR.ARPA.&quot; in {
+           type master;
+           allow-update {
+                   key xcat_key;
+           };
+           file &quot;db.192.168.1&quot;;
+      };</code></pre>
+<ul>
+<li>To update the name resolution entries from /etc/hosts or hosts table of xCAT MN to external dns</li>
+</ul>
+<pre><code>    makedns -e</code></pre>
+<pre><code>Alternatively, you can set site.externaldns=1 and run &#39;makedns&#39;</code></pre>
+<h4 id="option-3-run-dns-on-management-node-and-service-nodes"><a href="#TOC"><strong>Option #3: Run DNS on Management Node and Service Nodes</strong></a></h4>
+<p>When you have service nodes, the recommended configuration is to run DNS on the management node and all of the service nodes. Two choices are available:</p>
+<p><strong>Option #3.1</strong>: Using the management node as DNS server, the service nodes as forwarding/caching servers.</p>
+<p>This means the DNS server on the management node is the only one configured with all of the node hostname/IP address pairs. The DNS servers on the service nodes are simply forwarding/caching the DNS requests to the management node.</p>
+<p><strong>Option #3.2</strong>: Using the management node as DNS master, the service nodes as DNS slaves.(available in xCAT 2.8.4 and above)</p>
+<p>This means the DNS server on the management node is configured with all of the node hostname/IP address pairs, and allowed to transfer DNS zones to the service nodes. The DNS servers on the service nodes are DNS slaves, so that if the management node goes down for some reason, then you still have the service nodes to be able to do name resolution.</p>
+<p>The configurations are described below for the two options, note the differences marked as <strong>Option #3.x</strong>.</p>
+<p>Set site &quot;forwarders&quot; value to DNS servers outside of the cluster that can resolve non-cluster hostnames. The in-cluster DNS will automatically forward requests that it can't handle to these name servers:</p>
+<pre><code>    chdef -t site forwarders=50.1.2.254,50.1.3.254</code></pre>
+<p>Note: for <strong>Option #3.1</strong>, only the DNS on the management node will use the &quot;forwarders&quot; setting. The DNS servers on the service nodes will always forward requests to the management node. Note: for Option #3.2, make sure servicenode.nameserver=2 before you run 'makedns -n'.</p>
+<p>Once /etc/hosts is populated with all of the nodes' hostnames and IP addresses, configure DNS on the management node and start it:</p>
+<pre><code>   
+    makedns -n       
+    chkconfig named on     # linux
+    startsrc -s named      # AIX</code></pre>
+<p>When the /etc/resolv.conf files for the compute nodes are created the value of the &quot;nameserver&quot; is gotten from site.nameservers or networks.nameservers if it's specified.</p>
+<p>For example:</p>
+<pre><code>    chdef -t site nameservers=&quot;&lt;xcatmaster&gt;&quot;       # for Option #3.1
+    OR
+    chdef -t network &lt;my_network&gt; nameservers=&quot;&lt;xcatmaster&gt;&quot;   # for Option #3.1
+
+
+    chdef -t site nameservers=&quot;&lt;xcatmaster&gt;, MN_IP&quot;       # for Option #3.2
+    OR
+    chdef -t network &lt;my_network&gt; nameservers=&quot;&lt;xcatmaster&gt;, MN_IP&quot;   # for Option #3.2</code></pre>
+<p>The &lt;xcatmaster&gt; keyword will be interpreted as the value of the &lt;xcatmaster&gt; attribute of the node definition. The &lt;xcatmaster&gt; value for a node is the name of it's server as known by the node. This would be either the cluster-facing name of the service node or the cluster-facing name of the management node.</p>
+<p><strong>Note</strong>: for Linux, the site &quot;nameservers&quot; value must be set to &lt;xcatmaster&gt; before you run <strong>makedhcp</strong>.</p>
+<p>Make sure that the DNS service on the service nodes will be set up by xCAT.</p>
+<p>Assuming you have all of your service nodes in a group called &quot;service&quot; you could run a command similar to the following.</p>
+<pre><code>    chdef -t group service setupnameserver=1       # for Option #3.1
+    chdef -t group service setupnameserver=2       # for Option #3.2</code></pre>
+<p>For Linux systems, make sure DHCP is set up on the service nodes.</p>
+<pre><code>    chdef -t group service setupdhcp=1</code></pre>
+<p>If you have not yet installed or diskless booted your service nodes, xCAT will take care of configuring and starting DNS on the service nodes at that time. If the service nodes are already running, restarting xcatd on them will cause xCAT to recognize the above setting and configure/start DNS:</p>
+<pre><code>    xdsh service &#39;service xcatd restart&#39;   # linux
+
+    xdsh service &#39;restartxcatd&#39;            # AIX</code></pre>
+<p>If you add nodes or change node names or IP addresses later on, rerun <strong>makedns</strong>. The DNS on the service nodes will automatically pick up the new information.</p>
+<h4 id="creating-node-resolv.conf-files-on-aix---overview"><a href="#TOC"><strong>Creating node resolv.conf files on AIX - Overview</strong></a></h4>
+<p>The resolv.conf files could be created manually or you could use the xCAT support to automate the creation of the files when the nodes are installed.</p>
+<p>This section provides an overview of the various ways you can set up resolv.conf files in an AIX cluster.</p>
+<h5 id="providing-domain-and-nameservers-values---aix"><a href="#TOC"><strong>Providing &quot;domain&quot; and &quot;nameservers&quot; values - AIX</strong></a></h5>
+<p>The resolv.conf file requires a &quot;domain&quot; value and a &quot;nameservers&quot; value. When using xCAT on AIX you must provide this information in one of three ways:</p>
+<ol style="list-style-type: decimal">
+<li><p>Create a NIM resolv_conf resource and include it in your xCAT osimage definition. To do this you must create a NIM reolv_conf resource on the xCAT management node and include it in the xCAT osimage definition you will use to install the cluster nodes.</p></li>
+<li><p>Add values for the &quot;domain&quot; and &quot;nameservers&quot; attributes to the xCAT &quot;site&quot; definition. When setting up a cluster the xCAT &quot;site&quot; definition is used to save some basic cluster-wide information. You can add the &quot;domain&quot; and &quot;nameservers&quot; values to the &quot;site&quot; definition using the xCAT <strong>chdef</strong> command. For example:</p></li>
+</ol>
+<pre><code>    chdef -t site domain=mycluster.com nameservers=30.1.0.102</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Add values for the &quot;domain&quot; and &quot;nameservers&quot; attributes to the xCAT &quot;network&quot; definitions. An xCAT &quot;network&quot; definition must be created for each network that is used for cluster management. You can add the &quot;domain&quot; and &quot;nameservers&quot; values to the network definitions using the <strong>chdef</strong> command. For example:</li>
+</ol>
+<pre><code>     chdef -t network -o cluster_net domain=mycluster.com nameservers=30.1.0.102</code></pre>
+<p>When xCAT on AIX is determining the resolv.conf file for a node it will use the following priority order:</p>
+<ol style="list-style-type: decimal">
+<li>The user provided resolv_conf resource is used if provided.</li>
+<li>If there is no resolv_conf resource then the information from the network definition, that corresponds to the node, will be used. (I.e. If the node is located on the &quot;cluster_net&quot; network then the &quot;domain&quot; and &quot;nameservers&quot; values from that network definition will be used.</li>
+<li>If there is no resolv_conf resource AND the network definition does not contain the &quot;domain&quot; and &quot;nameservers&quot; values then the &quot;site&quot; definition will be used.</li>
+<li>If the &quot;domain&quot; and &quot;nameservers&quot; values are not provided in any of the above then no resolv.conf file will be created on the nodes.</li>
+</ol>
+<p>When setting the value for the &quot;nameservers&quot; attribute you may either use a comma-separated list of server IP addresses OR the keyword &quot;<xcatmaster>&quot;. The &quot;<xcatmaster>&quot; keyword will be interpreted as the value of the &quot;xcatmaster&quot; attribute of the node definition. The &quot;xcatmaster&quot; value for a node is the name of it's server as known by the node. This would be either the name of the service node or the name of the management node.</p>
+<h4 id="option-4-using-etchosts-throughout-the-cluster"><a href="#TOC"><strong>Option #4: Using /etc/hosts Throughout the Cluster</strong></a></h4>
+<p><strong>Note</strong>: currently this option only works easily on AIX. To make it work on linux, you have to also manually change /etc/nsswitch.conf .</p>
+<p>If you choose to use a fully populated /etc/hosts file on every node, you must ensure that the file gets updated throughout the cluster every time a node is added or a hostname or IP address changes.</p>
+<p><strong>NOTE:</strong> You should also remove the &quot;nameservers&quot; setting from the site definition and from any &quot;network&quot; definiton so that xCAT will not generate an /etc/resolv.conf file for the nodes. For example:</p>
+<pre><code>
+    chdef -t site nameservers=&quot;&quot;</code></pre>
+<p>There are several methods you can use to update the /etc/hosts files on the nodes.</p>
+<ol style="list-style-type: decimal">
+<li><p>Use the xCAT <strong>xdcp</strong> command to copy the new files to the nodes.</p>
+<p>See <a href="http://xcat.sourceforge.net/man1/xdcp.1.html">xdcp</a> for details.</p></li>
+</ol>
+<p>In this case the new /etc/hosts file <strong>would not be</strong> available during the boot of the node.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><p>Use the xCAT [Sync-ing_Config_Files_to_Nodes] support.</p>
+<p>For example, you could create a synclist file containing the following entry:</p></li>
+</ol>
+<pre><code>    /etc/hosts -&gt; /etc/hosts</code></pre>
+<pre><code> The file can be put anywhere, but let&#39;s assume you name it /install/custom/compute-image/synclist .
+ Make sure you have an OS image object in the xCAT database associated with your nodes:</code></pre>
+<pre><code>    mkdef -t osimage compute-image synclists=/install/custom/compute-image/synclist</code></pre>
+<pre><code>    chdef -t group compute provmethod=compute-image</code></pre>
+<pre><code> Each time you install or diskless boot a compute node, xCAT will automatically sync the /etc/hosts file </code></pre>
+<p>to the node. If you make changes to /etc/hosts while the nodes are running, you must push those changes to the nodes:</p>
+<pre><code>    updatenode compute -F</code></pre>
+<p>In this case the new /etc/hosts file <strong>would not be</strong> available during the boot of the node.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><p>Use the xCAT statelite support for diskless nodes.</p>
+<p>If all of your nodes are statelite nodes you can add /etc/hosts to the [litefile] (http://xcat.sourceforge.net/man5/litefile.5.html) table with the &quot;ro&quot; option and add the place it can be mounted from to the <a href="http://xcat.sourceforge.net/man5/litetree.5.html">litetree</a> table.</p>
+<p>For Linux systems see <a href="XCAT_Linux_Statelite">Linux statelite doc</a> for details on using the statelite support.</p>
+<p>For AIX systems refer to the documentation on AIX Diskless Nodes:</p></li>
+</ol>
+<p>[XCAT_AIX_Diskless_Nodes] for details on using the statelite support. See the section titled &quot;Provide a read-only configuration file&quot; for an example of how you could set up the /etc/hosts file.</p>
+<p>In this case the new /etc/hosts file <strong>will</strong> be available during the boot of the node.</p>
+<h3 id="specifying-additional-network-interfaces-for-cluster-nodes"><a href="#TOC">Specifying additional network interfaces for cluster nodes</a></h3>
+<p><strong>Note</strong>: This support is available starting with the xCAT 2.8.1 release.</p>
+<p>You can specify additional interface information as part of an xCAT node definition. This information is used by xCAT to populate the /etc/hosts file with the extra interfaces (using the <strong>makehosts</strong> command) and providing xCAT adapter configuration scripts with the information required to automatically configure the additional interfaces on the nodes.</p>
+<p>To use this support you must set one or more of the following node definition attributes.</p>
+<ul>
+<li>nicips - IP addresses for additional interfaces (NIC). (Required) nichostnamesuffixes - Hostname suffixes per NIC. This is a suffix to add to the node name to use for the hostname of the additional interface. (Optional)</li>
+<li>nictypes - NIC types per NIC. The valid &quot;nictypes&quot; values are: &quot;ethernet&quot;, &quot;infiniband&quot;, and &quot;bmc&quot;. (Optional)</li>
+<li>niccustomscripts - The name of an adapter configuration postscript to be used to configure the interface. (Optional)</li>
+<li>nicnetworks - xCAT network definition names corresponding to each NIC. (ie. the network that the nic ip resides on.) (Optional)</li>
+<li>nicaliases - Additional aliases to set for each additional NIC. (These are added to the /etc/hosts file when using <strong>makehosts</strong>).(Optional)</li>
+</ul>
+<p>The additional NIC information may be set by directly editing the xCAT &quot;nics&quot; table or by using the xCAT *defs commands to modify the node definitions.</p>
+<p>The details for how to add the additional information is described below. As you will see, entering this information manually can be tedious and error prone. <strong>This support is primarily targetted to be used in conjunction with other IBM products that have tools to fill in this information in an automated way.</strong></p>
+<h4 id="managing-additional-interface-information-using-the-xcat-defs-commands"><a href="#TOC">**Managing additional interface information using the xCAT <em>defs commands</em>*</a></h4>
+<p>The xCAT *defs commands (<a href="http://xcat.sourceforge.net/man1/mkdef.1.html">mkdef</a>, <a href="http://xcat.sourceforge.net/man1/chdef.1.html">chdef</a>, and <a href="http://xcat.sourceforge.net/man1/lsdef.1.html">lsdef</a>) may be used to manage the additional NIC information in the xCAT database.</p>
+<p>When using the these commands the expanded nic* attribute format will always be used.</p>
+<h5 id="expanded-format-for-nic-attributes"><a href="#TOC"><strong>Expanded format for nic* attributes</strong></a></h5>
+<p>The expanded format will be the nics attribute name and the nic name, separated by a &quot;.&quot; (dot).(ie. <nic attr name>.<nic name> )</p>
+<p>For example, the expanded format for the &quot;nicips&quot; and &quot;nichostnamesuffixes&quot; attributes for a nic named &quot;eth1&quot; might be:</p>
+<pre><code>     nicips.eth1=10.1.1.6
+     nichostnamesuffixes.eth1=-eth1</code></pre>
+<p>If we assume that your xCAT node name is &quot;compute02&quot; then this would mean that you have an additonal interface (&quot;eth1&quot;) and that the hostname and IP address are &quot;compute02-eth1&quot; and &quot;10.1.1.6&quot;.</p>
+<p>A &quot;|&quot; delimiter is used to specify multiple values for an interface. For example:</p>
+<pre><code>    nicips.eth2=60.0.0.7|70.0.0.7
+    nichostnamesuffixes.eth2=&#39;-eth2|-eth2-lab&#39;</code></pre>
+<p>This indicates that &quot;eth2&quot; gets two hostnames and two IP addresses. ( compute02-eth2 gets 60.0.0.7 and compute02-eth2-lab&quot; gets &quot;70.0.0.7&quot;.)</p>
+<p>For the &quot;nicaliases&quot; attribute a list of additional aliases may be provided.</p>
+<pre><code>    nicaliases.eth1=&#39;alias1 alias2&#39;
+    nicaliases.eth2=&#39;alias3|alias4&#39;</code></pre>
+<p>This indicates that the &quot;compute02-eth1&quot; hostname would get the additional two aliases, alias1 alias2&quot;, included in the /etc/hosts file, (when using the <strong>makehosts</strong> command).</p>
+<p>The second line indicates that &quot;compute02-eth2&quot; would get the additonal alias &quot;alias3&quot; and that &quot;compute02-eth-lab&quot; would get &quot;alias4&quot;</p>
+<h5 id="setting-individual-nic-attribute-values"><a href="#TOC"><strong>Setting individual nic attribute values</strong></a></h5>
+<p>The nic attribute values may be set using the <strong>chdef</strong> or <strong>mkdef</strong> commands. You can specify the nic* values when creating an xCAT node definition with <strong>mkdef</strong> or you can update an existing node definition using <strong>chdef</strong>.</p>
+<p><strong>Note</strong>: <strong>chdef</strong> does not support using the &quot;-m&quot; and &quot;-p&quot; options to modify the nic* attributes.</p>
+<p><strong>nicips</strong> example:</p>
+<pre><code>    chdef -t node -o compute02 nicips.eth1=11.10.1.2 nicips.eth2=&#39;80.0.0.2|70.0.0.2&#39;</code></pre>
+<p><strong>NOTE</strong>: The management interface (eth0), that the &quot;compute02&quot; IP is configured on, is not included in the list of additional nics. Although adding it to the list of nics would do no harm.</p>
+<p>This &quot;nicips&quot; value indicates that there are two additional interfaces to be configured on node compute02, eth1 and eth2. The &quot;eth1&quot; interface will get the IP address &quot;11.10.1.2&quot;. The &quot;eth2&quot; interface will get two IP addresses, &quot;80.0.0.2&quot; and &quot;70.0.0.2&quot;.</p>
+<p><strong>nichostnamesuffixes</strong> example:</p>
+<pre><code>    chdef -t node -o compute02 nichostnamesuffixes.eth1=-eth1 nichostnamesuffixes.eth2=&#39;-eth2|-eth2-lab&#39;</code></pre>
+<p>This value indicates that the hostname for &quot;eth1&quot; should be &quot;compute02-eth1&quot;. For &quot;eth2&quot; we had two IP addresses so now we need two suffixes. The hostnames for &quot;eth2&quot; will be &quot;compute02-eth2&quot; and &quot;compute02- eth2-lab&quot;. The IP for &quot;compute02-eth2&quot; will be &quot;80.0.0.2&quot; and the IP for &quot;compute02-eth2-lab&quot; will be &quot;70.0.0.2&quot;.</p>
+<p>The suffixes provided may be any string that will conform to the DNS naming rules.</p>
+<p><strong>Important Note</strong>: According to DNS rules a hostname must be a text string up to 24 characters drawn from the alphabet (A-Z), digits (0-9), minus sign (-), and period (.). When you are specifying &quot;nichostnamesuffixes&quot; or &quot;nicaliases&quot; make sure the resulting hostnames will conform to this naming convention.</p>
+<p><strong>nictypes</strong> example:</p>
+<pre><code>    chdef -t node -o compute02 nictypes.eth1=ethernet nictypes.eth2=&#39;ethernet|ethernet&#39;</code></pre>
+<p>This value indicates that all the nics are ethernet. The valid &quot;nictypes&quot; values are: &quot;ethernet&quot;, &quot;infiniband&quot;, and &quot;bmc&quot;.</p>
+<p><strong>niccustomscripts</strong> example:</p>
+<pre><code>    chdef -t node -o compute02 niccustomscripts.eth1=cfgeth niccustomscripts.eth2=&#39;cfgeth|cfgeth&#39;</code></pre>
+<p>In this example &quot;cfgeth&quot; is the name of an adapter configuration postscript to be used to configure the interface.</p>
+<p><strong>nicnetworks</strong> example:</p>
+<pre><code>    chdef -t node -o compute02 nicnetworks.eth1=clstrnet11 nicnetworks.eth2=&#39;clstrnet80|clstrnet-lab&#39;</code></pre>
+<p>In this example we are saying that the IP address of &quot;eth0&quot; (ie. compute02-eth1 -&gt; 11.10.1.2) is part of the xCAT network named &quot;clstrnet11&quot;. &quot;compute02-eth2&quot; is in network &quot;clstrnet80&quot; and &quot;compute02-eth2-lab&quot; is in &quot;clstrnet-lab&quot;.</p>
+<p>By default the xCAT code will attempt to match the interface IP to one of the xCAT network definitions.</p>
+<p><strong>An xCAT network definition must be created for all networks being used in the xCAT cluster environment.</strong></p>
+<p><strong>nicaliases</strong> example:</p>
+<pre><code>    chdef -t node -o compute02 nicaliases.eth1=&quot;moe larry&quot;</code></pre>
+<p>In this example it specifies that, (when running <strong>makehosts</strong>), the &quot;compute02-eth1&quot; entry in the /etc/hosts file should get the additional aliases &quot;moe&quot; and &quot;larry&quot;.</p>
+<h5 id="add-additional-nic-information-for-a-single-cluster-node"><a href="#TOC">Add additional NIC information for a single cluster node</a></h5>
+<p>In this example we assume that we have already designated that node &quot;compute01&quot; get IP address &quot;60.0.0.1&quot; which will be configured on interface &quot;eth0&quot;. This will be the xCAT management interface for the node. In addition to the management interface we also wish to include information for the &quot;eth1&quot; interface on node &quot;compute01&quot;. To do this we must set the additional nic information for this node. For example:</p>
+<pre><code>    chdef -t node -o compute01 nicips.eth1=&#39;80.0.0.1&#39; nichostnamesuffixes.eth1=&#39;-eth1&#39; nictypes.eth1=&#39;ethernet&#39; nicnetworks.eth1=&#39;clstrnet80&#39;</code></pre>
+<p>This information will be used to configure the &quot;eth1&quot; interface, (in addition to the management interface (eth0)), during the boot of the node.</p>
+<p>Also, if you were to run &quot;makehosts compute01&quot; at this point you would see something like the following entries added to the /etc/hosts&quot; file.</p>
+<pre><code>    60.0.0.1 compute01 compute01.cluster60.com
+    80.0.0.1 compute01-eth1 compute01-eth1.cluster80.com</code></pre>
+<p>The domain names are found by checking the xCAT network definitions to see which one would include the IP address. The domain for the matching network is then used for the long name in the /etc/hosts file.</p>
+<p><strong>NOTE</strong>: If you specify the same IP address for a nic as you did for the management interface then the nic hostname will be considered an alias of the xCAT node hostname. For example, if you specified &quot;60.0.0.1&quot; for the eth1 &quot;nicips&quot; value then the /etc/hosts entry would be:</p>
+<pre><code>    60.0.0.1 compute01 compute01.cluster60.com compute01-eth1</code></pre>
+<h5 id="add-additional-nic-information-for-a-group-of-nodes"><a href="#TOC">Add additional NIC information for a group of nodes</a></h5>
+<p>In this example we'd like to configure additional &quot;eth1&quot; interfaces for a group of cluster nodes.</p>
+<p>The basic approach will be to create an xCAT node group containing all the nodes and then use a regular expression to determine the actual &quot;nicips&quot; to use for each node.</p>
+<p>For this technique to work you must set up the hostnames and IP address to a have a regular pattern. For more information on using regular expressions in the xCAT database see the <a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xcatdb</a> man page.</p>
+<p>In the following example, the xCAT node group &quot;compute&quot; was defined to include all the computational nodes: compute01, compute02, compute03 etc. (These hostnames/IPs will be mapped to the &quot;eth0&quot; interfaces.)</p>
+<p>For the &quot;eth1&quot; interfaces on these nodes we'd like to have &quot;compute01-eth1&quot; map to &quot;80.0.0.1&quot;, and &quot;compute02-eth1&quot; to map to &quot;80.0.0.2&quot; etc.</p>
+<p>To do this we could define the &quot;compute&quot; group attributes as follows:</p>
+<pre><code>    chdef -t group -o compute nicips=&#39;|\D+(\d+)|eth1!80.0.0.($1+0)|&#39; nichostnamesuffixes=&#39;eth1!-eth1&#39; nictypes=&#39;eth1!ethernet&#39;</code></pre>
+<p>These values will be applied to each node in the &quot;compute&quot; group. So, for example, if I list the attributes of &quot;compute08&quot; I'd see the following nic* attribute values set.</p>
+<pre><code>    lsdef compute08
+    Object name: compute08
+         . . . .
+         nicips.eth1=80.0.0.8
+         nichostnamesuffixes.eth1=-eth1
+         nictypes.eth1=ethernet
+         . . . .</code></pre>
+<p>Here is a second example of using regular expressions to define multiple nodes:</p>
+<pre><code>    chdef -t group -o nictest nicips=&#39;|\D+(\d+)|ib0!10.4.102.($1*1)|&#39; nichostnamesuffixes=&#39;ib0!-ib&#39; nictypes=&#39;ib0!Infiniband&#39; nicnetworks=&#39;ib0!barcoo_infiniband&#39;
+
+
+     lsdef nictest
+       Object name: node01
+       groups=nictest
+       nichostnamesuffixes.ib0=-ib
+       nicips.ib0=10.4.102.1
+       nicnetworks.ib0=barcoo_infiniband
+       nictypes.ib0=Infiniband
+       postbootscripts=otherpkgs
+       postscripts=syslog,remoteshell</code></pre>
+<p>As of release 2.8.1, you can use a <strong>simplified regular expression</strong> leaving off the evaluation of the node name and xCAT will automatically do that for you and get the same result.</p>
+<pre><code>     chdef -t group -o nictest nicips=&#39;**|ib0!10.4.102.($1*1)|&#39;** nichostnamesuffixes=&#39;ib0!-ib&#39;  nictypes=&#39;ib0!Infiniband&#39; nicnetworks=&#39;ib0!barcoo_infiniband&#39;
+
+
+     lsdef nictest
+       Object name: node01
+       groups=nictest
+       nichostnamesuffixes.ib0=-ib
+       nicips.ib0=10.4.102.1
+       nicnetworks.ib0=barcoo_infiniband
+       nictypes.ib0=Infiniband
+       postbootscripts=otherpkgs
+       postscripts=syslog,remoteshell
+</code></pre>
+<p><strong>NOTE</strong>: Make sure you haven't already set nic* values in the individual node definitions since they would take precedence over the group value.</p>
+<h5 id="using-expanded-stanza-file-format"><a href="#TOC"><strong>Using expanded stanza file format</strong></a></h5>
+<p>The xCAT stanza file supports the expanded nic* attribute format.</p>
+<p>It will contain the nic* attributes as described above.</p>
+<p>Example:</p>
+<pre><code>     compute01:
+           objtype=node
+           arch=x86_64
+           mgt=ipmi
+           cons=ipmi
+           bmc=10.1.0.12
+           nictypes.etn0=ethernet
+           nicips.eth0=11.10.1.3
+           nichostnamesuffixes.eth0=-eth0
+           nicnetworks.eth0=clstrnet1
+           nictypes.eth1=ethernet
+           nicips.eth1=60.0.0.7|70.0.0.7
+           nichostnamesuffixes.eth1=-eth1|-eth1-lab
+           nicnetworks.eth1=clstrnet2|clstrnet3
+           nicaliases.eth0=&quot;alias1 alias2&quot;
+           nicaliases.eth1=&quot;alias3|alias4&quot;</code></pre>
+<p>The <strong>lsdef</strong> command may be used to create a stanza file in this format and the <strong>chdef/mkdef</strong> commands will read a stanza file in this format.</p>
+<h5 id="using-lsdef-to-display-nic-attributes"><a href="#TOC"><strong>Using lsdef to display nic* attributes</strong></a></h5>
+<p>If a node has any nic* attributes set they will be displayed along with the node definition. The nic* attribute values are displayed in the expanded format.</p>
+<pre><code>    lsdef compute02</code></pre>
+<p>If you would only like to see the nic* attributes for the node you can specify the &quot;--nics&quot; option on the command line.</p>
+<pre><code>    lsdef compute02 --nics</code></pre>
+<p>If you would like to display individual nic* attribute values you can use the &quot;-i&quot; option.</p>
+<p>You can either specify the base nic* attribute name or the expanded name for a specific NIC.</p>
+<pre><code>    lsdef compute05 -i nicips,nichostnamesuffixes
+     Object name: compute05
+       nicips.eth1=11.1.89.7
+       nicips.eth2=12.1.89.7
+       nichostnamesuffixes.eth1=-lab
+       nichostnamesuffixes.eth2=-app</code></pre>
+<pre><code>     lsdef compute05 -i nicips.eth1,nichostnamesuffixes.eth1
+      Object name: compute05
+       nicips.eth1=11.1.89.7
+       nichostnamesuffixes.eth1=-lab</code></pre>
+<h4 id="otherinterfaces-vs.-nic-attributes"><a href="#TOC"><strong>&quot;otherinterfaces&quot; vs. nic* attributes</strong></a></h4>
+<p>The nic* attribute support will be replacing the support for the &quot;otherinterfaces&quot; node attribute in the xCAT 2.8.1 release. For now the &quot;otherinterfaces&quot; attribute will still be supported but it may be dropped in future releases. Any new network interface information should be provided using the new nic* attributes.</p>
+<p>If you are currently using the &quot;otherinterfaces&quot; node attribute you do not have to move it to the nic* attributes at this time. However, be careful to avoid any overlap or conflict with the information provided for each.</p>
+<p>If you are using &quot;otherinterfaces&quot; and add additional interfaces using the nic* attributes the <a href="http://xcat.sourceforge.net/man8/makehosts.8.html">makehosts</a> command will add both to the /etc/hosts table.</p>
+<p>When both the &quot;otherinterfaces&quot; and nic* attributes are used the &quot;otherinterfaces&quot; attribute is processed before the nic* attributes.</p>
+<h4 id="setting-addition-interface-information-using-the-xcat-tabedit-command."><a href="#TOC"><strong>Setting addition interface information using the xCAT tabedit command.</strong></a></h4>
+<p>Another option for setting the nic* attribute values is to use the <a href="http://xcat.sourceforge.net%20/man8/tabedit.8.html">tabedit</a> command. All the nic* attributes for a node or group are stored in the xCAT database table named &quot;nics&quot;. You can edit the table directly using the xCAT <strong>tabedit</strong> command.</p>
+<p>Example:</p>
+<pre><code>     tabedit nics</code></pre>
+<p>For a description of the nic* table attributes see the <a href="http://xcat.sourceforge.net/man5/nics.5.html">nics</a> table man page.</p>
+<p><strong>Sample table contents:</strong></p>
+<pre><code>    #node,nicips,nichostnamesuffixes,nictypes,niccustomscripts,nicnetworks,nicaliases,comments,disable
+    &quot;compute03&quot;,&quot;eth0!11.10.1.3,eth1!60.0.0.7&quot;,&quot;eth0!-eth0,eth1!-eth1&quot;,&quot;eth0!ethernet,eth1!ethernet&quot;,,
+    &quot;eth0!clstrnet11,eth1!clstrnet60&quot;,eth0!moe,,
+    .   .   .   .   .</code></pre>
+<h3 id="limited-support-for-user-application-networks"><a href="#TOC">Limited support for user application networks</a></h3>
+<p><strong>Note</strong>: This support is available starting with the xCAT 2.8 release. In some cases you may have additional user application networks in your site that are not specifically used for cluster management.</p>
+<p>If desired you can create xCAT network definitions for these networks. This not only provides a convenient way to keep track of the network details but the information can also be used to help set up name resolution for these networks on the cluster nodes. When you add a network definition that includes a &quot;domain&quot; value then that domain is automatically included the xCAT name resolution set up. This will enable the nodes to be able to resolve hostnames from the other domains.</p>
+<p>For example, when you run <a href="http://xcat.sourceforge.net/man8/makedhcp.8.html">makedhcp -n</a> it will list all domains defined in the xCAT &quot;site&quot; definition and xCAT &quot;network&quot; definitions in the &quot;option domain-search&quot; entry of the shared-network stanza in the dhcp configuration file. This will cause <strong>dhcp</strong> to put these domains in the compute nodes' /etc/resolv.conf file every time it gets a dhcp lease.</p>
+<p>Also, on AIX systems, when the default NIM &quot;resolv_conf&quot; resource is created it will include all the &quot;site&quot; and &quot;network&quot; domains in the &quot;search&quot; entry of the /etc/resolv.conf file.</p>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#changes-in-2.3.2-since-2.3.1">Changes in 2.3.2 Since 2.3.1</a></li>
+<li><a href="#bugs-fixed-in-2.3.2">Bugs Fixed in 2.3.2</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#changes-in-232-since-231">Changes in 2.3.2 Since 2.3.1</a></li>
+<li><a href="#bugs-fixed-in-232">Bugs Fixed in 2.3.2</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the 2.3.1 release. Also see the [XCAT_2.3.1_Release_Notes].</p>
+<h2 id="changes-in-2.3.2-since-2.3.1"><a href="#TOC">Changes in 2.3.2 Since 2.3.1</a></h2>
+<ul>
+<li>The postscript behaviour has been restored to the xCAT 2.2 behavior (i.e. run before the reboot for RHEL installations). A new column in the postscripts table called postbootscripts allows you to specify postscripts that should run after the reboot. See http://xcat.sourceforge.net/man5/postscripts.5.html for details.</li>
+<li>New flexible NFS-root option that let's you specify which parts of the OS should be stateless and which should be stateful, and uses minimal memory on the node. See http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT-Statelite.pdf</li>
+<li>Support for Fedora 12 nodes</li>
+<li>A slightly new build and packaging process for xCAT on AIX. (More similar to the xCAT on linux process.)</li>
+<li>New CSM to xCAT migration doc: http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2CSMigration.pdf</li>
+<li>Many <a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/index.html">documentation</a> updates</li>
+</ul>
+<h2 id="bugs-fixed-in-2.3.2"><a href="#TOC">Bugs Fixed in 2.3.2</a></h2>
+<p>Many bugs were fixed in 2.3.2, for details see http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945 .</p>
+</body>
+</html>

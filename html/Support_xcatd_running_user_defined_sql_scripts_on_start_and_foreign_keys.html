@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">1. Overview</a></li>
+<li><a href="#adding-tables-sql-script-to-xcat">2. Adding Tables, SQL script to xCAT</a></li>
+<li><a href="#runsqlcmd">2.1 runsqlcmd</a></li>
+<li><a href="#support-for-foreign-keys">3. Support for Foreign Keys</a></li>
+<li><a href="#change-to-update-schema-design">4. Change to update schema design</a></li>
+<li><a href="#support-for-mysql-engines">5. Support for MySQL engines</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#1%5C-overview">1. Overview</a></li>
+<li><a href="#2%5C-adding-tables-sql-script-to-xcat">2. Adding Tables, SQL script to xCAT</a></li>
+<li><a href="#21-runsqlcmd">2.1 runsqlcmd</a></li>
+<li><a href="#3%5C-support-for-foreign-keys">3. Support for Foreign Keys</a></li>
+<li><a href="#4%5C-change-to-update-schema-design">4. Change to update schema design</a></li>
+<li><a href="#5%5C-support-for-mysql-engines">5. Support for MySQL engines</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p><strong>Support running Customer Defined sql scripts and foreign_keys</strong></p>
+<h2 id="overview"><a href="#TOC">1. Overview</a></h2>
+<p>xCAT currently support having the Customer defining their own table schema and having xCAT automatically add the tables to the xCAT Schema. See [XCAT_Developer_Guide] for information.</p>
+<p>A Customer may want to run sql scripts after the database tables are created for additional setup such as adding &quot;views&quot;, &quot;stored procedures&quot;, alter the table to add foreign keys, etc. xCAT needs to provide a way for those sql script to be run against the current database.</p>
+<p>Because the databases that xCAT support (SQlite,MySQL,PostgreSQL,DB2) are not consistent with the SQL and datatypes they support, we need to be able to support the Table Schema and SQL scripts created for a particular database.</p>
+<h2 id="adding-tables-sql-script-to-xcat"><a href="#TOC">2. Adding Tables, SQL script to xCAT</a></h2>
+<p>The Table schema, and SQL scripts are added to the /opt/xcat/lib/perl/xCAT_schema directory by the Customer. xCAT will read all the *.pm files first and create the tables and then read all the *.sql files. The following naming conventions will be followed for both the *.pm and *.sql files.</p>
+<p>1. &lt;name&gt;_&lt;database&gt;.pm for Table Schema</p>
+<p>2. &lt;name&gt;_&lt;database&gt;.sql for all SQL script (create stored procedure, views,alter table, etc) For runsqlcmd, see below.</p>
+<p>where &lt;database&gt; is</p>
+<pre><code>    
+         &quot;mysql&quot;  for mysql       (foo_mysql.pm)
+         &quot;pgsql&quot;  for postgresql (foo_pgsql.pm)
+         &quot;db2&quot; for db2           (foo_db2.pm)
+         &quot;sqlite&quot; for sqlite      (foo_sqlite.pm)
+         do not put in the database, if the file will work for all databases.  (foo.pm)</code></pre>
+<p>Files should be created owned by root with permission 0755.</p>
+<p>Each time the xcatd daemon is started on the Management Node, it will read all the *.pm files for the database it is currently using and all the *.pm files that work for all databases and create the tables in the database. It will then run the runsqlcmd script to add database updates.</p>
+<p>xCAT is providing a script runsqlcmd (/opt/xcat/sbin) that will read all the *.sql files for the database it is currently using and all the *.sql files that work for all the databases and run the sql scripts. This script can be run from an rpm post process, or on the command line.</p>
+<p>The Customer *.pm and *.sql files should have no order dependency. If an order is needed, then you can use the &lt;name&gt; of the file to determine the order as it will appear in a listed directory. For example you could name them (CNM1.sql , CNM2.sql) then when the directory is listed CNM1.pm would get processed before CNM2. The Customer should code the *.sql files such that they can be run multiple times without error.</p>
+<p>To have the database setup at the end of the Customers application install, the post processing of the rpm should reload xcatd.</p>
+<pre><code>    On AIX: restartxcatd -r
+    On Linux: service xcatd reload</code></pre>
+<h2 id="runsqlcmd"><a href="#TOC">2.1 runsqlcmd</a></h2>
+<p>runsqlcmd will by default run all <em>.sql files, appropriate for the database, from the /opt/xcat/lib/perl/xCAT_schema directory. The SQLite database is not supported. DB2, MySQL and PostgreSQL are supported on AIX and Linux. As an option, you can input the directory you want to use, or the list of filenames that you want to run. runsqlcmd will check that the filenames are appropriate for the database. Wild cards may be used for filenames, CNM</em> for example. The file names must follow the same naming convention as defined above, except sqlite is not supported.</p>
+<p>See man page for runsqlcmd. http://xcat.sourceforge.net/man8/runsqlcmd.8.html</p>
+<h2 id="support-for-foreign-keys"><a href="#TOC">3. Support for Foreign Keys</a></h2>
+<p>xCAT needs to support Foreign Keys. All tables need to be created first, since Foreign keys create a relationship between a table with the Foreign key, and the table(s) that are pointed to by the Foreign Key(s). Those tables must already exist for the key to be created.</p>
+<p>This relationship can be hierarchical, a table with a Foreign Key can point to a table with a Foreign keys. Also tables can have multiple Foreign keys pointing to multiple tables.</p>
+<p>Because of the potential complexity of the Foreign Key setup, it was decided that the Foreign Keys should not be created and updated at Table Create time. They should be created after all the Tables exist, using an SQL script, as supported above, and the Alter Table command. Another factor is each database has its own rules on how to add, update and remove Foreign key, do it is best to put that control in the hands of the developer who is maintaining their tables.</p>
+<p>xCAT will use the db2 -tvf command to run the file as the xcatd instance.</p>
+<p>The SQL would look something like this in the file: CNMalttable.db2.sql</p>
+<pre><code>  alter table isnm_perf_lllink add foreign key (&quot;perfID&quot;) REFERENCES isnm_perf  (&quot;perfID&quot;) ON DELETE CASCADE;</code></pre>
+<h2 id="change-to-update-schema-design"><a href="#TOC">4. Change to update schema design</a></h2>
+<p>Currently, checks are done on the Schema.pm file (updateschema) to see if any updates need to be done in the database (attribute added to tables, new keys) when a connect to a Table is done ( Table-&gt;new function). This causes the check to be done many times more than is necessary, since schemas are not updated that often.</p>
+<p>The update schema function will be moved to run when xcatd is restarted, after we run the function to add any Customer defined tables. There will be a separate update schema function for DB2 database, since the process for updating is very different than the other databases.</p>
+<h2 id="support-for-mysql-engines"><a href="#TOC">5. Support for MySQL engines</a></h2>
+<p>MySQL will only support Foreign Keys, if the database engine used to create the table is InnoDB. The current xCAT default for Table creation in Mysql is MyISAM. We will add support for a <strong>engine</strong> keyword in the schema to define what Engine you want to create the table with for MySQL.</p>
+<p>The schema line should look like this</p>
+<pre><code>%tabspec = ( 
+    
+       x_lljob =&gt; {      #your table name should start with &quot;x_&quot;.
+           cols =&gt; [qw(jobid status comments disable)],
+           keys =&gt; [qw(jobid)],
+           keys =&gt; [qw(jobid)],
+           required =&gt; [qw(jobid)],
+           types =&gt; {
+               jobid =&gt; &#39;INTEGER&#39;,
+           },
+           **engine =&gt; &#39;InnoDB&#39;,**
+           table_desc =&gt; &#39;Stores jobs.&#39;,</code></pre>
+</body>
+</html>

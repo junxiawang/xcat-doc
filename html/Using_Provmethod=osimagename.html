@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#create-the-distro-repository-on-the-mn">Create the Distro Repository on the MN</a></li>
+<li><a href="#using-an-osimage-definition">Using an osimage Definition</a></li>
+<li><a href="#select-or-create-an-osimage-definition">Select or Create an osimage Definition</a></li>
+<li><a href="#set-up-pkglists">Set up pkglists</a></li>
+<li><a href="#set-up-a-postinstall-script-optional">Set up a postinstall script (optional)</a></li>
+<li><a href="#set-up-files-to-be-synchronized-on-the-nodes">Set up Files to be synchronized on the nodes</a></li>
+<li><a href="#configure-the-nodes-to-use-your-osimage">Configure the nodes to use your osimage</a></li>
+<li><a href="#generate-and-pack-your-image">Generate and pack your image</a><ul>
+<li><a href="#building-an-image-for-a-different-os-or-architecture"><strong>Building an Image for a Different OS or Architecture</strong></a></li>
+<li><a href="#building-an-image-for-the-same-os-and-architecture-as-the-mn"><strong>Building an Image for the Same OS and Architecture as the MN</strong></a></li>
+<li><a href="#installing-a-new-kernel-in-the-stateless-image"><strong>Installing a New Kernel in the Stateless Image</strong></a></li>
+<li><a href="#installing-new-kernel-drivers-to-stateless-initrd"><strong>Installing New Kernel Drivers to Stateless Initrd</strong></a></li>
+</ul></li>
+<li><a href="#boot-the-nodes">Boot the nodes</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#create-the-distro-repository-on-the-mn">Create the Distro Repository on the MN</a></li>
+<li><a href="#using-an-osimage-definition">Using an osimage Definition</a></li>
+<li><a href="#select-or-create-an-osimage-definition">Select or Create an osimage Definition</a></li>
+<li><a href="#set-up-pkglists">Set up pkglists</a></li>
+<li><a href="#set-up-a-postinstall-script-optional">Set up a postinstall script (optional)</a></li>
+<li><a href="#set-up-files-to-be-synchronized-on-the-nodes">Set up Files to be synchronized on the nodes</a></li>
+<li><a href="#configure-the-nodes-to-use-your-osimage">Configure the nodes to use your osimage</a></li>
+<li><a href="#generate-and-pack-your-image">Generate and pack your image</a></li>
+<li><a href="#building-an-image-for-a-different-os-or-architecture"><strong>Building an Image for a Different OS or Architecture</strong></a></li>
+<li><a href="#building-an-image-for-the-same-os-and-architecture-as-the-mn"><strong>Building an Image for the Same OS and Architecture as the MN</strong></a></li>
+<li><a href="#installing-a-new-kernel-in-the-stateless-image"><strong>Installing a New Kernel in the Stateless Image</strong></a></li>
+<li><a href="#installing-new-kernel-drivers-to-stateless-initrd"><strong>Installing New Kernel Drivers to Stateless Initrd</strong></a></li>
+<li><a href="#boot-the-nodes">Boot the nodes</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>Note: this section describes how to create a stateless image using the genimage command to install a list of rpms into the image. As an alternative, you can also capture an image from a running node and create a stateless image out of it. See [Capture_Linux_Image] for details.</p>
+<h3 id="create-the-distro-repository-on-the-mn"><a href="#TOC">Create the Distro Repository on the MN</a></h3>
+<p>The <a href="http://xcat.sourceforge.net/man8/copycds.8.html">copycds</a> command copies the contents of the linux distro media to /install/&lt;os&gt;/&lt;arch&gt; so that it will be available to install nodes with or create diskless images.</p>
+<ul>
+<li>Obtain the Redhat or SLES ISOs or DVDs.</li>
+<li><p>If using an ISO, copy it to (or NFS mount it on) the management node, and then run:</p>
+<p>copycds &lt;path&gt;/RHEL6.2-Server-20080430.0-x86_64-DVD.iso</p></li>
+<li><p>If using a DVD, put it in the DVD drive of the management node and run:</p>
+<p>copycds /dev/dvd # or whatever the device name of your dvd drive is</p></li>
+</ul>
+<p>Tip: if this is the same distro version as your management node, create a .repo file in /etc/yum.repos.d with content similar to:</p>
+<pre><code>[local-rhels6.2-x86_64]
+name=xCAT local rhels 6.2
+baseurl=file:/install/rhels6.2/x86_64
+enabled=1
+gpgcheck=0</code></pre>
+<p>This way, if you need some additional RPMs on your MN at a later, you can simply install them using yum. Or if you are installing other software on your MN that requires some additional RPMs from the disto, they will automatically be found and installed.</p>
+<h3 id="using-an-osimage-definition"><a href="#TOC">Using an osimage Definition</a></h3>
+<p><strong>Note: To use an osimage as your provisioning method, you need to be running xCAT 2.6.6 or later.</strong></p>
+<p>The provmethod attribute of your nodes should contain the name of the osimage object definition that is being used for those nodes. The <a href="http://xcat.sourceforge.net/man7/osimage.7.html">osimage object</a> contains paths for pkgs, templates, kernels, etc. If you haven't already, run <a href="http://xcat.sourceforge.net/man8/copycds.8.html">copycds</a> to copy the distro rpms to /install. Default osimage objects are also defined when copycds is run. To view the osimages:</p>
+<pre><code>    lsdef -t osimage          # see the list of osimages
+    lsdef -t osimage &lt;osimage-name&gt;
+          # see the attributes of a particular osimage</code></pre>
+<h3 id="select-or-create-an-osimage-definition"><a href="#TOC">Select or Create an osimage Definition</a></h3>
+<p>From the list found above, select the osimage for your distro, architecture, provisioning method (install, netboot, statelite), and profile (compute, service, etc.). Although it is optional, we recommend you make a copy of the osimage, changing its name to a simpler name. For example:</p>
+<pre><code>    lsdef -t osimage -z rhels6.3-x86_64-netboot-compute | sed &#39;s/^[^ ]\+:/mycomputeimage:/&#39; | mkdef -z
+</code></pre>
+<p>This displays the osimage &quot;rhels6.3-x86_64-netboot-compute&quot; in a format that can be used as input to mkdef, but on the way there it uses sed to modify the name of the object to &quot;mycomputeimage&quot;.</p>
+<p>Initially, this osimage object points to templates, pkglists, etc. that are shipped by default with xCAT. And some attributes, for example otherpkglist and synclists, won't have any value at all because xCAT doesn't ship a default file for that. You can now change/fill in any <a href="http://xcat.sourceforge.net/man7/osimage.7.html">osimage attributes</a> that you want. A general convention is that if you are modifying one of the default files that an osimage attribute points to, copy it into /install/custom and have your osimage point to it there. (If you modify the copy under /opt/xcat directly, it will be over-written the next time you upgrade xCAT.) An important attribute to change is the rootimgdir which will contain the generated osimage files so that you don't over-write an image built with the shipped definitions. To continue the previous example:</p>
+<pre><code>      chdef -t osimage -o mycomputeimage rootimgdir=/install/netboot/rhels6.3/x86_64/mycomputeimage</code></pre>
+<h3 id="set-up-pkglists"><a href="#TOC">Set up pkglists</a></h3>
+<p>You likely want to customize the main pkglist for the image. This is the list of rpms or groups that will be installed from the distro. (Other rpms that they depend on will be installed automatically.) For example:</p>
+<pre><code>    mkdir -p /install/custom/netboot/rh
+    cp -p /opt/xcat/share/xcat/netboot/rh/compute.rhels6.x86_64.pkglist /install/custom/netboot/rh
+    vi /install/custom/netboot/rh/compute.rhels6.x86_64.pkglist
+    chdef -t osimage mycomputeimage pkglist=/install/custom/netboot/rh/compute.rhels6.x86_64.pkglist</code></pre>
+<p>The goal is to install the fewest number of rpms that still provides the function and applications that you need, because the resulting ramdisk will use real memory in your nodes.</p>
+<p>Also, check to see if the default exclude list excludes all files and directories you do not want in the image. The exclude list enables you to trim the image after the rpms are installed into the image, so that you can make the image as small as possible.</p>
+<pre><code>    cp /opt/xcat/share/xcat/netboot/rh/compute.exlist /install/custom/netboot/rh
+    vi /install/custom/netboot/rh/compute.exlist 
+    chdef -t osimage mycomputeimage exlist=/install/custom/netboot/rh/compute.exlist</code></pre>
+<p>Make sure nothing is excluded in the exclude list that you need on the node. For example, if you require perl on your nodes, remove the line &quot;./usr/lib/perl5*&quot;.</p>
+<p><a href="Install_OS_Updates">Install_OS_Updates</a></p>
+<p><a href="Install_Additional_Packages">Install_Additional_Packages</a></p>
+<h3 id="set-up-a-postinstall-script-optional"><a href="#TOC">Set up a postinstall script (optional)</a></h3>
+<p>Postinstall scripts for diskless images are analogous to postscripts for diskfull installation. The postinstall script is run by genimage near the end of its processing. You can use it to do anything to your image that you want done every time you generate this kind of image. In the script you can install rpms that need special flags, or tweak the image in some way. There are some examples shipped in /opt/xcat/share/xcat/netboot/&lt;distro&gt;. If you create a postinstall script to be used by genimage, then point to it in your osimage definition. For example:</p>
+<pre><code>    chdef -t osimage mycomputeimage postinstall=/install/custom/netboot/rh/compute.postinstall</code></pre>
+<h3 id="set-up-files-to-be-synchronized-on-the-nodes"><a href="#TOC">Set up Files to be synchronized on the nodes</a></h3>
+<p>Note: This is only supported for stateless nodes in xCAT 2.7 and above.</p>
+<p>Sync lists contain a list of files that should be sync'd from the management node to the image and to the running nodes. This allows you to have 1 copy of config files for a particular type of node and make sure that all those nodes are running with those config files. The sync list should contain a line for each file you want sync'd, specifying the path it has on the MN and the path it should be given on the node. For example:</p>
+<pre><code>    /install/custom/syncfiles/compute/etc/motd -&gt; /etc/motd
+    /etc/hosts -&gt; /etc/hosts</code></pre>
+<p>If you put the above contents in /install/custom/netboot/rh/compute.synclist, then:</p>
+<pre><code>    
+    chdef -t osimage mycomputeimage synclists=/install/custom/netboot/rh/compute.synclist</code></pre>
+<p>For more details, see <a href="Sync-ing_Config_Files_to_Nodes">Sync-ing_Config_Files_to_Nodes</a>.</p>
+<h3 id="configure-the-nodes-to-use-your-osimage"><a href="#TOC">Configure the nodes to use your osimage</a></h3>
+<p>You can configure any noderange to use this osimage. In this example, we define that the whole compute group should use the image:</p>
+<pre><code>     chdef -t group compute provmethod=mycomputeimage</code></pre>
+<p>Now that you have associated an osimage with nodes, if you want to list a node's attributes, including the osimage attributes all in one command:</p>
+<pre><code>    
+    lsdef node1 --osimage</code></pre>
+<h3 id="generate-and-pack-your-image"><a href="#TOC">Generate and pack your image</a></h3>
+<p>There are other attributes that can be set in your osimage definition. See the <a href="http://xcat.sourceforge.net/man7/osimage.7.html">osimage man page</a> for details.</p>
+<h4 id="building-an-image-for-a-different-os-or-architecture"><a href="#TOC"><strong>Building an Image for a Different OS or Architecture</strong></a></h4>
+<p>If you are building an image for a different OS/architecture than is on the Management node, you need to follow this process: [Building_a_Stateless_Image_of_a_Different_Architecture_or_OS]. Note: different OS in this case means, for example, RHEL 5 vs. RHEL 6. If the difference is just an update level/service pack (e.g. RHEL 6.0 vs. RHEL 6.3), then you can build it on the MN.</p>
+<h4 id="building-an-image-for-the-same-os-and-architecture-as-the-mn"><a href="#TOC"><strong>Building an Image for the Same OS and Architecture as the MN</strong></a></h4>
+<p>If the image you are building is for nodes that are the same OS and architecture as the management node (the most common case), then you can follow the instructions here to run genimage on the management node.</p>
+<p>Run <a href="http://xcat.sourceforge.net/man1/genimage.1.html">genimage</a> to generate the image based on the mycomputeimage definition:</p>
+<pre><code>    
+    genimage mycomputeimage</code></pre>
+<p>Before you pack the image, you have the opportunity to change any files in the image that you want to, by cd'ing to the rootimgdir (e.g. /install/netboot/rhels6/x86_64/compute/rootimg). Although, instead, we recommend that you make all changes to the image via your postinstall script, so that it is repeatable.</p>
+<p>The genimage command creates /etc/fstab in the image. If you want to, for example, limit the amount of space that can be used in /tmp and /var/tmp, you can add lines like the following to it (either by editing it by hand or via the postinstall script):</p>
+<pre><code>    tmpfs   /tmp     tmpfs    defaults,size=50m             0 2
+    tmpfs   /var/tmp     tmpfs    defaults,size=50m       0 2</code></pre>
+<p>But probably an easier way to accomplish this is to create a postscript to be run when the node boots up with the following lines:</p>
+<pre><code>    logger -t xcat &quot;$0: BEGIN&quot;
+    mount -o remount,size=50m /tmp/
+    mount -o remount,size=50m /var/tmp/
+    logger -t xcat &quot;$0: END&quot;</code></pre>
+<p>Assuming you call this postscript settmpsize, you can add this to the list of postscripts that should be run for your compute nodes by:</p>
+<pre><code>    
+    chdef -t group compute -p postbootscripts=settmpsize</code></pre>
+<p>Now pack the image to create the ramdisk:</p>
+<pre><code>    packimage mycomputeimage</code></pre>
+<h4 id="installing-a-new-kernel-in-the-stateless-image"><a href="#TOC"><strong>Installing a New Kernel in the Stateless Image</strong></a></h4>
+<p><strong>Note: This procedure assumes you are using xCAT 2.6.1 or later.</strong></p>
+<p>The <em>kerneldir</em> attribute in <em>linuximage</em> table can be used to assign a directory containing kernel RPMs that can be installed into stateless/statelite images. The default for <em>kernerdir</em> is <em>/install/kernels</em>. To add a new kernel, create a directory named <em>&lt;kernelver&gt;</em> under the <em>kerneldir</em>, and genimage will pick them up from there.</p>
+<p>The following examples assume you have the kernel RPM in /tmp and is using the default value for <em>kerneldir</em> (<em>/install/kernels</em>).</p>
+<p><em>The RPM names below are only examples, substitute your specific level and architecture.</em></p>
+<p><strong>[RHEL]:</strong></p>
+<p>The RPM kernel package is usually named: <em>kernel-&lt;kernelver&gt;.rpm</em>. For example, <strong>kernel-2.6.32.10-0.5.x86_64.rpm</strong> means <em>kernelver</em>=<strong>2.6.32.10-0.5.x86_64</strong>.</p>
+<p>~~~~ mkdir -p /install/kernels/2.6.32.10-0.5.x86_64 cp /tmp/kernel-2.6.32.10-0.5.x86_64.rpm /install/kernels/2.6.32.10-0.5.x86_64/ createrepo /install/kernels/2.6.32.10-0.5.x86_64/ ~~~~<br /> </p>
+<p>Run genimage/packimage to update the image with the new kernel. <strong>Note:</strong> <em>If downgrading the kernel, you may need to first remove the rootimg directory.</em></p>
+<pre><code>    genimage &lt;imagename&gt; -k 2.6.32.10-0.5.x86_64
+    packimage &lt;imagename&gt;</code></pre>
+<p> </p>
+<p><strong>[SLES]:</strong></p>
+<p>The RPM kernel package is usually separated into two parts: <em>kernel-&lt;arch&gt;-base</em> and <em>kernel</em>&lt;arch&gt;. For example, /tmp contains the following two RPMs:</p>
+<p>~~~~<br /> kernel-ppc64-base-2.6.27.19-5.1.x86_64.rpm kernel-ppc64-2.6.27.19-5.1.x86_64.rpm ~~~~<br /> </p>
+<p><em>2.6.27.19-5.1.x86_64</em> is <strong>NOT</strong> the kernel version, 2.6.27.19-<strong>5-</strong>x86_64 is the kernel version.<br />The &quot;5.1.x86_64&quot; is replaced with &quot;5-x86_64&quot;.</p>
+<p>~~~~ mkdir -p /install/kernels/2.6.27.19-5-x86_64/ cp /tmp/kernel-ppc64-base-2.6.27.19-5.1.x86_64.rpm /install/kernels/2.6.27.19-5-x86_64/ cp /tmp/kernel-ppc64-2.6.27.19-5.1.x86_64.rpm /install/kernels/2.6.27.19-5-x86_64/</p>
+<p>~~~~<br /> </p>
+<p>Run genimage/packimage to update the image with the new kernel. <strong>Note:</strong> <em>If downgrading the kernel, you may need to first remove the rootimg directory.</em></p>
+<p>Since the kernel version name is different from the kernel rpm package name, the -g flag <strong>MUST</strong> to be specified on the genimage command.</p>
+<p>~~~~ genimage <imagename> -k 2.6.27.19-5-x86_64 -g 2.6.27.19-5.1 packimage <imagename> ~~~~  </p>
+<h4 id="installing-new-kernel-drivers-to-stateless-initrd"><a href="#TOC"><strong>Installing New Kernel Drivers to Stateless Initrd</strong></a></h4>
+<p>The kernel drivers in the stateless initrd are used for the devices during the netboot. If you are missing one or more kernel drivers for specific devices (especially for the network device), the netboot process will fail. xCAT offers two approaches to add additional drivers to the stateless initrd during the running of <strong>genimage</strong>.</p>
+<ul>
+<li>Use the '-n' flag to add new drivers to the stateless initrd</li>
+</ul>
+<pre><code>    genimage &lt;imagename&gt; -n &lt;new driver list&gt;</code></pre>
+<p>Generally, the genimage command has a default driver list which will be added to the initrd. But if you specify the '-n' flag, the default driver list will be replaced with your &lt;new driver list&gt;. That means you need to include any drivers that you need from the default driver list into your &lt;new driver list&gt;.</p>
+<p>The default driver list:</p>
+<pre><code> 
+    rh-x86:   tg3 bnx2 bnx2x e1000 e1000e igb mlx_en virtio_net be2net
+    rh-ppc:   e1000 e1000e igb ibmveth ehea
+    sles-x86: tg3 bnx2 bnx2x e1000 e1000e igb mlx_en be2net
+    sels-ppc: tg3 e1000 e1000e igb ibmveth ehea be2net
+ </code></pre>
+<p>Note: With this approach, xCAT will search for the drivers in the rootimage. You need to make sure the drivers have been included in the rootimage before generating the initrd. You can install the drivers manually in an existing rootimage (using chroot) and run genimage again, or you can use a postinstall script to install drivers to the rootimage during your initial genimage run.</p>
+<ul>
+<li>Use the <strong>driver rpm package</strong> to add new drivers from rpm packages to the stateless initrd</li>
+</ul>
+<p>Refer to the doc <a href="Using_Linux_Driver_Update_Disk/#driver-rpm-package">Using_Linux_Driver_Update_Disk#Driver_RPM_Package</a>.</p>
+<h3 id="boot-the-nodes"><a href="#TOC">Boot the nodes</a></h3>
+<pre><code>    
+    nodeset compute osimage=mycomputeimage</code></pre>
+<p>(If you need to update your diskless image sometime later, change your osimage attributes and the files they point to accordingly, and then rerun genimage, packimage, nodeset, and boot the nodes.)</p>
+<p>Now boot your nodes...</p>
+</body>
+</html>

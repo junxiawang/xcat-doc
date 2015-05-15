@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#parallel-commands">Parallel Commands</a></li>
+<li><a href="#software-and-firmware-inventory">Software and Firmware Inventory</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#parallel-commands">Parallel Commands</a></li>
+<li><a href="#software-and-firmware-inventory">Software and Firmware Inventory</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="parallel-commands"><a href="#TOC">Parallel Commands</a></h2>
+<p>xCAT delivers a set of commands that can be run remote commands (ssh, scp,rsh,rcp,rsync,ping,cons) in parallel on multiple nodes. In addition the command have the capability of formatting the output from the commands, so the results are easier to process. These commands will make it much easier to administer your large cluster.</p>
+<p>For a list of the Parallel Commands and their man pages:</p>
+<p><a href="XCAT_Commands/#parallel-commands">parallel-commands</a></p>
+<h2 id="software-and-firmware-inventory"><a href="#TOC">Software and Firmware Inventory</a></h2>
+<p>xCAT provides a command '<strong>sinv'</strong> that checks the software and firmware configuration in this cluster.</p>
+<p>The command creates an inventory of the input software/firmware check, comparing to other machines in the cluster and produces an output of node that are installed the same and those that are not.</p>
+<p>This command uses the xdsh parallel command, so it is in itself a parallel command, and thus can be run on multiple cluster nodes at one time and is hierarchical.</p>
+<p>The sinv command is designed to check the configuration of the nodes in a cluster. The command takes as input command line flags, and one or more templates which will be compared against the output of the xdsh command, designated to be run on the nodes in the noderange.</p>
+<p>The nodes will then be grouped according to the template they match and a report returned to the administrator in the output file designated or to stdout.</p>
+<p>sinv supports checking the output from the rinv or xdsh command.</p>
+<p>For example, if you wanted to check the ssh level on all the nodes and make sure they were the same as on the service node, you would first generate a template from the &quot;good&quot; service node (sn1) by running the following:</p>
+<pre><code>    xdsh sn1 &quot;rpm -qa | grep ssh &quot; | xdshcoll &gt; /tmp/sinv/sinv.template</code></pre>
+<p>To execute sinv using the sinv.template generated above on the nodegroup, testnodes ,writing output report to /tmp/sinv.output, enter:</p>
+<pre><code>    sinv  -c &quot;xdsh testnodes rpm -qa | grep ssh&quot; -p /tmp/sinv/sinv.template -o /tmp/sinv.output</code></pre>
+<p>The report will look something like this, if every node matches:</p>
+<pre><code>    Command started with following input.
+    xdsh cmd:xdsh testnodes rpm -qa | grep ssh.
+    Template path:/tmp/sinv/sinv.template.
+    Template cnt:0.
+    Remove template:NO.
+    Output file:/tmp/sinv/sinv.output.
+    Exactmatch:NO.
+    Ignorefirst:NO.
+    Seed node:None.
+    file:None.
+    The following nodes match /tmp/lissav/sinv.template:
+    testnodes</code></pre>
+<p>There are many options for matching and reporting supported by the sinv command, including support to run rinv and generate reports on firmware inventory.</p>
+<p>See the <a href="http://xcat.sourceforge.net/man1/sinv.1.html">sinv</a> command for more information.</p>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#cookbook-using-virtualbox-nodes---step-by-step">Cookbook: Using VirtualBox Nodes - Step by Step</a><ul>
+<li><a href="#about-the-virtualbox-plugin">About the VirtualBox Plugin</a></li>
+<li><a href="#install-and-configure-virtualbox">1. Install and Configure VirtualBox</a><ul>
+<li><a href="#example-1-all-nodes-running-in-vms-on-one-server">Example 1: All nodes running in VMs on one server</a></li>
+</ul></li>
+<li><a href="#add-each-virtualbox-vm-as-a-node">4. Add each VirtualBox vm as a node:</a></li>
+<li><a href="#define-the-right-hardware-management-method-vbox-in-the-nodehm-table">5. Define the right hardware management method 'vbox' in the nodehm table:</a></li>
+<li><a href="#add-each-vm-host-as-a-node">6. Add each vm host as a node:</a></li>
+<li><a href="#the-host-machines-node-type-attribute-needs-to-be-set-to-websrv-as-well">7. The host machine's node type attribute needs to be set to websrv as well:</a></li>
+<li><a href="#start-the-virtualbox-web-service-process-on-the-virtual-host">8. Start the VirtualBox Web Service Process on the Virtual Host:</a></li>
+<li><a href="#you-are-ready-to-control-your-virtual-machines-with-rpower---as-you-know-it.">9. You are ready to control your virtual machines with rpower - as you know it.</a></li>
+<li><a href="#virtual-machine-console">10. Virtual Machine Console</a></li>
+<li><a href="#rpower-examples">11. rpower Examples</a></li>
+</ul></li>
+<li><a href="#tips">Tips</a><ul>
+<li><a href="#serial-console-settings">Serial Console Settings</a></li>
+<li><a href="#node-name-does-not-equal-virtualbox-machine-name">Node name does not equal VirtualBox machine name</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#cookbook-using-virtualbox-nodes---step-by-step">Cookbook: Using VirtualBox Nodes - Step by Step</a></li>
+<li><a href="#about-the-virtualbox-plugin">About the VirtualBox Plugin</a></li>
+<li><a href="#1%5C-install-and-configure-virtualbox">1. Install and Configure VirtualBox</a>
+<ul>
+<li><a href="#example-1-all-nodes-running-in-vms-on-one-server">Example 1: All nodes running in VMs on one server</a></li>
+</ul></li>
+<li><a href="#4%5C-add-each-virtualbox-vm-as-a-node">4. Add each VirtualBox vm as a node:</a></li>
+<li><a href="#5%5C-define-the-right-hardware-management-method-vbox-in-the-nodehm-table">5. Define the right hardware management method 'vbox' in the nodehm table:</a></li>
+<li><a href="#6%5C-add-each-vm-host-as-a-node">6. Add each vm host as a node:</a></li>
+<li><a href="#7%5C-the-host-machines-node-type-attribute-needs-to-be-set-to-websrv-as-well">7. The host machine's node type attribute needs to be set to websrv as well:</a></li>
+<li><a href="#8%5C-start-the-virtualbox-web-service-process-on-the-virtual-host">8. Start the VirtualBox Web Service Process on the Virtual Host:</a></li>
+<li><a href="#9%5C-you-are-ready-to-control-your-virtual-machines-with-rpower---as-you-know-it">9. You are ready to control your virtual machines with rpower - as you know it.</a></li>
+<li><a href="#10%5C-virtual-machine-console">10. Virtual Machine Console</a></li>
+<li><a href="#11%5C-rpower-examples">11. rpower Examples</a></li>
+<li><a href="#tips">Tips</a></li>
+<li><a href="#serial-console-settings">Serial Console Settings</a></li>
+<li><a href="#node-name-does-not-equal-virtualbox-machine-name">Node name does not equal VirtualBox machine name</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h1 id="cookbook-using-virtualbox-nodes---step-by-step"><a href="#TOC">Cookbook: Using VirtualBox Nodes - Step by Step</a></h1>
+<p>{{:Howto Warning}} This document handles the VirtualBox plugin, which is now included in the xCAT 2.2 release.</p>
+<p><a href="Using_VirtualBox_Nodes">Back to the 'Using VirtualBox Nodes' Introduction</a></p>
+<h2 id="about-the-virtualbox-plugin"><a href="#TOC">About the VirtualBox Plugin</a></h2>
+<p><strong>VirtualBox support was added to the following files to xCAT:</strong></p>
+<ul>
+<li>/opt/xcat/lib/perl/xCAT/Schema.pm (including the new 'websrv' table)</li>
+<li>/opt/xcat/lib/perl/xCAT/vboxService.pm</li>
+<li>/opt/xcat/lib/perl/xCAT_plugin/vbox.pm</li>
+</ul>
+<p>A new table called <strong>websrv</strong> was also added:</p>
+<pre><code># tabdump websrv
+#node,port,username,password,comments,disable
+&quot;vboxhost&quot;,&quot;18083&quot;,&quot;test&quot;,&quot;test&quot;,,</code></pre>
+<p>From the existing vm table the attributes 'host' and 'vncport' are used. The host's ip address needs to be specified in the 'hosts' table.</p>
+<p><strong>The following perl packages have been added to the dependencies of the RPM package:</strong></p>
+<ul>
+<li><p>perl-SOAP-Lite-0.710.08-1.noarch.rpm</p></li>
+<li><p>perl-version-0.76-1.noarch.rpm</p></li>
+</ul>
+<p>These packages should be pulled in automatically when yum is used to install xCAT.</p>
+<p>On SLES, the perl-version RPM appears to have a conflict with perl-doc, so you may have to remove perl-doc first.</p>
+<h2 id="install-and-configure-virtualbox"><a href="#TOC">1. Install and Configure VirtualBox</a></h2>
+<p>VirtualBox must be installed and configured correctly in order for xCAT to work properly. The network configuration of the virtual machines is critical. <a href="http://www.virtualbox.org/manual/ch06.html">VirtualBox has many networking options</a>, and the correct choice depends on how your virtual machines will be configured.</p>
+<p>VirtualBox can be controlled from an HTTP interface using the SOAP protocol. The VirtualBox plugin to xCAT uses this interface to control VMs with the <strong>rpower</strong> command. In order for this to work, the <strong>vboxwebsrv</strong> program must be installed on each host machine. It may be included by default when VirtualBox is installed, or it may require an extra step (for example, on Gentoo or other Portage-based systems the <strong>vboxwebsrv</strong> USE flag must be enabled before VirtualBox is installed.)</p>
+<h3 id="example-1-all-nodes-running-in-vms-on-one-server"><a href="#TOC">Example 1: All nodes running in VMs on one server</a></h3>
+<p>Mirroring the setup found on many clusters, the VM for the head (management) node has two network adapters. Adapter 1 is attached to NAT so it can access the outside world through the network connection on the host. Adapter 2 is attached to a Host-only Adapter which communicates with the other nodes on VirtualBox's internal network (named vboxnet0 by default). This network is not visible outside of the host machine, and thus does not create any security concerns.</p>
+<p>The VM for each compute node has one network adapter which is connected to a Host-only Adapter and connected to the same virtual network as the head node.</p>
+<h2 id="add-each-virtualbox-vm-as-a-node"><a href="#TOC">4. Add each VirtualBox vm as a node:</a></h2>
+<pre><code>nodeadd vm01 groups=all,vbox vm.host=vh01
+nodeadd vm02 groups=all,vbox vm.host=vh01</code></pre>
+<p>The vm.host attribute is mandatory - if it is not set the following error occurs: &quot;vm01: Missing information: host vncport comments&quot;</p>
+<h2 id="define-the-right-hardware-management-method-vbox-in-the-nodehm-table"><a href="#TOC">5. Define the right hardware management method 'vbox' in the nodehm table:</a></h2>
+<p>Here with help of the 'vbox' group.</p>
+<pre><code>chtab node=vbox nodehm.mgt=vbox nodehm.power=vbox</code></pre>
+<p>If the hardware management method is not specified, xCAT will not know which plugin to load.</p>
+<h2 id="add-each-vm-host-as-a-node"><a href="#TOC">6. Add each vm host as a node:</a></h2>
+<pre><code>nodeadd vh01 groups=all,websrv websrv.port=18083 websrv.username=test websrv.password=test
+chtab node=vh01 hosts.ip=192.168.1.10</code></pre>
+<p>The login data for the VirtualBox host machine's web service needs to be specified in the websrv table. If not specified the following error occurs: &quot;vh01: Missing information: port username password&quot;. Its IP address needs to be specified in the hosts table otherwise the following shows up: &quot;vh01: Missing information: ip&quot; For the case in which your xCAT management node is also a virtual machine, the virtual host's IP address may be something like 10.0.2.2.</p>
+<h2 id="the-host-machines-node-type-attribute-needs-to-be-set-to-websrv-as-well"><a href="#TOC">7. The host machine's node type attribute needs to be set to websrv as well:</a></h2>
+<p>This can be done with help of the websrv group as was done for the vbox hardware management method with the vbox group:</p>
+<pre><code>chtab node=websrv nodetype.nodetype=websrv</code></pre>
+<h2 id="start-the-virtualbox-web-service-process-on-the-virtual-host"><a href="#TOC">8. Start the VirtualBox Web Service Process on the Virtual Host:</a></h2>
+<p>Before running the VirtualBox web service, you may switch off security for testing if you want:</p>
+<pre><code>VBoxManage setproperty websrvauthlibrary null     # optional</code></pre>
+<p>Now start the web service on the virtual host, in a separate shell (or in the background):</p>
+<pre><code>vboxwebsrv</code></pre>
+<p>If the web service is not running or there is an authentication problem, the following error is shown: &quot;vm01: No connection to the web service @ <a href="http://192.168.1.10:18083/.">http://192.168.1.10:18083/</a>&quot;.</p>
+<h2 id="you-are-ready-to-control-your-virtual-machines-with-rpower---as-you-know-it."><a href="#TOC">9. You are ready to control your virtual machines with rpower - as you know it.</a></h2>
+<p><strong>NOTE: support for powering on/off VirtualBox nodes appears to be broken according to this <a href="http://www.mail-archive.com/xcat-user@lists.sourceforge.net/msg00660.html">post on the xCAT mailing list</a>.</strong></p>
+<p>Of course you can set more properties in the xCAT tables, like MAC and IP adresses, so xCAT can give IP adresses or perform automatic installations over PXE boot. See the xCAT2top document for the steps involved. When you are ready, run:</p>
+<pre><code>rpower vm01 boot</code></pre>
+<p>Notes:</p>
+<ul>
+<li>Watch the reaction to your commands, and see the extra information for the state or when the rpower argument &quot;stat&quot; is used.</li>
+<li>The plugin tries to use the &quot;Power Button Signal&quot; to shutdown a virtual machine when rpower off is issued. If the machine does not handle that signal (e.g. because no OS is running yet) the machine is forced to power off.</li>
+</ul>
+<h2 id="virtual-machine-console"><a href="#TOC">10. Virtual Machine Console</a></h2>
+<p>At the VRDP Port on the host machine, you can establish a Remote Desktop Connection to the virtual machine, which is compatible to the Windows Remote Desktop Connection standard program as well. For Linux, VirtualBox offers a client application: /usr/bin/rdesktop-vrdp. After the virtual machine has been powered on, run the following on the virtual host:</p>
+<pre><code>rdesktop-vrdp -a 16 localhost:3389</code></pre>
+<p>This will bring up a graphical console for the virtual machine.</p>
+<p>Note: The vm.vncport attribute from the vm table is used for the VRDP port of VirtualBox virtual machine. If it was not specified in that table, it will be set with the current vrdp port when the vm is started for the first time. If the port was not explicitly set during the creation of the virtual machine it will be the default value 3389. Each vm will have a different port number, when created in VirtualBox. Set these port numbers for each vm in vm.vncport attribute and the plugin will make sure that VirtualBox uses the correct port on each vm start.</p>
+<h2 id="rpower-examples"><a href="#TOC">11. rpower Examples</a></h2>
+<p><strong>NOTE: support for powering on/off VirtualBox nodes appears to be broken according to this <a href="http://www.mail-archive.com/xcat-user@lists.sourceforge.net/msg00660.html">post on the xCAT mailing list</a>.</strong></p>
+<pre><code>[root@c01b01-0 /]# rpower vm stat
+vm01: off
+vm02: off
+
+[root@c01b01-0 /]# rpower vm02 on
+vm02: on
+
+[root@c01b01-0 /]# rpower vm02 stat
+vm02: on
+
+[root@c01b01-0 /]# rpower vm02 off
+vm02: off
+
+[root@c01b01-0 /]# rpower vm02 stat
+vm02: off
+
+[root@node1 ~]# tabdump vm
+#node,host,migrationdest,storage,memory,cpus,nics,bootorder,virtflags,vncport,textconsole,beacon,comments,disable
+&quot;vm01&quot;,&quot;vh01&quot;,,,,,,,,&quot;3389&quot;,,,,
+[...]</code></pre>
+<h1 id="tips"><a href="#TOC">Tips</a></h1>
+<h2 id="serial-console-settings"><a href="#TOC">Serial Console Settings</a></h2>
+<p>On a physical machine, you may be used to configuring a serial port TTY console interface for each node. Do <em>not</em> do this with a virtual node! Leave the fields <strong>serialport</strong>, <strong>serialspeed</strong>, and <strong>serialflow</strong> blank in the <strong>nodehm</strong> table so that you can watch the boot and installation process in the virtual machine window.</p>
+<p>There may be a way to configure virtual nodes to work with rcons/wcons...if you got this to work, please add it to this document.</p>
+<h2 id="node-name-does-not-equal-virtualbox-machine-name"><a href="#TOC">Node name does not equal VirtualBox machine name</a></h2>
+<p>Sometimes the VirtualBox machine name can not equal the xCAT node name, especially in test cases that might occur. There is a feature for this situation: add somewhere in the comment field of the vm table a schema like &quot;vmname:NAME!&quot; and replace NAME by the vm name on the VirtualBox host system. You may insert other comments before and after that schema. For example the xCAT node &quot;vm03&quot; should point to the virtual machine &quot;machine03&quot; on the VirtualBox host &quot;vh01&quot;. If it should also use the VRDP port 3400 the vm table should look like this:</p>
+<pre><code>[root@node1 ~]# tabdump vm
+#node,host,migrationdest,storage,memory,cpus,nics,bootorder,virtflags,vncport,textconsole,beacon,comments,disable
+[...]
+&quot;vm03&quot;,&quot;vh01&quot;,,,,,,,,&quot;3400&quot;,,,&quot;vmname:machine03!&quot;,</code></pre>
+<p><a href="Using_VirtualBox_Nodes">Back to the 'Using VirtualBox Nodes' Introduction</a></p>
+</body>
+</html>

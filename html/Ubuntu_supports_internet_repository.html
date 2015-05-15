@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#problems">problems</a></li>
+</ul></li>
+<li><a href="#interface">Interface</a><ul>
+<li><a href="#specify-the-repository">specify the repository</a></li>
+<li><a href="#compute-node-can-not-access-internet">compute node can not access internet</a></li>
+</ul></li>
+<li><a href="#internal-implementation">Internal Implementation</a><ul>
+<li><a href="#stateful">stateful</a></li>
+<li><a href="#stateless">stateless</a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#problems">problems</a></li>
+<li><a href="#interface">Interface</a></li>
+<li><a href="#specify-the-repository">specify the repository</a></li>
+<li><a href="#compute-node-can-not-access-internet">compute node can not access internet</a></li>
+<li><a href="#internal-implementation">Internal Implementation</a></li>
+<li><a href="#stateful">stateful</a></li>
+<li><a href="#stateless">stateless</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This is the mini-design of supporting internet/local official distribution repository for other packages installation on the ubuntu compute node. The Ubuntu iso only contains the basic packages which used for OS installation(657MB), it can not satisfy the otherpkg installtion on compute node. Ubuntu has many official distribution repository mirrors on the internet, so compute node can use the official distribution repository mirror for the other pakcages installation.</p>
+<p>If want to use ospkglist file method to install packages, before adding package name into this file, should ensure the package is contained in the ubuntu iso. All packages that does not contained in the ubuntu iso should use otherpkg method to install.</p>
+<h3 id="problems"><a href="#TOC">problems</a></h3>
+<ul>
+<li>where specify the internet repository?</li>
+<li>If the compute node can not access the internet, how to use the official distribution repository?</li>
+</ul>
+<h2 id="interface"><a href="#TOC">Interface</a></h2>
+<h3 id="specify-the-repository"><a href="#TOC">specify the repository</a></h3>
+<p>Use the otherpkgdir attribute in linuximage table to save the internet repository URL, so xCAT should support multiple otherpkgdirs (currently only on ubuntu), and repository direcotries are splited by ','.</p>
+<ul>
+<li><p>modify the otherpkgdir attribute for osimage object.</p>
+<p>chdef -t osimage &lt;osimage name&gt; otherpkgdir=&quot;/install/ubuntu12.04.1/x86_64/,http://us.archive.ubuntu.com/ubuntu/ precise main&quot;</p></li>
+</ul>
+<p>The first directory is a repository on MN, the method of creating local repository on management node will be introduced in the Ubuntu quick start document. The second one is a official mirror URL on the internet. the <em>precise</em> means the suite for the ubuntu version. the <em>main</em> means the base component which will be used.</p>
+<ul>
+<li><p>create an otherpkglist file, /install/custom/install/ubuntu/compute.otherpkgs.pkglist. Add the packages' name into thist file. And modify the otherpkglist attribute for osimage object.</p>
+<p>chdef -t osimage &lt;osimage name&gt; otherpkglist=/install/custom/install/ubuntu/compute.otherpkgs.pkglist</p></li>
+</ul>
+<h3 id="compute-node-can-not-access-internet"><a href="#TOC">compute node can not access internet</a></h3>
+<p>There are 2 scenarios:</p>
+<p>1. The management node can access the internet</p>
+<pre><code>a. Install the Squit on management node, and configure the proxy server. (introduced in the quick start) 
+b. add the aptproxy script to the postscript(a new script), it can configure the apt to use proxy when downloading packages. </code></pre>
+<p>2. The management node can not access the internet either</p>
+<pre><code>a. If the packages installed on the compute node change frequently, 
+
+i. use &quot;apt-mirror&quot; to create a local mirror. 
+ii. add this local mirror to the otherpkgdir attribute, apt on the compute node can download packages from this local mirror. 
+b. else 
+
+i. use &quot;apt-rdepends&quot; to find out all dependent packages&#39; name. 
+ii. use &quot;apt-get install &amp;lt;packages&#39; name&amp;gt; -d&quot; to download all needed packages 
+iii. copy these packages to management node, use &quot;dpkg-scanpackages&quot; to create a repository on the management node. (introduced in the quick start) </code></pre>
+<h2 id="internal-implementation"><a href="#TOC">Internal Implementation</a></h2>
+<p>Only the internet distribution mirror includes some code modification, the local repository on the management node use the current process.</p>
+<h3 id="stateful"><a href="#TOC">stateful</a></h3>
+<ul>
+<li>otherpkgs script</li>
+</ul>
+<p>All repositories which used for other packages installation are saved in &quot;/etc/apt/sources.list.d/xCAT-otherpkgs.list&quot;. When parse the $OTHERPKGDIR, and the os belongs to ubuntu,</p>
+<pre><code>a. split the $OTHERPKGDIR by &#39;,&#39; 
+b. if the repo started by http, add it into the xCAT-otherpkgs.list directly. 
+c. if the repo does not started by http, should did some modification to the repo address, and append to the xCAT-otherpkgs.lis. </code></pre>
+<ul>
+<li>aptproxy script</li>
+</ul>
+<p>add a file /etc/apt/apt.conf.d/proxy, append a line to specify this proxy server.</p>
+<h3 id="stateless"><a href="#TOC">stateless</a></h3>
+<ul>
+<li><p>genimage</p>
+<ol style="list-style-type: lower-alpha">
+<li>add the otherpkgdir into the /&lt;rootimagedir&gt;/etc/apt/sources.list.d/xCAT-otherpkgs.list, similar with the stateful scenario.</li>
+<li>backup the /&lt;rootimagedir&gt;/etc/hosts and resolv.conf in the stateless root image.</li>
+<li>copy the management node's /etc/hosts and /etc/resolv.conf to the /&lt;rootimagedir&gt;, it can access the internet after chroot</li>
+<li>install other packages into the root image.</li>
+<li>recover the /&lt;rootimagedir&gt;/etc/hosts and resolv.conf</li>
+</ol></li>
+<li><p>genimage.pm</p>
+<ol style="list-style-type: lower-alpha">
+<li>the value of --otherpkgdir should be embraced by &quot;.</li>
+</ol></li>
+</ul>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce, Gao Ling, Li Guang Cheng, Jin Jie Hua</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: the ubuntu quick start document</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

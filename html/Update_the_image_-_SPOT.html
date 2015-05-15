@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#update-options"><strong>Update options</strong></a><ul>
+<li><a href="#add-or-update-software"><strong>Add or update software</strong></a></li>
+<li><a href="#update-system-configuration-files"><strong>Update system configuration files</strong></a></li>
+<li><a href="#run-commands-in-the-spot-using-xcatchroot"><strong>Run commands in the SPOT using xcatchroot</strong></a><ul>
+<li><a href="#run-the-aix-trustchk-command-optional"><strong>Run the AIX &quot;trustchk&quot; command (optional)</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#adding-required-software"><strong>Adding required software</strong></a><ul>
+<li><a href="#copy-the-software"><strong>Copy the software</strong></a></li>
+<li><a href="#create-nim-installp_bundle-resources"><strong>Create NIM installp_bundle resources</strong></a></li>
+<li><a href="#check-the-osimage-optional"><strong>Check the osimage (optional)</strong></a></li>
+<li><a href="#install-the-software-into-the-spot"><strong>Install the software into the SPOT</strong></a></li>
+</ul></li>
+<li><a href="#adding-power-775-required-software-for-diskless-images"><strong>Adding Power 775 required software for Diskless Images</strong></a><ul>
+<li><a href="#include-additional-files-for-power-775-support"><strong>Include additional files for Power 775 support</strong></a></li>
+<li><a href="#install-the-power-775-software-into-the-spot"><strong>Install the Power 775 software into the SPOT</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#update-options"><strong>Update options</strong></a></li>
+<li><a href="#add-or-update-software"><strong>Add or update software</strong></a></li>
+<li><a href="#update-system-configuration-files"><strong>Update system configuration files</strong></a></li>
+<li><a href="#run-commands-in-the-spot-using-xcatchroot"><strong>Run commands in the SPOT using xcatchroot</strong></a>
+<ul>
+<li><a href="#run-the-aix-trustchk-command-optional"><strong>Run the AIX &quot;trustchk&quot; command (optional)</strong></a></li>
+</ul></li>
+<li><a href="#adding-required-software"><strong>Adding required software</strong></a></li>
+<li><a href="#copy-the-software"><strong>Copy the software</strong></a></li>
+<li><a href="#create-nim-installp_bundle-resources"><strong>Create NIM installp_bundle resources</strong></a></li>
+<li><a href="#check-the-osimage-optional"><strong>Check the osimage (optional)</strong></a></li>
+<li><a href="#install-the-software-into-the-spot"><strong>Install the software into the SPOT</strong></a></li>
+<li><a href="#adding-power-775-required-software-for-diskless-images"><strong>Adding Power 775 required software for Diskless Images</strong></a></li>
+<li><a href="#include-additional-files-for-power-775-support"><strong>Include additional files for Power 775 support</strong></a></li>
+<li><a href="#install-the-power-775-software-into-the-spot"><strong>Install the Power 775 software into the SPOT</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>The SPOT created in the previous step should be considered the basic minimal diskless AIX operating system image. It does not contain all the software that would normally be installed as part of AIX, if you were installing a standalone system from the AIX product media. (The &quot;nim -o showres ...&quot; command mentioned above will display what software is contained in the SPOT.)</p>
+<p>You must install any additional software you need and make any customizations to the image before you boot the nodes.</p>
+<p>For more information on updating a diskless image see the document called [Updating_AIX_Software_on_xCAT_Nodes]</p>
+<h4 id="update-options"><a href="#TOC"><strong>Update options</strong></a></h4>
+<p>There are basically three types of updates you can do to a SPOT.</p>
+<h5 id="add-or-update-software"><a href="#TOC"><strong>Add or update software</strong></a></h5>
+<p>The SPOT created in the previous step should be considered the basic minimal diskless AIX operating system image. It does not contain all the software that would normally be installed as part of AIX, if you were installing a standalone system from the AIX product media. (The &quot;nim -o showres ...&quot; command mentioned above will display what software is contained in the SPOT.)</p>
+<p>You can use the <strong>mknimimage</strong> &quot;-u&quot; option to update software in the diskless image (SPOT).</p>
+<p>To do this you can update your xCAT osimage definition with any &quot;installp_bundles&quot;, &quot;otherpkgs&quot; you wish to add and then run the <strong>mknimimage -u</strong> command.</p>
+<p>Use the <strong>chdef</strong> command to update the osimage definition. For example:</p>
+<pre><code>    chdef -t osimage -o 61cosi installp_bundle=&quot;hpcbnd,labbnd&quot;</code></pre>
+<p>Once the osimage definition is updated you can run <strong>mknimimage</strong>.</p>
+<pre><code>    mknimimage -u 61cosi</code></pre>
+<p>You can also specify &quot;installp_bundle&quot; and &quot;otherpkgs&quot; on the command line. However in this case you wouldn't have a record (in the database) of what software was added to the SPOT.</p>
+<p><strong>WARNING:</strong> Installing random RPM packages in a SPOT may have unpredictable consequences. The SPOT is a very restricted environment and some RPM packages may corrupt the SPOT or even hang your management system. Try to be very careful about the packages you install. When installing RPMs, if the mknimimage command hangs or if there are file systems left mounted after the command completes you may need to reboot your management node. This is a limitation of the current AIX support for diskless systems.</p>
+<h5 id="update-system-configuration-files"><a href="#TOC"><strong>Update system configuration files</strong></a></h5>
+<p>You can also add other configuration files such as /etc/passwd etc. These files will then be available to every node that boots with this image.</p>
+<p>This can be done manually or by setting the &quot;synclists&quot; attribute of the osimage definition to point to a synclists file. This file contains a list of configuration files etc. that you wish to have copied into the SPOT.</p>
+<p>For more information on using the synchronization file function see the document: [Sync-ing_Config_Files_to_Nodes]</p>
+<p>Syncfiles is currently supported for diskfull or diskless installations. The function is not supported for statelite installations. For statelite installations to sync files you should use the read-only option for files/directories listed in litefile table with source location specified in the litetree table.</p>
+<p>Use the <strong>chdef</strong> command to update the osimage definition. For example:</p>
+<pre><code>    chdef -t osimage -o 61cosi synclists=&quot;/u/test/mysyncfiles&quot;</code></pre>
+<p>Once the osimage definition is updated you can run <strong>mknimimage</strong>.</p>
+<pre><code>    mknimimage -u 61cosi</code></pre>
+<p>Note: You can do BOTH the software updates and configuration file updates at the same time with one call to <strong>mknimimage</strong>.</p>
+<h5 id="run-commands-in-the-spot-using-xcatchroot"><a href="#TOC"><strong>Run commands in the SPOT using xcatchroot</strong></a></h5>
+<p>Starting with xCAT 2.5 and AIX 6.1.6 the <strong>xcatchroot</strong> command can be used to modify the SPOT using the AIX <strong>chroot</strong> command.</p>
+<p>The <strong>xcatchroot</strong> command will take care of any of the required setup so that the command you provide will be able to run in the spot chroot environment. It will also mount the lpp_source resource listed in the osimage definition so that you can access additional software that you may wish to install.</p>
+<p>For example, to set the root password to &quot;cluster&quot; in the spot, (so that when the diskless node boots it will have a root password set), you could run a command similar to the following.</p>
+<pre><code>    xcatchroot -i 61cosi &quot;/usr/bin/echo root:cluster | /usr/bin/chpasswd -c&quot;</code></pre>
+<p>See the <strong>xcatchroot</strong> man page for more details.</p>
+<p>**Caution: **</p>
+<p>Be very careful when using <strong>chroot</strong> on a SPOT. It is easy to get the SPOT into an unusable state! It may be adviseable to make a copy of the SPOT before you try to run any commands that have an uncertain outcome.</p>
+<p>When you are done updating a NIM spot resource you should always run the NIM check operation on the spot.</p>
+<pre><code>    nim -Fo check 61cosi</code></pre>
+<p>For more information on updating a diskless image see the document called : [Updating_AIX_Software_on_xCAT_Nodes]</p>
+<p>See the section titled &quot;Updating diskless nodes&quot;</p>
+<h6 id="run-the-aix-trustchk-command-optional"><a href="#TOC"><strong>Run the AIX &quot;trustchk&quot; command (optional)</strong></a></h6>
+<p>The contents of the /etc/security/privcmds file created in the NIM SPOT does not include many of the entries you would normally get when installing a standalone (diskful) system. If you require the /etc/security/privcmds on a diskless node to have a complete set of entries you must run the AIX &quot;trustchk&quot; command on the SPOT. You can use the xCAT &quot;xcatchroot&quot; command to do this.</p>
+<p>For example, assuming the name of your xCAT osimage is &quot;71Bdskls&quot; then you could run the following command.</p>
+<pre><code>    xcatchroot -i 71Bdskls &quot;/usr/sbin/trustchk  -ry ALL &gt; /dev/null 2&gt;&amp;1&quot;</code></pre>
+<h4 id="adding-required-software"><a href="#TOC"><strong>Adding required software</strong></a></h4>
+<p>You will have to install openssl and openssh along with several additional requisite software packages.</p>
+<p>The basic process is:</p>
+<ul>
+<li>Copy the required software to the lpp_source resource that you used to create your SPOT.</li>
+<li>Create NIM installp_bundle resources</li>
+<li>Check the lpp_source and bundle files</li>
+<li>Install the software in the SPOT.</li>
+</ul>
+<h5 id="copy-the-software"><a href="#TOC"><strong>Copy the software</strong></a></h5>
+<p>You will have to update the SPOT with additional software required for xCAT.</p>
+<p>The required software is specified in the sample bundle file discussed below. The <strong>installp</strong> filesets should be available from the AIX product media. The prerequisite rpms are available in the dep-aix-&lt;version&gt;.tar.gz tar file that you downloaded from the xCAT download page.</p>
+<p>The required software must be copied to the NIM lpp_source resource that is being used for this OS image. The easiest way to do this is to use the &quot;nim -o update&quot; command.</p>
+<p>For example, assume the dep-aix* .tar.gz file has been copied and unwrapped in the /tmp/images directory and that the name of the NIM lpp_source resource is &quot;61cosi_lpp_source&quot;.</p>
+<p>In more recent versions of the dep-aix* tar file the software will be found in subdirectories corresponding to the level of AIX you are using. (ex. ./dep-aix/5.3, ./dep-aix/6.1).</p>
+<p><strong>Note:</strong> Typically all the rpms are copied to the lpp_source resource even though they are not all used when installing a compute node.</p>
+<p>For example, to copy all the rpms from the dep-aix package you could run the following command.</p>
+<pre><code>    nim -o update -a packages=all -a source=/tmp/images/dep-aix/6.1 61cosi_lpp_source</code></pre>
+<p>The NIM command will find the correct directories and update the lpp_source resource.</p>
+<h5 id="create-nim-installp_bundle-resources"><a href="#TOC"><strong>Create NIM installp_bundle resources</strong></a></h5>
+<p>To get all this additional software installed we need a way to tell NIM to include it in the installation. To facilitate this, xCAT provides sample NIM installp bundle files.</p>
+<p>Note: Always make sure that the contents of the bundle files you use are the packages you want to install and that they are all in the appropriate lpp_source directory.</p>
+<p>Starting with xCAT version 2.4.3 there will be a set of bundle files to use for installing a compute node. They are in &quot;<em>/opt/xcat/share/xcat/installp_bundles</em>&quot;. There is a version corresponding to the different AIX OS levels. (xCATaixCN53.bnd, xCATaixCN61.bnd etc.) Just use the one that corresponds to the version of AIX you are running.</p>
+<p>**Note: **For earlier versions of xCAT the sample bundle files are shipped as part of the xCAT tarball file.</p>
+<p>**Note: <em><em>There are two versions of perl-Net_SSLeay.pm rpm listed in the sample bundle files, use perl-Net_SSLeay.pm-1.30-3</em> for AIX 7.1.2 and older version, use perl-Net_SSLeay.pm-1.55-3</em> for AIX 7.1.3 and above, see details in xCATaixCN71.bnd and xCATaixSN71.bnd.</p>
+<p>To use the bundle file you need to define it as a NIM resources and add it to the xCAT osimage definition.</p>
+<p>Copy the bundle file ( say xCATaixCN61.bnd ) to a location where it can be defined as a NIM resource, for example &quot;/install/nim/installp_bundle&quot;.</p>
+<p>To define the NIM resource you can run the following command.</p>
+<pre><code>    nim -o define -t installp_bundle -a server=master -a
+     location= /install/nim/installp_bundle/xCATaixCN61.bnd xCATaixCN61</code></pre>
+<p>To add this bundle resource to your xCAT osimage definition run:</p>
+<pre><code>    chdef -t osimage -o 610SNimage installp_bundle=&quot;xCATaixSN61&quot;</code></pre>
+<h5 id="check-the-osimage-optional"><a href="#TOC"><strong>Check the osimage (optional)</strong></a></h5>
+<p>This command is available in xCAT 2.4.3 and beyond.</p>
+<p>To avoid potential problems when installing a node it is adviseable to verify that all the software that you wish to install has been copied to the appropriate NIM lpp_source directory.</p>
+<p>Any software that is specified in the &quot;otherpkgs&quot; or the &quot;installp_bundle&quot; attributes of the osimage definition must be available in the lpp_source directories.</p>
+<p>Also, if your bundle files include rpm entries that use a wildcard (*) you must make sure the lpp_source directory does not contain multiple packages that will match that entry. (NIM will attempt to install multiple version of the same package and produce an error!)</p>
+<p>To find the location of the lpp_source directories run the &quot;lsnim -l &lt;lpp_source_name&gt;&quot; command. For example:</p>
+<pre><code>    lsnim -l 610image_lpp_source</code></pre>
+<p>If the location of your lpp_source resource is &quot;/install/nim/lpp_source/610image_lpp_source/&quot; then you would find rpm packages in &quot;/install/nim/lpp_source/610image_lpp_source/RPMS/ppc&quot; and you would find your installp and emgr packages in &quot;/install/nim/lpp_source/610image_lpp_source/installp/ppc&quot;.</p>
+<p>To find the location of the installp_bundle resource files you can use the NIM &quot;lsnim -l&quot; command. For example,</p>
+<pre><code>    lsnim -l xCATaixSSH</code></pre>
+<p>Starting with xCAT version 2.4.3 you can use the xCAT <strong>chkosimage</strong> command to do this checking. For example:</p>
+<pre><code>    chkosimage -V 61cosi</code></pre>
+<p>See the <strong>chkosimage</strong> man page for details.</p>
+<h5 id="install-the-software-into-the-spot"><a href="#TOC"><strong>Install the software into the SPOT</strong></a></h5>
+<p>You can install and update software in a NIM SPOT resource by using NIM commands directly or you can use the xCAT <strong>mknimimage</strong> command.</p>
+<p>If you wish to use the NIM support directly you can check the NIM documentation for information on the NIM &quot;cust&quot; and &quot;maint&quot; operations.</p>
+<p>In this example the xCAT <strong>mknimimage</strong> command will be used.</p>
+<p>Run the <strong>mknimimage</strong> command to update the SPOT using the information saved in the xCAT &quot;61cosi&quot; osimage definition.</p>
+<pre><code>    mknimimage -u 61cosi</code></pre>
+<p>See the <strong>mknimimage</strong> man page for more options that are available for updating diskless images (SPOT resources).</p>
+<p><strong>Note</strong>: You cannot update a SPOT that is currently allocated. To check to see if the SPOT is allocated you could run the following command.</p>
+<pre><code>    lsnim -l &lt;spot name&gt;</code></pre>
+<h4 id="adding-power-775-required-software-for-diskless-images"><a href="#TOC"><strong>Adding Power 775 required software for Diskless Images</strong></a></h4>
+<pre><code>**NOTE**:  This support will be available in xCAT 2.6 and beyond.</code></pre>
+<p><strong>Please note that the HFI device driver packages are shipped with base AIX71 TL2 and later. It is important that these AIX HFI fileset packages are included as part of the AIX71 LPPsource.</strong></p>
+<p>We will require to have the HFI and ML device drivers included in the AIX71B diskless lpp_source images. This will create the proper HFI and ML device drivers to be part of AIX71B compute node diskless SPOT image. This is the same software that was installed in the xCAT SN image.</p>
+<pre><code>    devices.chrp.IBM.HFI
+    devices.common.IBM.hfi
+    devices.common.IBM.ml 
+    devices.msg.en_US.chrp.IBM.HFI
+    devices.msg.en_US.common.IBM.hfi
+    devices.msg.en_US.common.IBM.ml</code></pre>
+<p>Update the latest HFI and ML device drivers to your AIX71B compute node lpp source: Place the required packages into a directory called /hfi and execute nim -o update command to load images to lpp_source.</p>
+<pre><code>    nim -o update -a packages=all -a source=/hfi/ 71BCNimage_lpp_source</code></pre>
+<p>The HFI device driver installp bundle should have already have been created as part of the xCAT service node section. We will include the information here just to be safe.</p>
+<p>Create the bundle file /install/nim/installp_bundle/xCATaixHFIdd.bnd to look like the following:</p>
+<pre><code>    # HFI and ML installp packages
+    I:devices.chrp.IBM.HFI.rte
+    I:devices.common.IBM.hfi.rte
+    I:devices.common.IBM.ml 
+    I:devices.msg.en_US.chrp.IBM.HFI.rte
+    I:devices.msg.en_US.common.IBM.hfi.rte
+    I:devices.msg.en_US.common.IBM.ml</code></pre>
+<p>Execute the nim -o define command to create the nim HFI installp bundle file.</p>
+<pre><code>    nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle \
+          /xCATaixHFIdd.bnd xCATaixHFIdd</code></pre>
+<p>Assign HFI devices drivers isntallp bundle to service node image so they will be installed during service node installation.</p>
+<pre><code>    chdef -t osimage -o 71BCNimage installp_bundle=xCATaixHFIdd</code></pre>
+<h5 id="include-additional-files-for-power-775-support"><a href="#TOC"><strong>Include additional files for Power 775 support</strong></a></h5>
+<p>The Power 775 service node requires additional files. These are all specified in the /install/postscripts/synclist file.</p>
+<p>To include them in the xCAT osimage used for the xCAT compute nodes you can run a command similar to the following.</p>
+<pre><code>    chdef -t osimage -o 71BCNimage synclists=/install/postscripts/synclist</code></pre>
+<h5 id="install-the-power-775-software-into-the-spot"><a href="#TOC"><strong>Install the Power 775 software into the SPOT</strong></a></h5>
+<p>You can install and update software in a NIM SPOT resource by using NIM commands directly or you can use the xCAT <strong>mknimimage</strong> command.</p>
+<p>If you wish to use the NIM support directly you can check the NIM documentation for information on the NIM &quot;cust&quot; and &quot;maint&quot; operations.</p>
+<p>In this example the xCAT <strong>mknimimage</strong> command will be used.</p>
+<p>Run the <strong>mknimimage</strong> command to update the SPOT using the information saved in the xCAT &quot;61cosi&quot; osimage definition.</p>
+<pre><code>    mknimimage -u 71BCNimage</code></pre>
+<p>See the <strong>mknimimage</strong> man page for more options that are available for updating diskless images (SPOT resources).</p>
+<p><strong>Note</strong>: You cannot update a SPOT that is currently allocated. To check to see if the SPOT is allocated you could run the following command.</p>
+<pre><code>    lsnim -l &lt;spot name&gt;</code></pre>
+</body>
+</html>

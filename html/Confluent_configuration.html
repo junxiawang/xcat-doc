@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#organization">Organization</a></li>
+<li><a href="#inheritance">Inheritance</a></li>
+<li><a href="#expressions">Expressions</a></li>
+<li><a href="#on-disk">On Disk</a></li>
+<li><a href="#backup-format">Backup format</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#organization">Organization</a></li>
+<li><a href="#inheritance">Inheritance</a></li>
+<li><a href="#expressions">Expressions</a></li>
+<li><a href="#on-disk">On Disk</a></li>
+<li><a href="#backup-format">Backup format</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h1 id="organization"><a href="#TOC">Organization</a></h1>
+<p>In xCAT 2, there are two configuration schemes, 'table' and 'objdef'. For confluent, converge the two models. The result is something that resembles objdef, but with dot-delimited names to help organize data and provide a way to map 'tabedit' behavior as desired. Also, rename and consolidate concepts for more understandable use. For example:</p>
+<ul>
+<li>lsdef shows 'bmc' and nodels thinks of it as 'ipmi.bmc'. confluent uses 'hardwaremanagement.manager'</li>
+<li>'mp.mpa' becomes 'enclosure.manager'</li>
+</ul>
+<p>Some attributes are removed entirely for now (installnic). At least long enough to have people comfortable with the concept that it need not be defined for the common case. Boot from media may indicate a return of the need of it.</p>
+<h1 id="inheritance"><a href="#TOC">Inheritance</a></h1>
+<p>Inheritence behaves on the surface much like xCAT 2. Under the covers, performance is dramatically improved on read as inheritance is done and re-evaluated on writes and results stored in memory and on disk. Backup process will skip the result fields and only get the source material, restore will re-evaluate the information</p>
+<h1 id="expressions"><a href="#TOC">Expressions</a></h1>
+Expressions are dramatically changed. In xCAT 2, regular expressions were used and extended by allowing 'Safe' compartment evaluation of result data with a blacklist of forbidden low level operations. This results in a syntax that is unbelievably flexible, but slow, hard to follow, and likely able to do unexpected things from a security standpoint. Confluent expressions, like inheritance improve performance by doing all evaluations on write rather than read of data. One additional capability is the ability to read in values from other attributes. Some example xCAT2 expressions and confluent equivalents (using the relatively new 'easy' xCAT expressions when possible:
+<table>
+<tr><td>
+xCAT 2
+</td><td>
+Confluent
+</td></tr>
+<tr><td>
+//-bmc
+</td><td>
+{nodename}-bmc
+</td></tr>
+<tr><td>
+|10.1.($1/255).($1%255)|
+</td><td>
+10.1.{n0/255}.{n0%255}
+</td></tr>
+<tr><td>
+N/A
+</td><td>
+10.1.{enclosure.id}.{enclosure.bay}
+</td></tr>
+<tr><td>
+/n/bmc/
+</td><td>
+<em>TBD</em>, possibly {nodename.replace('n', 'bmc')}
+</td></tr>
+<tr><td>
+/(+)++(+)/test$1$2/
+</td><td>
+N/A (TODO if requested)
+</td></tr>
+</table>
+
+<h1 id="on-disk"><a href="#TOC">On Disk</a></h1>
+<p>Data is committed to disk in a DBM style backing store.</p>
+<h1 id="backup-format"><a href="#TOC">Backup format</a></h1>
+<p>Backup data is to be in .json files. inheritedfrom entries are omitted. value attributes alongside expression attributes are omitted. cryptvalue entries are converted to base64. The master integrity and privacy keys are encrypted by a backup password which is required to restore the encrypted values. See [Confluent_security] for more on that aspect.</p>
+</body>
+</html>

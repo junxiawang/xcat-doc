@@ -1,0 +1,359 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#mellanox-ib-drives-installation">Mellanox IB Drives Installation</a><ul>
+<li><a href="#prepare-ib-driverslibraries">Prepare IB drivers/libraries</a></li>
+<li><a href="#script-to-install-the-ib-drivers-only-required-for-rhel-sles-and-ubuntu">Script to Install the IB Drivers Only required for RHEL, SLES and Ubuntu</a></li>
+<li><a href="#install-ib-drives-during-node-installation">Install IB Drives during Node installation</a><ul>
+<li><a href="#configuration-for-diskfull-installation">Configuration for diskfull installation</a></li>
+<li><a href="#configuration-for-diskless-installation">Configuration for diskless installation</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#mellanox-ib-interface-configuration">Mellanox IB Interface Configuration</a></li>
+<li><a href="#mellanox-switch-configuration">Mellanox Switch Configuration</a><ul>
+<li><a href="#setup-the-xcat-database">Setup the xCAT Database</a></li>
+<li><a href="#setup-ssh-connection-to-the-mellanox-switch">Setup ssh connection to the Mellanox Switch</a></li>
+<li><a href="#setup-syslog-on-the-switch">Setup syslog on the Switch</a></li>
+<li><a href="#configure-xdsh-for-mellanox-switch">Configure xdsh for Mellanox Switch</a></li>
+<li><a href="#commands-supported-for-the-mellanox-switch">Commands Supported for the Mellanox Switch</a></li>
+<li><a href="#send-snmp-traps-to-xcat-management-node">Send SNMP traps to xCAT Management Node</a></li>
+</ul></li>
+<li><a href="#ufm-configuration">UFM Configuration</a><ul>
+<li><a href="#setup-xdsh-to-ufm-and-backup">Setup xdsh to UFM and backup</a></li>
+<li><a href="#consolidate-syslogs">Consolidate syslogs</a></li>
+<li><a href="#send-snmp-traps-to-xcat-management-node-1">Send SNMP traps to xCAT Management Node</a></li>
+</ul></li>
+<li><a href="#mellanox-switch-and-adapter-firmware-update">Mellanox Switch and Adapter Firmware Update</a><ul>
+<li><a href="#adapter-firmware-update">Adapter Firmware Update</a><ul>
+<li><a href="#aix-os-image">AIX OS image</a></li>
+<li><a href="#linux-os-image">Linux OS image</a></li>
+</ul></li>
+<li><a href="#mellanox-switch-firmware-upgrade">Mellanox Switch Firmware Upgrade</a><ul>
+<li><a href="#update-via-browser">Update via Browser</a></li>
+<li><a href="#firmware-update-using-cli">Firmware Update using CLI</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#mellanox-ib-drives-installation">Mellanox IB Drives Installation</a>
+<ul>
+<li><a href="#prepare-ib-driverslibraries">Prepare IB drivers/libraries</a></li>
+<li><a href="#script-to-install-the-ib-drivers-only-required-for-rhel-sles-and-ubuntu">Script to Install the IB Drivers Only required for RHEL, SLES and Ubuntu</a></li>
+<li><a href="#install-ib-drives-during-node-installation">Install IB Drives during Node installation</a></li>
+<li><a href="#configuration-for-diskfull-installation">Configuration for diskfull installation</a></li>
+<li><a href="#configuration-for-diskless-installation">Configuration for diskless installation</a></li>
+</ul></li>
+<li><a href="#mellanox-ib-interface-configuration">Mellanox IB Interface Configuration</a></li>
+<li><a href="#mellanox-switch-configuration">Mellanox Switch Configuration</a>
+<ul>
+<li><a href="#setup-the-xcat-database">Setup the xCAT Database</a></li>
+</ul></li>
+<li><a href="#switchsshusernamesshpasswordswitchtype">switch,...,sshusername,sshpassword,switchtype,....</a>
+<ul>
+<li><a href="#setup-ssh-connection-to-the-mellanox-switch">Setup ssh connection to the Mellanox Switch</a></li>
+<li><a href="#setup-syslog-on-the-switch">Setup syslog on the Switch</a></li>
+<li><a href="#configure-xdsh-for-mellanox-switch">Configure xdsh for Mellanox Switch</a></li>
+<li><a href="#commands-supported-for-the-mellanox-switch">Commands Supported for the Mellanox Switch</a></li>
+<li><a href="#send-snmp-traps-to-xcat-management-node">Send SNMP traps to xCAT Management Node</a></li>
+</ul></li>
+<li><a href="#ufm-configuration">UFM Configuration</a>
+<ul>
+<li><a href="#setup-xdsh-to-ufm-and-backup">Setup xdsh to UFM and backup</a></li>
+<li><a href="#consolidate-syslogs">Consolidate syslogs</a></li>
+<li><a href="#send-snmp-traps-to-xcat-management-node-1">Send SNMP traps to xCAT Management Node</a></li>
+</ul></li>
+<li><a href="#mellanox-switch-and-adapter-firmware-update">Mellanox Switch and Adapter Firmware Update</a>
+<ul>
+<li><a href="#adapter-firmware-update">Adapter Firmware Update</a></li>
+<li><a href="#aix-os-image">AIX OS image</a></li>
+<li><a href="#linux-os-image">Linux OS image</a></li>
+<li><a href="#mellanox-switch-firmware-upgrade">Mellanox Switch Firmware Upgrade</a></li>
+<li><a href="#update-via-browser">Update via Browser</a></li>
+<li><a href="#firmware-update-using-cli">Firmware Update using CLI</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="mellanox-ib-drives-installation"><a href="#TOC">Mellanox IB Drives Installation</a></h2>
+<h3 id="prepare-ib-driverslibraries"><a href="#TOC">Prepare IB drivers/libraries</a></h3>
+<p>For AIX, the IB drivers/libraries have been installed in the system. This step is only needed for RHEL, SLES and Ubuntu.</p>
+<p>Mellonax provides different ISOs named like MLNX_OFED_LINUX-<packver1>-<packver2>-<osver>-<arch>.iso to contain IB drivers/libraries needed by different operating system. So you need to prepare correct Mellonax OFED ISO, such as MLNX_OFED_LINUX-1.5.3-3.0.0-sles11sp1-x86_64.iso, MLNX_OFED_LINUX-1.5.3-3.0.0-rhel6.1-x86_64.iso and MLNX_OFED_LINUX-2.3-1.0.1-ubuntu14.04-ppc64le.iso, according your OS before below steps.</p>
+<p>Mount the Mellonax OFED ISO onto suggested target location on the xCAT MN according your OS and ARCH:</p>
+<pre><code> mkdir -p /install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/ofed
+ mount -o loop MLNX_OFED_LINUX-&lt;packver1&gt;-&lt;packver2&gt;-&lt;osver&gt;-&lt;arch&gt;.iso \
+               /install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/ofed
+</code></pre>
+<p>Take sles11 sp1 for x86_64 as an example:</p>
+<pre><code>  mkdir -p /install/post/otherpkgs/sles11.1/x86_64/ofed/
+  mount -o loop MLNX_OFED_LINUX-1.5.3-3.0.0-sles11sp1-x86_64.iso \
+      /install/post/otherpkgs/sles11.1/x86_64/ofed/
+</code></pre>
+<h3 id="script-to-install-the-ib-drivers-only-required-for-rhel-sles-and-ubuntu"><a href="#TOC">Script to Install the IB Drivers Only required for RHEL, SLES and Ubuntu</a></h3>
+<p>XCAT provides one sample postscript -- <em>* mlnxofed_ib_install</em>* to install the Mellanox OFED IB driver. This shell script is /opt/xcat/share/xcat/ib/scripts/Mellanox/mlnxofed_ib_install, and for both RHELS 6.x, SLES11.x and Ubuntu14.04.01 (both diskfull and diskless). When using it, you should copy it into /install/postscripts, such as :</p>
+<pre><code> cp /opt/xcat/share/xcat/ib/scripts/Mellanox/mlnxofed_ib_install \
+    /install/postscripts/mlnxofed_ib_install
+</code></pre>
+<p>The <strong>mlnxofed_ib_install</strong> invokes the perl script <strong>mlnxofedinstall</strong> from Mellonax OFED ISO. If you want to pass the argument of <strong>mlnxofedinstall</strong>, you set the argument to the environment variable <strong>mlnxofed_options</strong> which could be read by mlnxofed_ib_install. For example: PPE requires the 32-bit version of libibverbs, but the default mlnxofed_ib_install will remove all the old ib related packages at first including the 32-bit version of libibverbs. In this case, you can set the environment variable <strong>mlnxofed_options=--force</strong> when running the mlnxofed_ib_install. For diskfull, you should put the environment variable <strong>mlnxofed_options=--force</strong> in mypostscript.tmpl. myposcript.tmpl is in /opt/xcat/share/xcat/templates/mypostscript/ by default. When customize it, you should copy it into /install/postscripts/myposcript.tmpl:</p>
+<pre><code>       mlnxofed_options=&#39;--force&#39;
+       export  mlnxofed_options</code></pre>
+<p>For diskless, you should put the variable before mlnxofed_ib_install in &lt;profile&gt;.postinstall:</p>
+<pre><code> installroot=$1 ofeddir=/install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/ofed/ \
+   NODESETSTATE=genimage  mlnxofed_options=--force /install/postscripts/mlnxofed_ib_install
+</code></pre>
+<h3 id="install-ib-drives-during-node-installation"><a href="#TOC">Install IB Drives during Node installation</a></h3>
+<p>Copy the xCAT mlnxofed_ib_install script file to postscripts directory:</p>
+<pre><code> cp /opt/xcat/share/xcat/ib/scripts/Mellanox/mlnxofed_ib_install \ 
+    /install/postscripts/mlnxofed_ib_install
+</code></pre>
+<h4 id="configuration-for-diskfull-installation"><a href="#TOC">Configuration for diskfull installation</a></h4>
+<ol style="list-style-type: decimal">
+<li>set script 'mlnxofed_ib_install' as post boot script ~~~~ chdef xcat01 -p postbootscripts=mlnxofed_ib_install ~~~~</li>
+</ol>
+<p>[Note] step 2-4 only needed by RHEL and SLES 2. Copy the pkglist to the custom directory:</p>
+<pre><code>     cp /opt/xcat/share/xcat/install/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist   \
+ /install/custom/install/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist
+</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Edit your /install/custom/install/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist and add:</li>
+</ol>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/ib/netboot/&lt;ostype&gt;/ib.&lt;osver&gt;.&lt;arch&gt;.pkglist#</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Make sure the related osimage use the customized pkglist.</li>
+</ol>
+<pre><code>     lsdef -t osimage -o  &lt;osver&gt;-&lt;arch&gt;-install-compute</code></pre>
+<p>if not, change it:</p>
+<pre><code>     chdef  -t osimage -o &lt;osver&gt;-&lt;arch&gt;-install-compute  \
+pkglist=/install/custom/install/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>install node</li>
+</ol>
+<pre><code>    nodeset &lt;nodename&gt; osimage=&lt;osver&gt;-&lt;arch&gt;-install-compute
+    rsetboot &lt;nodename&gt; net
+    rpower &lt;nodename&gt; reset</code></pre>
+<h4 id="configuration-for-diskless-installation"><a href="#TOC">Configuration for diskless installation</a></h4>
+<p>Copy the pkglist to the custom directory for RHEL and SLES:</p>
+<pre><code>     cp /opt/xcat/share/xcat/netboot/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist \
+ /install/custom/netboot/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist
+</code></pre>
+<p>Edit your /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/ib/netboot/&lt;ostype&gt;/ib.&lt;osver&gt;.&lt;arch&gt;.pkglist#</code></pre>
+<p>Take sles11 sp1 for x86_64 as an example: Edit the /install/custom/netboot/sles11.1/x86_64/compute/compute.sles11.1.x86_64.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/ib/netboot/sles/ib.sles11.1.x86_64.pkglist#</code></pre>
+<p>Add to postinstall scripts: Edit your /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.postinstall and add:</p>
+<pre><code>      installroot=$1 ofeddir=/install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/ofed/   \
+NODESETSTATE=genimage /install/postscripts/mlnxofed_ib_install
+</code></pre>
+<p>Take sles11 sp1 for x86_64 as an example: Edit the /install/custom/netboot/sles/compute.postinstall and add:</p>
+<pre><code>      installroot=$1 ofeddir=/install/post/otherpkgs/sles11.1/x86_64/ofed/ \
+NODESETSTATE=genimage /install/postscripts/mlnxofed_ib_install</code></pre>
+<p>Make sure the related osimage use the customized pkglist and customized compute.postinsall</p>
+<pre><code>     lsdef -t osimage -o  &lt;osver&gt;-&lt;arch&gt;-netboot-compute</code></pre>
+<p>if not, change it:</p>
+<pre><code>     chdef  -t osimage -o &lt;osver&gt;-&lt;arch&gt;-netboot-compute \
+pkglist=/install/custom/netboot/&lt;ostype&gt;/compute.&lt;osver&gt;.&lt;arch&gt;.pkglist \
+postinstall=/install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.postinstall
+</code></pre>
+<h2 id="mellanox-ib-interface-configuration"><a href="#TOC">Mellanox IB Interface Configuration</a></h2>
+<p>XCAT provided two sample postscripts - configiba.1port and configiba.2ports to configure the IB secondary adapter before xcat 2.8, these tow scripts still work but will be in maintenance mode. So if you keep using this way to configure IB interface, please refer to [IB_Interface_Configuration_ON_Management_node] and [IB_Interface_Configuration_ON_MN_part2].</p>
+<p>A new postscript /install/postscripts/configib is shipped with xCAT 2.8, the configib postscript works with the new &quot;nics&quot; table and confignic postscript which where introduced in xCAT 2.8 also. xcat recommends you to use new configib script from now on.</p>
+<h2 id="mellanox-switch-configuration"><a href="#TOC">Mellanox Switch Configuration</a></h2>
+<h3 id="setup-the-xcat-database"><a href="#TOC">Setup the xCAT Database</a></h3>
+<p><strong>The Mellanox Switch is only supported in xCAT Release 2.7 or later.</strong></p>
+<ul>
+<li>Add the switch ip address in the /etc/hosts file</li>
+<li>Define IB switch as a node</li>
+</ul>
+<pre><code>    chdef -t node -o mswitch groups=all nodetype=switch mgt=switch</code></pre>
+<ul>
+<li>Add the login user name and password to the switches table:</li>
+</ul>
+<pre><code>tabch switch=mswitch switches.sshusername=admin \
+   switches.sshpassword=admin switches.switchtype=MellanoxIB
+</code></pre>
+<p>The switches table will look like this:</p>
+<pre><code>#switch,...,sshusername,sshpassword,switchtype,....  
+&quot;mswitch&quot;,,,,,,,&quot;admin&quot;,&quot;admin&quot;,&quot;MellanoxIB&quot;,,
+</code></pre>
+<p>If there is only one admin and one password for all the switches then put the entry in the xCAT passwd table for the admin id and password to use to login.</p>
+<pre><code>    tabch key=mswitch  passwd.username=admin passwd.password=admin</code></pre>
+<p>The passwd table will look like this:</p>
+<pre><code>    #key,username,password,cryptmethod,comments,disable
+    &quot;mswitch&quot;,&quot;admin&quot;,&quot;admin&quot;,,,
+</code></pre>
+<h3 id="setup-ssh-connection-to-the-mellanox-switch"><a href="#TOC">Setup ssh connection to the Mellanox Switch</a></h3>
+<p>To run commands like xdsh and script to the Mellanox Switch, we need to setup ssh to run without prompting for a password to the Mellanox Switch. To do this, first you must add a configuration file. <em>This configuration file is NOT needed for xCAT 2.8 and later</em>.</p>
+<pre><code>    mkdir -p /var/opt/xcat/IBSwitch/Mellanox
+    cd /var/opt/xcat/IBSwitch/Mellanox
+    cp /opt/xcat/share/xcat/ib/scripts/Mellanox/config .</code></pre>
+<p>The file contains the following:</p>
+<pre><code>    [main]
+    [xdsh]
+    pre-command=cli
+    post-command=NULL</code></pre>
+<p>Then run the following:</p>
+<pre><code>    rspconfig mswitch sshcfg=enable</code></pre>
+<ul>
+<li>Note: For Mellanox switch in manufacturing defaults status, the user need to answer 'no' for the initial configuration wizard prompt as follows before run 'rspconfig'.</li>
+</ul>
+<pre><code>    [s1mn][/](/)&gt; ssh -l admin mswitch
+    Mellanox MLNX-OS Switch Management
+    Password:
+    Last login: Wed Feb 20 20:09:50 2013 from 1.2.3.4
+    Mellanox Switch
+    Mellanox configuration wizard
+    Do you want to use the wizard for initial configuration? **no**
+    To return to the wizard from the CLI, enter the &quot;configuration jump-start&quot;
+    command from configure mode. Launching CLI...
+    switch-xxxxxx [standalone: unknown] &gt; exit</code></pre>
+<h3 id="setup-syslog-on-the-switch"><a href="#TOC">Setup syslog on the Switch</a></h3>
+<p>Use the following command to consolidate the syslog to the Management Node or Service Nodes, where ip is the addess of the MN or SN as known by the switch.</p>
+<pre><code>    rspconfig mswitch logdest=&lt;ip&gt;</code></pre>
+<h3 id="configure-xdsh-for-mellanox-switch"><a href="#TOC">Configure xdsh for Mellanox Switch</a></h3>
+<p>To run xdsh commands to the Mellanox Switch, you must use the --devicetype input flag to xdsh. In addition, for xCAT versions less than 2.8, you must add a configuration file, please see &quot;<strong>Setup ssh connection to the Mellanox Switch</strong>&quot; section.</p>
+<p>For the Mellanox Switch the --devicetype is &quot;IBSwitch::Mellanox&quot;. See xdsh man page: http://xcat.sourceforge.net/man1/xdsh.1.html for details.</p>
+<p>Now you can run the switch commands from the mn using xdsh. For example:</p>
+<p>xdsh mswitch -l admin --devicetype IBSwitch::Mellanox 'enable;configure terminal;show ssh server host-keys'</p>
+<h3 id="commands-supported-for-the-mellanox-switch"><a href="#TOC">Commands Supported for the Mellanox Switch</a></h3>
+<p>Setup the snmp alert destination:</p>
+<pre><code>    rspconfig &lt;switch&gt; snmpdest=&lt;ip&gt; [remove]</code></pre>
+<p>where &quot;remove&quot; means to remove this ip from the snmp destination list.</p>
+<p>Enable/disable setting the snmp traps.</p>
+<pre><code>    rspconfig &lt;switch&gt; alert=enable/disable</code></pre>
+<p>Define the read only community for snmp version 1 and 2.</p>
+<pre><code>    rspconfig &lt;switch&gt; community=&lt;string&gt;</code></pre>
+<p>Enable/disable snmp function on the swithc.</p>
+<pre><code>     rspconfig &lt;switch&gt; snmpcfg=enable/disable</code></pre>
+<p>Enable/disable ssh-ing to the switch without password.</p>
+<pre><code>rspconfig &lt;switch&gt; sshcfg=enable/disable</code></pre>
+<p>Setup the syslog remove receiver for this switch, and also define the minimum level of severity of the logs that are sent. The valid levels are: emerg, alert, crit, err, warning, notice, info, debug, none, remove. &quot;remove&quot; means to remove the given ip from the receiver list.</p>
+<pre><code>    rspconfig &lt;switch&gt; logdest=&lt;ip&gt; [&lt;level&gt;]</code></pre>
+<p>For doing other tasks on the switch, use xdsh. For example:</p>
+<pre><code>     xdsh mswitch -l admin --devicetype IBSwitch::Mellanox  &#39;show logging&#39;</code></pre>
+<p>Interactive commands are not supported by xdsh. For interactive commands, use ssh.</p>
+<h3 id="send-snmp-traps-to-xcat-management-node"><a href="#TOC">Send SNMP traps to xCAT Management Node</a></h3>
+<p>First, get http://www.mellanox.com/related-docs/prod_ib_switch_systems/MELLANOX-MIB.zip, unzip it. Copy the mib file MELLANOX-MIB.txt to /usr/share/snmp/mibs directory on the mn and sn (if the sn is the snmp trap destination.)</p>
+<p>Then,</p>
+<p>To configure, run:</p>
+<pre><code>     monadd snmpmon
+     moncfg snmpmon &lt;mswitch&gt;</code></pre>
+<p>To start monitoring, run:</p>
+<pre><code>     monstart snmpmon &lt;mswitch&gt;</code></pre>
+<p>To stop monitoring, run:</p>
+<pre><code>     monstop snmpmon &lt;mswitch&gt;</code></pre>
+<p>To deconfigure, run:</p>
+<pre><code>     mondecfg snmpmon &lt;mswitch&gt;</code></pre>
+<p>For more details on monitoring the cluster: <a href="Monitoring_an_xCAT_Cluster/#snmp-monitoring">Monitoring_an_xCAT_Cluster/#snmp-monitoring</a></p>
+<h2 id="ufm-configuration"><a href="#TOC">UFM Configuration</a></h2>
+<p>UFM server are just regular Linix boxes with UFM installed. xCAT can help install and configure the UFM servers. The xCAT mn can send remote command to UFM through xdsh. It can also collect SNMP traps and syslogs from the UFM servers.</p>
+<h3 id="setup-xdsh-to-ufm-and-backup"><a href="#TOC">Setup xdsh to UFM and backup</a></h3>
+<p>Assume we have two hosts with UFM installed, called host1 and host2. First define the two hosts in the xCAT cluster. Usually the network that the UFM hosts are in a different than the compute nodes, make sure to assign correct servicenode and xcatmaster in the noderes table. And also make sure to assign correct os and arch values in the nodetype table for the UFM hosts. For example:</p>
+<pre><code>     mkdef -t node -o host1,host2 groups=ufm,all os=sles11.1 arch=x86_64 servicenode=10.0.0.1 xcatmaster=10.0.0.1</code></pre>
+<p>Then exchange the SSH key so that it can run xdsh.</p>
+<pre><code>     xdsh host1,host2 -K</code></pre>
+<p>Now we can run xdsh on the UFM hosts.</p>
+<pre><code>     xdsh ufm date</code></pre>
+<h3 id="consolidate-syslogs"><a href="#TOC">Consolidate syslogs</a></h3>
+<p>Run the following command to make the UFM hosts to send the syslogs to the xCAT mn:</p>
+<pre><code>     updatenode ufm -P syslog</code></pre>
+<p>To test, run the following commands on the UFM hosts and see if the xCAT MN receives the new messages in /var/log/messages</p>
+<pre><code>     logger xCAT &quot;This is a test&quot;</code></pre>
+<h3 id="send-snmp-traps-to-xcat-management-node-1"><a href="#TOC">Send SNMP traps to xCAT Management Node</a></h3>
+<p>You need to have the Advanced License for UFM in order to send SNMP traps.</p>
+<p>1. Copy the mib file to /usr/share/snmp/mibs directory on the mn.</p>
+<pre><code>      scp ufmhost:/opt/ufm/files/conf/vol_ufm3_0.mib /usr/share/snmp/mibs</code></pre>
+<p>where ufmhost is the host where UFM is installed.</p>
+<p>2. On the UFM host, open the /opt/ufm/conf/gv.cfg configuration file. Under the [Notifications] line, set</p>
+<pre><code>     snmp_listeners = &lt;IP Address 1&gt;[:&lt;port 1&gt;][,&lt;IP Address 2&gt;[:&lt;port 2&gt;].]</code></pre>
+<p>the default port is 162. For example:</p>
+<pre><code>       ssh ufmhost
+       vi /opt/ufm/conf/gv.cfg
+
+       ....
+       [Notifications]
+       snmp_listeners = 10.0.0.1</code></pre>
+<pre><code> where 10.0.0.1 is the the ip address of the management node.</code></pre>
+<p>3. On the UFM host, restart the ufmd.</p>
+<pre><code>     service ufmd restart</code></pre>
+<p>4. From UFM GUI, click on the &quot;Config&quot; tab; bring up the &quot;Event Management&quot; Policy Table. Then select the SNMP check boxes for the events you are interested in to enable the system to send an SNMP traps for these events. Click &quot;OK&quot;.</p>
+<p>5. Make sure snmptrapd is up and running on mn and all monitoring servers.</p>
+<p>It should have the '-m ALL' flag.</p>
+<pre><code>     ps -ef |grep snmptrapd
+     root 31866 1 0 08:44 ? 00:00:00 /usr/sbin/snmptrapd -m ALL</code></pre>
+<p>If it is not running, then run the following commands:</p>
+<pre><code>     monadd snmpmon
+     monstart snmpmon</code></pre>
+<h2 id="mellanox-switch-and-adapter-firmware-update"><a href="#TOC">Mellanox Switch and Adapter Firmware Update</a></h2>
+<h3 id="adapter-firmware-update"><a href="#TOC">Adapter Firmware Update</a></h3>
+<p>The adapter firmware update process differs depending on whether running AIX or Linux. The general steps are the same, however, the commands to perform the upgrade are different since the firmware image is packaged differently. Please download the OFED IB adapter firmware from the Mellanox site http://www.mellanox.com/page/firmware_table_IBM .</p>
+<h4 id="aix-os-image"><a href="#TOC">AIX OS image</a></h4>
+<p>Obtain device id:</p>
+<pre><code>     lscfg -vp -l iba*</code></pre>
+<p>Check current installed fw level:</p>
+<pre><code>      lscfg -vp -l iba0 |grep ROM</code></pre>
+<p>Copy firmware to /etc/microcode.</p>
+<p>Burn new firmware on each ibaX:</p>
+<pre><code>       diag -cd iba0 -T &quot;download -f&quot;</code></pre>
+<p>Verify download successful :</p>
+<pre><code>       diag -d iba0 -T disp_mcode</code></pre>
+<p>Activate the new firmware :</p>
+<pre><code>       reboot the image</code></pre>
+<p>Note: the above iba0 device id was used as an example only. it is not meant to imply that there is only one device id.</p>
+<h4 id="linux-os-image"><a href="#TOC">Linux OS image</a></h4>
+<p>Obtain device id :</p>
+<pre><code>        lspci | grep -i mel</code></pre>
+<p>Check current installed fw level:</p>
+<pre><code>        mstflint -d 0002:01:00.0 q | grep FW</code></pre>
+<p>Copy or mount firmware to host:</p>
+<p>Burn new firmware on each ibaX:</p>
+<pre><code>        mstflint -d 0002:01:00.0 -i &lt;image location&gt; b</code></pre>
+<p>Note: if this is a PureFlex MezzanineP adapater then you must select the correct image for each ibaX device. Note the difference in the firmware image at end of filename: *<em>0.bin (iba0/iba2) &amp; *</em>1.bin (iba1/iba3)</p>
+<p>Verify download successful:</p>
+<pre><code>        mstflint -d 0002:01:00.0 q</code></pre>
+<p>Activate the new firmware :</p>
+<pre><code>        reboot the image</code></pre>
+<p>Note: the above 0002:01:00.0 device location was used as an example only. it is not meant to imply that there is only one device location or that your device will have the same device location.</p>
+<h3 id="mellanox-switch-firmware-upgrade"><a href="#TOC">Mellanox Switch Firmware Upgrade</a></h3>
+<p>This section provides manual procedure to help update the firmware for Mellanox Infiniband (IB) Switches. You can down load IB switch firmware like IB6131 (image-PPC_M460EX-SX_3.2.xxx.img) from the Mellanox website http://www.mellanox.com/page/firmware_table_IBM and place into your xCAT Management Node or server that can communicate to Flex IB6131 switch module. There are two ways to update the MLNX-OS switch package. This process works regardless if updating an internal PureFlex chassis Infiniband switch (IB6131 or for an external Mellanox switch.</p>
+<h4 id="update-via-browser"><a href="#TOC">Update via Browser</a></h4>
+<p>This method is straight forward if your switches are on the public network or your browser is already capable to tunnel to the private address. If neither is the case then you may prefer to use option two.</p>
+<p>After logging into the switch (id=admin, pwd=admin)</p>
+<p>Select the &quot;System&quot; tab and then the &quot;MLNX-OS Upgrade&quot; option</p>
+<p>Under the &quot;Install New Image&quot;, select the &quot;Install via scp&quot; URL: scp://userid@fwhost/directoryofimage/imagename</p>
+<p>Select &quot;Install Image&quot;</p>
+<p>The image will then be downloaded to the switch and the installation process will begin.</p>
+<p>Once completed, the switch must be rebooted for the new package to be activated.</p>
+<h4 id="firmware-update-using-cli"><a href="#TOC">Firmware Update using CLI</a></h4>
+<p>Login to the IB switch:</p>
+<pre><code>       ssh admin@&lt;switchipaddr&gt;
+       enable  (get into correct CLI mode. You can use en)
+       configure terminal (get into correct CLI mode. You can use co t)</code></pre>
+<p>List current images and Remove older images to free up space:</p>
+<p>~~~~ show image image delete <ibimage> ~~~~ (you can paste in ibimage name from show image for image delete)</p>
+<p>Get the new IB image using fetch with scp to a server that contains new IB image. An example of IB3161 image would be &quot;image-PPC_M460EX-SX_3.2.0291.img&quot; Admin can use different protocol . This image fetch scp command is about 4 minutes.</p>
+<pre><code>        image fetch ?
+        image fetch scp://userid:password@serveripddr/&lt;full path ibimage location&gt;</code></pre>
+<p>Verify that new IB image is loaded, then install the new showIB image on IB switch. The install image process goes through 4 stages Verify image, Uncompress image, Create Filesystems, and Extract Image. This install process takes about 9 minutes.</p>
+<p>~~~~ show image image install <newibimage> ~~~~ (you can paste in new IB image from &quot;show image&quot; to execute image install)</p>
+<p>Toggle boot partition to new IB image, verify image install is loaded , and that next boot setting is pointing to new IB image.</p>
+<pre><code>        image boot next
+        show image</code></pre>
+<p>Save the changes made for new IB image:</p>
+<pre><code>        configuration write</code></pre>
+<p>Activate the new IB image (reboot switch):</p>
+<pre><code>        reload
+</code></pre>
+</body>
+</html>

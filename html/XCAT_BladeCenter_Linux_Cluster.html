@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#distro-specific-steps">Distro-specific Steps</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+</ul></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#configure-xcat">Configure xCAT</a><ul>
+<li><a href="#networks-table">Networks Table</a></li>
+<li><a href="#passwd-table">passwd Table</a></li>
+<li><a href="#setup-dns">Setup DNS</a></li>
+<li><a href="#setup-dhcp">Setup DHCP</a></li>
+<li><a href="#setup-tftp">Setup TFTP</a></li>
+<li><a href="#setup-conserver">Setup conserver</a></li>
+</ul></li>
+<li><a href="#define-and-configure-the-amms">Define and Configure the AMMs</a><ul>
+<li><a href="#set-up-amms">Set Up AMMs</a></li>
+<li><a href="#change-amm-password">Change AMM password</a></li>
+<li><a href="#update-the-amm-firmware-if-necessary">Update the AMM Firmware, If Necessary</a></li>
+</ul></li>
+<li><a href="#define-compute-nodes-in-the-database">Define Compute Nodes in the Database</a><ul>
+<li><a href="#get-mac-addresses-for-the-blades">Get MAC Addresses for the Blades</a></li>
+<li><a href="#add-compute-nodes-to-dhcp">Add Compute Nodes to DHCP</a></li>
+<li><a href="#setup-blade-for-net-boot">Setup Blade for net boot</a></li>
+</ul></li>
+<li><a href="#deploying-nodes">Deploying Nodes</a></li>
+<li><a href="#installing-stateful-nodes">Installing Stateful Nodes</a><ul>
+<li><a href="#begin-installation">Begin Installation</a></li>
+</ul></li>
+<li><a href="#deploying-stateless-nodes">Deploying Stateless Nodes</a></li>
+<li><a href="#where-do-i-go-from-here">Where Do I Go From Here?</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#distro-specific-steps">Distro-specific Steps</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#configure-xcat">Configure xCAT</a></li>
+<li><a href="#networks-table">Networks Table</a></li>
+<li><a href="#passwd-table">passwd Table</a></li>
+<li><a href="#setup-dns">Setup DNS</a></li>
+<li><a href="#setup-dhcp">Setup DHCP</a></li>
+<li><a href="#setup-tftp">Setup TFTP</a></li>
+<li><a href="#setup-conserver">Setup conserver</a></li>
+<li><a href="#define-and-configure-the-amms">Define and Configure the AMMs</a></li>
+<li><a href="#set-up-amms">Set Up AMMs</a></li>
+<li><a href="#change-amm-password">Change AMM password</a></li>
+<li><a href="#update-the-amm-firmware-if-necessary">Update the AMM Firmware, If Necessary</a></li>
+<li><a href="#define-compute-nodes-in-the-database">Define Compute Nodes in the Database</a></li>
+<li><a href="#get-mac-addresses-for-the-blades">Get MAC Addresses for the Blades</a></li>
+<li><a href="#add-compute-nodes-to-dhcp">Add Compute Nodes to DHCP</a></li>
+<li><a href="#setup-blade-for-net-boot">Setup Blade for net boot</a></li>
+<li><a href="#deploying-nodes">Deploying Nodes</a></li>
+<li><a href="#installing-stateful-nodes">Installing Stateful Nodes</a></li>
+<li><a href="#begin-installation">Begin Installation</a></li>
+<li><a href="#deploying-stateless-nodes">Deploying Stateless Nodes</a></li>
+<li><a href="#where-do-i-go-from-here">Where Do I Go From Here?</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>This document provides step-by-step instructions for setting up an example stateful or stateless cluster for a BladeCenter.</p>
+<h3 id="distro-specific-steps"><a href="#TOC">Distro-specific Steps</a></h3>
+<ul>
+<li>[RH] indicates that step only needs to be done for RHEL and Red Hat based distros (CentOS, Scientific Linux, and in most cases Fedora).</li>
+<li>[SLES] indicates that step only needs to be done for SLES.</li>
+</ul>
+<h3 id="command-man-pages-and-database-attribute-descriptions"><a href="#TOC">Command Man Pages and Database Attribute Descriptions</a></h3>
+<ul>
+<li>All of the commands used in this document are described in the<a href="http://xcat.sourceforge.net/man1/xcat.1.html">xCAT man pages</a>.</li>
+<li>All of the database attributes referred to in this document are described in the<a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xCAT database object and table descriptions</a>.</li>
+</ul>
+<h2 id="prepare-the-management-node-for-xcat-installation"><a href="#TOC">Prepare the Management Node for xCAT Installation</a></h2>
+<p><a href="Prepare_the_Management_Node_for_xCAT_Installation">Prepare_the_Management_Node_for_xCAT_Installation</a></p>
+<h2 id="install-xcat-on-the-management-node"><a href="#TOC">Install xCAT on the Management Node</a></h2>
+<p><a href="Install_xCAT_on_the_Management_Node">Install_xCAT_on_the_Management_Node</a></p>
+<h2 id="configure-xcat"><a href="#TOC">Configure xCAT</a></h2>
+<h3 id="networks-table"><a href="#TOC">Networks Table</a></h3>
+<p>All networks in the cluster must be defined in the networks table. When xCAT was installed, it ran makenetworks, which created an entry in this table for each of the networks the management node is connected to. Now is the time to add to the networks table any other networks in the cluster, or update existing networks in the table.</p>
+<p>For a sample Networks Setup, see the following example: <a href="Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-a-network-table-setup-example">Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-a-network-table-setup-example</a>.</p>
+<h3 id="passwd-table"><a href="#TOC">passwd Table</a></h3>
+<p>The password should be set in the passwd table that will be assigned to root when the node is installed. You can modify this table using tabedit. To change the default password for root on the nodes, change the system line. To change the password to be used for the AMMs, change the blade line.</p>
+<pre><code>    tabedit passwd
+    #key,username,password,cryptmethod,comments,disable
+    &quot;system&quot;,&quot;root&quot;,&quot;cluster&quot;,,,
+    &quot;blade&quot;,&quot;USERID&quot;,&quot;PASSW0RD&quot;,,,</code></pre>
+<h3 id="setup-dns"><a href="#TOC">Setup DNS</a></h3>
+<p>To get the hostname/IP pairs copied from /etc/hosts to the DNS on the MN:</p>
+<ul>
+<li>Ensure that /etc/sysconfig/named does not have ROOTDIR set</li>
+<li>Set site.forwarders to your site-wide DNS servers that can resolve site or public hostnames. The DNS on the MN will forward any requests it can't answer to these servers.</li>
+</ul>
+<pre><code>    chdef -t site forwarders=1.2.3.4,1.2.5.6</code></pre>
+<ul>
+<li>Edit /etc/resolv.conf to point the MN to its own DNS. (Note: this won't be required in xCAT 2.8 and above.)</li>
+</ul>
+<pre><code>    search cluster
+    nameserver 172.20.0.1</code></pre>
+<ul>
+<li><p>Run makedns</p>
+<p>makedns -n</p></li>
+</ul>
+<p>For more information about name resolution in an xCAT Cluster, see [Cluster_Name_Resolution].</p>
+<h3 id="setup-dhcp"><a href="#TOC">Setup DHCP</a></h3>
+<p>You usually don't want your DHCP server listening on your public (site) network, so set site.dhcpinterfaces to your MN's cluster facing NICs. For example:</p>
+<pre><code>    chdef -t site dhcpinterfaces=eth1</code></pre>
+<p>Then this will get the network stanza part of the DHCP configuration (including the dynamic range) set:</p>
+<pre><code>    makedhcp -n</code></pre>
+<p>The IP/MAC mappings for the nodes will be added to DHCP automatically as the nodes are discovered.</p>
+<h3 id="setup-tftp"><a href="#TOC">Setup TFTP</a></h3>
+<p>Nothing to do here - the TFTP server is done by xCAT during the Management Node install.</p>
+<h3 id="setup-conserver"><a href="#TOC">Setup conserver</a></h3>
+<pre><code>    makeconservercf</code></pre>
+<h2 id="define-and-configure-the-amms"><a href="#TOC">Define and Configure the AMMs</a></h2>
+<p><strong>xCAT requires the AMM management module. It does not support MM's.</strong></p>
+<ul>
+<li>Add the node definitions that represent the AMMs and switches within the chassis:</li>
+</ul>
+<pre><code>    nodeadd amm1-amm5 groups=mm,all
+    nodeadd sw1-sw5 groups=nortel,switch,all</code></pre>
+<ul>
+<li>Set attributes that are common to the whole group or are regular expression:</li>
+</ul>
+<pre><code>    chdef -t group mm mgt=blade hwtype=mm nodetype=mm password=&lt;mypw&gt; mpa=&#39;/\z//&#39; ip=&#39;|10.20.0.($1)|&#39;
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li>the expression used for the mpa attribute just means make it the same as the node name.</li>
+<li>The expression used for the ip attribute means for the last octet use the number in the node name (i.e. amm2 would be 10.20.0.2).</li>
+<li><p>For more info see [Listing_and_Modifying_the_Database].</p></li>
+<li><p>Verify the attributes are set to what you want:</p></li>
+</ul>
+<pre><code>    lsdef mm -l</code></pre>
+<ul>
+<li>Add the MMs to name resolution:</li>
+</ul>
+<pre><code>    makehosts mm
+    makedns mm</code></pre>
+<h3 id="set-up-amms"><a href="#TOC">Set Up AMMs</a></h3>
+<p>Use <a href="http://xcat.sourceforge.net/man1/rspconfig.1.html">rspconfig</a> to configure the network settings on the MM and for the switch module.</p>
+<p><strong>Note: Using rspconfig to set up the MMs' network is an optional step, it is necessary only when the MMs' network are not already setup correctly.</strong> ****</p>
+<p>Set up all of the MMs' network configuration based on what's in the xCAT DB:</p>
+<pre><code>    rspconfig mm network=&#39;*&#39;</code></pre>
+<p>Alternatively, you can configure each MM individually and manually:</p>
+<pre><code>    rspconfig amm1 network=10.20.0.1,amm1,10.20.0.254,255.255.255.0
+    ...</code></pre>
+<p>Note: the network parameters in the command above are: ip,host,gateway,netmask</p>
+<p>Set up the switch module network information for each switch:</p>
+<pre><code>    rspconfig amm1 swnet=10.20.0.101,10.20.0.254,255.255.255.0
+    ...</code></pre>
+<p>Note: the IP addresses in the commands above are: ip,gateway,netmask</p>
+<p>After setting the network settings of the MM and switch module, then enable SNMP and password-less ssh between the xCAT management node and the AMM:</p>
+<pre><code>    rspconfig mm snmpcfg=enable sshcfg=enable
+    rspconfig mm pd1=redwoperf pd2=redwoperf
+    rpower mm reset</code></pre>
+<p>Test the ssh set up to see if password-less ssh is enabled:</p>
+<pre><code>    psh -l USERID mm info -T mm[1]</code></pre>
+<p>For SOL to work best telnet to each nortel switch (default pw is &quot;admin&quot;) and run:</p>
+<pre><code>    /cfg/port int1/gig/auto off
+    .
+    .
+    /cfg/port int14/gig/auto off
+    cd
+    apply
+    save</code></pre>
+<p>Do this for each port (I.e. int2, int3, etc.)</p>
+<h3 id="change-amm-password"><a href="#TOC">Change AMM password</a></h3>
+<p>Be sure password-less ssh is enabled between the Manage Node and the AMM. See above.</p>
+<p>Set the password on the MM (must be the same as in the xCAT DB):</p>
+<pre><code>    rspconfig mm USERID=&lt;mypw&gt;</code></pre>
+<p>Alternatively, if you want to set it manually, then for each AMM:</p>
+<ul>
+<li>List the users on the AMM by running the following command. Write down the user &quot;id&quot; of the USERID, here the id is &quot;1&quot;.</li>
+</ul>
+<pre><code>    ssh -l USERID amm1 &quot;users -T mm[1]&quot;
+    amm:
+    amm: system&amp;gt; users -T mm[1]
+    amm: **1. USERID** 
+    amm: 3 active session(s)
+    amm: Password compliant
+    amm: Account active
+    amm:    Role:supervisor
+    amm:    Blades:1|2|3|4|5|6|7|8|9|10|11|12|13|14
+    amm:    Chassis:1
+    amm:    Modules:1|2|3|4|5|6|7|8|9|10
+    amm: Number of SSH public keys installed for this user: 3
+    amm: 2. &lt;not used&gt;
+    amm: 3. &lt;not used&gt;
+    amm: 4. &lt;not used&gt;
+            .
+            .</code></pre>
+<ul>
+<li>Change the password of USERID on the AMM:</li>
+</ul>
+<pre><code>    ssh -l USERID amm1 &quot;users -T mm[1] **-1** -op PASSW0RD -p PASSW1RD&quot;
+    amm:
+    amm: system&amp;gt; users -T mm[1] -1 -op PASSW0RD -p PASSW1RD
+    amm: OK</code></pre>
+<p>Verify the hardware control commands are working:</p>
+<pre><code>    rvitals amm all</code></pre>
+<p>returns:</p>
+<pre><code>    amm: Blower/Fan 1: 74% RPM Good state
+    amm: Blower/Fan 2: 74% RPM Good state
+    amm: Blower/Fan 3: % RPM Unknown state
+    amm: Blower/Fan 4: % RPM Unknown state
+                    .
+                    .</code></pre>
+<h3 id="update-the-amm-firmware-if-necessary"><a href="#TOC">Update the AMM Firmware, If Necessary</a></h3>
+<p>Updating AMM Firmware can be done through the web GUI or can be done in parallel with psh. To do it in parallel using psh:</p>
+<p>Download Firmware from http://www-304.ibm.com/systems/support/supportsite.wss/docdisplay?brandind=5000008&amp;lndocid=MIGR-5073383 to the management node:</p>
+<pre><code>    cd /tftpboot/
+    unzip ibm_fw_amm_bpet36k_anyos_noarch.zip</code></pre>
+<p>Perform the update:</p>
+<pre><code>    psh -l USERID mm &quot;update -i 10.20.0.200 -l CNETCMUS.pkt -v -T mm[1]&quot;</code></pre>
+<p>Note: 10.20.0.200 should be the IP address and the management node on the service network.</p>
+<p>Reset the AMM, they will take a few minutes to come back online</p>
+<pre><code>    psh -l USERID mm &quot;reset -T mm[1]&quot;</code></pre>
+<p>You can display the current version of firmware with:</p>
+<pre><code>    psh -l USERID mm &quot;info -T mm[1]&quot; | grep &quot;Build ID&quot;</code></pre>
+<h2 id="define-compute-nodes-in-the-database"><a href="#TOC">Define Compute Nodes in the Database</a></h2>
+<p>Note: For more information about the node attributes used in this section, see [&lt;http://xcat.sourceforge.net/man7/node.7.html&gt; node attributes].</p>
+<ul>
+<li>Add the node definitions that represent the blades:</li>
+</ul>
+<pre><code>    nodeadd blade01-blade50 groups=blade,compute,all</code></pre>
+<ul>
+<li>Set attributes that are common to the whole group or are regular expression:</li>
+</ul>
+<pre><code>   chdef -t group blade mgt=blade cons=blade hwtype=blade nodetype=blade serialspeed=115200 serialport=1 netboot=xnba tftpserver=10.20.0.200
+    chdef -t group blade mpa=&#39;|amm(($1-1)/14+1)|&#39; id=&#39;|(($1-1)%14+1)|&#39; ip=&#39;|10.0.0.($1+0)|&#39;</code></pre>
+<pre><code> Notes: </code></pre>
+<ul>
+<li>10.20.0.200 should be the IP address and the management node on the service network.</li>
+<li>the expression used for the mpa attribute means the 1st 14 blades are in the 1st amm, the next 14 blades and in the next amm, etc.</li>
+<li>the expression used for id sets the slot id correctly for each blade assuming there are 14 blades in each chassis.</li>
+<li>The expression used for the ip attribute means for the last octet use the number in the node name (i.e. blade02 would be 10.0.0.2).</li>
+<li>For more info on Regular expressionssee [Listing_and_Modifying_the_Database].</li>
+<li><p>if you are using JS blades, do not set serialspeed or serialport.</p></li>
+<li><p>Verify the attributes are set to what you want by listing them for one blade:</p></li>
+</ul>
+<pre><code>    lsdef blade20</code></pre>
+<ul>
+<li>Add the blades to name resolution:</li>
+</ul>
+<pre><code>    makehosts blade
+    makedns blade</code></pre>
+<ul>
+<li>Add the blades to conserver:</li>
+</ul>
+<pre><code>    makeconservercf</code></pre>
+<ul>
+<li>Make sure hardware control works:</li>
+</ul>
+<pre><code>    rpower blade stat</code></pre>
+<p>Test rcons for a few nodes:</p>
+<pre><code>    rcons blade01</code></pre>
+<p>If you have problems with conserver:</p>
+<ul>
+<li>Are you setting the blade bios versions correctly?</li>
+<li>Are you setting xCAT tables correctly ( check your nodehm table)?</li>
+</ul>
+<p>To check the bios version, check your docs ( for example for a hs21 blade):<em>http://download.boulder.ibm.com/ibmdl/pub/systems/support/system_x_cluster/hs21-cmos-settings-v1.1.htm</em></p>
+<p>If you want the MTM and serial numbers of the blades in the xCAT DB, you can run:</p>
+<pre><code>    rscan mm -u</code></pre>
+<h3 id="get-mac-addresses-for-the-blades"><a href="#TOC">Get MAC Addresses for the Blades</a></h3>
+<p>Collect the blade MACs from the MMs:</p>
+<pre><code>    getmacs blade</code></pre>
+<p>Note: The getmacs will get the mac address of the first network interface, to get the mac address of the other network interfaces, use getmacs &lt;nodename&gt; -i eth&lt;x&gt;.</p>
+<p>To verify the mac addresses are set in the DB:</p>
+<pre><code>    lsdef blade -i mac -c</code></pre>
+<h3 id="add-compute-nodes-to-dhcp"><a href="#TOC">Add Compute Nodes to DHCP</a></h3>
+<pre><code>    makedhcp blade</code></pre>
+<h3 id="setup-blade-for-net-boot"><a href="#TOC">Setup Blade for net boot</a></h3>
+<pre><code>    rbootseq &lt;nodename&gt; net,hd</code></pre>
+<h2 id="deploying-nodes"><a href="#TOC">Deploying Nodes</a></h2>
+<ul>
+<li>In you want to install your nodes as stateful (diskful) nodes, follow the next section<a href="XCAT_BladeCenter_Linux_Cluster/#installing-stateful-nodes">XCAT_BladeCenter_Linux_Cluster/#installing-stateful-nodes</a>).</li>
+<li>If you want to define one or more stateless (diskless) OS images and boot the nodes with those, see section <a href="XCAT_BladeCenter_Linux_Cluster/#deploying-stateless-nodes">XCAT_BladeCenter_Linux_Cluster/#deploying-stateless-nodes</a>. This method has the advantage of managing the images in a central place, and having only one image per node type.</li>
+<li>If you want to have nfs-root statelite nodes, see [XCAT_Linux_Statelite]. This has the same advantage of managing the images from a central place. It has the added benefit of using less memory on the node while allowing larger images. But it has the drawback of making the nodes dependent on the management node or service nodes (i.e. if the management/service node goes down, the compute nodes booted from it go down too).</li>
+<li>If you have a very large cluster (more than 500 nodes), at this point you should follow [Setting_Up_a_Linux_Hierarchical_Cluster] to install and configure your service nodes. After that you can return here to install or diskless boot your compute nodes.</li>
+</ul>
+<h2 id="installing-stateful-nodes"><a href="#TOC">Installing Stateful Nodes</a></h2>
+<p><a href="Installing_Stateful_Linux_Nodes">Installing_Stateful_Linux_Nodes</a></p>
+<h3 id="begin-installation"><a href="#TOC">Begin Installation</a></h3>
+<p>The <a href="http://xcat.sourceforge.net/man8/nodeset.8.html">nodeset</a> command tells xCAT what you want to do next with this node, <a href="http://xcat.sourceforge.net/man1/rsetboot.1.html">rsetboot</a> tells the node hardware to boot from the network for the next boot, and powering on the node using<a href="http://xcat.sourceforge.net/man1/rpower.1.html">rpower</a> starts the installation process:</p>
+<pre><code>    nodeset compute osimage=mycomputeimage
+    rpower compute boot</code></pre>
+<p>Tip: when nodeset is run, it processes the kickstart or autoyast template associated with the osimage, plugging in node-specific attributes, and creates a specific kickstart/autoyast file for each node in /install/autoinst. If you need to customize the template, make a copy of the template file that is pointed to by the osimage.template attribute and edit that file (or the files it includes).</p>
+<p><a href="Monitor_Installation">Monitor_Installation</a></p>
+<h2 id="deploying-stateless-nodes"><a href="#TOC">Deploying Stateless Nodes</a></h2>
+<p><a href="Using_Provmethod=osimagename">Using_Provmethod=osimagename</a></p>
+<pre><code>    rpower compute boot</code></pre>
+<h2 id="where-do-i-go-from-here"><a href="#TOC">Where Do I Go From Here?</a></h2>
+<p>Now that your basic cluster is set up, here are suggestions for additional reading:</p>
+<ul>
+<li>To help configure your networks:
+<ul>
+<li>[Managing_the_Mellanox_Infiniband_Network]</li>
+<li>[Managing_Ethernet_Switches]</li>
+</ul></li>
+<li>To install other HPC products:
+<ul>
+<li>[IBM_HPC_Stack_in_an_xCAT_Cluster]</li>
+</ul></li>
+<li>For on-going management of the cluster:
+<ul>
+<li>[Using_Updatenode]</li>
+<li>[Monitoring_an_xCAT_Cluster]</li>
+</ul></li>
+<li>If you want to create multiple virtual machines in each physical server:
+<ul>
+<li>[XCAT_Virtualization_with_VMWare]</li>
+<li>[XCAT_Virtualization_with_KVM]</li>
+<li>[XCAT_Virtualization_with_RHEV]</li>
+</ul></li>
+</ul>
+</body>
+</html>

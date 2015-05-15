@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-changes-in-behavior-and-bugs-fixed-in-2.6.2-since-2.6.1">New Function, Changes in Behavior, and Bugs Fixed in 2.6.2 Since 2.6.1</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-changes-in-behavior-and-bugs-fixed-in-262-since-261">New Function, Changes in Behavior, and Bugs Fixed in 2.6.2 Since 2.6.1</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the <a href="XCAT_2.6.1_Release_Notes">2.6.1 release</a>.</p>
+<h2 id="new-function-changes-in-behavior-and-bugs-fixed-in-2.6.2-since-2.6.1"><a href="#TOC">New Function, Changes in Behavior, and Bugs Fixed in 2.6.2 Since 2.6.1</a></h2>
+<ul>
+<li>A new <a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Linux/xcat-dep-201107291350.tar.bz2/download">xCAT Linux deps tarball</a> was built to fix the plugin load errors on Centos6/Redhat6 x86* - bug <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3380912&amp;group_id=208749&amp;atid=1006945">3380912</a></li>
+<li>makedns needs the /etc/resolv.conf on management node has the mn's IP address specified as nameserver (from site.master) and cluster domain ( from site.domain) as a search path. If the compute nodes also needs to have name resolution to hosts outside the cluster, add the external nameservers addresses to the site table forwarders attribute.</li>
+</ul>
+<h2 id="known-issues-and-work-arounds"><a href="#TOC">Known Issues and Work Arounds</a></h2>
+<ul>
+<li>&quot;makedhcp -n&quot; reports error 'Can't call method &quot;brsft&quot; ...' - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3323752&amp;group_id=208749&amp;atid=1006945">bug 3323752</a></li>
+<li><p>makedns can not work on SLES - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3365678&amp;group_id=208749&amp;atid=1006945">bug 3365678</a> - <a href="https://bugzilla.linux.ibm.com/show_bug.cgi?id=73119">SuSE bugzilla 73119</a></p>
+<p>workaround - run &quot;chown root:name /var/lib/named&quot; on management node. Fixed in xCAT svn truck revision 10094.</p></li>
+<li><p>makedns can currently only handle domain names with at least one &quot;dot&quot; in them. For example a doman of cluster.net is valid, but a domain of just cluster is not. Defect</p></li>
+</ul>
+<p>3384808 is opened to fix.</p>
+</body>
+</html>

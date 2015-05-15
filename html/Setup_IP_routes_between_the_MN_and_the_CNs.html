@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#setup-ip-routes-between-the-mn-and-the-cns">Setup IP routes between the MN and the CNs</a><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#implementation">Implementation</a><ul>
+<li><a href="#setup-service-node-ip-forwarding">Setup service node IP forwarding</a></li>
+<li><a href="#setup-routing">Setup routing</a></li>
+<li><a href="#makeroutes-command">makeroutes command</a></li>
+<li><a href="#modify-makedhcp-command">Modify makedhcp command</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#setup-ip-routes-between-the-mn-and-the-cns">Setup IP routes between the MN and the CNs</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#implementation">Implementation</a>
+<ul>
+<li><a href="#setup-service-node-ip-forwarding">Setup service node IP forwarding</a></li>
+<li><a href="#setup-routing">Setup routing</a></li>
+<li><a href="#makeroutes-command">makeroutes command</a></li>
+<li><a href="#modify-makedhcp-command">Modify makedhcp command</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="setup-ip-routes-between-the-mn-and-the-cns"><a href="#TOC">Setup IP routes between the MN and the CNs</a></h2>
+<h3 id="overview"><a href="#TOC">Overview</a></h3>
+<p>In a large cluster where service nodes are needed, the networks is often configured in one of the following ways.</p>
+<ol style="list-style-type: decimal">
+<li>The MN and SNs are in a network, the SNs and CNs are in a different network. (Figure 1)</li>
+<li>The MN, SNs and CNs are all in a flat network. (Figure 2)</li>
+<li>The MN and SNs are in a network, each SN has its own network with a subset of CNs. (Figure 3)</li>
+</ol>
+<p>[[img src=F1.JPG]] [[img src=F2.JPG]] [[img src=F3.JPG]]</p>
+<p>There is often need to be able to ping or ssh from the MN to the CNs. However, in case 1 and 3, the MN and the CNs are not in a same network, the SN will be used as gateway to connect the MN to the CNs. xCAT will help setting up the routes automatically if it is required by the user.</p>
+<h3 id="implementation"><a href="#TOC">Implementation</a></h3>
+<p>There are two steps involved in setting up the IP connection between the MN and CNs. The first is to configure the SNs to enable <strong>IP forwarding</strong>. The second is to setup the routing table on the MN. In order the make it automated, the user needs to input the requirements into xCAT database.</p>
+<h4 id="setup-service-node-ip-forwarding"><a href="#TOC">Setup service node IP forwarding</a></h4>
+<p>A new column called <strong>ipforward</strong> in the servicenode table will be added. It can be set by hand or by <strong>makeroutes</strong> (see later) command. When xcatd on a service node is started (without the -r option), AAsn.pm will check this value. If it is set to 1, the ip forwarding will be enabled on it and if 0 the ip forwarding will be disabled.</p>
+<h4 id="setup-routing"><a href="#TOC">Setup routing</a></h4>
+<p>Routing will be specified in the <strong>routes</strong> table. The table has the following columns:</p>
+<ul>
+<li>routename (primary key)</li>
+<li>net</li>
+<li>mask</li>
+<li>gateway</li>
+<li>ifname</li>
+<li>metric ??</li>
+</ul>
+<p>For PERCS cluster, the routing info will be specified in the xCAT configuration file and this table will be populated by the <strong>xcatsetup</strong> command.</p>
+<p>The routes specified in the xCAT <strong>routes</strong> table will be added to the Kernel IP routing table for the os by <strong>makeroutes</strong> command.</p>
+<h4 id="makeroutes-command"><a href="#TOC">makeroutes command</a></h4>
+<p>This new command will read the routing info from xCAT's <strong>routes</strong> table and then add the routes to the Kernel IP routing table for the os. It also gets all the gateways from the table, if a gateway is a service node, it then make servicenode.ipforward=1 and then goes to the service node and enable the ipforwarding on that service node.</p>
+<pre><code>   **makeroutes -v|-h**
+   **makeroutes [-r routenames]**  
+                add given routes to the os route table. routenames is a list of comma separated route names defined in the **routes** table. If omitted, all routes defined in the **routes** table will be added to the os route table.
+   **makeroutes -d [-r routenames]** 
+                delete given routes from the os route table. routenames is a list of comma separated route names defined in the **routes** table. If omitted, all routes defined in the **routes** table will be deleted from the os route table.
+   **makeroutes [-n net] [-m mask] [-g gateway]**
+                add the specified routes into the os route table.
+   **makeroutes -d [-n net] [-m mask] [-g gateway]**
+                remove the specified routes from the os route table.</code></pre>
+<h4 id="modify-makedhcp-command"><a href="#TOC">Modify makedhcp command</a></h4>
+<p>With current implementation of <strong>makedhcp</strong>, the dhcp leases file on a service node contains all the nodes that is within the same network. This is not feasible for a large cluster where all SNs and CNs are in flat network, the .leases file will contain all the CNs which will be huge. For DHCP request/response, we still want to break the CNs into groups according to the noderes.servicenode settings for the nodes. A new <strong>site</strong> table attribute called <strong>disjointdhcps</strong> will be used to indicate if the grouping is used or not. The <strong>makedhcp</strong> command will check for this setting and create the .leases files accordingly on the service nodes. All the flags for <strong>makedhcp</strong> remain the same.</p>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>xCAT puts a small daemon in the RH and SuSE preinstall code. You can see this if you examine the INSTALLDIR/scripts/OS/ARCH/... files.</p>
+<p>This daemon allows remote shell access and the ability to query the state of the install, including the current RPM being installed.</p>
+<p>To monitor the installs type:</p>
+<p>watch 'nodestat noderange | sort'</p>
+<p>This is prefered to watching with wcons/rcons.</p>
+<p>To run a remote command type:</p>
+<p>cd $XCATROOT/lib<br />./nodecmd.awk nodename command</p>
+<p>To get a remote console screen dump (same as Alt-F1, Alt-F2, etc... on the console) type:</p>
+<p>xterm -geometry 80x26</p>
+<p>In the xterm window type:</p>
+<p>cd $XCATROOT/lib<br />./nodescreendump.awk nodename screen_number (1-7), e.g.:</p>
+<p>./nodescreendump.awk node01 3</p>
+</body>
+</html>

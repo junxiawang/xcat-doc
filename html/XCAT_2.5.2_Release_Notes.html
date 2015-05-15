@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-in-2.5.2-since-2.5.1">New Function in 2.5.2 Since 2.5.1</a></li>
+<li><a href="#bugs-fixed-in-2.5.2">Bugs Fixed in 2.5.2</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-in-252-since-251">New Function in 2.5.2 Since 2.5.1</a></li>
+<li><a href="#bugs-fixed-in-252">Bugs Fixed in 2.5.2</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the 2.5.1 release. Also see the [XCAT_2.5.1_Release_Notes].</p>
+<h2 id="new-function-in-2.5.2-since-2.5.1"><a href="#TOC">New Function in 2.5.2 Since 2.5.1</a></h2>
+<ul>
+<li>rinv -t to allow writing data from vSphere to xCAT databases</li>
+<li>Support dhcpd having multiple, non-contiguous dynamic ranges</li>
+<li>SLES 11 SP1 support for stateless/statelite</li>
+<li>Postscripts behavior was enhanced</li>
+</ul>
+<h2 id="bugs-fixed-in-2.5.2"><a href="#TOC">Bugs Fixed in 2.5.2</a></h2>
+<ul>
+<li>Fix genimage compatibility with older RHEL5 versions</li>
+<li>Fix compatibility with older stateless/statelite images</li>
+<li>Fix problem where xCAT failed to customize stateless ESXi 4.0</li>
+<li>Fix remote video compatibility with newer versions of IBM IMM firmware</li>
+<li>Fix reparenting virtual machines when vSphere performs migrations without xCAT involvement</li>
+<li>Refrain from configuring dhcpd for dynamic DNS unless the corresponding dnshandler is chosen</li>
+<li>Fix multi-mac syntax when VMs are created with multiple addresses</li>
+<li>Fix boot nic auto-detection</li>
+</ul>
+<p>Many bugs were fixed in 2.5.2. For details see the <a href="http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945">Tracker Bugs</a>, or check the subversion commit history for the 2.5 branch.</p>
+<h2 id="known-issues-and-work-arounds"><a href="#TOC">Known Issues and Work Arounds</a></h2>
+<ul>
+<li>The AIX support for the &quot;notify&quot; option when defining a NIM dump resource is not currently working. In an xCAT cluster this option would be specified with the mknimimage command. Do not attempt to use this option at this time.</li>
+</ul>
+</body>
+</html>

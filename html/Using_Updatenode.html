@@ -1,0 +1,318 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#add-additional-software-linux-only">Add Additional Software (Linux Only)</a><ul>
+<li><a href="#installing-additional-os-distro-packages">Installing Additional OS Distro Packages</a></li>
+<li><a href="#install-additional-non-os-rpms">Install Additional non-OS rpms</a></li>
+<li><a href="#update-stateful-nodes">Update Stateful Nodes</a></li>
+<li><a href="#update-stateless-nodes">Update Stateless Nodes</a></li>
+<li><a href="#update-the-delta-changes-in-sysclone-environment">Update the delta changes in Sysclone environment</a></li>
+</ul></li>
+<li><a href="#rerun-postscripts-or-run-additional-postcripts-with-the-updatenode-command">Rerun Postscripts or Run Additional Postcripts with the updatenode Command</a></li>
+<li><a href="#mypostscript-template-for-updatenode">mypostscript template for updatenode</a></li>
+<li><a href="#update-the-ssh-keys-and-credentials-on-the-nodes"><strong>Update the ssh Keys and Credentials on the Nodes</strong></a></li>
+<li><a href="#syncfiles-to-the-nodes"><strong>syncfiles to the nodes</strong></a><ul>
+<li><a href="#setting-up-syncfile-for-updatenode">Setting up syncfile for updatenode</a></li>
+</ul></li>
+<li><a href="#appendix-a-file-format-for-otherpkgs.pkglist-file">Appendix A: File Format for otherpkgs.pkglist File</a><ul>
+<li><a href="#rpm-names">RPM Names</a></li>
+<li><a href="#rpm-names-with-otherpkgs-subdirectories">RPM Names with otherpkgs Subdirectories</a></li>
+<li><a href="#include-other-pkglist-files">Include Other pkglist Files</a></li>
+<li><a href="#multiple-install-lists">Multiple Install Lists</a></li>
+<li><a href="#environment-variable-list">Environment Variable List</a></li>
+<li><a href="#remove-rpms-before-installing">Remove RPMs Before Installing</a></li>
+<li><a href="#remove-rpms-after-installing">Remove RPMs After Installing</a></li>
+</ul></li>
+<li><a href="#appendix-b-file-format-for-.pkglist-file">Appendix B: File Format for .pkglist File</a><ul>
+<li><a href="#rpm-names-1">RPM Names</a></li>
+<li><a href="#include-pkglist-files">Include pkglist Files</a></li>
+<li><a href="#grouppattern-names">Group/Pattern Names</a></li>
+<li><a href="#remove-rpms-after-installing-1">Remove RPMs After Installing</a></li>
+</ul></li>
+<li><a href="#appendix-c-debugging-tips">Appendix C: Debugging Tips</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#add-additional-software-linux-only">Add Additional Software (Linux Only)</a></li>
+<li><a href="#installing-additional-os-distro-packages">Installing Additional OS Distro Packages</a></li>
+<li><a href="#install-additional-non-os-rpms">Install Additional non-OS rpms</a></li>
+<li><a href="#update-stateful-nodes">Update Stateful Nodes</a></li>
+<li><a href="#update-stateless-nodes">Update Stateless Nodes</a></li>
+<li><a href="#update-the-delta-changes-in-sysclone-environment">Update the delta changes in Sysclone environment</a></li>
+<li><a href="#rerun-postscripts-or-run-additional-postcripts-with-the-updatenode-command">Rerun Postscripts or Run Additional Postcripts with the updatenode Command</a></li>
+<li><a href="#mypostscript-template-for-updatenode">mypostscript template for updatenode</a></li>
+<li><a href="#update-the-ssh-keys-and-credentials-on-the-nodes"><strong>Update the ssh Keys and Credentials on the Nodes</strong></a></li>
+<li><a href="#syncfiles-to-the-nodes"><strong>syncfiles to the nodes</strong></a></li>
+<li><a href="#setting-up-syncfile-for-updatenode">Setting up syncfile for updatenode</a></li>
+<li><a href="#appendix-a-file-format-for-otherpkgspkglist-file">Appendix A: File Format for otherpkgs.pkglist File</a></li>
+<li><a href="#rpm-names">RPM Names</a></li>
+<li><a href="#rpm-names-with-otherpkgs-subdirectories">RPM Names with otherpkgs Subdirectories</a></li>
+<li><a href="#include-other-pkglist-files">Include Other pkglist Files</a></li>
+<li><a href="#multiple-install-lists">Multiple Install Lists</a></li>
+<li><a href="#environment-variable-list">Environment Variable List</a></li>
+<li><a href="#remove-rpms-before-installing">Remove RPMs Before Installing</a></li>
+<li><a href="#remove-rpms-after-installing">Remove RPMs After Installing</a></li>
+<li><a href="#appendix-b-file-format-for-pkglist-file">Appendix B: File Format for .pkglist File</a></li>
+<li><a href="#rpm-names-1">RPM Names</a></li>
+<li><a href="#include-pkglist-files">Include pkglist Files</a></li>
+<li><a href="#grouppattern-names">Group/Pattern Names</a></li>
+<li><a href="#remove-rpms-after-installing-1">Remove RPMs After Installing</a></li>
+<li><a href="#appendix-c-debugging-tips">Appendix C: Debugging Tips</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>The xCAT platform-specific cookbooks explain how to initially deploy your nodes. (See the [XCAT_Documentation] page for a list of the cookbooks.) But after initial node deployment, you inevitably need to make changes/updates to your nodes. The <a href="http://xcat.sourceforge.net/man1/updatenode.1.html">updatenode</a> command is for this purpose. It allows you to add or modify the following things on your nodes:</p>
+<ul>
+<li>Add additional software</li>
+<li>Synchronize new/updated configuration files</li>
+<li>Rerun postscripts</li>
+<li>Update ssh keys and xCAT certificates</li>
+</ul>
+<p>Each of these will be explained in the document. The basic way to use updatenode is to set the definition of nodes on the management node the way you want it and then run updatenode to push those changes out to the actual nodes. Using options to the command, you can control which of the above categories updatenode pushes out to the nodes.</p>
+<p>Most of what is described in this document applies to <strong>stateful, and stateless</strong> nodes. For <strong>nfs-based statelite nodes</strong>, see [XCAT_Linux_Statelite].</p>
+<p>In addition to the information in this document, check out the <a href="http://xcat.sourceforge.net/man1/updatenode.1.html">updatenode man page</a>.</p>
+<h2 id="add-additional-software-linux-only"><a href="#TOC">Add Additional Software (Linux Only)</a></h2>
+<p>The name of the rpms that will be installed on the node are stored in the packages list files. There are <strong>two kinds of package list files</strong>:</p>
+<ul>
+<li>The <strong>package list file</strong> contains the names of the rpms that comes from the os distro. They are stored in <strong>.pkglist</strong> file.</li>
+<li>The <strong>other package list file</strong> contains the names of the rpms that do <strong>NOT</strong> come from the os distro. They are stored in <strong>.otherpkgs.pkglist</strong> file.</li>
+</ul>
+<p>The path to the package lists will be read from the osimage definition. Which osimage a node is using is specified by the provmethod attribute. To display this value for a node:</p>
+<pre><code>     lsdef node1 -i provmethod
+    Object name: dx360m3n03
+       provmethod=rhels6.3-x86_64-netboot-compute</code></pre>
+<p>You can display this details of this osimage by running the following command, supplying your osimage name:</p>
+<pre><code>    lsdef -t osimage rhels6.3-x86_64-netboot-compute
+    Object name: rhels6.3-x86_64-netboot-compute
+        exlist=/opt/xcat/share/xcat/netboot/rhels6.3/compute.exlist
+        imagetype=linux
+        osarch=x86_64
+        osname=Linux
+        osvers=rhels6.3
+        otherpkgdir=/install/post/otherpkgs/rhels6.3/x86_64
+        otherpkglist=/install/custom/netboot/rh/compute.otherpkgs.pkglist
+        pkgdir=/install/rhels6/x86_64
+        pkglist=/opt/xcat/share/xcat/netboot/rhels6/compute.pkglist
+        postinstall=/opt/xcat/share/xcat/netboot/rh/compute.rhels6.x86_64.postinstall
+        profile=compute
+        provmethod=netboot
+        rootimgdir=/install/netboot/rhels6.3/x86_64/compute
+        synclists=/install/custom/netboot/compute.synclist</code></pre>
+<p>You can set the pkglist and otherpkglist using the following command:</p>
+<pre><code>    chdef -t osimage rhels6.3-x86_64-netboot-compute pkglist=/opt/xcat/share/xcat/netboot/rh/compute.pkglist\
+ otherpkglist=/install/custom/netboot/rh/my.otherpkgs.pkglist</code></pre>
+<h3 id="installing-additional-os-distro-packages"><a href="#TOC">Installing Additional OS Distro Packages</a></h3>
+<p>For rpms from the OS distro, add the new rpm names (without the version number) in the .pkglist file. For example, file /install/custom/netboot/sles/compute.pkglist will look like this after adding perl-DBI:</p>
+<pre><code>    bash
+    nfs-utils
+    openssl
+    dhcpcd
+    kernel-smp
+    openssh
+    procps
+    psmisc
+    resmgr
+    wget
+    rsync
+    timezone
+    perl-DBI</code></pre>
+<p>For the format of the .pkglist file, go to <a href="Using_Updatenode/#appendix-b-file-format-for-pkglist-file">Using_Updatenode#Appendix_B:<em>File_Format_for</em>.pkglist_File</a>.</p>
+<p>If you have newer updates to some of your operating system packages that you would like to apply to your OS image, you can place them in another directory, and add that directory to your osimage pkgdir attribute. For example, with the osimage defined above, if you have a new openssl package that you need to update for security fixes, you could place it in a directory, create repository data, and add that directory to your pkgdir:</p>
+<pre><code>mkdir -p /install/osupdates/rhels6.3/x86_64 
+cd /install/osupdates/rhels6.3/x86_64
+cp &lt;your new openssl rpm&gt;  .
+createrepo .
+chdef -t osimage rhels6.3-x86_64-netboot-compute pkgdir=/install/rhels6/x86_64,/install/osupdates/rhels6.3/x86_64 </code></pre>
+<h3 id="install-additional-non-os-rpms"><a href="#TOC">Install Additional non-OS rpms</a></h3>
+<p><a href="Install_Additional_Packages">Install_Additional_Packages</a></p>
+<p>For the format of the .otherpkg.pklist file, go to <a href="Using_Updatenode/#appendix-a-file-format-for-otherpkgspkglist-file">Using_Updatenode#Appendix_A:<em>File_Format_for</em>.pkglist_File</a></p>
+<h3 id="update-stateful-nodes"><a href="#TOC">Update Stateful Nodes</a></h3>
+<p>Run the updatenode command to push the new software to the nodes:</p>
+<pre><code>    
+    updatenode &lt;noderange&gt; -S</code></pre>
+<p>The -S flag updates the nodes with all the new or updated rpms specified in both .pkglist and .otherpkgs.pkglist.</p>
+<p>If you have a configuration script that is necessary to configure the new software, then instead run:</p>
+<pre><code>    cp myconfigscript /install/postscripts/
+    chdef -p -t compute postbootscripts=myconfigscript
+    updatenode &lt;noderange&gt; ospkgs,otherpkgs,myconfigscript</code></pre>
+<p>The next time you re-install these nodes, the additional software will be automatically installed.</p>
+<h3 id="update-stateless-nodes"><a href="#TOC">Update Stateless Nodes</a></h3>
+<p>Run the updatenode command to push the new software to the nodes:</p>
+<pre><code>    updatenode &lt;noderange&gt; -S</code></pre>
+<p>The -S flag updates the nodes with all the new or updated rpms specified in both .pkglist and .otherpkgs.pkglist.</p>
+<p>If you have a configuration script that is necessary to configure the new software, then instead run:</p>
+<pre><code>    cp myconfigscript /install/postscripts/
+    chdef -p -t compute postbootscripts=myconfigscript
+    updatenode &lt;noderange&gt; ospkgs,otherpkgs,myconfigscript</code></pre>
+<p><strong>You must also do this next step</strong>, otherwise the next time you reboot the stateless nodes, the new software won't be on the nodes. Run genimage and packimage to install the extra rpms into the image:</p>
+<pre><code>    genimage &lt;osimage&gt;
+    packimage &lt;osimage&gt;</code></pre>
+<h3 id="update-the-delta-changes-in-sysclone-environment"><a href="#TOC">Update the delta changes in Sysclone environment</a></h3>
+<p>Updatenode can also be used in Sysclone environment to push delta changes to target node. After capturing the delta changes from the golden client to management node, just run below command to push delta changes to target nodes. See <a href="Using_Clone_to_Deploy_Server/#Update_Nodes_Later_On">Using_Clone_to_Deploy_Server#Update_Nodes_Later_On</a> for more information.</p>
+<pre><code>  updatenode &lt;targetnoderange&gt; -S</code></pre>
+<h2 id="rerun-postscripts-or-run-additional-postcripts-with-the-updatenode-command"><a href="#TOC">Rerun Postscripts or Run Additional Postcripts with the updatenode Command</a></h2>
+<p>You can use the updatenode command to perform the following functions after the nodes are up and running:</p>
+<ul>
+<li>Rerun postscripts defined in the postscripts table. You might want to do this, for example, if you changed database attributes that affect the running of the postscripts.</li>
+<li>Run any additional postscript one time. (If you want it run every time the node is deployed, you should add it to the postscript or postbootscript attribute of the nodes or node group.) The reason you might want to run a postscript on the nodes once, instead of running a script via xdsh or psh, is that the former approach will make a lot of environment variables available to the postscript that contain the node database values. See [Postscripts_and_Prescripts] for more information.</li>
+</ul>
+<p>To rerun all the postscripts for the nodes. (In general, xCAT postscripts are structured such that it is not harmful to run them multiple times.)</p>
+<pre><code>    updatenode &lt;noderange&gt; -P</code></pre>
+<p>To rerun just the syslog postscript for the nodes:</p>
+<pre><code>    updatenode &lt;noderange&gt; -P syslog</code></pre>
+<p>To run a list of your own postscripts, make sure the scripts are copied to /install/postscripts directory, then:</p>
+<pre><code>    updatenode &lt;noderange&gt; -P &quot;script1,script2&quot;</code></pre>
+<p>If you need to, you can also pass arguments to your scripts (this will work in xCAT 2.6.7 and greater):</p>
+<pre><code>    updatenode &lt;noderange&gt; -P &quot;script1 p1 p2,script2&quot;</code></pre>
+<h2 id="mypostscript-template-for-updatenode"><a href="#TOC">mypostscript template for updatenode</a></h2>
+<p>As of xCAT 2.8, you can customize what attributes you want made available to the post*script, using the shipped mypostscript.tmpl file.</p>
+<p><a href="Template_of_mypostscript">Template_of_mypostscript</a></p>
+<h2 id="update-the-ssh-keys-and-credentials-on-the-nodes"><a href="#TOC"><strong>Update the ssh Keys and Credentials on the Nodes</strong></a></h2>
+<p>If after node deployment, the ssh keys or xCAT ssl credentials become corrupted, xCAT provides a way to quickly fix the keys and credentials on your Service and compute nodes:</p>
+<pre><code>     updatenode &lt;noderange&gt; -K</code></pre>
+<p>Note: this option can't be used with any of the other updatenode options.</p>
+<h2 id="syncfiles-to-the-nodes"><a href="#TOC"><strong>syncfiles to the nodes</strong></a></h2>
+<p>If after install, you would like to sync files to the nodes, use the instructions in the next section on &quot;Setting up syncfile for updatenode&quot; and then run:</p>
+<pre><code>    updatenode &lt;noderange&gt; -F</code></pre>
+<p><strong>With the updatenode command the syncfiles postscript cannot be used to sync files to the nodes.</strong> Therefore, if you run updatenode &lt;noderange&gt; -P syncfiles, nothing will be done. A messages will be logged that you must use updatenode &lt;noderange&gt; -F to sync files using updatenode.</p>
+<h3 id="setting-up-syncfile-for-updatenode"><a href="#TOC">Setting up syncfile for updatenode</a></h3>
+<p><a href="The_location_of_synclist_file_for_updatenode_and_install_process">The_location_of_synclist_file_for_updatenode_and_install_process</a></p>
+<h2 id="appendix-a-file-format-for-otherpkgs.pkglist-file"><a href="#TOC">Appendix A: File Format for otherpkgs.pkglist File</a></h2>
+<p>The otherpkgs.pklist file can contain the following types of entries:</p>
+<pre><code>  * rpm name without version numbers 
+  * otherpkgs subdirectory plus rpm name 
+  * blank lines 
+  * comment lines starting with # 
+  * #INCLUDE: &lt;full file path&gt;# to include other pkglist files 
+  * #NEW_INSTALL_LIST# to signify that the following rpms will be installed with a new rpm install command (zypper, yum, or rpm as determined by the function using this file) 
+  * #ENV:&lt;variable list&gt;# to specify environment variable(s) for a sparate rpm install command 
+  * rpms to remove before installing marked with a &quot;-&quot; 
+  * rpms to remove after installing marked with a &quot;--&quot; </code></pre>
+<p>These are described in more details in the following sections.</p>
+<h3 id="rpm-names"><a href="#TOC">RPM Names</a></h3>
+<p>A simple otherpkgs.pkglist file just contains the the name of the rpm file without the version numbers.</p>
+<p>For example, if you put the following three rpms under /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/ directory,</p>
+<pre><code>    rsct.core-2.5.3.1-09120.ppc.rpm
+    rsct.core.utils-2.5.3.1-09118.ppc.rpm
+    src-1.3.0.4-09118.ppc.rpm</code></pre>
+<p>The otherpkgs.pkglist file will be like this:</p>
+<pre><code>    src
+    rsct.core
+    rsct.core.utils</code></pre>
+<h3 id="rpm-names-with-otherpkgs-subdirectories"><a href="#TOC">RPM Names with otherpkgs Subdirectories</a></h3>
+<p>If you create a subdirectory under /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/, say rsct, the otherpkgs.pkglist file will be like this:</p>
+<pre><code>    rsct/src
+    rsct/rsct.core
+    rsct/rsct.core.utils
+    </code></pre>
+<h3 id="include-other-pkglist-files"><a href="#TOC">Include Other pkglist Files</a></h3>
+<p>You can group some rpms in a file and include that file in the otherpkgs.pkglist file using #INCLUDE:&lt;file&gt;# format.</p>
+<pre><code>    rsct/src
+    rsct/rsct.core
+    rsct/rsct.core.utils
+    #INCLUDE:/install/post/otherpkgs/myotherlist#</code></pre>
+<p>where /install/post/otherpkgs/myotherlist is another package list file that follows the same format.</p>
+<p>Note the trailing &quot;#&quot; character at the end of the line. It is important to specify this character for correct pkglist parsing.</p>
+<h3 id="multiple-install-lists"><a href="#TOC">Multiple Install Lists</a></h3>
+<p>The #NEW_INSTALL_LIST# statement is supported in xCAT 2.4 and later.</p>
+<p>You can specify that separate calls should be made to the rpm install program (zypper, yum, rpm) for groups of rpms by specifying the entry #NEW_INSTALL_LIST# on a line by itself as a separator in your pkglist file. All rpms listed up to this separator will be installed together. You can have as many separators as you wish in your pkglist file, and each sublist will be installed separately in the order they appear in the file.</p>
+<p>For example:</p>
+<pre><code>    compilers/vacpp.rte
+    compilers/vac.lib
+    compilers/vacpp.lib
+    compilers/vacpp.rte.lnk
+    #NEW_INSTALL_LIST#
+    pe/IBM_pe_license</code></pre>
+<h3 id="environment-variable-list"><a href="#TOC">Environment Variable List</a></h3>
+<p>The #ENV statement is supported on Redhat and SLES in xCAT 2.6.9 and later.</p>
+<p>You can specify environment variable(s) for each rpm install call by entry &quot;#ENV:&lt;variable list&gt;#&quot;. The environment variables also apply to rpm(s) remove call if there is rpm(s) needed to be removed in the sublist.</p>
+<p>For example:</p>
+<pre><code>    #ENV:INUCLIENTS=1 INUBOSTYPE=1#
+    rsct/rsct.core
+    rsct/rsct.core.utils
+    rsct/src</code></pre>
+<p>Be same as,</p>
+<pre><code>    #ENV:INUCLIENTS=1#
+    #ENV:INUBOSTYPE=1#
+    rsct/rsct.core
+    rsct/rsct.core.utils
+    rsct/src</code></pre>
+<h3 id="remove-rpms-before-installing"><a href="#TOC">Remove RPMs Before Installing</a></h3>
+<p>The &quot;-&quot; syntax is supported in xCAT 2.3 and later.</p>
+<p>You can also specify in this file that certain rpms to be removed before installing the new software. This is done by adding '-' before the rpm names you want to remove. For example:</p>
+<pre><code>    rsct/src
+    rsct/rsct.core
+    rsct/rsct.core.utils
+    #INCLUDE:/install/post/otherpkgs/myotherlist#
+    -perl-doc</code></pre>
+<p>If you have #NEW_INSTALL_LIST# separators in your pkglist file, the rpms will be removed before the install of the sublist that the &quot;-&lt;rpmname&gt;&quot; appears in.</p>
+<h3 id="remove-rpms-after-installing"><a href="#TOC">Remove RPMs After Installing</a></h3>
+<p>The &quot;--&quot; syntax is supported in xCAT 2.3 and later.</p>
+<p>You can also specify in this file that certain rpms to be removed after installing the new software. This is done by adding '--' before the rpm names you want to remove. For example:</p>
+<pre><code>    pe/IBM_pe_license
+    --ibm-java2-ppc64-jre</code></pre>
+<p>If you have #NEW_INSTALL_LIST# separators in your pkglist file, the rpms will be removed after the install of the sublist that the &quot;--&lt;rpmname&gt;&quot; appears in.</p>
+<h2 id="appendix-b-file-format-for-.pkglist-file"><a href="#TOC">Appendix B: File Format for .pkglist File</a></h2>
+<p>The .pklist file is used to specify the rpm and the group/pattern names from os distro that will be installed on the nodes. It can contain the following types of entries:</p>
+<pre><code>  * rpm name without version numbers 
+  * group/pattern name marked with a &#39;@&#39; (for full install only) 
+  * rpms to removed after the installation marked with a &quot;-&quot; (for full install only) </code></pre>
+<p>These are described in more details in the following sections.</p>
+<h3 id="rpm-names-1"><a href="#TOC">RPM Names</a></h3>
+<p>A simple .pkglist file just contains the the name of the rpm file without the version numbers.</p>
+<p>For example,</p>
+<pre><code>    openssl
+    xntp
+    rsync
+    glibc-devel.i686   </code></pre>
+<h3 id="include-pkglist-files"><a href="#TOC">Include pkglist Files</a></h3>
+<p>The #INCLUDE statement is supported in the pkglist file.</p>
+<p>You can group some rpms in a file and include that file in the pkglist file using #INCLUDE:&lt;file&gt;# format.</p>
+<pre><code>    openssl
+    xntp
+    rsync
+    glibc-devel.1686
+    #INCLUDE:/install/post/custom/rh/myotherlist#</code></pre>
+<p>where /install/post/custom/rh/myotherlist is another package list file that follows the same format.</p>
+<p>Note: the trailing &quot;#&quot; character at the end of the line. It is important to specify this character for correct pkglist parsing.</p>
+<h3 id="grouppattern-names"><a href="#TOC">Group/Pattern Names</a></h3>
+<p>It is only supported for statefull deployment.</p>
+<p>In Linux, a groups of rpms can be packaged together into one package. It is called a <strong>group</strong> on RedHat, CentOS, Fedora and Scientific Linux. To get the a list of available groups, run</p>
+<pre><code>    yum grouplist</code></pre>
+<p>On SLES, it is called a <strong>pattern</strong>. To list all the available patterns, run</p>
+<pre><code>    zypper se -t pattern</code></pre>
+<p>You can specify in this file the group/pattern names by adding a '@' and a space before the group/pattern names. For example:</p>
+<pre><code>    @ base</code></pre>
+<h3 id="remove-rpms-after-installing-1"><a href="#TOC">Remove RPMs After Installing</a></h3>
+<p>It is only supported for statefull deployment.</p>
+<p>You can specify in this file that certain rpms to be removed after installing the new software. This is done by adding '-' before the rpm names you want to remove. For example:</p>
+<pre><code>    wget</code></pre>
+<h2 id="appendix-c-debugging-tips"><a href="#TOC">Appendix C: Debugging Tips</a></h2>
+<p>Internally updatenode command uses the xdsh in the following ways:</p>
+<p>Linux: xdsh &lt;noderange&gt; -e /install/postscripts/xcatdsklspost -m &lt;server&gt; &lt;scripts&gt;</p>
+<p>AIX: xdsh &lt;noderange&gt; -e /install/postscripts/xcataixspost -m &lt;server&gt; -c 1 &lt;scripts&gt;</p>
+<p>where &lt;scripts&gt; is a comma separated postscript like ospkgs,otherpkgs etc.</p>
+<ul>
+<li>wget is used in xcatdsklspost/xcataixpost to get all the postscripts from the &lt;server&gt; to the node. You can check /tmp/wget.log file on the node to see if wget was successful or not. You need to make sure the /xcatpost directory has enough space to hold the postscripts.</li>
+<li>A file called /xcatpost/mypostscript (Linux) or /xcatpost/myxcatpost_&lt;node&gt; (AIX) is created on the node which contains the environmental variables and scripts to be run. Please make sure this file exists and it contains correct info. You can also run this file on the node manually to debug.</li>
+<li>For ospkgs/otherpkgs, if /install is not mounted on the &lt;server&gt;, it will download all the rpms from the &lt;server&gt; to the node using wget. Please make sure /tmp and /xcatpost have enough space to hold the rpms and please check /tmp/wget.log for errors.</li>
+<li>For ospkgs/otherpkgs, If zypper or yum is installed on the node, it will be used the command to install the rpms. Please make sure to run createrepo on the source direcory on the &lt;server&gt; every time a rpm is added or removed. Otherwise, the rpm command will be used, in this case, please make sure all the necessary depended rpms are copied in the same source directory.</li>
+<li>You can append -x on the first line of ospkgs/otherpkgs to get more debug info.</li>
+</ul>
+</body>
+</html>

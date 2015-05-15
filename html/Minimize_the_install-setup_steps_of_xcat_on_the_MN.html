@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>{{:Design Warning}}</p>
+<p><strong>Note: this design only applies for Linux environment.</strong></p>
+<p>There are a bunch of manual steps to setup xCAT the management node, some of the manual steps could be automated to reduce the complexity of setting xCAT on the management node. The /opt/xcat/sbin/xcatconfig will run some configuration procedure on the management node after xCAT packages are installed. Additional steps will be added to xcatconfig to reduce the manual steps after xCAT are installed on the management node.</p>
+<p><strong>All the following steps should be done only for the new xCAT installation but not update.</strong></p>
+<p>1. Disable selinux on Redhat. If the user forgot to disable selinux, it will cause a lot of weird problems, the xcatconfig could check the selinux status and disable it if necessary.</p>
+<p>To check the selinux status, use the subroutine xCAT::Utils::isSElinux, to disable selinux:</p>
+<pre><code> echo 0 &amp;gt; /selinux/enforce
+ sed -i &#39;s/^SELINUX=.*$/SELINUX=disabled/&#39; /etc/selinux/config</code></pre>
+<p>The &quot;echo 0 &gt; /selinux/enforce&quot; disables selinux until the system reboots, the &quot;sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config&quot; disables selinux after the system reboots.</p>
+<p>2. Disable the firewall</p>
+<p>On Redhat:</p>
+<pre><code> service iptables stop
+ chkconfig iptables off</code></pre>
+<p>On SLES:</p>
+<pre><code> service SuSEfirewall2_setup stop
+ chkconfig SuSEfirewall2_setup off</code></pre>
+<p>To completely disable the firewall:</p>
+<p>On RedHat:</p>
+<pre><code> chkconfig iptables off
+ service iptables stop</code></pre>
+<p>On SLES:</p>
+<pre><code> chkconfig SuSEfirewall2_setup off
+ service SuSEfirewall2_setup stop</code></pre>
+<p>3. Check if the network adapters are configure to use static ip address, if not, change the network adapters to use static ip address. The /install/postscripts/hardeths could be used to achieve this.</p>
+<p>4. Check the MN host name resolution, if the MN hostname could not resolved, print a warning message and indicate what needs to be done after the xCAT is installed, for example:</p>
+<pre><code> Warning: Hostname resolution for &amp;lt;mnnodename&amp;gt; failed, setting the site.master to NORESOLUTION for now, 
+ after the xCAT installation is finished, fix this hostname resolution problem, 
+ change the site.master to the correct value and then resart xcatd.</code></pre>
+<p>5. Setup ntp server on management node</p>
+<p>In /etc/ntp.conf</p>
+<pre><code> driftfile /var/lib/ntp/drift
+ disable auth
+ restrict 127.0.0.1
+ server  127.127.1.0     # local clock
+ fudge   127.127.1.0 stratum 10</code></pre>
+<p>Then restart ntpd:</p>
+<pre><code> service ntpd restart   # RedHat
+ service ntp restart    # SLES</code></pre>
+<p>6. Configure named and dhcpd to start on boot (Already done)</p>
+<p>7. Setup the default timezone (Already done by os installation)</p>
+<p>In /etc/sysconfig/clock:</p>
+<pre><code> [RH] ZONE=&quot;US/Eastern&quot;
+
+
+ [SLES] TIMEZONE=&quot;America/New_York&quot;
+
+
+ ln -s /usr/share/zoneinfo/US/Eastern /etc/localtime</code></pre>
+<p>8. Setup PostgreSQL (Done)</p>
+<p>we are having a requirement that when xCAT installs, it comes up running postgresql, never setting up sqlite, a good way to do this would make it an option in xcatconfig, this option would be used in xcatconfig when run from xCAT.spec (xcatconfig -i). xcatconfig will call pgsqlsetup with the -N flag and XCATPGPW environment variable set to the admin password for pgsql, so there will be no prompting. This should be done before any database call is made out of xcatconfig and only for the initial install of xCAT.</p>
+<p>To drive xcatconfig to make the call to pgsqlsetup -i -N during install, we can use environment variable with yum command, if the user or PCM scripts exported the environment variable XCATPGPW when running yum command to install xCAT, then xcatconfig can call pgsqlsetup -i -N to setup postgresql. Here is an example:</p>
+<pre><code> XCATPGPW=cluster yum -y install xCAT</code></pre>
+<p>indicates that the xcatconfig should call pgsqlsetup -i -N to setup postgresql.</p>
+</body>
+</html>

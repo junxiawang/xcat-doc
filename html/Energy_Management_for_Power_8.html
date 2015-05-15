@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#interface">Interface</a><ul>
+<li><a href="#for-query">For Query</a></li>
+<li><a href="#for-setting">For Setting</a></li>
+<li><a href="#the-node-definition">The Node Definition</a><ul>
+<li><a href="#for-powerbe">For PowerBE</a></li>
+<li><a href="#for-powerle">For PowerLE</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#implementation">Implementation</a><ul>
+<li><a href="#a-common-cim-utils">A Common CIM Utils</a></li>
+<li><a href="#a-cim-specific-plugin-for-energy">A CIM specific plugin for energy</a></li>
+<li><a href="#to-make-renergy-command-for-p8-node-can-route-to-energy.pm">To make renergy command for P8 node can route to energy.pm</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#interface">Interface</a>
+<ul>
+<li><a href="#for-query">For Query</a></li>
+<li><a href="#for-setting">For Setting</a></li>
+<li><a href="#the-node-definition">The Node Definition</a></li>
+<li><a href="#for-powerbe">For PowerBE</a></li>
+</ul></li>
+<li><a href="#lsdef-server-8247-22l-sn10121ba">lsdef Server-8247-22L-SN10121BA</a></li>
+<li><a href="#lsdef-50331--s">lsdef 50.3.3.1 -S</a>
+<ul>
+<li><a href="#for-powerle">For PowerLE</a></li>
+</ul></li>
+<li><a href="#lsdef-test_ppcle">lsdef test_ppcle</a></li>
+<li><a href="#implementation">Implementation</a>
+<ul>
+<li><a href="#a-common-cim-utils">A Common CIM Utils</a></li>
+<li><a href="#a-cim-specific-plugin-for-energy">A CIM specific plugin for energy</a></li>
+<li><a href="#to-make-renergy-command-for-p8-node-can-route-to-energypm">To make renergy command for P8 node can route to energy.pm</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>Energy Management for Power series (P6 and P7) and x86_64 serials (Refer to the man page of renergy command) has been supported by xCAT. For both of them, there's an additional rpm package (xCAT-pEnergy or xCAT-xEnergy) needs be installed to enable this feature. These two additional packages only can be gotten from IBM, they are commercial one and close source.</p>
+<p>Now for the Energy Management support for Power 8, the situation has been changed that the original interface that xCAT used to query/set Energy for P6/P7 has been obsoleted. But another public CIM interface has been published by IBM for Power 8 machines. This means xCAT can make a open source version (use Perl language) of Energy Management feature for Power 8.</p>
+<p>The final decision is to make a new energy management implementation for P8 with CIM interface, the old implementation will be kept for old platforms like P6/P7 and x86_64.</p>
+<p>IBM uses Power 8 chip to make two types of Power 8 machine, one is the original one which is running with PowerVM hypervisor that the machine or Lpar will run in Big Endian mode, the other is the machine or virtual machine will run in Little Endian mode. Now we call them PowerBE and PowerLE machines.</p>
+<p>From the xCAT perspective that the Hardware Control for PowerBE and PowerLE machines is totally different. The PowerBE will use DFM inteface, but PowerLE will use IPMI interface. So the node definition will be different. But currently a good point is both of them are using the FSP as the service processor, so the implementation will be same. NOTE: in the near future that the service processor for PowerLE will be changed to BMC, in that case we need make change to support it.</p>
+<p>Since the capping support is complicated and we did not see a lot customers were using this capping feature, we decided to NOT support capping in the phase 1 for P8 energy management support.</p>
+<h2 id="interface"><a href="#TOC">Interface</a></h2>
+<h3 id="for-query"><a href="#TOC">For Query</a></h3>
+<p>All the energy management attributes except capping related ones in renergy command for P6/P7 will be supported for P8.</p>
+<pre><code>[savingstatus] [dsavingstatus] [averageAC] [averageDC] [ambienttemp] [exhausttemp] [CPUspeed] [syssbpower] [sysIPLtime] [fsavingstatus] [ffoMin] [ffoVmin] [ffoTurbo] [ffoNorm] [ffovalue]
+</code></pre>
+<p>Additionally, another fan related attribute named 'fanspeed' will be supported.</p>
+<p>Another big change in the interface is that a history attribute will be added for each of '[averageAC] [averageDC] [ambienttemp] [exhausttemp] [CPUspeed] [fanspeed]'. The history will be a historical records for each attribute in last one hour. The interval of records will be 30s.</p>
+<h3 id="for-setting"><a href="#TOC">For Setting</a></h3>
+<p>All the energy management attributes except capping related ones in renergy command for P6/P7 will be supported for P8.</p>
+<p>~~~~~</p>
+<p>{ savingstatus={on | off} | dsavingstatus={on-norm | on-maxp | off} | fsavingstatus={on | off} | ffovalue=MHZ }</p>
+<p>~~~~</p>
+<h3 id="the-node-definition"><a href="#TOC">The Node Definition</a></h3>
+<h4 id="for-powerbe"><a href="#TOC">For PowerBE</a></h4>
+<ul>
+<li>The 'mgt' attribute must be set to 'fsp'.</li>
+<li>The 'hcp' attribute must be set.</li>
+<li>The 'mtm' attribute must be set, otherwise xCAT cannot figure out this is a P6/P7 or P8.</li>
+</ul>
+<p>For example:</p>
+<pre><code># lsdef Server-8247-22L-SN10121BA
+Object name: Server-8247-22L-SN10121BA
+    groups=cec,all
+    hcp=Server-8247-22L-SN10121BA
+    hwtype=cec
+    mgt=fsp
+    mtm=8247-22L
+    nodetype=ppc
+    serial=10121BA
+
+# lsdef 50.3.3.1 -S
+Object name: 50.3.3.1
+    groups=fsp,all
+    hcp=50.3.3.1
+    hwtype=fsp
+    mgt=fsp
+    mtm=8247-22L
+    nodetype=ppc
+    parent=Server-8247-22L-SN10121BA
+    serial=10121BA</code></pre>
+<h4 id="for-powerle"><a href="#TOC">For PowerLE</a></h4>
+<ul>
+<li>The 'mgt' attribute must be 'ipmi'.</li>
+<li>The 'bmc' must be set to the IP of service process.</li>
+<li>The 'arch' must be set to 'ppc64le' to make xcat to know this is a P8 node.</li>
+</ul>
+<p>For example:</p>
+<pre><code># lsdef test_ppcle
+Object name: test_ppcle
+    arch=ppc64le
+    bmc=50.3.3.1
+    groups=cec,ppcle
+    mgt=ipmi
+    mtm=8247-22L
+    serial=10121BA</code></pre>
+<h2 id="implementation"><a href="#TOC">Implementation</a></h2>
+<h3 id="a-common-cim-utils"><a href="#TOC">A Common CIM Utils</a></h3>
+<p>Since the energy management feature for P8 must be done through CIM interface, we will create a xCAT/CIMUtils.pm to implement a common interface to access CIM server.</p>
+<p>In the CIMUtils.pm, several common HTTP subroutines will be created to make 'http head', 'http content' and send/receive http package.</p>
+<p>A common CIM 'enum_instance' subroutine will be created to enumerate instance for a specified class.</p>
+<p>A common CIM 'set_property' subroutine will be created to set property for a specified instance.</p>
+<h3 id="a-cim-specific-plugin-for-energy"><a href="#TOC">A CIM specific plugin for energy</a></h3>
+<p>Since the implementation for P8 energy is totally different with P6/P7, we decide to create a new plugin module xCAT_plugin/energy.pm to implement the energy management feature for P8.</p>
+<p>This plugin will do following things:</p>
+<pre><code>
+1. Verify this is a valid P8 node that energy.pm can handle.
+2. Get the service process IP for the node;
+3. Get the user and password of service processor for the node.
+4. For each service processor (if it has multiple ones), call &#39;run_cim&#39; subroutine to do the real thing.
+</code></pre>
+<p>In the run_cim subroutine:</p>
+<pre><code>
+1. Check this &#39;Service Processor IP&#39; is accessible;
+2. Check whether this is a standby FSP. If yes, another &#39;Service Process IP&#39; will be tried;
+3. Go through each target attributes to know which &#39;CIM instance&#39; needs be queried. This step will skip the unnecessary query for certain instance when they are required by multiple attributes.
+4. Query all necessary instances at once.
+5. Go through each target attributes:
+5.1. For &#39;attribute query&#39;, get values from &#39;pre-queried instance&#39; and display them.
+5.2. For &#39;Attribute Setting&#39;, get values from &#39;pre-queried instance&#39; to make sure it&#39;s valid to run the setting, and then call the &#39;set_property&#39; subroutine to do the setting. Note, the setting need a name path of instance (a list of instance attribute to identify an instance&#39;) , this will be gotten from instance query. 
+</code></pre>
+<h3 id="to-make-renergy-command-for-p8-node-can-route-to-energy.pm"><a href="#TOC">To make renergy command for P8 node can route to energy.pm</a></h3>
+<p>Before the support of P8 energy, the renergy command might route to 'blade.pm', 'fsp.pm' or 'ipmi.pm' base on the attributes of the node. We have a subroutine xCAT::Utils-&gt;filter_nodes() to help figure out which plugin to go in.</p>
+<p>We will enhance this subroutine to make it can figure out which node should get in 'blade.pm' (blade node), 'fsp.pm' (only P6/P7) or 'ipmi.pm'(x86_64). Then the rest ones will get into energy.pm</p>
+</body>
+</html>

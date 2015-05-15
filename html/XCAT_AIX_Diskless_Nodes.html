@@ -1,0 +1,842 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#deploying-aix-diskless-nodes-using-xcat">Deploying AIX diskless nodes using xCAT</a><ul>
+<li><a href="#create-a-diskless-image">Create a diskless image</a></li>
+<li><a href="#update-the-image---spot">Update the image - SPOT</a></li>
+<li><a href="#define-xcat-networks">Define xCAT networks</a></li>
+<li><a href="#define-p775-hfi-networks">Define P775 HFI networks</a></li>
+<li><a href="#create-additional-nim-network-definitions-optional">Create additional NIM network definitions (optional)</a></li>
+<li><a href="#define-the-hmc-as-an-xcat-node-for-non-p775-clusters">Define the HMC as an xCAT node for non P775 clusters</a></li>
+<li><a href="#discover-the-lpars-managed-by-the-hmc">Discover the LPARs managed by the HMC</a></li>
+<li><a href="#define-xcat-cluster-nodes">Define xCAT cluster nodes</a></li>
+<li><a href="#define-xcat-p775-cluster-nodes">Define xCAT P775 cluster nodes</a></li>
+<li><a href="#add-ip-addresses-and-hostnames-to-etchosts">Add IP addresses and hostnames to /etc/hosts</a></li>
+<li><a href="#create-and-define-additional-logical-partitions-for-non-p775-cluster-optional">Create and define additional logical partitions for non P775 cluster (optional)</a></li>
+<li><a href="#gather-mac-information-for-the-boot-adapters">Gather MAC information for the boot adapters</a></li>
+<li><a href="#define-xcat-groups-optional">Define xCAT groups (optional)</a></li>
+<li><a href="#add-customization-post-boot-scripts-optional">Add customization post boot scripts (optional)</a></li>
+<li><a href="#add-customization-prescripts-optional">Add customization prescripts (optional)</a></li>
+<li><a href="#power-775-customization-postscripts-and-prescripts">Power 775 customization postscripts and prescripts</a></li>
+<li><a href="#verify-the-node-definitions">Verify the node definitions</a></li>
+<li><a href="#initialize-the-aixnim-diskless-nodes">Initialize the AIX/NIM diskless nodes</a></li>
+<li><a href="#initialize-the-aixnim-diskless-nodes-for-power-775">Initialize the AIX/NIM diskless nodes for Power 775</a></li>
+<li><a href="#verifying-the-node-initialization-before-booting-optional">Verifying the node initialization before booting (optional)</a></li>
+<li><a href="#open-a-remote-console-optional">Open a remote console (optional)</a></li>
+<li><a href="#initiate-a-network-boot">Initiate a network boot</a></li>
+<li><a href="#initiate-a-network-boot-over-hfi-on-power-775">Initiate a network boot over HFI on Power 775</a></li>
+<li><a href="#verify-the-deployment">Verify the deployment</a><ul>
+<li><a href="#retry-and-troubleshooting-tips">Retry and troubleshooting tips:</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#aix-statelite-support">AIX statelite support</a><ul>
+<li><a href="#statelite-options">Statelite options</a></li>
+<li><a href="#statelite-database-tables">Statelite database tables</a></li>
+<li><a href="#statelite-user-management">Statelite user management</a></li>
+<li><a href="#examples-of-how-to-use-the-aix-statelite-support">Examples of how to use the AIX statelite support</a><ul>
+<li><a href="#provide-a-persistent-logging-directory">Provide a persistent logging directory</a></li>
+<li><a href="#provide-a-read-write-configuration-file">Provide a read-write configuration file</a></li>
+<li><a href="#provide-a-read-only-configuration-file">Provide a read-only configuration file</a></li>
+<li><a href="#using-variables-in-table-entries">Using variables in table entries</a></li>
+</ul></li>
+<li><a href="#preserving-aix-odm-configuration-data-on-diskless-stateless-nodes.">Preserving AIX ODM configuration data on diskless-stateless nodes.</a></li>
+<li><a href="#preserving-system-log-files">Preserving system log files</a></li>
+<li><a href="#using-statelite-with-backup-service-nodes.">Using statelite with backup service nodes.</a></li>
+</ul></li>
+<li><a href="#iscsi-dump-support">ISCSI dump support</a><ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#configuring-diskless-dump">Configuring diskless dump</a></li>
+<li><a href="#initiating-a-diskless-dump">Initiating a diskless dump</a></li>
+<li><a href="#nim-snap-and-showdump-operations">NIM snap and showdump operations</a><ul>
+<li><a href="#snap-operation">Snap operation</a></li>
+<li><a href="#showdump-operation">Showdump operation</a></li>
+</ul></li>
+<li><a href="#reading-a-system-dump-file">Reading a system dump file</a></li>
+</ul></li>
+<li><a href="#special-cases">Special Cases</a><ul>
+<li><a href="#using-other-nim-resources">Using other NIM resources</a></li>
+<li><a href="#booting-a-dataless-node">Booting a &quot;dataless&quot; node</a></li>
+<li><a href="#specifying-additional-values-for-the-nim-node-initialization">Specifying additional values for the NIM node initialization</a></li>
+</ul></li>
+<li><a href="#cleanup">Cleanup</a><ul>
+<li><a href="#removing-nim-machine-definitions">Removing NIM machine definitions</a></li>
+<li><a href="#removing-nim-resources">Removing NIM resources</a></li>
+</ul></li>
+<li><a href="#notes">Notes</a><ul>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#nim-diskless-resources">NIM diskless resources</a></li>
+<li><a href="#nim-commands"><strong>NIM Commands</strong></a><ul>
+<li><a href="#cosi-commands"><strong>COSI commands</strong></a></li>
+<li><a href="#thin-server-commands"><strong>Thin server commands</strong></a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#deploying-aix-diskless-nodes-using-xcat">Deploying AIX diskless nodes using xCAT</a></li>
+<li><a href="#create-a-diskless-image">Create a diskless image</a></li>
+<li><a href="#update-the-image---spot">Update the image - SPOT</a></li>
+<li><a href="#define-xcat-networks">Define xCAT networks</a></li>
+<li><a href="#define-p775-hfi-networks">Define P775 HFI networks</a></li>
+<li><a href="#create-additional-nim-network-definitions-optional">Create additional NIM network definitions (optional)</a></li>
+<li><a href="#define-the-hmc-as-an-xcat-node-for-non-p775-clusters">Define the HMC as an xCAT node for non P775 clusters</a></li>
+<li><a href="#discover-the-lpars-managed-by-the-hmc">Discover the LPARs managed by the HMC</a></li>
+<li><a href="#define-xcat-cluster-nodes">Define xCAT cluster nodes</a></li>
+<li><a href="#define-xcat-p775-cluster-nodes">Define xCAT P775 cluster nodes</a></li>
+<li><a href="#add-ip-addresses-and-hostnames-to-etchosts">Add IP addresses and hostnames to /etc/hosts</a></li>
+<li><a href="#create-and-define-additional-logical-partitions-for-non-p775-cluster-optional">Create and define additional logical partitions for non P775 cluster (optional)</a></li>
+<li><a href="#gather-mac-information-for-the-boot-adapters">Gather MAC information for the boot adapters</a></li>
+<li><a href="#define-xcat-groups-optional">Define xCAT groups (optional)</a></li>
+<li><a href="#add-customization-post-boot-scripts-optional">Add customization post boot scripts (optional)</a></li>
+<li><a href="#add-customization-prescripts-optional">Add customization prescripts (optional)</a></li>
+<li><a href="#power-775-customization-postscripts-and-prescripts">Power 775 customization postscripts and prescripts</a></li>
+<li><a href="#verify-the-node-definitions">Verify the node definitions</a></li>
+<li><a href="#initialize-the-aixnim-diskless-nodes">Initialize the AIX/NIM diskless nodes</a></li>
+<li><a href="#initialize-the-aixnim-diskless-nodes-for-power-775">Initialize the AIX/NIM diskless nodes for Power 775</a></li>
+<li><a href="#verifying-the-node-initialization-before-booting-optional">Verifying the node initialization before booting (optional)</a></li>
+<li><a href="#open-a-remote-console-optional">Open a remote console (optional)</a></li>
+<li><a href="#initiate-a-network-boot">Initiate a network boot</a></li>
+<li><a href="#initiate-a-network-boot-over-hfi-on-power-775">Initiate a network boot over HFI on Power 775</a></li>
+<li><a href="#verify-the-deployment">Verify the deployment</a>
+<ul>
+<li><a href="#retry-and-troubleshooting-tips">Retry and troubleshooting tips:</a></li>
+</ul></li>
+<li><a href="#aix-statelite-support">AIX statelite support</a></li>
+<li><a href="#statelite-options">Statelite options</a></li>
+<li><a href="#statelite-database-tables">Statelite database tables</a></li>
+<li><a href="#statelite-user-management">Statelite user management</a></li>
+<li><a href="#examples-of-how-to-use-the-aix-statelite-support">Examples of how to use the AIX statelite support</a>
+<ul>
+<li><a href="#provide-a-persistent-logging-directory">Provide a persistent logging directory</a></li>
+<li><a href="#provide-a-read-write-configuration-file">Provide a read-write configuration file</a></li>
+<li><a href="#provide-a-read-only-configuration-file">Provide a read-only configuration file</a></li>
+<li><a href="#using-variables-in-table-entries">Using variables in table entries</a></li>
+</ul></li>
+<li><a href="#preserving-aix-odm-configuration-data-on-diskless-stateless-nodes">Preserving AIX ODM configuration data on diskless-stateless nodes.</a></li>
+<li><a href="#preserving-system-log-files">Preserving system log files</a></li>
+<li><a href="#using-statelite-with-backup-service-nodes">Using statelite with backup service nodes.</a></li>
+<li><a href="#iscsi-dump-support">ISCSI dump support</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#configuring-diskless-dump">Configuring diskless dump</a></li>
+<li><a href="#initiating-a-diskless-dump">Initiating a diskless dump</a></li>
+<li><a href="#nim-snap-and-showdump-operations">NIM snap and showdump operations</a>
+<ul>
+<li><a href="#snap-operation">Snap operation</a></li>
+<li><a href="#showdump-operation">Showdump operation</a></li>
+</ul></li>
+<li><a href="#reading-a-system-dump-file">Reading a system dump file</a></li>
+<li><a href="#special-cases">Special Cases</a></li>
+<li><a href="#using-other-nim-resources">Using other NIM resources</a></li>
+<li><a href="#booting-a-dataless-node">Booting a &quot;dataless&quot; node</a></li>
+<li><a href="#specifying-additional-values-for-the-nim-node-initialization">Specifying additional values for the NIM node initialization</a></li>
+<li><a href="#cleanup">Cleanup</a></li>
+<li><a href="#removing-nim-machine-definitions">Removing NIM machine definitions</a></li>
+<li><a href="#removing-nim-resources">Removing NIM resources</a></li>
+<li><a href="#notes">Notes</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#nim-diskless-resources">NIM diskless resources</a></li>
+<li><a href="#nim-commands"><strong>NIM Commands</strong></a>
+<ul>
+<li><a href="#cosi-commands"><strong>COSI commands</strong></a></li>
+<li><a href="#thin-server-commands"><strong>Thin server commands</strong></a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h3 id="overview"><a href="#TOC">Overview</a></h3>
+<p>This &quot;How-To&quot; describes how AIX diskless nodes can be deployed and updated using xCAT and AIX/NIM commands.</p>
+<p>NIM (Network Installation Management) is an AIX tool that enables a cluster administrator to centrally manage the installation and configuration of AIX and optional software on machines within a networked environment. This document assumes you are somewhat familiar with NIM. For more information about NIM, see the IBM AIX Installation Guide and Reference. (&lt;http://www-03.ibm.com/servers/aix/library/index.html&gt;)</p>
+<p>The process described below is one basic set of steps that may be used to boot AIX diskless nodes and is not meant to be a comprehensive guide of all the available xCAT or NIM options.</p>
+<p>Before starting this process it is assumed you have completed the following.</p>
+<ul>
+<li>An AIX system has been installed to use as an xCAT management node.</li>
+<li>xCAT and prerequisite software has been installed on the management node.</li>
+<li>The xCAT management node has been configured.</li>
+<li>One or more LPARs have already been created using the HMC interfaces.</li>
+<li>The cluster management network has been set up. (The Ethernet network that will be used to do the network installation of the cluster nodes.)</li>
+</ul>
+<h3 id="deploying-aix-diskless-nodes-using-xcat"><a href="#TOC">Deploying AIX diskless nodes using xCAT</a></h3>
+<h4 id="create-a-diskless-image"><a href="#TOC">Create a diskless image</a></h4>
+<p><a href="Create_an_AIX_Diskless_Image">Create_an_AIX_Diskless_Image</a></p>
+<h4 id="update-the-image---spot"><a href="#TOC">Update the image - SPOT</a></h4>
+<p><a href="Update_the_image_-_SPOT">Update_the_image<em>-</em>SPOT</a></p>
+<h4 id="define-xcat-networks"><a href="#TOC">Define xCAT networks</a></h4>
+<p>Create a network definition for each network that contains cluster nodes. You will need a name for the network and values for the following attributes.</p>
+<p>net - The network address.</p>
+<p>mask - The network mask.</p>
+<p>gateway - The network gateway.</p>
+<p>This &quot;How-To&quot; assumes that all the cluster node management interfaces and the xCAT management node interface are on the same network. You can use the xCAT mkdef command to define the network.</p>
+<p>For example:</p>
+<pre><code>
+    mkdef -t network -o net1 net=9.114.113.0 mask=255.255.255.224 gateway=9.114.113.254</code></pre>
+<p>Note: NIM also requires network definitions. When NIM was configured in an earlier step the default NIM master network definition was created. The NIM definition should match the one you create for xCAT. If multiple cluster subnets are needed then you will need an xCAT and NIM network definition for each one. A future xCAT enhancement will simplify this by automatically creating NIM network definitions based on the xCAT definitions.</p>
+<h4 id="define-p775-hfi-networks"><a href="#TOC">Define P775 HFI networks</a></h4>
+<p>Make sure that a HFI network definition has been created for the P775 HFI network that supports the P775 cluster compute nodes. You will need to have all the P775 nodes defined to work in this HFI network. The expectation is that for P775 cluster, you will have multiple xCAT service nodes (SN)being assigned in the HFI cluster. This means that compute nodes may not all be using the same xCAT SN as their xCAT master server. To support this environment xCAT has provided a keyword &lt;xcatmaster&gt; that will be used to reference the appropriate xCAT SN working with gateway and other network attributes.</p>
+<pre><code>    mkdef -t network -o hfinet net=20.0.0.0 mask=255.0.0.0 gateway=&quot;&lt;xcatmaster&gt;&quot;</code></pre>
+<h4 id="create-additional-nim-network-definitions-optional"><a href="#TOC">Create additional NIM network definitions (optional)</a></h4>
+<p>For the processs described in this document we are assuming that the xCAT management node and the LPARs are all on the same network.</p>
+<p>However, depending on your specific situation, you may need to create additional NIM network and route definitions.</p>
+<p>NIM network definitions represent the networks used in the NIM environment. When you configure NIM, the primary network associated with the NIM master is automatically defined. You need to define additional networks only if there are nodes that reside on other local area networks or subnets. If the physical network is changed in any way, the NIM network definitions need to be modified.</p>
+<p>To create the NIM network definitions corresponding to the xCAT network definitions you can use the xCAT xcat2nim command.</p>
+<p>For example, to create the NIM definitions corresponding to the xCAT &quot;clstr_net&quot; network you could run the following command.</p>
+<pre><code>    xcat2nim -V -t network -o clstr_net</code></pre>
+<p>Manual method</p>
+<p>The following is an example of how to define a new NIM network using the NIM command line interface.</p>
+<p>Step 1</p>
+<p>Create a NIM network definition. Assume the NIM name for the new network is &quot;clstr_net&quot;, the network address is &quot;10.0.0.0&quot;, the network mask is &quot;255.0.0.0&quot;, and the default gateway is &quot;10.0.0.247&quot;.</p>
+<pre><code>    nim -o define -t ent -a net_addr=10.0.0.0 -a snm=255.0.0.0 -a routing1=&#39;default 10.0.0.247&#39; clstr_net</code></pre>
+<p>Step 2</p>
+<p>Create a new interface entry for the NIM &quot;master&quot; definition. Assume that the next available interface index is &quot;2&quot; and the hostname of the NIM master is &quot;xcataixmn&quot;. This must be the hostname of the management node interface that is connected to the &quot;clstr_net&quot; network.</p>
+<pre><code>    nim -o change -a if2=&#39;clstr_net xcataixmn 0&#39; -a cable_type2=N/A master</code></pre>
+<p>Step 3 - (optional)</p>
+<p>If the new subnet is not directly connected to a NIM master network interface then you should create NIM routing information</p>
+<p>The routing information is needed so that NIM knows how to get to the new subnet. Assume the next available routing index is &quot;2&quot;, and the IP address of the NIM master on the &quot;master_net&quot; network is &quot;8.124.37.24&quot;. Assume the IP address on the NIM master on the &quot;clstr_net&quot; network is &quot; 10.0.0.241&quot;. This command will set the route from &quot;master_net&quot; to &quot;clstr_net&quot; to be &quot; 10.0.0.241&quot; and it will set the route from &quot;clstr_net&quot; to &quot;master_net&quot; to be &quot;8.124.37.24&quot;.</p>
+<pre><code>    nim -o change -a routing2=&#39;master_net 10.0.0.241 8.124.37.24&#39; clstr_net</code></pre>
+<p>Step 4</p>
+<p>Verify the definitions by running the following commands.</p>
+<pre><code>    lsnim -l master
+    lsnim -l master_net
+    lsnim -l clstr_net</code></pre>
+<p>See the NIM documentation for details on creating additional network and route definitions. (IBM AIX Installation Guide and Reference. &lt;http://www-03.ibm.com/servers/aix/library/index.html&gt;)</p>
+<h4 id="define-the-hmc-as-an-xcat-node-for-non-p775-clusters"><a href="#TOC">Define the HMC as an xCAT node for non P775 clusters</a></h4>
+<p>The xCAT hardware control support requires that the hardware control point for the nodes also be defined as a cluster node.</p>
+<p>The following command will create an xCAT node definition for an HMC with a host name of &quot;hmc01&quot;. The groups, nodetype, hwtype, mgt, username, and password attributes must be set.</p>
+<pre><code>mkdef -t node -o hmc01 groups=&quot;all&quot; nodetype=ppc hwtype=hmc mgt=hmc username=hscroot password=def456</code></pre>
+<h4 id="discover-the-lpars-managed-by-the-hmc"><a href="#TOC">Discover the LPARs managed by the HMC</a></h4>
+<p>This step assumes that the LPARs were already created using the standard HMC interfaces.</p>
+<p>Use the xCAT rscan command to gather the LPAR information. In this example we will use the &quot;-z&quot; option to create a stanza file that contains the information gathered by rscan as well as some default values that could be used for the node definitions.</p>
+<p>To write the stanza format output of rscan to a file called &quot;mystanzafile&quot; run the following command.</p>
+<pre><code>    rscan -z hmc01 &gt; mystanzafile</code></pre>
+<p>This file can then be checked and modified as needed. For example you may need to add a different name for the node definition or add additional attributes and values etc.</p>
+<p>Note: The stanza file will contain stanzas for objects other than the LPARs. This information must also be defined in the xCAT database. It is not necessary to modify the non-LPAR stanzas in any way.</p>
+<h4 id="define-xcat-cluster-nodes"><a href="#TOC">Define xCAT cluster nodes</a></h4>
+<p>This section is to be used when the HMC is the primary hardware control point (hcp) for non P775 clusters. The information gathered by the rscan command can be used to create xCAT node definitions.</p>
+<p>Since we have put all the node information in a stanza file we can now pass the contents of the file to the mkdef command to add the definitions to the database.</p>
+<pre><code>    cat mystanzafile | mkdef -z</code></pre>
+<p>You can use the xCAT lsdef command to check the definitions (ex. &quot;lsdef -l node01&quot;). After the node has been defined you can use the chdef command to make any additional updates to the definitions, if needed.</p>
+<h4 id="define-xcat-p775-cluster-nodes"><a href="#TOC">Define xCAT P775 cluster nodes</a></h4>
+<p>The P775 cluster nodes should have been defined as part of the execution for the P775 Hardware Management guide. Refer to the &quot;System P775 Management Guide&quot;, ([XCAT_Power_775_Hardware_Management]) for implementation being used to support the Power 775 clusters.</p>
+<p>We expect that all the P775 cluster nodes have the proper attributes assigned for the hardware control environments. Since the P775 clusters require xCAT service nodes, the expectation is that the P775 diskless nodes will need to reference reference the xCAT SN for some of the server attributes. It is important the P775 compute nodes have specified the following server based attributes.</p>
+<pre><code>     monserver, nfsserver, tftpserver, xcatmaster, servicenode</code></pre>
+<p>You will want to make sure that all postscripts, postbootscripts, and prescripts have been defined for the P775 compute nodes.</p>
+<h4 id="add-ip-addresses-and-hostnames-to-etchosts"><a href="#TOC">Add IP addresses and hostnames to /etc/hosts</a></h4>
+<p>Make sure all node hostnames are added to /etc/hosts. Refer to:</p>
+<p><a href="XCAT_AIX_Cluster_Overview_and_Mgmt_Node/#configuring-name-resolution">XCAT_AIX_Cluster_Overview_and_Mgmt_Node/#configuring-name-resolution</a></p>
+<h4 id="create-and-define-additional-logical-partitions-for-non-p775-cluster-optional"><a href="#TOC">Create and define additional logical partitions for non P775 cluster (optional)</a></h4>
+<p>You can use the xCAT mkvm command to create additional logical partitions for diskless nodes in some cases.</p>
+<p>This command can be used to create new partitions based on an existing partition or it can replicate the partitions from a source CEC to a destination CEC.</p>
+<p>The first form of the mkvm command creates new partition(s) with the same profile/resources as the partition specified on the command line. The starting numeric partition number and the noderange for the newly created partitions must also be provided. The LHEA port numbers and the HCA index numbers will be automatically increased if they are defined in the source partition.</p>
+<p>The second form of this command duplicates all the partitions from the specified source CEC to the destination CEC. The source and destination CECs can be managed by different HMCs.</p>
+<p>The nodes in the noderange must already be defined in the xCAT database. The &quot;mgt&quot; attribute of the node definitions must be set to &quot;hmc&quot;.</p>
+<p>For example, to create a set of new nodes. (The &quot;groups&quot; attribute is required.)</p>
+<pre><code>    mkdef -t node -o clstrn04-clstrn10 groups=all,aixnodes mgt=hmc</code></pre>
+<p>To create several new partitions based on the partition for node clstrn01.</p>
+<pre><code>    mkvm -V clstn01 -i 4 -n clstrn04-clstrn10</code></pre>
+<p>See the mkvm man page for more details.</p>
+<h4 id="gather-mac-information-for-the-boot-adapters"><a href="#TOC">Gather MAC information for the boot adapters</a></h4>
+<p><a href="Gather_MAC_information_for_the_node_boot_adapters">Gather_MAC_information_for_the_node_boot_adapters</a></p>
+<h4 id="define-xcat-groups-optional"><a href="#TOC">Define xCAT groups (optional)</a></h4>
+<p>XCAT supports both _static and dynamic node groups. See [Node_Group_Support] for details. All nodes must belong to at least one static group.</p>
+<h4 id="add-customization-post-boot-scripts-optional"><a href="#TOC">Add customization post boot scripts (optional)</a></h4>
+<p>xCAT supports the running of customization scripts on the nodes when they are installed. For diskless nodes these scripts are run when the /etc/inittab file is processed during the node boot up.</p>
+<p>This support includes:</p>
+<ul>
+<li>The running of a set of default customization scripts that are required by xCAT. You can see what scripts xCAT will run by default by looking at the &quot;xcatdefaults&quot; entry in the xCAT &quot;postscripts&quot; database table. ( I.e. Run &quot;tabdump postscripts&quot;.). You can change the default setting by using the xCAT chtab or tabedit command. The scripts are contained in the /install/postscripts directory on the xCAT management node.</li>
+<li>The optional running of customization scripts provided by xCAT. There is a set of xCAT customization scripts provided in the /install/postscripts directory that can be used to perform optional tasks such as additional adapter configuration. (See the &quot;configiba&quot; script for example.)</li>
+<li>The optional running of user-provided customization scripts.</li>
+</ul>
+<p>To have your script run on the nodes:</p>
+<ol style="list-style-type: decimal">
+<li>Put a copy of your script in /install/postscripts on the xCAT management node. (Make sure it is executable.)</li>
+<li>Set the &quot;postscripts&quot; attribute of the node definition to include the comma separated list of the scripts that you want to be executed on the nodes. The order of the scripts in the list determines the order in which they will be run. For example, if you want to have your two scripts called &quot;foo&quot; and &quot;bar&quot; run on node &quot;node01&quot; you could use the chdef command as follows.</li>
+</ol>
+<pre><code>    chdef -t node -o node01 -p postscripts=foo,bar</code></pre>
+<p>(The &quot;-p&quot; means to add these to whatever is already set.)</p>
+<p>Note: The customization scripts are run during the boot process (out of /etc/inittab).</p>
+<h4 id="add-customization-prescripts-optional"><a href="#TOC">Add customization prescripts (optional)</a></h4>
+<p>This support will be available in xCAT 2.5 and beyond.</p>
+<p>The xCAT prescript support is provided to to run user-provided scripts during the node initialization process. These scripts can be used to help set up specific environments on the servers that handle the cluster node deployment. The scripts will run on the install server for the nodes. (Either the management node or a service node.) A different set of scripts may be specified for each node if desired.</p>
+<p>One or more user-provided prescripts may be specified to be run either at the beginning or the end of node initialization. The node initialization on AIX is done either by the nimnodeset command (for diskfull nodes) or the mkdsklsnode command (for diskless nodes.)</p>
+<p>For more information about using the xCAT prescript support refer to:[Postscripts_and_Prescripts]</p>
+<h4 id="power-775-customization-postscripts-and-prescripts"><a href="#TOC">Power 775 customization postscripts and prescripts</a></h4>
+<p>This support will be available in xCAT 2.6 and beyond. Need help from Norm, Hua Zhong, and Power 775 admins to specify which postscripts and prescripts should be used on diskless client. It will help to identify some helpful debug and P775 cluster input here.</p>
+<p>The expectation is that P775 nodes will be working with HPC software which will need to be placed as part of the diskless images. The P775 admin should refereence the xCAT HPC Integration documentation to makes sure the HPC software is available.</p>
+<ul>
+<li>[Setting_up_all_IBM_HPC_products_in_a_Statelite_or_Stateless_Cluster]</li>
+</ul>
+<h4 id="verify-the-node-definitions"><a href="#TOC">Verify the node definitions</a></h4>
+<p>Verify that the node definitions include the required information.</p>
+<p>To get a listing of the node definitions you can use the lsdef command. For example, to display the definitions of all nodes in the group &quot;aixnodes&quot; you could run the following command.</p>
+<pre><code>    lsdef -t node -l -o aixnodes</code></pre>
+<p>The output for one diskless node might look something like the following:</p>
+<pre><code>    Object name: clstrn02
+    cons=hmc
+    groups=lpar,all
+    hcp=clstrhmc01
+    hostnames=clstrn02.mycluster.com
+    id=2
+    ip=10.1.3.2
+    mac=001a64f9bfc9
+    mgt=hmc
+    nodetype=ppc,osi
+    hwtype=lpar
+    os=AIX
+    parent=clstrf1fsp03-9125-F2A-SN024C352
+    pprofile=compute
+</code></pre>
+<p>Most of these attributes should have been filled in automatically by xCAT.</p>
+<p>Note: The length of a NIM object name must be no longer than 39 characters. Since the xCAT definitions will be used to create the NIM object definitions you should limit your xCAT names accordingly.</p>
+<p>Note: xCAT supports many different cluster environments and the attributes that may be required in a node definition will vary. For diskless nodes the node definition should include at least the attributes listed in the above example.</p>
+<h4 id="initialize-the-aixnim-diskless-nodes"><a href="#TOC">Initialize the AIX/NIM diskless nodes</a></h4>
+<p>You can set up NIM to support a diskless boot of nodes by using the xCAT mkdsklsnode command. This command uses information from the xCAT database and default values to run the appropriate NIM commands.</p>
+<p>If you want to have the compute nodes mount the SPOT and ROOT resources from some external NFS server for high availability or performance considerations, please refer to [External_NFS_Server_Support_With_AIX_Stateless_And_Statelite] for more details.</p>
+<p>For example, to set up all the nodes in the group &quot;aixnodes&quot; to boot using the SPOT (COSI) named &quot;61cosi&quot; you could issue the following command.</p>
+<pre><code>    mkdsklsnode -i 61cosi aixnodes</code></pre>
+<p>The command will define and initialize the NIM machines. It will also set the &quot;provmethod&quot; attribute in the xCAT node definitions to &quot;61cosi &quot;.</p>
+<p>Starting with xCAT version 2.5 you can also to specify the &quot;configdump&quot; attribute to specify the type of system do to configure. See the section called &quot;ISCSI dump support&quot; below for details.</p>
+<p>To verify that NIM has allocated the required resources for a node and that the node is ready for a network boot you can run the &quot;lsnim -l&quot; command. For example, to check node &quot;node01&quot; you could run the following command.</p>
+<pre><code>    lsnim -l node01</code></pre>
+<h4 id="initialize-the-aixnim-diskless-nodes-for-power-775"><a href="#TOC">Initialize the AIX/NIM diskless nodes for Power 775</a></h4>
+<p>You can set up NIM to support a diskless boot of P775 nodes by using the xCAT mkdsklsnode command. This command uses information from the xCAT database and default values to run the appropriate NIM commands.</p>
+<p>These diskless images will be created on both the xCAT EMS, and on the xCAT service nodes. The xCAT EMS will contain information about the supported xCAT images, but most of the installation setup for diskless boot will be contained on the xCAT SN. Make sure that your diskless images have been created working with the mknimimage command in a previous step.</p>
+<p>The Power 775 cluster allows remote system dump support for diskless nodes. To set up the diskless dump support you must define the NIM dump resource and allocate the resource to the diskless node. If you already have created a diskless osimage then you can just create the NIM dump resource manually and add the name to the xCAT osimage definition.</p>
+<p>To create a NIM dump resource you could run a command similar to the following (or use SMIT):</p>
+<pre><code>    nim -o define -t dump -a server=master -a location=/install/nim/dump/71BCNdskls_dump
+    -a max_dumps=1 71BCNdskls_dump</code></pre>
+<p>To add this to the 71BCNimage osimage definition you could run the following:</p>
+<pre><code>    chdef -t osimage -o 71BCNimage dump=71BSNdskls_dump</code></pre>
+<p>The mkdsklsnode will check the xCAT DB for the &quot;osimage&quot; and the compute node. It will then update the diskless spot images to reference any additional updates found in the xCAT DB. For example, to set up all the nodes in the group &quot;p775nodes&quot; to boot using the SPOT (71BCNimage) named &quot;71BCNimage&quot; you could issue the following command.</p>
+<pre><code>    mkdsklsnode -i 71BCNimage p775nodes -f</code></pre>
+<p>Same as no-Power 775 clusters, to verify that NIM has allocated the required resources for a node and that the node is ready for a network boot you can run the &quot;lsnim -l&quot; command. For example, to check node &quot;node01&quot; you could run the following command.</p>
+<pre><code>    lsnim -l node01</code></pre>
+<h4 id="verifying-the-node-initialization-before-booting-optional"><a href="#TOC">Verifying the node initialization before booting (optional)</a></h4>
+<p>Once the mkdsklsnode command completes you can check several things to see if it has been initialized correctly.</p>
+<ul>
+<li>The /etc/bootptab and /etc/exports files.</li>
+<li>The &lt;nodename&gt;.info file in the /tftpboot directory.</li>
+<li>The NIM node definition for the node. (&quot;lsnim -l node01&quot;)</li>
+</ul>
+<h4 id="open-a-remote-console-optional"><a href="#TOC">Open a remote console (optional)</a></h4>
+<p>You can open a remote console to monitor the boot progress using the xCAT rcons command. This command requires that you have conserver installed and configured.</p>
+<p>If you wish to monitor a network installation you must run rcons before initiating a network boot.</p>
+<p>To configure conserver run:</p>
+<pre><code>    makeconservercf</code></pre>
+<p>To start a console:</p>
+<pre><code>    rcons node01</code></pre>
+<p>Note: You must always run makeconservercf after you define new cluster nodes.</p>
+<h4 id="initiate-a-network-boot"><a href="#TOC">Initiate a network boot</a></h4>
+<p>Initiate a remote network boot request using the xCAT rnetboot command. For example, to initiate a network boot of all nodes in the group &quot;aixnodes&quot; you could issue the following command.</p>
+<pre><code>    rnetboot aixnodes</code></pre>
+<p>Starting with xCAT version 2.5 you can also specify the &quot;-I&quot; option to specify the iscsi boot option. (&quot;rnetboot -I aixnodes&quot;) See the section called &quot;ISCSI dump support&quot; below for details.</p>
+<p>Note: If you receive timeout errors from the rnetboot command, you may need to increase the default 60-second timeout to a larger value by setting ppctimeout in the site table:</p>
+<pre><code>    chdef -t site -o clustersite ppctimeout=180</code></pre>
+<h4 id="initiate-a-network-boot-over-hfi-on-power-775"><a href="#TOC">Initiate a network boot over HFI on Power 775</a></h4>
+<p>Starting from xCAT 2.6 and working in Power 775 cluster, there are two ways to initialize a network boot to the compute nodes: one way is that using xCAT rbootseq command to setup the boot device as network adapter for the compute nodes, and after that, you can issue xCAT rpower command to power on or reset the compute node to boot from network, another way is to use xCAT rnetboot command directly. Comparing these two ways, rbootseq/rpower commands don't require the console support and operate in the console, so it has a better performance. It is recommended to use rbootseq/rpower to setup the boot device to network adapter and initialize the network boot in Power 775 cluster.</p>
+<pre><code>    rbootseq aixnodes hfi
+    rpower aixnodes boot</code></pre>
+<h4 id="verify-the-deployment"><a href="#TOC">Verify the deployment</a></h4>
+<ul>
+<li>You can use the AIX lsnim command to see the state of the NIM installation for a particular node, by running the following command on the NIM master:</li>
+</ul>
+<pre><code>lsnim -l &lt;clientname&gt;</code></pre>
+<h5 id="retry-and-troubleshooting-tips"><a href="#TOC">Retry and troubleshooting tips:</a></h5>
+<ul>
+<li>For p6 lpars, it may be helpful to bring up the HMC web interface in a browser and watch the lpar status and reference codes as the node boots.</li>
+<li>Verify network connections</li>
+<li>If the rnetboot returns &quot;unsuccessful&quot; for a node, verify that bootp and tftp is configured and running properly.</li>
+<li>For bootp, view /etc/bootptab to make sure an entry exists for the node.</li>
+<li>For dhcp, view /var/lib/dhcp/db/dhcpd.leases to make sure an entry exists for the node.</li>
+<li>Verify that the information in /tftpboot/&lt;node&gt;.info is correct.</li>
+<li>Stop and restart inetd:</li>
+</ul>
+<pre><code>    stopsrc -s inetd
+    startsrc -s inetd</code></pre>
+<ul>
+<li>Stop and restart tftp:</li>
+</ul>
+<pre><code>    stopsrc -s tftp
+    startsrc -s tftp</code></pre>
+<ul>
+<li>Verify NFS is running properly and mounts can be performed with this NFS server:</li>
+<li>View /etc/exports for correct mount information.</li>
+<li>Run the showmount and exportfs commands.</li>
+<li>Stop and restart the NFS and related daemons:</li>
+</ul>
+<pre><code>    stopsrc -g nfs
+    startsrc -g nfs</code></pre>
+<ul>
+<li>Attempt to mount a file system from another system on the network.</li>
+<li>If the rnetboot operation is successful, but lsnim shows that the node is stuck at one of the netboot phases, you may need to redo your NIM definitions.</li>
+</ul>
+<h3 id="aix-statelite-support"><a href="#TOC">AIX statelite support</a></h3>
+<p>Note: The xCAT statelite implementation for AIX is not the same as the Linux implementation due to basic differences in the base operating systems and their deployment methods.</p>
+<p>The xCAT support for AIX diskless nodes includes options for using either a NIM &quot;root&quot; or a &quot;shared_root&quot; resource. You can choose either one for a diskless node deployment.</p>
+<p>If you choose the &quot;root&quot; resource then each node will get it's own unique mounted root file system. If the node is shut down and rebooted it will get the same root filesystem. Anything that the node wrote to it's root file system is preserved. This case is referred to as &quot;stateful&quot;.</p>
+<p>If you choose a &quot;shared_root&quot; resource then the nodes will share the same root filesystem. When an individual node writes to it's root file system it is actually writing to local memory (using the AIX STNFS support). If the node is shut down and rebooted it will get the same root filesystem it originally started with. In this case anything that the node wrote to it's root file system is lost. Any node-specific information or configuration will have to be redone. This case is referred to as &quot;stateless&quot;.</p>
+<p>The big advantage for using <em>stateless</em> nodes is that they can all share a common &quot;<em>shared_root</em>&quot; resource and that there is very little network traffic since the nodes all write to local memory.</p>
+<p>For large scale cluster environments it may be advantageous to use a stateless implementation. However there will very likely be a need to have some subset of files or directories be persistent. There also may be a need to specify unique files or directories for each node.</p>
+<p>The xCAT on AIX &quot;statelite&quot; implementation provides this type of support. It basically provides the ability to &quot;overlay&quot; specific files or directories over the standard diskless-stateless support.</p>
+<p>The AIX stateless support is only available when using the diskless-stateless deployment method.</p>
+<p>The statelite setup on the node occurs early in the boot process. Information that is provided in statelite tables will be used during the boot process.</p>
+<p>Note: Statelite support must be used with caution especially when modifying system configurations files that are used early in the boot process. For, example if you try to use the /etc/objrepos as a statelite directory the diskless boot will hang. If you are not sure about how a system configuration file change will affect the system, you should try it on a test system before deploying the cluster nodes.</p>
+<h4 id="statelite-options"><a href="#TOC">Statelite options</a></h4>
+<p>The xCAT for AIX statelite support includes the following three options:</p>
+<ol style="list-style-type: decimal">
+<li><strong>persistent</strong> - Provide a mounted file or directory that is copied to the xCAT persistent location and then over-mounted read-write on the local file or directory. Anything written to that file or directory is preserved. For example, this could be used to preserve log or trace files or to provide node configuration data for the next time the node is booted. (Requires the statelite table to be filled out with a location for persistent storage - see below).</li>
+<li><strong>rw</strong> - Provide a file or directory for a node to use when booting, allow the node to write to the file, but on the next diskless boot the original (or latest) version of the file on the server will be used. ( read-write -non-persistent)</li>
+<li><strong>ro</strong> - Provide files or directories that can be overmounted read-only on the local files or directories. The directory or file will be mounted on the node while the node is running (not just during the boot process), and overmounted on the local version of the file or directory. Changes made to this file or directory on the server will be immediately seen in this file or directory on the node. This option requires that the file or directory to be mounted must be available in one of the entries in the litetree table</li>
+</ol>
+<p>The default option is &quot;<strong>rw</strong>&quot;, which means if you leave the option attribute as blank,</p>
+<p>then the option will be treated as &quot;rw&quot; when the entry in litefile table is used.</p>
+<p>The examples provided below illustrate how to use these options.</p>
+<h4 id="statelite-database-tables"><a href="#TOC">Statelite database tables</a></h4>
+<p>In order to specify the information needed for xCAT to do the statelite setup you must update one or more of the xCAT statelite database tables.</p>
+<p>There are three xCAT database tables that may need to be updated to implement the xCAT statelite support.</p>
+<ul>
+<li><p>The statelite table contains the location on an NFS server where a nodes persistent files and directories are stored. Any file marked persistent in the litefile table will be stored in the location specified in this table for that node.</p>
+<p>Example:</p>
+<p>Assume that the xCAT node group name is &quot;aixnodes&quot;, that the server for the NFS mounted directory will be the management node (xcatmn), and that the persistent directory is /nodedata.</p>
+<p>In this case the table entry would look like the following:</p></li>
+</ul>
+<pre><code>    #node,image,statemnt,mntopts,comments,disable
+    &quot;aixnodes&quot;,,&quot;xcatmn:/nodedata/&quot;,,,</code></pre>
+<p>In NFSv4 environment, the option &quot;vers=4&quot; needs to be defined in statelite.mntopts field.</p>
+<pre><code>    #node,image,statemnt,mntopts,comments,disable
+    &quot;aixnodes&quot;,,&quot;xcatmn:/nodedata/&quot;,&quot;vers=4&quot;,,</code></pre>
+<pre><code>The &quot;image&quot; value is not currently used in this table.
+
+In the statelite table, The &quot;node&quot; attribute can be filled in with either a node name or a group name.
+
+In the &quot;statemnt&quot; value the server should always be the name of the server as it would be know by the node.
+
+Export any directories that are listed in this table before attempting to boot the nodes. Use the export options appropriate to your environment. Make sure the nodes will be able to read-from and write-to the persistent directory.
+
+You can specify a comma-separated list of options to use when mounting the persistent directory by adding a value for the &quot;mntopts&quot; attribute. (Ex. &#39;soft&#39;) The default is to do a &#39;hard&#39; mount, the statelite persistent directories will be mounted with option &quot;llock&quot;(local locking) by default. You can use any values supported by the &quot;-o&quot; option of the mount command.
+
+Also, consider that the internal xCAT code must be able to create additional files and subdirectories under the statelite directories, so make sure the permissions and ownership options will allow this. (For example, you could set the permissions on the statelite directories to &quot;755&quot; and the ownership to &quot;root system&quot;.)</code></pre>
+<ul>
+<li><p>The litefile table specifies the directories and files for the statelite setup along with the option to use to do the setup. If no option is provided then the default is &quot;rw&quot;.</p>
+<p>Example:</p>
+<p>The &quot;image&quot; value can be either the name of the xCAT osimage definition or &quot;ALL&quot; (which means all osimages.)</p></li>
+</ul>
+<pre><code>    #image,file,options,comments,disable
+    &quot;ALL&quot;,&quot;/mydata/&quot;,&quot;persistent&quot;,,
+    &quot;61cosi&quot;,&quot;/lppcfg&quot;,&quot;rw&quot;,,
+    &quot;61cosi&quot;,&quot;/etc/lppcfg&quot;,&quot;ro&quot;,,</code></pre>
+<pre><code>Note: A directory name should end with a &quot;/&quot;.
+
+Make sure the file or directory permissions and ownership options are set the way you want them to appear on the nodes and that they are appropriate for the statelite option you are using.
+
+When filling in the litefile table you may wish to include BOTH a directory and a subdirectory (or file). For example, &quot;/foo/&quot; and &quot;/foo/bar&quot;. These are referred to as parent-child entries.
+
+This is supported, however there are certain limitations based on the options you wish to use.
+
+If the option for the parent directory is &quot;rw&quot; then a child entry could be &quot;rw&quot;, &quot;persistent&quot;, or &quot;ro&quot;.
+
+If the option for the parent directory is &quot;persistent&quot; then a child entry could be &quot;rw&quot;, or &quot;persistent&quot;.
+
+If the option for the parent directory is &quot;ro&quot; then you cannot have any &quot;child&quot; entries.</code></pre>
+<ul>
+<li><p>The litetree table controls where the initial content of the files in the litefile table come from, and the long term content of the &quot;ro&quot; files. The &quot;priority&quot; value indicates the search path to use when looking for a file or directory. If the file cannot be found in any of the litetree entries (or there are no entries), then the default will be to use the file contained in the osimage SPOT resource. If the file does not exist in the SPOT then an empty file or directory will be created.</p>
+<p>The directory value must be the location (hostname:path) of a directory that contains the file or directory exactly as specified in the litefile table. For example, if the litefile entry is &quot;/etc/motd&quot; and the litetree directory entry is &quot;/myfiles&quot; then the assumption is that the file would be located in &quot;/myfiles/etc/motd&quot;.</p>
+<p>In the directory value the server should always be the name of the server as it would be know by the node.</p>
+<p>Export any directories that are listed in this table before attempting to boot the nodes. Use the export options appropriate to your environment.</p>
+<p>Example:</p></li>
+</ul>
+<pre><code>    #priority,image,directory,mntopts,comments,disable
+    &quot;1&quot;,&quot;61cosi&quot;,&quot;xcatmn:/clstrnodedata/&quot;,&quot;vers=4&quot;,,
+    &quot;2&quot;,&quot;61cosi&quot;,&quot;xcatsvr:/mydata/&quot;,&quot;vers=4&quot;,,
+</code></pre>
+<pre><code>To update an xCAT database table you can use the tabedit command. (&quot;tabedit table-name&quot;) See the tabedit man page for details.</code></pre>
+<p>Also see the examples described below.</p>
+<h4 id="statelite-user-management"><a href="#TOC">Statelite user management</a></h4>
+<p>If you wish to set up something other than root user access to the statelite files or directories on the nodes you must also set up the new user and group IDs on the nodes. (For example, if you wish to set up a persistent logging directory to be written to by a different userid.)</p>
+<p>One way to accomplish this is to create a set of configuration files, that include the user information, and include them in the SPOT resource that will be used to boot the node.</p>
+<p>The list of configuration files you will need in order to get the exact same user information on the nodes is:</p>
+<pre><code>    /etc/passwd
+    /etc/group
+    /etc/security/passwd
+    /etc/security/group
+    /etc/security/user
+    /etc/security/limits
+</code></pre>
+<p>You can create these files on the management nodes and copy them to the SPOT resource being used to boot the nodes. (ex. /install/nim/spot/&lt;spot-name&gt;/usr/lpp/bos/inst_root/etc)</p>
+<p>Another option is to use the xCAT synclists support. With this support you can create a &quot;synclists&quot; file containing a list of all the extra configuration files you would like added to the SPOT resource. You can then update the SPOT using the &quot;mknimimage -u ... &quot;. For more information on using the synclists support see the following xCAT document. &quot;How to sync files in xCAT&quot; [Sync-ing_Config_Files_to_Nodes]</p>
+<h4 id="examples-of-how-to-use-the-aix-statelite-support"><a href="#TOC">Examples of how to use the AIX statelite support</a></h4>
+<p>Refer to the xCAT documents that describe now to boot diskless AIX nodes (mentioned above) for details on the deployment process. The examples below describe additional steps that are needed to utilize the statelite support.</p>
+<p>When the mkdsklsnode command is run during the deployment process it will use the information in the statelite tables to make modifications to the osimage SPOT resource to prepare for the statelite setup. When the node boot process begins an xCAT setup script is run to do the required statelite setup on the node.</p>
+<p>You must add the required information to the statelite tables before you run mkdsklsnode.</p>
+<p>The &quot;Result&quot; sections below indicate some of the internal structure that is used in the xCAT for AIX implementation. (This may be useful for debug purposes.)</p>
+<h5 id="provide-a-persistent-logging-directory"><a href="#TOC">Provide a persistent logging directory</a></h5>
+<p>Provide a unique persistent logging directory location for the cluster diskless-stateless nodes. (read-write-persistent directory)</p>
+<p>Assume that you have an xCAT node group named &quot;aixstateless&quot;, that the server for the NFS mounted directory will be the management node (xcatmn), and that the persistent directory is /nodedata. Also assume the xCAT osimage name is &quot;61dskls&quot; and that the directory to store the logs in should be &quot;/logs&quot;.</p>
+<ul>
+<li>Modify the statelite table. ( using tabedit or chtab)</li>
+</ul>
+<pre><code>    #node,image,statemnt,comments,disable
+    &quot;aixstateless&quot;,,&quot;xcatmn:/nodedata&quot;,,</code></pre>
+<p>This says that each node in the &quot;aixstateless&quot; node group will store their persistent data in the /nodedata file system mounted from the management node.</p>
+<p>Make sure you export any directories that are listed in this table before attempting to boot the nodes.</p>
+<ul>
+<li>Modify the litefile table. ( using tabedit or chtab)</li>
+</ul>
+<pre><code>    #image,file,options,comments,disable
+    &quot;61dskls&quot;,&quot;/logs/&quot;,&quot;persistent&quot;,,</code></pre>
+<p>This says that any node using the &quot;61dskls&quot; osimage should have a /logs/ directory, and that it should be persistent. Notice that a directory name must end in a &quot;/&quot;.</p>
+<p>Result:</p>
+<p>When the node (say node01) writes to it's local /logs directory it really goes to the over-mounted /.statelite/persistent/node01/logs directory. These directories were created during the statelite setup. The /nodedata directory was then mounted from the management node. So when you write to the local /logs directory you are really writing to the /nodedata/node01/logs directoryon the management node.</p>
+<h5 id="provide-a-read-write-configuration-file"><a href="#TOC">Provide a read-write configuration file</a></h5>
+<p>Provide the current version of a configuration file for the node to use when booting, allow the node to write to the file, but on the next install the latest version of the file on the server should be used. (read-write - non-persistent)</p>
+<p>Assume that you want any node that uses the osimage named &quot;61dskls&quot; to boot using the configuration file called &quot;/etc/FScfg&quot;. The original version of the file should come from the server named &quot;FSserver.cluster.com&quot;.</p>
+<ul>
+<li>Modify the litefile table. ( using tabedit or chtab)</li>
+</ul>
+<pre><code>    #image,file,options,comments,disable
+    &quot;61dskls&quot;,&quot;/etc/FScfg&quot;,&quot;rw&quot;,,
+</code></pre>
+<p>This says that any node using the &quot;61dskls&quot; osimage should have an /etc/FScfg file, and that it should be read-write.</p>
+<ul>
+<li>Modify the litetree table. ( using tabedit or chtab)</li>
+</ul>
+<pre><code>    #priority,image,directory,comments,disable
+    &quot;1&quot;,&quot;61dskls&quot;,&quot;FSserver.cluster.com:/myfiles&quot;,,,</code></pre>
+<p>This says that the initial version of the file should be taken from <strong>&quot;FSserver.cluster.com:/myfiles&quot;</strong>.</p>
+<p>Make sure you export any directories that are listed in this table before attempting to boot the nodes.</p>
+<p>Result:</p>
+<p>When the node is being booted an xCAT script mounts &quot;/myfiles&quot; from &quot;FSserver&quot; and copies &quot;/myfiles/etc/FScfg&quot; into the local /etc/FScfg.</p>
+<p>When the node writes to the file it is actually writing to local memory, (the normal stateless function), and the updates are not preserved for the next deployment. When the node is re-deployed the /etc/FScfg file from FSserver is again used for the initial value.</p>
+<h5 id="provide-a-read-only-configuration-file"><a href="#TOC">Provide a read-only configuration file</a></h5>
+<p>Provide the nodes with a unique configuration files to use when booting. The file should not be modified. ( read-only )</p>
+<p>The server for the NFS mounted directory is the management node (xcatmn). The osimage name is be &quot;61dskls&quot; and the configuration file is /etc/lppcfg.</p>
+<ul>
+<li>Modify the litefile table. ( using tabedit or chtab)</li>
+</ul>
+<pre><code>    #image,file,options,comments,disable
+    &quot;61dskls&quot;,&quot;/etc/lppcfg&quot;,&quot;ro&quot;,,</code></pre>
+<p>This says that any node using the &quot;61dskls&quot; osimage should have a /etc/lppcfg file, and that it should be read-only.</p>
+<ul>
+<li>Modify the litetree table. ( using tabedit or chtab)</li>
+</ul>
+<pre><code>    #priority,image,directory,comments,disable
+    &quot;&#39;1&quot;,&quot;61dskls&quot;, &quot;xcatmn:/statelite/&quot;,,,
+    &quot;2&quot;,&quot;61dskls&quot;, &quot;xcatmn:/&quot;,,,
+</code></pre>
+<p>This says that any node using the &quot;61dskls&quot; osimage should look for the litefile names, first in the &quot;xcatmn:/statelite/&quot; directory and, if not found, then look for it in &quot;xcatmn:/&quot; (ie. Take the file from the management node.). If the file is not found in either of these places the default will be to take the one that exists in the SPOT &quot;instroot&quot; location. If that doesn't exist then an empty file is created.</p>
+<p>Make sure you export any directories that are listed in this table before attempting to boot the nodes.</p>
+<p>Result</p>
+<p>When the statelite setup is being done xCAT will find the file using the entries in the litetree table. It will then mount the correct file or directory to the local xCAT statelite directories. Then the xCAT statelite directory is used to overmount the local &quot;/etc/lppcfg&quot; file.</p>
+<p>When the node reads the local &quot;/etc/lppcfg &quot; file it is actually reading the file mounted from the server specified in the litetree table. Any change to the file located on the server will be seen immediately on the local node.</p>
+<h5 id="using-variables-in-table-entries"><a href="#TOC">Using variables in table entries</a></h5>
+<p>In the previous examples it would also have been possible to specify unique files or directories for each node or set of nodes. To do this you could use variables from the xCAT database. When the statelite setup information is read, the variables in the table will be substituted with the actual values for that node. This would support having one statement cover multiple different nodes. It will also support having unique servers and locations for each node or group of nodes.</p>
+<p>For example, a &quot;directory&quot; entry in the litetree table might look like the following:</p>
+<pre><code>    $noderes.nfsserver:/mydir/$node</code></pre>
+<p>This would mean that the NFS server would be the value of &quot;$noderes.nfsserver&quot; for this node definition and the location would be &quot;/mydir/&lt;nodename&gt;&quot;.</p>
+<p>You could also use the variable support for the &quot;statemnt&quot; attribute of the statelite table. For example,</p>
+<pre><code>    #node,image,statemnt,comments,disable
+    &quot;node01&quot;,,&quot;$noderes.xcatmaster:/foo/$nodetype.provmethod&quot;,,</code></pre>
+<p>This would say to use the node's service node as the NFS server and &quot;/foo/&lt;osimagename&gt;&quot; as the persistent directory.</p>
+<h4 id="preserving-aix-odm-configuration-data-on-diskless-stateless-nodes."><a href="#TOC">Preserving AIX ODM configuration data on diskless-stateless nodes.</a></h4>
+<p>The xCAT on AIX statelite support may be used to preserve the ODM database updates that are made on the cluster node. Normally any changes that were made on the node would be lost when the node is rebooted.</p>
+<p>When the ODM database is updated on the node a record of the update is saved in the /etc/basecust file. This file can be used to restore the database when the node is rebooted.</p>
+<p>To enable this you must use the statelite support to create the /etc/basecust file as a persistent file. If this file is available xCAT code will use it to restore the ODM during the boot process.</p>
+<p>Typically, for the initial boot of the node, the /etc/basecust would be empty. When the node is booted, devices may be configured etc. which changes the ODM and updates the /etc/basecust file. On subsequent boots the information in the /etc/basecust file is automatically restored.</p>
+<p>To set up the /etc/basecust file just add an entry to the litefile table.</p>
+<p>For example:</p>
+<pre><code>    #image,file,options,comments,disable
+    &quot;61dskls&quot;,&quot;/etc/basecust&quot;,&quot;persistent&quot;,,</code></pre>
+<h4 id="preserving-system-log-files"><a href="#TOC">Preserving system log files</a></h4>
+<p>It may be useful to preserve certain system logs such as errlog, cfglog etc. to use for debugging purposes. You can use the statelite support to do this but there could be complications depending on what files you wish to preserve. For example, creating a persistent errlog file would not work correctly since the errdemon command will not accept a zero-length file when starting the daemon on the node. If you are not sure if a particular file or directory will work correctly then it would be good to try it on a test system first.</p>
+<p>If you wish to preserve the files in the /var/adm/ras directory the current recommendation is to create the whole directory as persistent.</p>
+<p>For example, in the litefile table you would add an entry similar to the following.</p>
+<pre><code>    #image,file,options,comments,disable
+    &quot;ALL&quot;,&quot;/var/adm/ras/&quot;,&quot;persistent&quot;,,</code></pre>
+<p>When the nodes boot up you will then have to move the conslog file to a location outside of the persistent directory. (We have discovered that leaving the conslog file in a persistent directory can occasionally lead to a deadlock situation.)</p>
+<p>This can be done by using the xdsh command to run swcons on the cluster nodes.</p>
+<pre><code>    xdsh &lt;noderange&gt; &quot;/usr/sbin/swcons -p /tmp/conslog&quot;</code></pre>
+<p>(The /tmp location is just an example, you could move it to a different place.)</p>
+<p>At this point whenever the system updates any of the files in /var/adm/ras it will really be updating the files in the persistent directory you specified in the statelite table - which is mounted on the node.</p>
+<h4 id="using-statelite-with-backup-service-nodes."><a href="#TOC">Using statelite with backup service nodes.</a></h4>
+<p>You can use the statelite and the service node backup support together in an xCAT AIX cluster.</p>
+<p>However, when you try to boot a node using it's backup service node it will need to be able to mount the statelite persistent directory etc. If you specify the primary service node as the server of the persistent directory, and it is down, then you will not be able to boot the node.</p>
+<p>When setting up the statelite support in this environment you may need to set up a separate server for the statelite files OR make sure there is an up-to-date copy on the backup service node.</p>
+<p>For example if you had a statelite directory (&lt;prinSN&gt;:/nodedata) on the primary service node then you could manually create and update a corresponding directory (&lt;bkSN&gt;:/nodedata) on the backup service node.</p>
+<p>In this case you could simplify the switch to the backup service node by using variables in the statelite table entries. For example, if you use &quot;$noderes.xcatmaster&quot; in the statelite table then it will always be evaluated as the &quot;xcatmaster&quot; value of the node. When you run the snmove command to switch service nodes it will set the new &quot;xcatmaster&quot; value. When the node is rebooted it will use the statelite directory on the backup service node.</p>
+<h3 id="iscsi-dump-support"><a href="#TOC">ISCSI dump support</a></h3>
+<p>Starting with xCAT version 2.5.1 you can configure remote system dump support for diskless nodes. To set up the diskless dump support you must define the NIM dump resource and allocate the resource to the diskless node.</p>
+<p>When a dump resource is allocated to a client node, NIM creates a sub-directory identified by the client's name for the client's exclusive use. The client uses this directory to store any dump files it creates. For example, &quot;/install/nim/dump/61dskls_dump/node05&quot;.</p>
+<p>See the AIX/NIM documentation for more information on the diskless (thin server) dump support.</p>
+<h4 id="prerequisites"><a href="#TOC">Prerequisites</a></h4>
+<p>The xCAT support for diskless system dump has the following prerequisites.</p>
+<ul>
+<li>xCAT version 2.6 or higher</li>
+<li>Hardware: POWER6 or later</li>
+<li><p>Operating system version:</p></li>
+<li>AIX 6.1.6 plus SP2 or above</li>
+<li><p>AIX 7.1.0 plus SP2 or above</p></li>
+<li><p>Minimum firmware level:</p></li>
+<li>Power6 non-blade hardware, minimum FW level is 350_039</li>
+<li>Power6 blade hardware, minimum FW level is 350_038</li>
+<li>Power7 HV16, FW level is 730_035</li>
+<li><p>Power775, FW level is 730_042.</p></li>
+<li><p>Software prereqs:</p></li>
+<li>devices.tmiscsw (Latest available from the AIX Expansion Pack. Additional updates may be available on SP)</li>
+<li><p>bos.sysmgt.nim.spot (version 7.1.0.1 or 6.1.6.1 or later)</p></li>
+</ul>
+<h4 id="configuring-diskless-dump"><a href="#TOC">Configuring diskless dump</a></h4>
+<p>The process for configuring xCAT diskless dump support is provided below. These additional steps should be integrated into the AIX diskless deployment process described above.</p>
+<p>All the software prerequisites listed above must be installed on the xCAT management node and any service nodes that are being used.</p>
+<p>All the software prerequisite EXCEPT devices.tmiscsw must also be installed in the SPOT resource being used for the diskless node.</p>
+<ul>
+<li>Install prerequisite software on the management node</li>
+</ul>
+<p>Use the standard AIX interfaces to install the software on the management node. (SMIT, installp, geninstall)</p>
+<ul>
+<li>Install prerequisite software on service nodes</li>
+</ul>
+<p>For the service nodes you can add the filesets to the service node installp_bundle resource you use to install the service node. (ex. xCATaixSN71.) The filesets can be included when you do the initial installation or they can be installed later with the updatenode command.</p>
+<p>IMPORTANT: All the prerequisite software must be copied to the lpp_source resource used for the service nodes before attempting to update the service nodes.</p>
+<ul>
+<li>Install prerequisite software in the SPOT resource used for the compute nodes</li>
+</ul>
+<p>You can install additional software in a SPOT at any time using either the xcatchroot command to run the installp command on the SPOT, or you can use the mknimimage -u command. (See the man pages for the commands for details.)</p>
+<p>Note: Run <strong>export INUCLIENTS=1</strong> from within xcatchroot environment before you install or update bos.* AIX filesets or any other filesets or rpms that expect an active operating environment or else installp or rpm command may fail.</p>
+<pre><code>  xcatchroot -i 61cosi &quot;export INUCLIENTS=1;/usr/sbin/installp  .....&quot;</code></pre>
+<p>To use the mknimimage command you should first update the NIM installp_bundle resource you are using for your diskless osimage. (ex. xCATaixCN71)</p>
+<p>IMPORTANT: All the prerequisite software must be copied to the lpp_source resource used for the compute nodes before attempt to update the SPOT.</p>
+<p>To see what software has been installed in the SPOT you can run:</p>
+<pre><code>    nim -o showres 61spot</code></pre>
+<p>Once you are done updating the SPOT you must always run the NIM &quot;check&quot; operation.</p>
+<pre><code>    nim -Fo check 61spot</code></pre>
+<ul>
+<li>Create a NIM dump resource</li>
+</ul>
+<p>If you are creating a new diskless osimage then you can have the dump resource created automatically when you run mknimimage. See the mknimimage man page for more details.</p>
+<p>For example,</p>
+<pre><code>    mknimimage -V -r -D -t diskless -s 61rte_lpp_source
+    61dskls max_dumps=1</code></pre>
+<p>The &quot;-D&quot; option specifies that a dump resource should be created.</p>
+<p>When creating a dump resource there are several dump-related attributes that may be set.</p>
+<p>dumpsize - The maximum size for a single dump image the dump resource will accept. Space is not allocated until a client starts to dump. The default size is 50GB. The dump resource should be large enough to hold the expected AIX dump and snap data.</p>
+<p>max_dumps - The maximum number of dumps that can be collected for a client node. For example, if max_dumps is 2, you can save 2 dumps for the client. If 2 dumps have been saved and a new dump is taken, the oldest one is overwritten. The default is one.</p>
+<p>notify - An administrator supplied script that will be invoked when a new dump is captured, or when a dump error occurs on the client. No default value. (NOTE: The AIX support for the notify option is currently broken.)</p>
+<p>snapcollect - Indicates whether snap data should be included with the dump. The snap data file will be saved in the client's dump resource directory. Values are &quot;yes&quot; or &quot;no&quot;. The default is &quot;no&quot;.</p>
+<p>If you already have created a diskless osimage then you can just create the NIM dump resource manually and add the name to the xCAT osimage definition.</p>
+<p>To create a NIM dump resource you could run a command similar to the following (or use SMIT):</p>
+<pre><code>    nim -o define -t dump -a server=master -a location=/install/nim/61dskls_dump
+    -a max_dumps=1 61dskls_dump
+</code></pre>
+<p>To add this to the 61dskls osimage definition you could run the following:</p>
+<pre><code>    chdef -t osimage -o 61dskls dump=61dskls_dump</code></pre>
+<ul>
+<li>Initialize the diskless client node</li>
+</ul>
+<p>Use the xCAT mkdsklsnode command to define and initialize a NIM diskless machine.</p>
+<p>For example:</p>
+<pre><code>    mkdsklsnode -V -i 61dskls compute15 configdump=full</code></pre>
+<p>When initializing a node there are two dump-related attributes that may be set.</p>
+<p>dumpiscsi_port - The tcpip port number to use to communicate dump images from the client to the dump resource server. Normally set by default. This port number is used by a dump resource server.</p>
+<p>configdump - Specifies the type of dump to be collected from the client node. The values are &quot;selective&quot;, &quot;full&quot;, and &quot;none&quot;. If the configdump attribute is set to &quot;full&quot; or &quot;selective&quot; the client will automatically be setup to dump to an iSCSI Target device. The &quot;selective&quot; memory dump will avoid dumping user data. The &quot;full&quot; memory dump will dump all the memory of the client partition. Selective and full memory dumps will be collected in the dump resource allocated to the client. Setting the value to &quot;none&quot; means that the dump configuration will not be done on the node. The default value is &quot;selective&quot;.</p>
+<p>Warning: Part of the initialization process is to allocate the NIM dump resource to the node. If the node has previously used this dump resource to store any dump files the files will be removed. It is advisable to copy any dump files you want to keep to a different location so they are not accidentally removed.</p>
+<ul>
+<li>Boot the node</li>
+</ul>
+<p>Use the xCAT rnetboot command to boot the diskless node.</p>
+<pre><code>    rnetboot compute15</code></pre>
+<ul>
+<li>Verify that the dump device has been configured on the node. (optional)</li>
+</ul>
+<p>Log on to the node or use xdsh to run the AIX sysdumpdev command.</p>
+<pre><code>    sysdumpdev</code></pre>
+<p>The result should be something like the following.</p>
+<pre><code>    primary /dev/hdisk0
+    secondary /dev/sysdumpnull
+    copy directory /var/adm/ras
+    forced copy flag TRUE
+    always allow dump FALSE
+    dump compression ON
+    type of dump fw-assisted
+    full memory dump disallow
+</code></pre>
+<h4 id="initiating-a-diskless-dump"><a href="#TOC">Initiating a diskless dump</a></h4>
+<p>System dumps are normally initiated when a fatal system error occurs, however, you can also initiate a system dump using the AIX sysdumpstart command.</p>
+<p>For example, to initiate a system dump on a diskless node called &quot;compute15&quot; you could run the following:</p>
+<pre><code>    xdsh compute15 &quot;sysdumpstart -p&quot;
+</code></pre>
+<p>The time for the dump to complete will vary depending on the dump options you specify and your network performance etc., however, it could take 2 or more hours to complete in some cases.</p>
+<p>When you initiate a dump with the sysdumpstart command the node will be unavailable for the duration of the dump process. The node will automatically reboot after the dump completes.</p>
+<p>If you wish to monitor the dump progress you can open a console for the node using the the rcons command. When you see the node rebooted you know the dump should be done. Once the node is rebooted you could also run the &quot;sysdumpdev -L&quot; command on the node to find out if the dump was successful.</p>
+<p>The dump file will be created in the NIM dump resource sub-directory created for the node on it's NIM master. The NIM master for the node will either be the xCAT management node or a service node. If the dump file is on a service node you must either copy it to the management node or log on to the service node to debug it.</p>
+<p>If the snapcollect attribute was set to &quot;no&quot; (which is the default) then you should get a dump file with a name something like &quot;dump.&lt;date&gt;.BZ&quot;</p>
+<p>For example,</p>
+<pre><code>    &quot;/install/nim/dump/61dskls_dump/clstrn05/dump.2010.06.15.10:47:34.BZ&quot;.</code></pre>
+<p>If the snapcollect attribute was set to &quot;yes&quot; then you will see a snap file with a name similar to &quot; snap.pax.&lt;date&gt;.Z&quot; In this case you must extract the dump file from the snap file.</p>
+<p>Use the following process to extract the dump file.</p>
+<ul>
+<li>Uncompress the snap file</li>
+</ul>
+<pre><code>    uncompress snap.pax.2010.11.09.15:53:04.Z</code></pre>
+<ul>
+<li>Get the name of the dump file contained in the snap file</li>
+</ul>
+<pre><code>     pax -v -f snap.pax.2010.11.09.15:53:04 | grep BZ</code></pre>
+<ul>
+<li>Create a subdirectory to save the dump file (ex. /install/nim/dump/710dskls_dump/compute04/savedump)</li>
+</ul>
+<pre><code>    mkdir savedump</code></pre>
+<ul>
+<li>Copy the snap file to the subdirectory</li>
+</ul>
+<pre><code>    cp snap.pax. 2010.11.09.15:53:04 savedump</code></pre>
+<ul>
+<li>Extract the dump file</li>
+</ul>
+<pre><code>    cd savedump
+    pax -rvf snap.pax.2010.11.09.15:53:04 -x pax ./dump/dump.2010.11.09.15:52:25.BZ
+</code></pre>
+<p>(ex. /install/nim/dump/710dskls_dump/compute04/savedump/dump/dump.2010.11.09.15:52:25.BZ)</p>
+<p>Note: You may need to run &quot;ulimit -f unlimited&quot; command to set the file size limit.</p>
+<p>Once you have the dump.&lt;date&gt;.BZ file you can uncompress it using the AIX dmpuncompress command. For example:</p>
+<pre><code>    dmpuncompress dump.2010.11.09.15:52:25.BZ</code></pre>
+<p>The AIX dmpuncompress command restores the original dump files that were compressed at dump time. The compressed dump file is removed and replaced by an expanded copy. The expanded file has the same name as the compressed version, but without the .BZ</p>
+<h4 id="nim-snap-and-showdump-operations"><a href="#TOC">NIM snap and showdump operations</a></h4>
+<p>You must run nim commands on the NIM master that is being used for the node. In an xCAT cluster this would either be the management node or an AIX service node. You can use the xCAT xdsh command to run the nim command on the service nodes.</p>
+<p>For example, to run the NIM command on the xCAT service node named &quot;SN27&quot;.</p>
+<pre><code>    xdsh SN27 &quot;&lt;nim command&gt;&quot;</code></pre>
+<h5 id="snap-operation"><a href="#TOC">Snap operation</a></h5>
+<p>The NIM &quot;snap&quot; operation allows you to gather system configuration data from a node at any time without having to initiate a system dump. (&quot;nim -o snap -a snap_flags=&lt;value&gt; nodename&quot;) The default value for &quot;snap_flags&quot; is &quot;-a&quot; which means it gathers all system configuration information. See the AIX documentation for details on the AIX snap command usage and the &quot;nim -o snap&quot; operation.</p>
+<p>For example:</p>
+<pre><code>    nim -o snap compute15</code></pre>
+<p>The snap file (ex. snap.pax.2010.02.17.11:47:38.Z) will be saved in the dump</p>
+<p>resource directory. If the snap operation is run again it will remove the existing snap file.</p>
+<h5 id="showdump-operation"><a href="#TOC">Showdump operation</a></h5>
+<p>Use the NIM &quot;showdump&quot; operation to see what dump files are available for a node.</p>
+<p>To run the command on the management node.</p>
+<pre><code>    nim -o showdump compute15</code></pre>
+<h4 id="reading-a-system-dump-file"><a href="#TOC">Reading a system dump file</a></h4>
+<p>Use the AIX kdb command to read dump files.</p>
+<p>For example, after you have run the dmpuncompress command you could run the following:</p>
+<pre><code>    kdb ./dump.2010.11.09.15:52:25 ./unix_64</code></pre>
+<p>The &quot;unix_64&quot; should be the one contained in the corresponding SPOT (ex. &quot;/install/nim/spot/&lt;spotname&gt;/usr/lib/boot/unix_64&quot;)</p>
+<p>If kdb does not work correctly you should check the build levels of the unix_64 and dump file. If they do not match then kdb will not work.</p>
+<p>To check the build levels you could run the following commands.</p>
+<pre><code>    what unix_64 | grep unix
+    what dump.2010.11.09.15:52:25 | grep buildinfo
+</code></pre>
+<p>If the levels do not match then you should check to make sure the correct prerequisite software levels have been installed and then try running the &quot;nim -Fo check&quot; operation on the SPOT. You will have to shut the nodes down and run rmdsklsnode before updating the SPOT resource.</p>
+<p>See the kdb documentation for more details on how to use kdb with dump files.</p>
+<h3 id="special-cases"><a href="#TOC">Special Cases</a></h3>
+<h4 id="using-other-nim-resources"><a href="#TOC">Using other NIM resources</a></h4>
+<p>When you run the mknimimage command to create a new xCAT osimage definition it will create default NIM resources and add their names to the osimage definition. It is also possible to specify additional or different NIM resources to use for the osimage. To do this you can use the &quot;attr=val [attr=val ...]&quot; option. These &quot;attribute equals value&quot; pairs are used to specify NIM resource types and names to use when creating the the xCAT osimage definition. The &quot;attr&quot; must be a NIM resource type and the &quot;val&quot; must be the name of a previously defined NIM resource of that type, (ie. &quot;&lt;nim_resource_type&gt;=&lt;resource_name&gt;&quot;). For example, to create a diskless image and include tmp and home resources you could issue the command as follows. This assumes that the mytmp and myhome NIM resources have already been created by using NIM commands directly.</p>
+<pre><code>    mknimimage -t diskless -s /dev/cd0 611cosi tmp=mytmp home=myhome</code></pre>
+<p>These resources will be added to the xCAT osimage definition. When you initialize a node using this definition the mkdsklsnode command will include all the resources when running the &quot;nim -o dkls_init&quot; operation.</p>
+<p>See the NIM documentation for more information on supported diskless resources.</p>
+<h4 id="booting-a-dataless-node"><a href="#TOC">Booting a &quot;dataless&quot; node</a></h4>
+<p>AIX NIM includes support for &quot;dataless&quot; systems as well as &quot;diskless&quot;. NIM defines a dataless machine as one that has some local disk space that could be used for paging space and optionally the /tmp and /home. If you wish to use dataless machines you can create an xCAT osimage definition for them with the mknimimage command. When creating the osimage, use the &quot;-t&quot; option to specify a type of &quot;dataless&quot;.</p>
+<p>For example, to create an osimage definition for &quot;dataless&quot; nodes you could run the command as follows.</p>
+<pre><code>     mknimimage -s /dev/cd0 -t dataless 53cosi</code></pre>
+<p>When the node is initialized to use this image the mkdsklsnode command will run the &quot;nim -o dtls_init ..&quot; operation.</p>
+<p>See the NIM documentation for more information on the NIM support for dataless systems.</p>
+<h4 id="specifying-additional-values-for-the-nim-node-initialization"><a href="#TOC">Specifying additional values for the NIM node initialization</a></h4>
+<p>When you run the mkdsklsnode command to initialize diskless nodes the command will run the required NIM commands using some default values. If you wish to use different values you can specify them on the mkdsklsnode command line using the &quot;attr=val [attr=val ...]&quot; option. See the mkdsklsnode man page for the details of what attributes and values are supported.</p>
+<p>For example, when mkdsklsnode defines the diskless node there are default values set for the &quot;speed&quot;(100) and &quot;duplex&quot;(full) network settings. If you wish to specify a different value for &quot;speed&quot; you could run the command as follows.</p>
+<pre><code>mkdsklsnode -i myosimage mynode speed=1000</code></pre>
+<h3 id="cleanup"><a href="#TOC">Cleanup</a></h3>
+<p>The NIM definitions and resources that are created by xCAT commands are not automatically removed. It is therefore up to the system administrator to do some clean up of unused NIM definitions and resources from time to time. (The NIM lpp_source and SPOT resources are quite large.) There are xCAT commands that can be used to assist in this process.</p>
+<h4 id="removing-nim-machine-definitions"><a href="#TOC">Removing NIM machine definitions</a></h4>
+<p>Use the xCAT rmdsklsnode command to remove all NIM machine definitions that were created for the specified xCAT nodes. This command will not remove the xCAT node definitions.</p>
+<p>For example, to remove the NIM machine definition corresponding to the xCAT node named &quot;node01&quot; you could run the command as follows.</p>
+<pre><code>    rmdsklsnode node01</code></pre>
+<p>The previous example assumes that the NIM machine definition is the same name as the xCAT node name. If you had used the &quot;-n&quot; option when you created the NIM machine definitions with mkdsklsnode then the NIM machine names would be a combination of the xCAT node name and the osimage name used to initialize the NIM machine. To remove these definitions you must provide the rmdsklsnode command with the name of the osimage that was used.</p>
+<p>For example, to remove the NIM machine definition associated with the xCAT node named &quot;node2&quot; and the osimage named &quot;61spot&quot; you could run the following command.</p>
+<pre><code>    rmdsklsnode -i 61spot node02</code></pre>
+<p>If the NIM machine is currently running or the machine definition was left in a bad state you can use the rmdsklsnode &quot;-f&quot; (force) option. This will stop the node and deallocate any resources it is using so the machine definition can be removed.</p>
+<p>The rmdsklsnode command is intended to make it easier to clean up NIM machine definitions that were created by xCAT. You can also use the AIX nim command directly. See the AIX/NIM documentation for details.</p>
+<h4 id="removing-nim-resources"><a href="#TOC">Removing NIM resources</a></h4>
+<p>Use the xCAT rmnimimage command to remove all the NIM resources associated with a given xCAT osimage definition. The command will only remove a NIM resource if it is not allocated to a node. You should always clean up the NIM node definitions before attempting to remove the NIM resources. The command will also remove the xCAT osimage definition that is specified on the command line.</p>
+<p>For example, to remove the &quot;61spot&quot; osimage definition along with all the associated NIM resources run the following command.</p>
+<pre><code>    rmnimimage -x 61spot</code></pre>
+<p>If necessary, you can also remove the NIM definitions directly by using NIM commands. See the AIX/NIM documentation for details.</p>
+<h3 id="notes"><a href="#TOC">Notes</a></h3>
+<h4 id="terminology"><a href="#TOC">Terminology</a></h4>
+<p><strong>image</strong> - The term &quot;image&quot; is used extensively in this document. The precise meaning of an &quot;image&quot; will vary depending on the context in which the term is being used. In general you can think of an image as the basic operating system image as well as other resources etc. that are needed to boot a node. In most cases in this document we will be referring to an image as either an xCAT osimage definition or an AIX/NIM diskless image (called a SPOT or COSI).</p>
+<p><strong>osimage</strong> - This is an xCAT object that can be used to describe an operation system image. This definition can contain various types of information depending on what will be installed on the node and how it will be installed. The image definition is not node specific and can be used to deploy multiple nodes. It contains all the information that will be needed by the underlying xCAT and NIM support to deploy the node.</p>
+<p><strong>COSI</strong> - A Common Operating System Image is the name used by AIX/NIM to refer to a SPOT resource. From the NIM perspective this would be an AIX diskless image.</p>
+<p><strong>diskless node</strong></p>
+<p>The operating system is not stored on local disk. For AIX systems this means the file systems are mounted from a NIM server. NIM also supports the concept of a dataless system which has some limited disk space that can be used for certain file systems. See the &quot;Special Cases&quot; section below for information on using additional NIM features.</p>
+<p>**diskful node **</p>
+<p>For AIX systems this means that the node has local disk storage that is used for the operating system. Diskfull AIX nodes are typically installed using the NIM <strong>rte</strong> or <strong>mksysb</strong> type install methods.</p>
+<h4 id="nim-diskless-resources"><a href="#TOC">NIM diskless resources</a></h4>
+<p>The following list describes the required and optional resources that are managed by NIM to support diskless and dataless clients.</p>
+<p><strong>boot</strong> - Defined as a network boot image for NIM clients.</p>
+<pre><code>The boot resource is managed automatically by NIM and is never explicitly allocated or deallocated by users.</code></pre>
+<p><strong>SPOT</strong> - Defined as a directory structure that contains the AIX run-time files common to all machines.</p>
+<pre><code>These files are referred to as the usr parts of the fileset.
+The SPOT resource is mounted as the /usr file system on diskless and dataless clients.
+
+Contains the root parts of filesets. The root part of a fileset is the set of files that may be used to configure the software for a particular machine. These root files are stored in special directories in the SPOT, and they are used to populate the root directories of diskless and dataless clients during initialization.
+
+The network boot images used to boot clients are constructed from software installed in the SPOT.
+
+A SPOT resource is required for both diskless and dataless clients.</code></pre>
+<p><strong>root</strong> - Defined as a parent directory for client &quot;/&quot; (root) directories.</p>
+<pre><code> The client root directory in the root resource is mounted as the &quot;/&quot; (root) file system on the client.
+
+When the resources for a client are initialized, the client root directory is populated with configuration files.
+These configuration files are copied from the SPOT resource that has been allocated to the same machine.
+A root resource is required for both diskless and dataless clients.
+This resource is managed automatically by NIM.</code></pre>
+<p><strong>dump</strong> - Defined as a parent directory for client dump files.</p>
+<pre><code>The client dump file in the dump resource is mounted as the dump device for the client.
+A dump resource is optional for both diskless and dataless clients.
+This resource is managed automatically by NIM.</code></pre>
+<p><strong>paging</strong> - Defined as a parent directory for client paging files.</p>
+<pre><code>The client paging file in the paging resource is mounted as the paging device for the client.
+A paging resource is required for diskless clients and optional for dataless clients.
+This resource is managed automatically by NIM.</code></pre>
+<p><strong>home</strong> - Defined as a parent directory for client /home directories.</p>
+<pre><code>The client directory in the home resource is mounted as the /home file system on the client.
+A home resource is optional for both diskless and dataless clients.</code></pre>
+<p><strong>shared_home</strong> - Defined as a /home directory shared by clients.</p>
+<pre><code>All clients that use a shared_home resource will mount the same directory as the /home file system.
+A shared_home resource is optional for both diskless and dataless clients.</code></pre>
+<p><strong>tmp</strong> - Defined as a parent directory for client /tmp directories.</p>
+<pre><code>The client directory in the tmp resource is mounted as the /tmp file system on the client.
+A tmp resource is optional for both diskless and dataless clients.</code></pre>
+<p><strong>resolv_conf</strong> - This resource is a file that contains nameserver IP addresses and a network domain name.</p>
+<pre><code>It is copied to the /etc/resolv.conf file in the client&#39;s root directory.
+A resolv_conf resource is optional for both diskless and dataless clients.</code></pre>
+<p>The AIX/NIM resources for diskless/dataless machines will remain allocated and the node will remain initialized until they are specifically unallocated and uninitialized.</p>
+<h4 id="nim-commands"><a href="#TOC"><strong>NIM Commands</strong></a></h4>
+<h5 id="cosi-commands"><a href="#TOC"><strong>COSI commands</strong></a></h5>
+<p>AIX provides commands that may be used to manage the SPOT (or COSI) resource. Refer to the AIX man pages for further details.</p>
+<ul>
+<li>**mkcosi **Create a COSI (SPOT) for a thin server (diskless or dataless client) to mount and use.</li>
+<li>**chcosi **Manages a Common Operating System Image (COSI).</li>
+<li>**cpcosi **Create a copy of a COSI (SPOT).</li>
+<li>**lscosi **List the properties of a COSI (SPOT).</li>
+<li>**rmcosi **Remove a COSI (SPOT) from the NIM environment.</li>
+</ul>
+<h5 id="thin-server-commands"><a href="#TOC"><strong>Thin server commands</strong></a></h5>
+<p>AIX provides several commands that can be used to manage diskless (also called thin server) nodes. See the AIX man pages for further details.* **mkts **Create a thin server and all necessary resources.</p>
+<ul>
+<li>**lsts **List the status and software content of a thin server.</li>
+<li>**swts **Switch a thin server to a different COSI.</li>
+<li>**dbts **Perform a debug boot on a thin server.</li>
+<li>**rmts **Remove a thin server from the NIM environment.</li>
+</ul>
+</body>
+</html>

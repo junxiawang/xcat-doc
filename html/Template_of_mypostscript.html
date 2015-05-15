@@ -1,0 +1,403 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#using-the-mypostscript-template">Using the mypostscript template</a><ul>
+<li><a href="#site-table-precreatemypostscripts-attribute">site table precreatemypostscripts attribute</a></li>
+<li><a href="#content-of-the-template-for-mypostscript">Content of the template for mypostscript</a></li>
+<li><a href="#kinds-of-variables-in-the-template"><strong>Kinds of variables in the template</strong></a></li>
+<li><a href="#edit-mypostscript.tmpl">Edit mypostscript.tmpl</a></li>
+<li><a href="#test-the-new-template">Test the new template</a></li>
+<li><a href="#sample-xcatpostmypostscript">Sample /xcatpost/mypostscript</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#using-the-mypostscript-template">Using the mypostscript template</a></li>
+<li><a href="#site-table-precreatemypostscripts-attribute">site table precreatemypostscripts attribute</a></li>
+<li><a href="#content-of-the-template-for-mypostscript">Content of the template for mypostscript</a></li>
+<li><a href="#kinds-of-variables-in-the-template"><strong>Kinds of variables in the template</strong></a></li>
+<li><a href="#edit-mypostscripttmpl">Edit mypostscript.tmpl</a></li>
+<li><a href="#test-the-new-template">Test the new template</a></li>
+<li><a href="#sample-xcatpostmypostscript">Sample /xcatpost/mypostscript</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h3 id="using-the-mypostscript-template"><a href="#TOC">Using the mypostscript template</a></h3>
+<p>As of the xCAT 2.8 release, xCAT provides a way for the admin to customize the information that will be provide to the post*scripts when they run on the node. This is done by editing the mypostscript.tmpl file. The attributes that are provided in the shipped mypostscript.tmpl file should not be removed. They are needed by the default xCAT postscripts.</p>
+<p>The mypostscript.tmpl, is shipped in the /opt/xcat/share/xcat/templates/mypostscript directory.</p>
+<p>If the admin customizes the mypostscript.tmpl, they should copy the mypostscript.tmpl to /install/postscripts/mypostscript.tmpl, and then edit it. The mypostscript for each node will be named mypostscript.&amp;lt.nodename&amp;gt.. The generated mypostscript.&amp;lt.nodename&amp;gt. will be put in the /tftpboot/mypostscripts directory.</p>
+<h4 id="site-table-precreatemypostscripts-attribute"><a href="#TOC">site table precreatemypostscripts attribute</a></h4>
+<p>As of xCAT 2.8.2, this attribute is supported on both AIX and Linux. If running 2.8 or 2.8.1, it is only supported on Linux. If the site table precreatemypostscripts attribute is set to 1 or yes, it will instruct xcat at nodeset and updatenode time to query the db once for all of the nodes passed into the command and create the mypostscript file for each node and put them in a directory in $TFTPDIR(for example /tftpboot). The created mypostscript.&amp;lt.nodename&amp;gt. file in the /tftpboot/mypostscripts directory will not be regenerated unless another nodeset or updatenode command is run to that node. This should be used when the system definition has stabilized. It saves time on the updatenode or reboot by not regenerating the mypostscript file.</p>
+<p>If the precreatemyposcripts attribute is yes, and a database change is made or xcat code is upgraded, then you should run a new nodeset or updatenode to regenerate the /tftpboot/mypostscript/mypostscript.&amp;lt.nodename&amp;gt. file to pick up the latest database setting. The default for precreatemypostscripts is no/0.</p>
+<p>When you run nodeset or updatenode, it will search the /install/postscripts/mypostscript.tmpl first. If the /install/postscripts/mypostscript.tmpl exists, it will use that template to generate the mypostscript for each node. Otherwise, it will use /opt/xcat/share/xcat/templates/mypostscript/mypostscript.tmpl.</p>
+<h4 id="content-of-the-template-for-mypostscript"><a href="#TOC">Content of the template for mypostscript</a></h4>
+<p><strong>The attributes that are defined in the shipped mypostscript.tmpl file</strong> should not be removed. The xCAT default postscripts rely on that information to run successfully.<em>* The following will explain the entries in the mypostscript.tmpl file.</em>*</p>
+<p>The SITE_TABLE_ALL_ATTRIBS_EXPORT line in the file directs the code to export all attributes defined in the site table. Note the attributes are not always defined exactly as in the site table to avoid conflict with other table attributes of the same name. For example, the site table master attribute is named SITEMASTER in the generated mypostscript file.</p>
+<pre><code>     #SITE_TABLE_ALL_ATTRIBS_EXPORT#
+</code></pre>
+<p>The following line exports ENABLESSHBETWEENNODES by running the internal xCAT routine (enablesshbetweennodes).</p>
+<pre><code>     ENABLESSHBETWEENNODES=#Subroutine:xCAT::Template::enablesshbetweennodes:$NODE#
+     export ENABLESSHBETWEENNODES</code></pre>
+<p>tabdump(<TABLENAME>) is used to get all the information in the <TABLENAME> table</p>
+<pre><code>     tabdump(networks)</code></pre>
+<p>These line export the node name based on its definition in the database.</p>
+<pre><code>     NODE=$NODE
+     export NODE</code></pre>
+<p>These lines get a comma separated list of the groups to which the node belongs.</p>
+<pre><code>    GROUP=#TABLE:nodelist:$NODE:groups#
+    export GROUP
+</code></pre>
+<p>These lines reads the nodesres table, the given attributes (nfsserver,installnic,primarynic,xcatmaster,routenames) for the node ($NODE), and exports it.</p>
+<pre><code>     NFSSERVER=#TABLE:noderes:$NODE:nfsserver#
+     export NFSSERVER
+     INSTALLNIC=#TABLE:noderes:$NODE:installnic#
+     export INSTALLNIC
+     PRIMARYNIC=#TABLE:noderes:$NODE:primarynic#
+     export PRIMARYNIC
+     MASTER=#TABLE:noderes:$NODE:xcatmaster#
+     export MASTER
+     NODEROUTENAMES=#TABLE:noderes:$NODE:routenames#
+     export NODEROUTENAMES
+</code></pre>
+<p>The following entry exports multiple variables from the routes table. Not always set.</p>
+<pre><code>     #ROUTES_VARS_EXPORT#
+</code></pre>
+<p>The following lines export nodetype table attributes.</p>
+<pre><code>     OSVER=#TABLE:nodetype:$NODE:os#
+     export OSVER
+     ARCH=#TABLE:nodetype:$NODE:arch#
+     export ARCH
+     PROFILE=#TABLE:nodetype:$NODE:profile#
+     export PROFILE
+     PROVMETHOD=#TABLE:nodetype:$NODE:provmethod#
+     export PROVMETHOD</code></pre>
+<p>The following adds the current directory to the path for the postscripts.</p>
+<pre><code>     PATH=`dirname $0`:$PATH
+     export PATH
+</code></pre>
+<p>The following sets the NODESETSTATE by running the internal xCAT getnodesetstate script.</p>
+<pre><code>     NODESETSTATE=#Subroutine:xCAT::Postage::getnodesetstate:$NODE#
+     export NODESETSTATE
+</code></pre>
+<p>The following says the postscripts are <strong>not</strong> being run as a result of updatenode. This is changed =1, when updatenode runs.</p>
+<pre><code>     UPDATENODE=0
+     export UPDATENODE
+</code></pre>
+<p>The following sets the NTYPE to compute,service or MN.</p>
+<pre><code>     NTYPE=$NTYPE
+     export NTYPE</code></pre>
+<p>The following sets the mac address.</p>
+<pre><code>     MACADDRESS=#TABLE:mac:$NODE:mac#
+     export MACADDRESS
+</code></pre>
+<p>IF vlan is setup, then the #VLAN_VARS_EXPORT# line will provide the following exports:</p>
+<pre><code>    VMNODE=&#39;YES&#39;
+    export VMNODE
+    VLANID=vlan1...
+    export VLANID
+    VLANHOSTNAME=..
+      ..
+     #VLAN_VARS_EXPORT#
+</code></pre>
+<p>If monitoring is setup, then the #MONITORING_VARS_EXPORT# line will provide:</p>
+<pre><code>    MONSERVER=11.10.34.108
+    export MONSERVER
+    MONMASTER=11.10.34.108
+    export MONMASTER
+
+     #MONITORING_VARS_EXPORT#
+</code></pre>
+<p>The OSIMAGE_VARS_EXPORT# line will provide, for example:</p>
+<pre><code>     OSPKGDIR=/install/rhels6.2/ppc64
+     export OSPKGDIR
+     OSPKGS=&#39;bash,nfs-utils,openssl,dhclient,kernel,openssh-server,openssh-clients,busybox,wget,rsyslog,dash,vim-minimal,ntp,rsyslog,rpm,rsync,
+       ppc64-utils,iputils,dracut,dracut-network,e2fsprogs,bc,lsvpd,irqbalance,procps,yum&#39;
+     export OSPKGS
+
+     #OSIMAGE_VARS_EXPORT#</code></pre>
+<p>The #NETWORK_FOR_DISKLESS_EXPORT# line will provide diskless networks information, if defined.:</p>
+<pre><code>     NETMASK=255.255.255.0
+     export NETMASK
+     GATEWAY=8.112.34.108
+     export GATEWAY
+     ..
+
+     #NETWORK_FOR_DISKLESS_EXPORT#
+</code></pre>
+<p>Note: the #INCLUDE_POSTSCRIPTS_LIST# and the #INCLUDE_POSTBOOTSCRIPTS_LIST# sections in /tftpboot/mypostscript* on the Management Node will contain all the postscripts and postbootscripts defined for the node. When running an updatenode command for only some of the scripts , you will see in the /xcatpost/mypostscript file on the node, the list has been redefined during the execution of updatenode to only run the requested scripts. For example, if you run updatenode &lt;nodename&gt; -P syslog.</p>
+<p>The #INCLUDE_POSTSCRIPTS_LIST# flag provides a list of postscripts defined for this $NODE.</p>
+<pre><code>    #INCLUDE_POSTSCRIPTS_LIST#
+</code></pre>
+<p>For example, you will see in the generated file the following stanzas:</p>
+<pre><code>    # postscripts-start-here
+    # defaults-postscripts-start-here
+    syslog
+    remoteshell
+    # defaults-postscripts-end-here
+    # node-postscripts-start-here
+    syncfiles
+    # node-postscripts-end-here
+</code></pre>
+<p>The #INCLUDE_POSTBOOTSCRIPTS_LIST# provides a list of postbootscripts defined for this $NODE.</p>
+<pre><code>    #INCLUDE_POSTBOOTSCRIPTS_LIST#
+</code></pre>
+<p>For example, you will see in the generated file the following stanzas:</p>
+<pre><code>    # postbootscripts-start-here
+    # defaults-postbootscripts-start-here
+    otherpkgs
+    # defaults-postbootscripts-end-here
+    # node-postbootscripts-end-here
+    # postbootscripts-end-here</code></pre>
+<h4 id="kinds-of-variables-in-the-template"><a href="#TOC"><strong>Kinds of variables in the template</strong></a></h4>
+<p><strong>Type 1</strong>: For the simple variable, the syntax is as follows. The mypostscript.tmpl has several examples of this. $NODE is filled in by the code. UPDATENODE is changed to 1, when the postscripts are run by updatenode. $NTYPE is filled in as either compute,service or MN.</p>
+<pre><code>    NODE=$NODE
+    export NODE
+    UPDATENODE=0
+    export UPDATENODE
+    NTYPE=$NTYPE
+    export NTYPE
+</code></pre>
+<p><strong>Type 2</strong>: This is the syntax to get the value of one attribute from the &lt;tablename&gt; and its key is $NODE. It does not support tables with 2 keys. Some of the tables with two keys are (litefile,prodkey,deps,monsetting,mpa,networks).</p>
+<pre><code>    VARNAME=#TABLE:tablename:$NODE:attribute#
+</code></pre>
+<p>For example, to get the new updatstatus attribute from the nodelist table:</p>
+<pre><code>    UPDATESTATUS=#TABLE:nodelist:$NODE:updatestatus#
+    export UPDATESTATUS</code></pre>
+<p><strong>Type 3</strong>: The syntax is as follows:</p>
+<pre><code>    VARNAME=#Subroutine:modulename::subroutinename:$NODE#</code></pre>
+<p>or</p>
+<pre><code>    VARNAME=#Subroutine:modulename::subroutinename#</code></pre>
+<p>Examples in the mypostscript.tmpl are the following:</p>
+<pre><code>     NODESETSTATE=#Subroutine:xCAT::Postage::getnodesetstate:$NODE#
+     export NODESETSTATE
+     ENABLESSHBETWEENNODES=#Subroutine:xCAT::Template::enablesshbetweennodes:$NODE#
+     export ENABLESSHBETWEENNODES</code></pre>
+<p>Note: Type 3 is not an open interface to add extensions to the template.</p>
+<p><strong>Type 4:</strong> The syntax is #FLAG#. When parsing the template, the code generates all entries defined by #FLAG#, if they are defined in the database. For example: To export all values of all attributes from the site table. The tag is</p>
+<pre><code>    #SITE_TABLE_ALL_ATTRIBS_EXPORT#</code></pre>
+<p>For the #SITE_TABLE_ALL_ATTRIBS_EXPORT# flag, the related subroutine will get the attributes' values and deal with the special case. such as : the site.master should be exported as &quot;&quot;SITEMASTER&quot;. And if the noderes.xcatmaster exists, the noderes.xcatmaster should be exported as &quot;MASTER&quot;, otherwise, we also should export site.master as the &quot;MASTER&quot;.</p>
+<p>Other examples are:</p>
+<pre><code>    #VLAN_VARS_EXPORT#  - gets all vlan related itesm
+    #MONITORING_VARS_EXPORT#  - gets all monitoring configuration and setup da ta
+    #OSIMAGE_VARS_EXPORT# - get osimage related variables, such as ospkgdir, ospkgs ...
+    #NETWORK_FOR_DISKLESS_EXPORT# - gets diskless network information
+    #INCLUDE_POSTSCRIPTS_LIST# - includes the list of all postscripts for the node
+    #INCLUDE_POSTBOOTSCRIPTS_LIST# - includes the list of all postbootscripts for the node</code></pre>
+<p>Note: Type4 is not an open interface to add extensions to the templatel.</p>
+<p><strong>Type 5:</strong> Get all the data from the specified table. The &lt;TABLENAME&gt; should not be a node table, like nodelist. This should be handles with TYPE 2 syntax to get specific attributes for the $NODE. tabdump would result in too much data for a nodetype table. Also the auditlog, eventlog should not be in tabdump for the same reason. site table should not be specified, it is already provided with the #SITE_TABLE_ALL_ATTRIBS_EXPORT# flag. It can be used to get the data from the two key tables (like switch).</p>
+<p>The syntax is:</p>
+<pre><code>    tabdump(&lt;TABLENAME&gt;)</code></pre>
+<h4 id="edit-mypostscript.tmpl"><a href="#TOC">Edit mypostscript.tmpl</a></h4>
+<p><strong>Add new attribute into mypostscript.tmpl</strong></p>
+<p>When you add new attributes into the template, you should edit the /install/postscripts/mypostscript.tmpl which you created by copying /opt/xcat/share/xcat/templates/mypostscript/mypostscript.tmpl. Make all additions before the <strong># postscripts-start-here section</strong>. xCAT will first look in /install/mypostscript.tmpl for a file and then if not found will use the one in /opt/xcat/share/xcat/templates/mypostcript/mypostscript.tmpl.</p>
+<p>For example:</p>
+<pre><code>    UPDATESTATUS=#TABLE:nodelist:$NODE:updatestatus#
+    export UPDATESTATUS
+    ...
+    # postscripts-start-here
+    #INCLUDE_POSTSCRIPTS_LIST#
+    ## The following flag postscripts-end-here must not be deleted.
+    # postscripts-end-here</code></pre>
+<p>Note: If you have a hierarchical cluster, you must copy your new mypostscript.tmpl to /install/postscripts/mypostscript.tmpl on the service nodes, unless /install/postscripts directory is mounted from the MN to the service node.</p>
+<p><strong>Remove attribute from mypostscript.tmpl</strong></p>
+<p>If you want to remove an attribute <strong>that you have added</strong>, you should remove all the related lines or comment them out with ##. For example, comment out the added lines.</p>
+<pre><code>    ##UPDATESTATUS=#TABLE:nodelist:$NODE:updatestatus#
+    ##export UPDATESTATUS
+</code></pre>
+<h4 id="test-the-new-template"><a href="#TOC">Test the new template</a></h4>
+<p>There are two quick ways to test the template. ****</p>
+<p>If the node is up:</p>
+<pre><code>    updatenode &lt;nodename&gt; -P syslog
+</code></pre>
+<p>Check your generated template</p>
+<pre><code>    vi /tftpboot/mypostscripts/mypostscript.&lt;nodename&gt;</code></pre>
+<p>Another way, is set the precreate option</p>
+<pre><code>     chdef -t site -o clustersite precreatemypostscripts=1</code></pre>
+<p>Then run</p>
+<pre><code>    nodeset &lt;nodename&gt; ....</code></pre>
+<p>Check your generated template</p>
+<pre><code>    vi /tftpboot/mypostscripts/mypostscript.&lt;nodename&gt;</code></pre>
+<h4 id="sample-xcatpostmypostscript"><a href="#TOC">Sample /xcatpost/mypostscript</a></h4>
+<p>This is an example of the generated postscript for a servicenode install. It is found in /xcatpost/mypostscript on the node.</p>
+<pre><code>    # global value to store the running status of the postbootscripts,the value
+    #is non-zero if one postbootscript failed
+    return_value=0
+    # subroutine used to run postscripts
+    run_ps () {
+     local ret_local=0
+     logdir=&quot;/var/log/xcat&quot;
+     mkdir -p $logdir
+     logfile=&quot;/var/log/xcat/xcat.log&quot;
+     if [ -f $1 ]; then
+      echo &quot;`date` Running postscript: $@&quot; | tee -a $logfile
+      #./$@ 2&gt;&amp;1 1&gt; /tmp/tmp4xcatlog
+      #cat /tmp/tmp4xcatlog | tee -a $logfile
+      ./$@ 2&gt;&amp;1 | tee -a $logfile
+      ret_local=${PIPESTATUS[0]}
+      if [ &quot;$ret_local&quot; -ne &quot;0&quot; ]; then
+        return_value=$ret_local
+      fi
+      echo &quot;Postscript: $@ exited with code $ret_local&quot;
+     else
+      echo &quot;`date` Postscript $1 does NOT exist.&quot; | tee -a $logfile
+      return_value=-1
+     fi
+     return 0
+    }
+    # subroutine end
+    SHAREDTFTP=&#39;1&#39;
+    export SHAREDTFTP
+    TFTPDIR=&#39;/tftpboot&#39;
+    export TFTPDIR
+    CONSOLEONDEMAND=&#39;yes&#39;
+    export CONSOLEONDEMAND
+    PPCTIMEOUT=&#39;300&#39;
+    export PPCTIMEOUT
+    VSFTP=&#39;y&#39;
+    export VSFTP
+    DOMAIN=&#39;cluster.com&#39;
+    export DOMAIN
+    XCATIPORT=&#39;3002&#39;
+    export XCATIPORT
+    DHCPINTERFACES=&quot;&#39;xcatmn2|eth1;service|eth1&#39;&quot;
+    export DHCPINTERFACES
+    MAXSSH=&#39;10&#39;
+    export MAXSSH
+    SITEMASTER=10.2.0.100
+    export SITEMASTER
+    TIMEZONE=&#39;America/New_York&#39;
+    export TIMEZONE
+    INSTALLDIR=&#39;/install&#39;
+    export INSTALLDIR
+    NTPSERVERS=&#39;xcatmn2&#39;
+    export NTPSERVERS
+    EA_PRIMARY_HMC=&#39;c76v2hmc01&#39;
+    export EA_PRIMARY_HMC
+    NAMESERVERS=&#39;10.2.0.100&#39;
+    export NAMESERVERS
+    SNSYNCFILEDIR=&#39;/var/xcat/syncfiles&#39;
+    export SNSYNCFILEDIR
+    DISJOINTDHCPS=&#39;0&#39;
+    export DISJOINTDHCPS
+    FORWARDERS=&#39;8.112.8.1,8.112.8.2&#39;
+    export FORWARDERS
+    VLANNETS=&#39;|(\d+)|10.10.($1+0).0|&#39;
+    export VLANNETS
+    XCATDPORT=&#39;3001&#39;
+    export XCATDPORT
+    USENMAPFROMMN=&#39;no&#39;
+    export USENMAPFROMMN
+    DNSHANDLER=&#39;ddns&#39;
+    export DNSHANDLER
+    ROUTENAMES=&#39;r1,r2&#39;
+    export ROUTENAMES
+    INSTALLLOC=&#39;/install&#39;
+    export INSTALLLOC
+    ENABLESSHBETWEENNODES=YES
+    export ENABLESSHBETWEENNODES
+    NETWORKS_LINES=4
+     export NETWORKS_LINES
+    NETWORKS_LINE1=&#39;netname=public_net||net=8.112.154.64||mask=255.255.255.192||mgtifname=eth0||gateway=8.112.154.126||dhcpserver=||tftpserver=8.112.154.69||nameservers=8.112.8.1||ntpservers=||logservers=||dynamicrange=||staticrange=||staticrangeincrement=||nodehostname=||ddnsdomain=||vlanid=||domain=||disable=||comments=&#39;
+    export NETWORKS_LINE2
+    NETWORKS_LINE3=&#39;netname=sn21_net||net=10.2.1.0||mask=255.255.255.0||mgtifname=eth1||gateway=&lt;xcatmaster&gt;||dhcpserver=||tftpserver=||nameservers=10.2.1.100,10.2.1.101||ntpservers=||logservers=||dynamicrange=||staticrange=||staticrangeincrement=||nodehostname=||ddnsdomain=||vlanid=||domain=||disable=||comments=&#39;
+    export NETWORKS_LINE3
+    NETWORKS_LINE4=&#39;netname=sn22_net||net=10.2.2.0||mask=255.255.255.0||mgtifname=eth1||gateway=10.2.2.100||dhcpserver=10.2.2.100||tftpserver=10.2.2.100||nameservers=10.2.2.100||ntpservers=||logservers=||dynamicrange=10.2.2.120-10.2.2.250||staticrange=||staticrangeincrement=||nodehostname=||ddnsdomain=||vlanid=||domain=||disable=||comments=&#39;
+    export NETWORKS_LINE4
+    NODE=xcatsn23
+    export NODE
+    NFSSERVER=10.2.0.100
+    export NFSSERVER
+    INSTALLNIC=eth0
+    export INSTALLNIC
+    PRIMARYNIC=eth0
+    export PRIMARYNIC
+    MASTER=10.2.0.100
+    export MASTER
+    OSVER=sles11
+    export OSVER
+    ARCH=ppc64
+    export ARCH
+    PROFILE=service-xcattest
+    export PROFILE
+    PROVMETHOD=netboot
+    export PROVMETHOD
+    PATH=`dirname $0`:$PATH
+    export PATH
+    NODESETSTATE=netboot
+    export NODESETSTATE
+    UPDATENODE=1
+    export UPDATENODE
+    NTYPE=service
+    export NTYPE
+    MACADDRESS=16:3d:05:fa:4a:02
+    export MACADDRESS
+    NODEID=EA163d05fa4a02EA
+    export NODEID
+    MONSERVER=8.112.154.69
+    export MONSERVER
+    MONMASTER=10.2.0.100
+    export MONMASTER
+    MS_NODEID=0360238fe61815e6
+    export MS_NODEID
+    OSPKGS=&#39;kernel-ppc64,udev,sysconfig,aaa_base,klogd,device-mapper,bash,openssl,nfs- utils,ksh,syslog-ng,openssh,openssh-askpass,busybox,vim,rpm,bind,bind-utils,dhcp,dhcpcd,dhcp-server,dhcp-client,dhcp-relay,bzip2,cron,wget,vsftpd,util-linux,module-init-tools,mkinitrd,apache2,apache2-prefork,perl-Bootloader,psmisc,procps,dbus-1,hal,timezone,rsync,powerpc-utils,bc,iputils,uuid-runtime,unixODBC,gcc,zypper,tar&#39;
+    export OSPKGS
+    OTHERPKGS1=&#39;xcat/xcat-core/xCAT-rmc,xcat/xcat-core/xCATsn,xcat/xcat-dep/sles11/ppc64/conserver,perl-DBD-mysql,nagios/nagios-nsca-client,nagios/nagios,nagios/nagios-plugins-nrpe,nagios/nagios-nrpe&#39;
+    export OTHERPKGS1
+    OTHERPKGS_INDEX=1
+    export OTHERPKGS_INDEX
+    ## get the diskless networks information. There may be no information.
+    NETMASK=255.255.255.0
+    export NETMASK
+    GATEWAY=10.2.0.100
+    export GATEWAY
+    # NIC related attributes for the node for confignics postscript
+    NICIPS=&quot;&quot;
+    export NICIPS
+    NICHOSTNAMESUFFIXES=&quot;&quot;
+    export NICHOSTNAMESUFFIXES
+    NICTYPES=&quot;&quot;
+    export NICTYPES
+    NICCUSTOMSCRIPTS=&quot;&quot;
+    export NICCUSTOMSCRIPTS
+    NICNETWORKS=&quot;&quot;
+    export NICNETWORKS
+    NICCOMMENTS=
+    export NICCOMMENTS
+    # postscripts-start-here
+    # defaults-postscripts-start-here
+    run_ps test1
+    run_ps syslog
+    run_ps remoteshell
+    run_ps syncfiles
+    run_ps confNagios
+    run_ps configrmcnode
+    # defaults-postscripts-end-here
+    # node-postscripts-start-here
+    run_ps servicenode
+    run_ps configeth_new
+    # node-postscripts-end-here
+    run_ps setbootfromnet
+    # postscripts-end-here
+    # postbootscripts-start-here
+    # defaults-postbootscripts-start-here
+    run_ps otherpkgs
+    # defaults-postbootscripts-end-here
+    # node-postbootscripts-start-here
+    run_ps test
+    # The following line node-postbootscripts-end-here must not be deleted.
+    # node-postbootscripts-end-here
+    # postbootscripts-end-here
+    exit $return_value
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#minidesign-for-redundant-fspbpa"><strong>MiniDesign For Redundant FSP/BPA</strong></a></li>
+<li><a href="#definitions-terms">Definitions, Terms</a></li>
+<li><a href="#planning">Planning</a><ul>
+<li><a href="#planning-for-hostnames-and-ip-addresses">Planning for hostnames and ip addresses</a></li>
+<li><a href="#planning-for-mapping-between-the-hostnames-and-physical-hardware-components">Planning for mapping between the hostnames and physical hardware components</a></li>
+</ul></li>
+<li><a href="#xcat-db-desgin">xCAT DB desgin:</a><ul>
+<li><a href="#nodelist-table">nodelist table</a></li>
+<li><a href="#ppc-table">ppc table</a></li>
+<li><a href="#vpd-table">vpd table</a></li>
+<li><a href="#mac-table">mac table</a></li>
+</ul></li>
+<li><a href="#hardware-discovery.">Hardware discovery.</a><ul>
+<li><a href="#setup-dhcp-server-on-mn">Setup dhcp server on MN</a></li>
+</ul></li>
+<li><a href="#netnamenetmaskmgtifnamegatewaydhcpservertftpservernameservers">netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,</a><ul>
+<li><a href="#power-on-all-the-frames-and-cecs">Power on all the frames and CECs</a></li>
+<li><a href="#update-mapping-between-hostnames-and-physical-hardware-components">Update mapping between hostnames and physical hardware components</a></li>
+</ul></li>
+<li><a href="#nodeserialmtmsideassetcommentsdisable">node,serial,mtm,side,asset,comments,disable</a><ul>
+<li><a href="#discover-hmcsframececs-in-order-and-define-them-in-xcat-db.">Discover HMCs/frame/CECs in order, and define them in xCAT DB.</a></li>
+</ul></li>
+<li><a href="#connect-fsps-and-bpas-to-hmc">Connect FSPS and BPAs to HMC</a></li>
+<li><a href="#changes-from-hardware-control-commands">Changes from hardware control commands:</a></li>
+<li><a href="#changes-from-lsdefnodels-commands">Changes from lsdef/nodels commands:</a></li>
+<li><a href="#nodels-bpa">nodels bpa</a></li>
+<li><a href="#lsdef--z-server-9a01-100-sn0p1p056">lsdef -z Server-9A01-100-SN0P1P056:</a></li>
+<li><a href="#nodels--s-bpa">nodels -S bpa</a></li>
+<li><a href="#lsdef--z--s-server-9a01-100-sn0p1p056192.168.200.48">lsdef -z -S Server-9A01-100-SN0P1P056,192.168.200.48</a><ul>
+<li><a href="#migration-in-hardware-discovery">Migration in hardware discovery:</a></li>
+<li><a href="#migration-in-making-hardware-connections">Migration in making hardware connections:</a></li>
+<li><a href="#migration-in-other-hardware-control-commands">Migration in other hardware control commands:</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#minidesign-for-redundant-fspbpa"><strong>MiniDesign For Redundant FSP/BPA</strong></a></li>
+<li><a href="#definitions-terms">Definitions, Terms</a></li>
+<li><a href="#planning">Planning</a></li>
+<li><a href="#planning-for-hostnames-and-ip-addresses">Planning for hostnames and ip addresses</a></li>
+<li><a href="#planning-for-mapping-between-the-hostnames-and-physical-hardware-components">Planning for mapping between the hostnames and physical hardware components</a></li>
+<li><a href="#xcat-db-desgin">xCAT DB desgin:</a></li>
+<li><a href="#nodelist-table">nodelist table</a></li>
+<li><a href="#ppc-table">ppc table</a></li>
+<li><a href="#vpd-table">vpd table</a></li>
+<li><a href="#mac-table">mac table</a></li>
+<li><a href="#hardware-discovery">Hardware discovery.</a></li>
+<li><a href="#setup-dhcp-server-on-mn">Setup dhcp server on MN</a></li>
+<li><a href="#netnamenetmaskmgtifnamegatewaydhcpservertftpservernameservers">netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,</a></li>
+<li><a href="#power-on-all-the-frames-and-cecs">Power on all the frames and CECs</a></li>
+<li><a href="#update-mapping-between-hostnames-and-physical-hardware-components">Update mapping between hostnames and physical hardware components</a></li>
+<li><a href="#nodeserialmtmsideassetcommentsdisable">node,serial,mtm,side,asset,comments,disable</a></li>
+<li><a href="#discover-hmcsframececs-in-order-and-define-them-in-xcat-db">Discover HMCs/frame/CECs in order, and define them in xCAT DB.</a></li>
+<li><a href="#connect-fsps-and-bpas-to-hmc">Connect FSPS and BPAs to HMC</a></li>
+<li><a href="#changes-from-hardware-control-commands">Changes from hardware control commands:</a></li>
+<li><a href="#changes-from-lsdefnodels-commands">Changes from lsdef/nodels commands:</a></li>
+<li><a href="#nodels-bpa">nodels bpa</a></li>
+<li><a href="#lsdef--z-server-9a01-100-sn0p1p056">lsdef -z Server-9A01-100-SN0P1P056:</a></li>
+<li><a href="#nodels--s-bpa">nodels -S bpa</a></li>
+<li><a href="#lsdef--z--s-server-9a01-100-sn0p1p05619216820048">lsdef -z -S Server-9A01-100-SN0P1P056,192.168.200.48</a></li>
+<li><a href="#migration-in-hardware-discovery">Migration in hardware discovery:</a></li>
+<li><a href="#migration-in-making-hardware-connections">Migration in making hardware connections:</a></li>
+<li><a href="#migration-in-other-hardware-control-commands">Migration in other hardware control commands:</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="minidesign-for-redundant-fspbpa"><a href="#TOC"><strong>MiniDesign For Redundant FSP/BPA</strong></a></h2>
+<h1 id="definitions-terms"><a href="#TOC">Definitions, Terms</a></h1>
+<p>We have following naming conventions defined in this design:</p>
+<ul>
+<li>Service Network</li>
+</ul>
+<p>The Service Network is an Ethernet network connecting the HMCs, BPCs, and FSPs in a cluster.</p>
+<ul>
+<li>Building Block</li>
+</ul>
+<p>Building block a section of a cluster consisting of 3 frames which contain both P7IH server drawers and storage drawers.</p>
+<ul>
+<li>Framenode</li>
+</ul>
+<p>In a frame that has redundant BPAs, the term Frame node is representing the two redundant BPAs with same mtms in the frame. In one frame, there will be only one Frame node defined by xCAT.</p>
+<ul>
+<li>BPAnode</li>
+</ul>
+<p>BPA node represents for one port on one bpa, so in one frame there will be four BPA nodes defined by xCAT sine there will two BPAs and each BPA has two ports. The relationship between Frame node and BPA node from system admins perspective is that they can use the only Frame node definition per frame for all the xCAT hardware control commands, xCAT will figure out what are the BPA nodes and their attributes for hardware connections.</p>
+<ul>
+<li>CECnode</li>
+</ul>
+<p>In the CEC that has redundant fsps, CEC node represents for the two redundant fsps with the same mtms. So in one CEC, there will be only one CEC node defined by xCAT.</p>
+<ul>
+<li>FSPnode</li>
+</ul>
+<p>FSP node represents for one port on one FSP. In one CEC, there will be two FSPs and each FSP has two ports, there will be four FSP nodes defined by xCAT. Same as the relationship between Frame node and BPA node, system admins can just use the CEC node for all the hardware control commands, xCAT will figure out what are the four FSP nodes and their attributes for hardware connections.</p>
+<ul>
+<li>slot</li>
+</ul>
+<p>In the server with redundant BPA and FSP, there will be two BPAs in one frame and two FSPs in one CEC. We use the term 鈥渟lot鈥?to identify which BPA or FSP is primary and which is backup.</p>
+<ul>
+<li>port</li>
+</ul>
+<p>There will be two ports on one BPA or FSP.</p>
+<h1 id="planning"><a href="#TOC">Planning</a></h1>
+<p>In xCAT hardware discovery feature, the prerequisite information is the hostnames and ip addresses allocation for all the Frames, BPAs, CECs and FSPs. The mapping between Frame/CEC hostnames and ip addresses and the mapping between ip address and physical hardware components has to be settled down before proceeding with the xCAT hardware discovery function.</p>
+<h2 id="planning-for-hostnames-and-ip-addresses"><a href="#TOC">Planning for hostnames and ip addresses</a></h2>
+<p>The ip addresses for FSPs and BPAs are got from the DHCP server on xCAT management node, the DHCP service process in the hardware discovery is a little bit complex, there are two types of ip addresses allocation mechanism that can be used in the hardware discovery process: random ip addresses or permanent ip addresses.</p>
+<p><strong>Random ip addresses:</strong> When the FSPs and BPAs are brought up first time, since the MAC addresses for the FSPs and BPAs are not known yet, we can not specify the MAC address and ip address mapping in DHCP leases file, we can only specify a dynamic ip range in DHCP configuration file, so each FSP or BPA will get a random ip address. As mentioned above, the random ip address for each FSP or BPA may change in the future when the DHCP client on FSP or BPA restarts, however, if we specify a large enough dynamic ip range to aviod the ip addresses reuse, the random ip addresses can be similar as &quot;permanent&quot; ones. This solution has been validated in CSM CRHS solution. So the random ip address solution should be able to work. Please be aware that using the random DHCP ip addresses will increase the maintainance effort because you do not exactly know which hardware component has which ip address, at the same time, using random DHCP ip addresses opens an error windows that the FSPs/BPAs ip addresses may be changed during the FSPs/BPAs reboot, the FSPs/BPAs ip addresses change will result in HMC connection lost then you have to do some manual steps to recover. However, the random DHCP ip addresses solution should be able to work well for most of the scenarios, CSM CRHS has been using this solution for a long while.</p>
+<p><strong>Permanent ip addresses:</strong> the permanent ip addresses is clearer and easier to mantain, to achieve the permanent ip addresses goal, a method is to specify the MAC address and ip address mapping for each FSP and BPA in the DHCP leases file. Of course, getting the MAC address for each FSP and BPA is complex and time consuming unless the FSPs and BPAs have already got ip addresses from DHCP server, then we can simply ping the ip addresses and the mac addresses will be added to the arp cache. lsslp will collect the mac address and add the ip address mapping into DHCP leases file.</p>
+<p>Either the solution &quot;Random ip addresses&quot; or solution &quot;Permanent ip addresses&quot; can be used, the administrator needs to select one solution as the ip addresses assignment mechanism.</p>
+<h2 id="planning-for-mapping-between-the-hostnames-and-physical-hardware-components"><a href="#TOC">Planning for mapping between the hostnames and physical hardware components</a></h2>
+<p>Several tables need to be updated to specify the mapping between the hostnames and physical hardware components, the mapping will tell xCAT on which physical hardware component the hostname is referring to. For example, the hostname f1c1 can be actually pointing to the CEC 9125-F2A-SN027ACB4, or pointing to the CEC with cage id 3 connected to the first port in the core switch.</p>
+<p>There are two ways to specify the mapping between the hostnames and physical hardware compoents: switch port and vpd. You can select either of the methods based on your cluster configuration; if you understand the network connections very well for each FSPs/BPAs and the switch supports SNMP protocol, use the switch port method is a good choice. If you do not quite understand the network connections or the switch does not support SNMP well, then using vpd information is another choice for you. xCAT currently supports vpd, and it is used by default.</p>
+<p>For system p servers, we will only provide the vpd mode in this document.</p>
+<h1 id="xcat-db-desgin"><a href="#TOC">xCAT DB desgin:</a></h1>
+<p>Several tables need be updated for redundancy BPA/FSP implementation.</p>
+<h2 id="nodelist-table"><a href="#TOC">nodelist table</a></h2>
+<p>A new attribute will be added in nodelist table,</p>
+<ul>
+<li>hidden 0 or 1. 1 will be set for BPAnodes and FSPnodes because we trade FSP and BPA nodes as the internal node type and will not recommend the user to do the operation for them. If 1 is set, lsdef and nodels won't list them when you list all of the nodes or all the nodes in a group. A new flag -S added to nodels and lsdef in case the user still want to list these hidden nodes.</li>
+</ul>
+<h2 id="ppc-table"><a href="#TOC">ppc table</a></h2>
+<p>We will add one new attribute to the ppc table,</p>
+<ul>
+<li>nodetype the type of object in this row could be: frame,bpa,cec,fsp,lpar. (frame means it is a Framenode,bpa represents for BPAnode,cec represents for CECnode, fsp represents for FSPnode, lpar represents for the partition).</li>
+<li>For parent attribute For Framenode, the parent attribute will be blank. For BPAnode, parent will be set to Framenode. For CECnode, parent will be set to Framenode. For FSPnode, parent will be set to CECnode.</li>
+</ul>
+<h2 id="vpd-table"><a href="#TOC">vpd table</a></h2>
+<ul>
+<li>Side For BPAnode and FSPnode, the id will be a character conjuncted a number by a minus, e.g. A-0 which mean the BPA/FSP in slot 1(slot 0 with side B, slot 1 with A), and the 1nd port (port 0 with 0, port 1 with 1)on that FSP.</li>
+</ul>
+<h2 id="mac-table"><a href="#TOC">mac table</a></h2>
+<p>All the BPAnodes and FSPnodes will be added into mac table by lsslp automatically. Framenodes and CECnodes will not.</p>
+<h1 id="hardware-discovery."><a href="#TOC">Hardware discovery.</a></h1>
+<p>We will give example to explain how to setup DHCP server with xCAT and disover the hardwares.</p>
+<h2 id="setup-dhcp-server-on-mn"><a href="#TOC">Setup dhcp server on MN</a></h2>
+<p>Before the FSPs and BPAs first power on, an ip addresses range will be added into dhcpd.conf on Linux or dhcpsd.conf file on AIX, during the FSPs and BPAs first power on, the FSPs and BPAs will get random ip addresses.</p>
+<h1 id="netnamenetmaskmgtifnamegatewaydhcpservertftpservernameservers"><a href="#TOC">netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,</a></h1>
+<p>ntpservers,logservers,dynamicrange,nodehostname,comments,disable</p>
+<p>&quot;RandomIPRange&quot;,&quot;192.168.0.0&quot;,&quot;255.255.0.0&quot;,&quot;en0&quot;,&quot;192.168.200.205&quot;,&quot;192.168.200.</p>
+<p>205&quot;,&quot;192.168.200.205&quot;,&quot;192.168.200.205&quot;,,&quot;192.168.200.205&quot;,&quot;192.168.200.1-192.168.200.100&quot;,,,</p>
+<h2 id="power-on-all-the-frames-and-cecs"><a href="#TOC">Power on all the frames and CECs</a></h2>
+<p>Since the DHCP server is now configured with a dynamic ip range in the HW service subnet, all the FSPs and BPAs will get dynamic HW IP addresses from the DHCP server.</p>
+<h2 id="update-mapping-between-hostnames-and-physical-hardware-components"><a href="#TOC">Update mapping between hostnames and physical hardware components</a></h2>
+<p>Note:This step is optional if you want to use specific hostnames for BPA on high end servers or CEC on low end servers. If the default hostnames for BPA and FSPs generated by xCAT are acceptable, you can skip this step.</p>
+<ul>
+<li><strong>Update vpd table</strong><br />For the high end servers, only the BPAs MTMS information is necessary, for the low end servers, the CECs MTMS information is needed. You have two options to get the MTMS information for all the BPAs or FSPs, you can copy the BPAs or CECs MTMS information from the front rear of the BPA or CEC manually; or run lsslp to get the basic hardware information from the lsslp output.</li>
+</ul>
+<p>Since all the FSPs and BPAs have got ip addresses though the ip addresses are random ones, the lsslp command can be run to get the basic hardware information, but not all the necessary information is available such as the hostname and ip addresses mapping.</p>
+<p>Run <em>lsslp -s BPA -z -i 192.168.200.205 &gt; /stanza/file/path</em></p>
+<p>OR</p>
+<p>Run <em>lsslp -s FSP -z -i 192.168.200.205 &gt; /stanza/file/path</em></p>
+<p>This methods uses the Frame or CEC MTMS information to determine which hardware component that the hostname is pointing to. For high end servers environment, &quot;vpd&quot; table needs to be updated to include the Framenode MTMS information, For the low end servers environment, &quot;vpd&quot; table needs to be updated to contain the CEC MTMS information. All the MTMS information for the Frame or CEC can be got from the stanza file /stanza/file/path.For high end servers:</p>
+<p>vpd table:</p>
+<h1 id="nodeserialmtmsideassetcommentsdisable"><a href="#TOC">node,serial,mtm,side,asset,comments,disable</a></h1>
+<p>&quot;frame1&quot;,&quot;99200G1&quot;,&quot;9A00-100&quot;,,,,</p>
+<p>... ...</p>
+<p>&quot;frame3&quot;,&quot;99201WM&quot;,&quot;9458-100&quot;,,,,</p>
+<p>For low end servers:</p>
+<p>vpd table:</p>
+<p>&quot;cec1&quot;,&quot;9920652&quot;,&quot;9A00-FHB&quot;,,,,</p>
+<p>... ...</p>
+<p>&quot;cec3&quot;,&quot;9920672&quot;,&quot;9A00-FHB&quot;,,,,</p>
+<p>Note: The frames MTMS information can be got from the stanza file. For low end servers, the CECs MTMS information can be got from the stanza file.</p>
+<h2 id="discover-hmcsframececs-in-order-and-define-them-in-xcat-db."><a href="#TOC">Discover HMCs/frame/CECs in order, and define them in xCAT DB.</a></h2>
+<p>Till now, all the required hardware infromation to work with VPD method have been collected and defined in xCAT DB, issue lsslp to discovery HMC, Frame, and CEC seperately:</p>
+<p>lsslp -s HMC -i 192.168.200.205 -w --makedhcp</p>
+<p>lsslp -s FRAME -i 192.168.200.205 -w --makedhcp</p>
+<p>lsslp -s CEC -i 192.168.200.205 -w --makedhcp</p>
+<p>rspconfig hmc --resetnet</p>
+<p>rspconfig frame --resetnet</p>
+<p>rspconfig cec --resetnet</p>
+<p>The basic logic and actions with vpd method inside lsslp command are:</p>
+<ol style="list-style-type: decimal">
+<li>Run openslp command to get SLP responses from all the HMCs, BPAs or FSPs.</li>
+</ol>
+<ol style="list-style-type: decimal">
+<li>Parse the SLP responses:</li>
+</ol>
+<ul>
+<li>Generate the Framenode and CECnode definitions with mtms in SLP responses. If user defined specific Framenode and CECnode hostnames with mtms, xCAT will go to vpd table to find the correct hostnames for Framenode and CECnode.</li>
+</ul>
+<p>Each Framenode or CECnode will have attribute hidden=0 setting into nodelist table. nodels and lsdef command could list the nodes.</p>
+<p>Each Framenode and CECnode will have attribute nodetype setting in nodetype talbe and hwtype setting in ppc table. The type of CECnode is cec and Framenode is frame.</p>
+<p>For those high-end System P servers (IH and HE servers), CECnode will have attribute parent setting to the Framenode name that is controlling it. For Framenode, the parent attribute will be blank or the building block number setting by. An example of Framenode and CECnode definition:</p>
+<p>Server-9A01-100-SN0P1P056: objtype=node groups=bpa,all hcp=Server-9A01-100-SN0P1P056 hidden=0 mgt=bpa mtm=9A01-100 nodetype=ppc hwtype=frame serial=0P1P056</p>
+<p>Server-9A01-100-SN1021C3P: objtype=node groups=fsp,all hcp=Server-9A01-100-SN1021C3P hidden=0 mgt=fsp mtm=9A01-100 parent=Server-9A01-100-SN0P1P056 //Setting to Framenode nodetype=ppc hwtype=cec serial=1021C3P*</p>
+<p>Generate the BPAnode and FSPnode definition.</p>
+<p>The nodenames will be IP addresses. In the case of redundant BPAs and FSPs, there are two BPAs in a frame and two FSPs in a CEC, and each BPA and FSP has two ports, so there will be four node definitions per BPA or FSP.</p>
+<p>Each node will have attribute hidden=1 setting into nodelist table, which means these nodes will not be seen by nodels and lsdef commands. User still can see these nodes attribute with -S option in nodels and lsdef commands.</p>
+<p>Each node will have attribute nodetype in nodetype table and hwtype in ppc table.</p>
+<p>An example of BPAnode and FSPnode definition:</p>
+<p>192.168.200.48: objtype=node groups=bpa,all hcp=Server-9A01-100-SN0P1P056 hidden=1 id=4 mac=001a645457be mgt=bpa mtm=9A01-100 parent=Server-9A01-100-SN0P1P056 serial=0P1P056 type=bpa side=B-1</p>
+<p>192.168.200.100: objtype=node groups=fsp,all hcp=Server-9A01-100-SN1021C3P hidden=1 id=4 mac=00215e7e3325 mgt=fsp mtm=9A01-100 parent=Server-9A01-100-SN1021C3P serial=1021C3P side=B-0 type=fsp</p>
+<ol style="list-style-type: decimal">
+<li>Specify -w to write all the node attributes to xCAT database; otherwise, write the node attributes to stdout, stanza file can be used to redirect the output.</li>
+<li>Specify --makedhcp flag to internally call 鈥渕akedhcp -S鈥?to setup the DHCP service and update DHCP leases file to include the MAC and ip addresses mapping. This option could make the ip addresses to be persistent, so the same BPA or FSP can get the same ip address after it reboots.</li>
+<li>Specify --resetnet flag to login to ASMI interface on hardwares and restart the network interfaces.</li>
+</ol>
+<h1 id="connect-fsps-and-bpas-to-hmc"><a href="#TOC">Connect FSPS and BPAs to HMC</a></h1>
+<p>There are two ways to specify the HMC for each FSP and BPA, use mkhwconn -t flag to use the setting inxCAT table or through the mkhwconn -p flag, either way can be used.</p>
+<p>Changes in mkhwconn/lshwconn/rmhwconn command:</p>
+<ol style="list-style-type: decimal">
+<li>If the parameter 鈥渘oderange鈥?are Framenodes or CECnodes. xCAT needs to go to ppc table and find out the BPAnode and FSPnode whose鈥減arent鈥漚ttributes setting to the Framenode or CECnode. After getting all the corresponding BPAnodes and FSPnodes, xCAT could get all the ip addresses on the same Frame and CEC, and send them to fsp-api to take actions.</li>
+<li>If the parameter 鈥渘oderange鈥?are BPAnodes or FSPnodes, it means users just want to work with the specified BPA or FSP ports, xCAT will only add/list/remove the connections for the specific ports.</li>
+</ol>
+<h1 id="changes-from-hardware-control-commands"><a href="#TOC">Changes from hardware control commands:</a></h1>
+<p>Same as mkhwconn/lshwconn/rmhwconn, the noderange parameter to the hardware control commands should be the Framenode and CECnode names. xCAT needs to go to ppc table and find out the BPAnode and FSPnode whose鈥減arent鈥漚ttribute setting to the Framenode or CECnode. After getting all the corresponding BPAnodes and FSPnodes, xCAT could get all the ip addresses on the same Frame and CEC, and send them to fsp-api to take actions.</p>
+<h1 id="changes-from-lsdefnodels-commands"><a href="#TOC">Changes from lsdef/nodels commands:</a></h1>
+<p>By default, lsdef and nodels commands can only display the Framenode and CECnode. For example:</p>
+<h1 id="nodels-bpa"><a href="#TOC">nodels bpa</a></h1>
+<p>Server-9A01-100-SN0P1P056</p>
+<h1 id="lsdef--z-server-9a01-100-sn0p1p056"><a href="#TOC">lsdef -z Server-9A01-100-SN0P1P056:</a></h1>
+<p>objtype=node</p>
+<p>groups=bpa,all</p>
+<p>hcp=Server-9A01-100-SN0P1P056</p>
+<p>hidden=0</p>
+<p>mgt=bpa</p>
+<p>parent=Server-9A01-100-SN0P1P056</p>
+<p>type=frame</p>
+<p>To list the BPAnode and FSPnode, a new flag -S needs to add for lsdef and nodels commands, for example:</p>
+<h1 id="nodels--s-bpa"><a href="#TOC">nodels -S bpa</a></h1>
+<p>Server-9A01-100-SN0P1P056,192.168.200.48</p>
+<h1 id="lsdef--z--s-server-9a01-100-sn0p1p056192.168.200.48"><a href="#TOC">lsdef -z -S Server-9A01-100-SN0P1P056,192.168.200.48</a></h1>
+<p>192.168.200.48:</p>
+<p>objtype=node</p>
+<p>groups=bpa,all</p>
+<p>hcp=Server-9A01-100-SN0P1P056</p>
+<p>hidden=1</p>
+<p>id=0</p>
+<p>mac=001a645457be</p>
+<p>mgt=bpa</p>
+<p>mtm=9A01-100</p>
+<p>parent=Server-9A01-100-SN0P1P056</p>
+<p>serial=0P1P056</p>
+<p>side=0:1</p>
+<p>type=bpa</p>
+<p>Server-9A01-100-SN0P1P056:</p>
+<p>objtype=node</p>
+<p>groups=bpa,all</p>
+<p>hcp=Server-9A01-100-SN0P1P056</p>
+<p>hidden=0</p>
+<p>mgt=bpa</p>
+<p>parent=Server-9A01-100-SN0P1P056</p>
+<p>type=frame= Migration = For migration from xCAT 2.5 or older version, we will split it to three parts: hardware discovery, make hardware connections, and other hardware control commands:</p>
+<h2 id="migration-in-hardware-discovery"><a href="#TOC">Migration in hardware discovery:</a></h2>
+<p>lsslp commmand is designed for hardware discovery. In the case that there are existing hardware data generated by xCAT 2.5 or even older:</p>
+<p>If user specified lsslp -n option to discover new hardwares, the existing data will not be changed. Otherwise,</p>
+<ul>
+<li>For BPAs, generate the new Frame node and set the new BPAnode's parent to Frame node. The Frame nodename could be generated by xCAT or user defined Frame names. Change the attribute 鈥渟ide鈥?to new format.</li>
+<li>Same scenario applies for FSP nodes. One more thing is to specify the CECnode's parent to Framenode.</li>
+<li>In direct attch, lookup ppc table and update the hcp and parent attributes for lpars to be CECnode.</li>
+<li>Without direct attach, lookup ppc table and update the parent attributes only to be CECnode for lpars.</li>
+</ul>
+<h2 id="migration-in-making-hardware-connections"><a href="#TOC">Migration in making hardware connections:</a></h2>
+<p>mkhwconn/lshwconn/rmhwconn will accept the frame, bpa, cec, and fsp as the &quot;node range&quot; parameter.</p>
+<p>The workflow to work with frame and cec nodes have been described above.</p>
+<p>There are two reasons of why we need to accept bpa and fsp nodes as &quot;node range&quot; parameter:</p>
+<ol style="list-style-type: decimal">
+<li>Users might have the hardware data already and don't want to run lsslp to discover the hardwares, generate the hardware data with new DB design again.</li>
+<li>It is possible that user wants to do more accurate control to any specific port. We can give this capability to users.</li>
+</ol>
+<p>The workflow to work with bpa and fsp nodes is that xCAT will check the attribute &quot;parent&quot; of bpa and fsp nodes. If their parents are setting to frame or cec nodes, it means the data are generated by xCAT 2.6. Mkhwconn/lshwconn/rmhwconn will only work with this port. Otherwise, go to find and proceed with all other bpa and fsp nodes with the same MTMS. This is the same way with xCAT 2.4 and 2.5.</p>
+<h2 id="migration-in-other-hardware-control-commands"><a href="#TOC">Migration in other hardware control commands:</a></h2>
+<p>All the hardware control commands need to handle the data generated by xCAT 2.6 and xCAT 2.5 or older.</p>
+<p>An enhancement might be to add funtion in rscan -u option which give user the capability to revert the existing data generated by xCAT 2.5 or older to the new DB design, without re-do the hardware discovery work. This is used for future use, with this change, our new code in the future like xCAT 2.7 can only care the new DB design. Otherwise, we will always think of the data design in xCAT 2.5.</p>
+<ul>
+<li>For BPAs, generate the new Frame node and set the new BPAnode's parent to Frame node. The Frame nodename could be generated by xCAT or user defined Frame names. Change the attribute &quot;id&quot;to new format.</li>
+<li>Same scenario applies for FSP nodes. One more thing is to specify the CECnode's parent to Framenode.</li>
+<li>In direct attch, lookup ppc table and update the hcp and parent attributes for lpars to be CECnode.<br />Without direct attach, lookup ppc table and update the parent attributes only to be CECnode for lpars.</li>
+</ul>
+</body>
+</html>

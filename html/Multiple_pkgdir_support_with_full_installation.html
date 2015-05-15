@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#main-thoughts">Main thoughts</a></li>
+<li><a href="#external">External</a></li>
+<li><a href="#internal">Internal</a><ul>
+<li><a href="#code-changes-in-linux-os-image-template-files"><strong>Code changes in linux os image template files</strong></a></li>
+<li><a href="#code-changes-in-anaconda.pmsles.pmtemplate.pm"><strong>Code changes in anaconda.pm/sles.pm/Template.pm</strong></a></li>
+<li><a href="#updates-for-the-description-of-linuximage.pkgdir-in-the-schema.pm">**Updates for the description of linuximage.pkgdir in the Schema.pm **</a></li>
+</ul></li>
+<li><a href="#support-os">support os</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#main-thoughts">Main thoughts</a></li>
+<li><a href="#external">External</a></li>
+<li><a href="#internal">Internal</a></li>
+<li><a href="#code-changes-in-linux-os-image-template-files"><strong>Code changes in linux os image template files</strong></a></li>
+<li><a href="#code-changes-in-anacondapmslespmtemplatepm"><strong>Code changes in anaconda.pm/sles.pm/Template.pm</strong></a></li>
+<li><a href="#updates-for-the-description-of-linuximagepkgdir-in-the-schemapm-">**Updates for the description of linuximage.pkgdir in the Schema.pm **</a></li>
+<li><a href="#support-os">support os</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="background"><a href="#TOC">Background</a></h2>
+<p>In xCAT 2.8, there is one item &quot;support osimage.pkgdir with multiple paths in genimage and diskfull installation&quot;, and the min-design is the following link:</p>
+<p>[Support_osimage.pkgdir_with_multiple_paths_in_genimage_and_diskfull_installation]</p>
+<p>It supported the multiple paths in genimage successfully.</p>
+<p>For diskfull installation, we put the ospkgs into the postscripts. It was ok for rhels, but couldn't work for sles. Because the yast2 lock the zypper repository, and the zypper in ospkgs couldn't do anything. So for full installation, this solution will be obsoleted after xCAT 2.8.</p>
+<h2 id="main-thoughts"><a href="#TOC">Main thoughts</a></h2>
+<p>After some investigation, we propose that: put all the paths into the autoyast/kickstart file,and not change the main os repository in the yaboot/xnba file. During the installation, it will use all the repositories, and the updates will be installed.</p>
+<h2 id="external"><a href="#TOC">External</a></h2>
+<p>The multiple paths of pkgdir will be separated by &quot;,&quot; such as:</p>
+<p>pkgdir=/install/rhels6.2/ppc64,/install/updates</p>
+<p>Notes:</p>
+<p>(1)all the pkg dirs should be in the site.installdir directory</p>
+<p>(2)in the os base pkg dir, there are default repository data. And in the other pkg dir(s), the users should make sure there are repository data. If not, use &quot;createrepo&quot; command to create them.</p>
+<p>After running nodeset/makedhcp, and do the full installation. We can check that if the latest pkgs updates in the /install/updates, the latest pkgs updates will be installed.</p>
+<h2 id="internal"><a href="#TOC">Internal</a></h2>
+<p>The main work is focused on generating the repositories in the kickstart/autoyast file. After running nodeset,</p>
+<p>For rhels, the repositories in the kickstart file looks like:</p>
+<pre><code>repo --name=pkg0 --baseurl=http://1.1.1.2//install/rhels6.2/x86_64
+repo --name=pkg1 --baseurl=http://1.1.1.2//install/rhtest</code></pre>
+<p>For sles, we should add &quot;signature-handling&quot; tag, and add the &quot;add-on&quot; tag in autoyast file, such as:</p>
+<pre><code> &amp;lt;general&amp;gt;
+...
+     &amp;lt;signature-handling&amp;gt;
+        &amp;lt;accept_non_trusted_gpg_key config:type=&quot;boolean&quot;&amp;gt;true&amp;lt;/accept_non_trusted_gpg_key&amp;gt;
+        &amp;lt;accept_unknown_gpg_key config:type=&quot;boolean&quot;&amp;gt;true&amp;lt;/accept_unknown_gpg_key&amp;gt;
+        &amp;lt;accept_unsigned_file config:type=&quot;boolean&quot;&amp;gt;true&amp;lt;/accept_unsigned_file&amp;gt;
+     &amp;lt;/signature-handling&amp;gt;
+   &amp;lt;/general&amp;gt;
+   &amp;lt;add-on&amp;gt;
+      &amp;lt;add_on_products config:type=&quot;list&quot;&amp;gt;
+      &amp;lt;listentry&amp;gt;
+          &amp;lt;media_url&amp;gt;http://1.1.1.4/install/test&amp;lt;/media_url&amp;gt;
+          &amp;lt;product&amp;gt;SuSE-Linux-pkg1&amp;lt;/product&amp;gt;
+          &amp;lt;product_dir&amp;gt;/&amp;lt;/product_dir&amp;gt;
+          &amp;lt;ask_on_error config:type=&quot;boolean&quot;&amp;gt;false&amp;lt;/ask_on_error&amp;gt;
+          &amp;lt;name&amp;gt;SuSE-Linux-pkg1&amp;lt;/name&amp;gt;
+        &amp;lt;/listentry&amp;gt;
+      &amp;lt;/add_on_products&amp;gt;
+   &amp;lt;/add-on&amp;gt;</code></pre>
+<p>So we need to modify the templates for installation, and the anaconda.pm/sles.pm/Template.pm.</p>
+<p>The subroutine subvars() of Template.pm will generate the kickstart/autoyast file according to the compute.&lt;osver&gt;.&lt;arch&gt;.tmpl or service.&lt;osver&gt;.&lt;arch&gt;.tmpl .</p>
+<h3 id="code-changes-in-linux-os-image-template-files"><a href="#TOC"><strong>Code changes in linux os image template files</strong></a></h3>
+<p>For rhels, in the /opt/xcat/share/xcat/install/rh/compute.&lt;osver&gt;.&lt;arch&gt;.tmpl or service.&lt;osver&gt;.&lt;arch&gt;.tmpl, there is one tag:</p>
+<pre><code>#INSTALL_SOURCES#</code></pre>
+<p>This tag will be used in the subvars() of Template.pm and generate the related repositories for rhels anaconda.</p>
+<p>For sles, the &quot;signature-handling&quot; tag will be added into the /opt/xcat/share/xcat/install/sles/compute.&lt;osver&gt;.&lt;arch&gt;.tmpl or service.&lt;osver&gt;.&lt;arch&gt;.tmpl, and there is “add-on” tag in the template:</p>
+<pre><code>  &amp;lt;add-on&amp;gt;
+      &amp;lt;add_on_products config:type=&quot;list&quot;&amp;gt;
+          #INSTALL_SOURCES#
+      &amp;lt;/add_on_products&amp;gt;
+   &amp;lt;/add-on&amp;gt;</code></pre>
+<p>The tag #INSTALL_SOURCES# will be used in the subvars() of Template.pm and generate the related repositories for sles autoyast.</p>
+<h3 id="code-changes-in-anaconda.pmsles.pmtemplate.pm"><a href="#TOC"><strong>Code changes in anaconda.pm/sles.pm/Template.pm</strong></a></h3>
+<p>In anaconda.pm, the $pkgdir and $platform value should be passed into subvars() of Template.pm, and the changes are as follows:</p>
+<pre><code>            $tmperr =
+             xCAT::Template-&amp;gt;subvars(
+                   $tmplfile,
+                   &quot;/$installroot/autoinst/&quot; . $node,
+                   $node,
+                           $pkglistfile,
+                   **  $pkgdir,**
+                   **$platform,**
+                   $partfile
+                   );</code></pre>
+<p>In sles.pm , the $pkgdir and $os values should be passed into subvars() of Template.pm, and the changes are as follows:</p>
+<pre><code>           $tmperr =
+             xCAT::Template-&amp;gt;subvars(
+                        $tmplfile,
+                        &quot;$installroot/autoinst/$node&quot;,
+                        $node,
+                        $pkglistfile,
+                 **$tmppkgdir,**
+                **$os,**
+                $partfile
+                        );</code></pre>
+<p>For sles, the os base path in the linuximage.pkgdir always be /install/&lt;slesvers&gt;/&lt;arch&gt;. But the autoyast uses the /install/&lt;slesvers&gt;/&lt;arch&gt;/1, so I apppend the &quot;/1&quot; to the os base path in linuximage.pkgdir, and set the value to $tmppkgdir.</p>
+<p>In subvars() of Template.pm, it will collect the repository information and use the info to replace the tag #INSTALL_SOURCES# in kickstart/autoyast template.</p>
+<pre><code> #support multiple paths of osimage in rh/sles diskfull installation
+ my @pkgdirs;
+ if ( defined($media_dir) ) {
+     @pkgdirs = split(&quot;,&quot;, $media_dir);
+     my $source;
+     my $c = 0;
+     foreach my $pkgdir(@pkgdirs) {
+         if( $platform =~ /^(rh|SL)$/ ) {
+             $source .=  &quot;repo --name=pkg$c --baseurl=http://#TABLE:noderes:\$NODE:nfsserver#/$pkgdir\n&quot;;
+         } elsif ($platform =~ /^(sles|suse)/) {
+             my $http = &quot;http://#TABLE:noderes:\$NODE:nfsserver#$pkgdir&quot;;
+             $source .=  &quot;         &amp;lt;listentry&amp;gt;
+          &amp;lt;media_url&amp;gt;$http&amp;lt;/media_url&amp;gt;
+          &amp;lt;product&amp;gt;SuSE-Linux-pkg$c&amp;lt;/product&amp;gt;
+          &amp;lt;product_dir&amp;gt;/&amp;lt;/product_dir&amp;gt;
+          &amp;lt;ask_on_error config:type=\&quot;boolean\&quot;&amp;gt;false&amp;lt;/ask_on_error&amp;gt;
+          &amp;lt;name&amp;gt;SuSE-Linux-pkg$c&amp;lt;/name&amp;gt;
+        &amp;lt;/listentry&amp;gt;&quot;;
+         }
+         $c++;
+     }
+     $inc =~ s/#INSTALL_SOURCES#/$source/g;
+ }</code></pre>
+<h3 id="updates-for-the-description-of-linuximage.pkgdir-in-the-schema.pm"><a href="#TOC">**Updates for the description of linuximage.pkgdir in the Schema.pm **</a></h3>
+<p>I update the description of the linuximage.pkgdir in the Schema.pm.</p>
+<pre><code> linuximage  =&amp;gt; {
+ ...
+    pkgdir =&amp;gt; &#39;The name of the directory where the distro packages are stored. It could be set multiple paths.The multiple paths must be seperated by &quot;,&quot;. 
+ The first path in the value of osimage.pkgdir must be the OS base pkg dir path, such as pkgdir=/install/rhels6.2/x86_64,/install/updates . In the os base 
+ pkg path, there are default repository data. And in the other pkg path(s), the users should make sure there are repository data. If not, use &quot;createrepo&quot;
+ command to create them. &#39;,
+ ...
+ }</code></pre>
+<p>You can run “tabdump linuximage -d” to get the description.</p>
+<h2 id="support-os"><a href="#TOC">support os</a></h2>
+<p>I have verified the following scenarios:</p>
+<p>1. use rhels6.2 mn to install rhels6.&lt;x&gt; cn/sn</p>
+<p>2. use rhels6.2 mn to install sles11sp&lt;x&gt; cn</p>
+<p>3. use sles11sp2 mn to install sles11sp&lt;x&gt; cn/sn, and sles10sp3 cn.</p>
+<p>4. use sles11sp2 mn to install rhels6.&lt;x&gt; cn</p>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<pre><code>  *Required reviewers:  Bruce
+  *Required approvers:  Bruce Potter
+  *Affect on other components:  rhels/sles full installation
+  *External interface changes, documentation, and usability issues: values of linuximage.pkgdir will be changed. This page.
+  *Packaging, installation, dependencies:  N/A
+  *Portability and platforms (HW/SW) supported:  N/A
+  *Performance and scaling considerations:  N/A
+  *Migration and coexistence:  N/A
+  *Serviceability: N/A
+  *Security:  N/A
+  *NLS and accessibility:  N/A
+  *Invention protection:  N/A</code></pre>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#iscsi-anywhere-with-xcat-for-rhel5.3">iSCSI Anywhere with xCAT for RHEL5.3</a></li>
+<li><a href="#assumptions">Assumptions</a></li>
+<li><a href="#section"></a></li>
+<li><a href="#install-required-iscsi-tools">Install required iSCSI tools</a></li>
+<li><a href="#change-tables-to-to-allow-for-node-to-boot-from-iscsi">Change tables to to allow for node to boot from iSCSI</a></li>
+<li><a href="#create-iscsi-target">Create iSCSI target</a></li>
+<li><a href="#install-the-node">Install the Node</a></li>
+<li><a href="#troubleshoot">Troubleshoot</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#iscsi-anywhere-with-xcat-for-rhel53">iSCSI Anywhere with xCAT for RHEL5.3</a></li>
+<li><a href="#assumptions">Assumptions</a></li>
+<li><a href="#"></a></li>
+<li><a href="#install-required-iscsi-tools">Install required iSCSI tools</a></li>
+<li><a href="#change-tables-to-to-allow-for-node-to-boot-from-iscsi">Change tables to to allow for node to boot from iSCSI</a></li>
+<li><a href="#create-iscsi-target">Create iSCSI target</a></li>
+<li><a href="#install-the-node">Install the Node</a></li>
+<li><a href="#troubleshoot">Troubleshoot</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<h2 id="iscsi-anywhere-with-xcat-for-rhel5.3"><a href="#TOC">iSCSI Anywhere with xCAT for RHEL5.3</a></h2>
+<h2 id="assumptions"><a href="#TOC">Assumptions</a></h2>
+<p>as usual with these howtos you should have at least a basic xCAT install done. We're going to take a diskless node and boot it into iSCSI. As a sanity check, make sure that you can do a diskful install and/or a diskless install on the node you're going to do iSCSI with. If this works then you should be able to boot iSCSI</p>
+<h2 id="section"><a href="#TOC"></a></h2>
+<h2 id="install-required-iscsi-tools"><a href="#TOC">Install required iSCSI tools</a></h2>
+<pre><code>yum -y install gpxe-xcat # on the management server
+yum -y install scsi-target-utils-0.9.1-1 # on the tgt server (this has to be a service node or the xCAT management server)
+service tgtd start
+chkconfig tgtd on</code></pre>
+<p>If you need to create an iSCSI target on the machine you</p>
+<p>You'll need to install scsi-target-utils on the machine that you wish to be the iSCSI target and gpxe-xcat on the management node.</p>
+<h2 id="change-tables-to-to-allow-for-node-to-boot-from-iscsi"><a href="#TOC">Change tables to to allow for node to boot from iSCSI</a></h2>
+<pre><code>chtab node=node01 nodetype.os=rhels5.3 nodetype.arch=x86_64 nodetype.profile=iscsi</code></pre>
+<p>You'll also need to set the <strong>iscsi table</strong>:</p>
+<pre><code>tabdump iscsi
+#node,server,target,lun,iname,file,userid,passwd,kernel,kcmdline,initrd,comments,disable
+&quot;node01&quot;,&quot;redhouse&quot;,</code></pre>
+<p>Notice that the first two arguments: The node and the server are all you need. xCAT will populate the other fields automatically.<br />You'll also need to know where you're iscsi targets are going to live. We made a directory called iscsi to put ours in. Do this by modifying the <strong>site table</strong>. And finally, you'll need the password for your Windows machine:</p>
+<pre><code>chtab key=iscsidir site.value=/iscsi</code></pre>
+<h2 id="create-iscsi-target"><a href="#TOC">Create iSCSI target</a></h2>
+<p>If you are using a machine as an iSCSI target like we are then you'll need to create the iSCSI target:</p>
+<pre><code>setupscsidev node01 -s 10240 # 10GB of disk</code></pre>
+<p>if you now look at your iscsi table you'll see the new settings that xCAT configured for you.</p>
+<p>Note that if the system hosting the iSCSI targets is rebooted, the &quot;setupiscsidev&quot; command (with no arguments) will have to be re-run to export the iSCSI targets again (be careful not to re-create/overwrite the iSCSI targets).</p>
+<h2 id="install-the-node"><a href="#TOC">Install the Node</a></h2>
+<pre><code>rinstall node01
+nodeset node01 iscsiboot</code></pre>
+<h2 id="troubleshoot"><a href="#TOC">Troubleshoot</a></h2>
+<pre><code>tgtadm --mode target --op show</code></pre>
+<p>To remotely access the node from linux, use rdesktop version 1.60 or later</p>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-2.0.1-release-notes">xCAT 2.0.1 Release Notes</a><ul>
+<li><a href="#bug-fixes-and-ehancements">Bug Fixes and Ehancements</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-201-release-notes">xCAT 2.0.1 Release Notes</a></li>
+<li><a href="#bug-fixes-and-ehancements">Bug Fixes and Ehancements</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h1 id="xcat-2.0.1-release-notes"><a href="#TOC">xCAT 2.0.1 Release Notes</a></h1>
+<h2 id="bug-fixes-and-ehancements"><a href="#TOC">Bug Fixes and Ehancements</a></h2>
+<ul>
+<li>Fix problem where IPMI sessions were left open after rpower reset</li>
+<li>Fix problem where BMC error messages were being overwritten by generic error messages</li>
+<li>Add CentOS5.2 DVD media ids to anaconda plugin.</li>
+<li>Fix a problem where a missing noderes table would abort certain operations uncleanly</li>
+<li>Ignore multicast networks in DHCP and networks table.</li>
+<li>Backup /etc/hosts before makehosts</li>
+<li>ntp postscript fixes</li>
+<li>Fix for stateless initrd generation failures under certain circumstances.</li>
+<li>Fix System p linux mac table formatting</li>
+<li>LDAP postinstall script</li>
+<li>Fedora 9 stateless fixes (networking and serial console setup)</li>
+<li>Fix Bladecenter AMM eventlog retrieval to retrieve more than 32 items</li>
+<li>Fix for system resource consumption issue with a discovery plugin crash.</li>
+<li>Fix discovery of JS-22 systems with BPET42D and later firmware AMM revisions.</li>
+<li>Fix templates with some incorrectly formatted comments that could cause nodeset failures</li>
+<li>Fix stateless RHEL5 to allow image server to be specified by name as well as IP</li>
+<li>Fix a number of documentation issues</li>
+<li>Allow nodegroups in site.dhcpinterfaces as interface criteria</li>
+<li>iDataplex thermal profile manipulation support via rspconfig</li>
+<li>Fix stateless management to not eliminate an existing etc/shadow file</li>
+<li>Fix some SLES path issues in mknb and makedns.</li>
+<li>Fix init script for RHEL4 and SLES10</li>
+<li>Update xCAT discovery environment (QS22 discovery support)</li>
+<li>Init script fixes for various services and RHEL4 and SLES10</li>
+<li>atftp patches to implement unicast block rollover for large files (recent AMM firmware sizes through tftp).</li>
+<li>atftp patches to translate '' to '/' and check for per-node BCD files (not used by xCAT today)</li>
+<li>Fix a character truncation issue in atftp PCRE support, unused by xCAT</li>
+<li>Added &quot;-f&quot; flag to getmacs (force LPAR shutdown)</li>
+<li>Removed &quot;rspconfig build&quot; - MPA specific</li>
+<li>Correct &quot;rinv&quot; usage for PPC</li>
+<li>Changed &quot;deps&quot; table to support multiple keys (node, cmd)</li>
+<li>Corrected ppchcp table &quot;hcp&quot; description</li>
+<li>Strip colons from mac address before sending - rnetboot (PPC specific).</li>
+<li>Call xCAT::Usage from getmacs instead of doing usage with PPCmac.pm module</li>
+<li>Updated getmacs usage (removed -c flag)</li>
+<li>Seperated mac address returned from getmacs with colons - Linux only (PPC specific).</li>
+<li>Remove -c (colon-seperated output) from lpar_netboot() function</li>
+<li>Fix problem not writing &quot;first&quot; mac in writemac() with -w specified (PPC specific).</li>
+<li>Added IO-Stty-02.tar.gz to perl-IO-Stty</li>
+</ul>
+</body>
+</html>

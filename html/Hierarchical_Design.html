@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#attribute-summary">Attribute Summary</a></li>
+<li><a href="#new-servicenode-table">New servicenode Table</a></li>
+<li><a href="#environments-to-support">Environments to Support</a></li>
+<li><a href="#makedhcp">Makedhcp</a></li>
+<li><a href="#nodeset">Nodeset</a></li>
+<li><a href="#makedns">Makedns</a></li>
+<li><a href="#makenetworks">Makenetworks</a></li>
+<li><a href="#conserver">Conserver</a></li>
+<li><a href="#distributing-commands-run-by-the-admin-on-the-mn">Distributing Commands Run by the Admin on the MN</a></li>
+<li><a href="#hw-ctrl-cmds">HW Ctrl Cmds</a></li>
+<li><a href="#scaling-and-ha-considerations">Scaling and HA Considerations</a></li>
+<li><a href="#database-access">Database Access</a></li>
+<li><a href="#setting-up-the-service-nodes">Setting Up the Service Nodes</a></li>
+<li><a href="#details-for-specific-commands">Details for Specific Commands</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#attribute-summary">Attribute Summary</a></li>
+<li><a href="#new-servicenode-table">New servicenode Table</a></li>
+<li><a href="#environments-to-support">Environments to Support</a></li>
+<li><a href="#makedhcp">Makedhcp</a></li>
+<li><a href="#nodeset">Nodeset</a></li>
+<li><a href="#makedns">Makedns</a></li>
+<li><a href="#makenetworks">Makenetworks</a></li>
+<li><a href="#conserver">Conserver</a></li>
+<li><a href="#distributing-commands-run-by-the-admin-on-the-mn">Distributing Commands Run by the Admin on the MN</a></li>
+<li><a href="#hw-ctrl-cmds">HW Ctrl Cmds</a></li>
+<li><a href="#scaling-and-ha-considerations">Scaling and HA Considerations</a></li>
+<li><a href="#database-access">Database Access</a></li>
+<li><a href="#setting-up-the-service-nodes">Setting Up the Service Nodes</a></li>
+<li><a href="#details-for-specific-commands">Details for Specific Commands</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>A few rules about how xCAT should behave in a hierarchical cluster (i.e. a cluster w/service nodes).</p>
+<h2 id="attribute-summary"><a href="#TOC">Attribute Summary</a></h2>
+<ul>
+<li>noderes.servicenode: the service node for this node as known by the mn. Used normally for distributing out cmds from the mn.</li>
+<li>noderes.xcatmaster: the service node for this node as known by the node. The default for several of the attrs below.</li>
+<li>noderes.tftpserver: the tftp service node for this node as known by the node (defaults back to noderes.xcatmaster)</li>
+<li>noderes.nfsserver: the service node that this node should get files from via http, ftp, etc. (as known by the node).</li>
+<li>noderes.monserver: the monitoring event collection point. Two hostnames separated by a comma: as known by mn, and as known by node</li>
+<li>nodehm.conserver: the service node that should provide console access to this node (as known by the mn)</li>
+<li>networks.dhcpserver: specifies the dhcpserver on each network.</li>
+<li>If the noderes/nodehm specific attrs are not specified for a node:
+<ul>
+<li>if the servicenode table has at least one entry, try to guess which service node(s) should service this node based on networks</li>
+<li>if the servicenode table is empty, assume the node is serviced by the mn</li>
+</ul></li>
+</ul>
+<h2 id="new-servicenode-table"><a href="#TOC">New servicenode Table</a></h2>
+<ul>
+<li>Lists all the service nodes in your cluster and what services they should be running. You can set servicenode-related attributes in nodehm or noderes to explicitly state that either a specific sn or the mn should be used.</li>
+<li>Attributes:
+<ul>
+<li>node - hostname of service node (as known by mn)</li>
+<li>nameserver - yes or 1 to set up dns caching (default is yes)</li>
+<li>dhcpserver - yes or 1 (default is yes) (may support including NIC names, dynamic range, noderange, but this is still being discussed)</li>
+<li>tftpserver - yes or 1 (default is yes)</li>
+<li>nfsserver - yes or 1 (default is yes) Note that this doesn't necessarily mean nfs. It is a general attr for any file access services (e.g. http, ftp)</li>
+<li>conserver - yes or 1 (default is yes)</li>
+<li>monserver - yes or 1 (default is yes)</li>
+<li>ntpserver - yes or 1 (default is yes)</li>
+<li>ldapserver - yes or 1 (ldap proxy) (default is yes)</li>
+<li>(can't have syslog in this table because the sn needs to set up syslog before the db access is established)</li>
+</ul></li>
+</ul>
+<h2 id="environments-to-support"><a href="#TOC">Environments to Support</a></h2>
+<ul>
+<li>Subnetted Service Nodes - Each service node is on its own subnet with the nodes it is responsible for.
+<ul>
+<li>Every node/nodegroup has explict noderes.servicenode, noderes.xcatmaster, etc., entries. The user must ensure that each servicenode listed in one of those attributes is also added to the servicenode table for correct servicenode install/configuration.</li>
+</ul></li>
+<li>Pooled Service Nodes - The cluster network is logically flat and any service node can service any node.
+<ul>
+<li>All service nodes are listed in the service node table. (The nodename key in the servicenode table is &quot;as known by the management node&quot;.)</li>
+<li>noderes.xcatmaster is null, indicating that the SN that responds to the node boot should be its SN.</li>
+<li>noderes.servicenode can contain a list of SNs, so that top down cmds like xdsh can be dispatched to any one of them (trying them in order)</li>
+</ul></li>
+<li>Combination of Subnetted and Pooled Service Nodes - Compute nodes are segregated into subnets, but within each subnet there is a pool of service nodes.
+<ul>
+<li>noderes.xcatmaster is null, indicating that the SN that responds to the node boot should be its SN.</li>
+<li>noderes.servicenode can contain a list of SNs in that pool, so that top down cmds like xdsh can be dispatched to any one of them (trying them in order)</li>
+</ul></li>
+<li>site.disjointdhcps should be set to 1 so that the dhcpd.conf on the SN will be filled in with only the nodes that have that SN listed in their noderes.servicenode attribute</li>
+</ul>
+<h2 id="makedhcp"><a href="#TOC">Makedhcp</a></h2>
+<ul>
+<li>Command will be sent to all service nodes in servicenode table that have dhcpserver attr filled in.</li>
+<li>On each service node:
+<ul>
+<li>the NICs on the SN will be compared to the xcat networks table and all nodes that are on a subnet with this SN will be put in its dhcpd.conf</li>
+</ul></li>
+</ul>
+<h2 id="nodeset"><a href="#TOC">Nodeset</a></h2>
+<ul>
+<li>For now, service nodes that have servicenode.tftpserver filled in will always mount /tftpboot read/write.</li>
+<li>This means the nodeset cmd can be done completely from the mn.</li>
+<li>This also means there is no need for guessing, because all sn's that have the tftp service set up will be able to serve any node.</li>
+</ul>
+<h2 id="makedns"><a href="#TOC">Makedns</a></h2>
+<ul>
+<li>Every sn in the servicenode table that has the nameserver attr filled in will have dns set up on it.</li>
+<li>The DNS on the SN is just a forwarding/caching DNS set up to forward all requests to the MN, and then remember the answer</li>
+</ul>
+<p>For more information about name resolution in an xCAT Cluster, refer to the following:</p>
+<p>[Cluster_Name_Resolution]</p>
+<h2 id="makenetworks"><a href="#TOC">Makenetworks</a></h2>
+<ul>
+<li>The cmd should be sent to every sn in the servicenode table, so that it can discover its networks.</li>
+</ul>
+<h2 id="conserver"><a href="#TOC">Conserver</a></h2>
+<ul>
+<li>Conserver will always use nodehm.conserver to determine who should have the console for each node.</li>
+<li>The cmd makeconservercf should be distributed to the service nodes based on nodehm.conserver</li>
+</ul>
+<h2 id="distributing-commands-run-by-the-admin-on-the-mn"><a href="#TOC">Distributing Commands Run by the Admin on the MN</a></h2>
+<ul>
+<li>Use noderes.servicenode to determine who should run the cmd for each node</li>
+<li>For nodes that don't have a noderes.servicenode value, randomly distribute the cmds to the sn's in the servicenode table</li>
+</ul>
+<h2 id="hw-ctrl-cmds"><a href="#TOC">HW Ctrl Cmds</a></h2>
+<ul>
+<li>If noderes.servicenode is set for a hw ctrl point (mm, hmc, fsp, etc.), then hw ctrl cmds should be distributed to those service nodes
+<ul>
+<li>I.e. if &quot;rpower node1 on&quot; is run, xcat 1st looks up the hcp (e.g. ppc.hcp) of node1. Assume it is called fsp1. Then it looks up noderes.servicenode for fsp1. If that is set, for example, to sn1, then the rpower cmd will be dispatch to sn1 and then sn1 will contact fsp1 to power on node1.</li>
+</ul></li>
+</ul>
+<h2 id="scaling-and-ha-considerations"><a href="#TOC">Scaling and HA Considerations</a></h2>
+<p>The goal for the service nodes is to configure them such that we can have more than one in a building block and any node in that BB can be serviced by any service node in the BB.  This way if we need better scaling within the BB, we can simply add more service nodes.  And to provide HA we can simply have multiple service nodes and if one service node goes down, the other service nodes within the BB can pick up the load.  For example, all service nodes within a BB have DHCP and/or NIM configured for all the compute nodes in the BB, and have all the same OS images on them.  Thus when a compute node boots, it will broadcast PXE or bootp for a server, and whichever service node responds first can deploy the node.</p>
+<p>The paragraph above states the ultimate goal, but there may be some services that can't be set up this way.  In these cases, we may have to divide up responsibility of the compute nodes between the service nodes.  But we want to limit the number of services we have to do this for, so we limit how much we have to fail over to another service node when one service node dies.</p>
+<p>Also, not all services for a compute node have to be provided by the same service node.  For example, TFTP can be served from one machine, DHCP from another, and NFS from another.</p>
+<h2 id="database-access"><a href="#TOC">Database Access</a></h2>
+<p>Information about all the nodes in the whole cluster is kept in the xCAT DB on the management node (EMS).  This is the master source of the data.  Specific information that is needed by a service node for a specific operation must be accessed somehow from the management node.  There are several possible ways to do this:</p>
+<ul>
+<li>Every plugin is structured such that it is split into 2 functions:  preprocess_request() and process_request().  The preprocess_request() function queries the DB for whatever data it needs (for that operation for the nodes specified) and stores it temporarily in internal hash tables.  The hash tables are passed to process_request() to actually perform the operation.  When a plugin is executed directly on the MN, both are run in succession.  When the operation needs to be distributed out to the service nodes, preprocess_request() is run on the MN, then the data is passed to the appropriate SNs and process_request() is run on the SNs. <em>The is the preferred solution.</em></li>
+<li>Have the SN query the MN for the data it needs, using the client/server protocol.  For example, when a service node needs to be configured to respond correctly to compute node PXE requests, the makedhcp command is run on the SN and it is passed a list of nodes that this service node is responsible for.  This command queries the particular node attributes it needs, using the client/server connection to xcatd on the management node.  Then it writes out dhcpd.conf. <em>This will cause a scaling bottleneck on the management node</em> for large clusters, because all the service nodes will be asking the management node for data at the same time?</li>
+</ul>
+<h2 id="setting-up-the-service-nodes"><a href="#TOC">Setting Up the Service Nodes</a></h2>
+<p>The management node installs (or diskless boots) the service nodes and uses the servicenode postinstall script to set up the node as a service node.</p>
+<h2 id="details-for-specific-commands"><a href="#TOC">Details for Specific Commands</a></h2>
+<p>Because the scaling challenges for each operation vary greatly, we can't use the same approach for every operation.  This section enumerates many of the commands and operations and describes what approach will be used for each to overcome the scaling issues. (This info may be out of date):</p>
+<ul>
+<li>PXE Booting Compute Nodes:  DHCP will be configured on each service node to respond to the PXE requests for its nodes.  The /tftpboot file system will be mounted from the management node so it will have all the proper hex files.  The /install file system will also be mounted from the MN so the OS image files will be available if the compute node is being installed or diskless booted.</li>
+<li>For system p support, each service node is a NIM master.  The MN is a NIM master also and originally all the SPOT and lpp_source resources on the MN should be put in /install.  Since this file system will be mounted on the service nodes, the appropriate NIM resources can be defined on each service node and refer (when necessary) to the software files in /install.  (Configuring NIM automatically configures the bootp daemon.)</li>
+<li>The rpower command for system x (BMC) will be passed along to the service nodes (along with the node list and attributes) via the xcat client/server mechanism.  The service node will communicate with each node's BMC to perform the operation.  Note, that the BMC user/pw info must also be sent, so the client/server XML communication may need to be encrypted.</li>
+<li>Should the &quot;simple&quot; rpower commands (query, on, off) for system p be done straight from the MN (w/o involving the service node), since it is really the HMC that has to implement it anyway??</li>
+<li>The boot-to-openfirmware rpower command will be distributed to the service nodes.</li>
+<li>The compute nodes will forward their syslog entries to the service node.  Will the service nodes forward all syslog entries to the MN?</li>
+<li>Each service node will run an intermediate DNS daemon.</li>
+<li>Each service node will run an intermediate NTP daemon.</li>
+<li>One designated service node in each BB will run conserver and the compute nodes will have their consoles directed to that.  The rconsole command on the MN will connect to the conserver on the relevant SN.  A specific conserver.cf for each SN needs to be generated with just its CNs.</li>
+<li>Each node will have a MonitorService attribute to designate which service node will be the collection point for events and performance monitoring info.</li>
+</ul>
+</body>
+</html>

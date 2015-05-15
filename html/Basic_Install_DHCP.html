@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#pre-install">Pre-install</a><ul>
+<li><a href="#network-wiring">Network wiring</a></li>
+</ul></li>
+<li><a href="#install-the-operating-system">Install the operating system</a></li>
+<li><a href="#setup-networking">Setup Networking</a></li>
+<li><a href="#install-xcat">Install xCAT</a></li>
+<li><a href="#setup-the-xcat-tables">Setup the xCAT tables</a></li>
+<li><a href="#advanced-features">Advanced features</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#pre-install">Pre-install</a></li>
+<li><a href="#network-wiring">Network wiring</a></li>
+<li><a href="#install-the-operating-system">Install the operating system</a></li>
+<li><a href="#setup-networking">Setup Networking</a></li>
+<li><a href="#install-xcat">Install xCAT</a></li>
+<li><a href="#setup-the-xcat-tables">Setup the xCAT tables</a></li>
+<li><a href="#advanced-features">Advanced features</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p><strong>Note: Refer to [XCAT_iDataPlex_Cluster_Quick_Start] for a more up to date quick start guide.</strong></p>
+<p>Directions for a basic xCAT server. Specificly written for <strong>CentOS 5.2 x86_64</strong>, but could be generalized for other installations</p>
+<h2 id="pre-install"><a href="#TOC">Pre-install</a></h2>
+<p>Before installing, these decisions need to be made:</p>
+<ul>
+<li>Internal IP of headnode - referred to as (xcat_int_ip)</li>
+<li>External IP (internet connected) of headnode - referred to as (xcat_ext_ip)</li>
+<li>External DNS server IP - referred to as (dns_ext_ip)</li>
+<li>Cluster domain - referred to as (cluster_dom)</li>
+</ul>
+<h3 id="network-wiring"><a href="#TOC">Network wiring</a></h3>
+<p>This setup assumes your xCAT node has eth0 plugged into an existing network, connected to the internet and using DHCP. Eth1 is attached to the switch that the compute nodes are attached to.</p>
+<h2 id="install-the-operating-system"><a href="#TOC">Install the operating system</a></h2>
+<p>A basic Desktop install will do fine. Turn off the Firewall and SELinux to be able to access the node from your network (most xCAT servers are already behind a company firewall). Install all updates.</p>
+<h2 id="setup-networking"><a href="#TOC">Setup Networking</a></h2>
+<p>Configure the Ethernet interfaces</p>
+<pre><code>    vi /etc/sysconfig/network-scripts/ifcfg-eth0
+    
+    DEVICE=eth0
+    PEERDNS=no
+    BOOTPROTO=dhcp
+    HWADDR=00:14:5E:6B:18:21
+    ONBOOT=yes
+    
+    ifdown eth0 &amp;&amp; ifup eth0
+    
+    vi /etc/sysconfig/network-scripts/ifcfg-eth1
+    
+    DEVICE=eth1
+    BOOTPROTO=static
+    HWADDR=00:14:5E:6B:18:22
+    ONBOOT=yes
+    IPADDR=(xcat_int_ip)
+    NETMASK=255.255.255.0
+    
+    ifdown eth1 &amp;&amp; ifup eth1
+</code></pre>
+<h2 id="install-xcat"><a href="#TOC">Install xCAT</a></h2>
+<p>Add the xCAT package repositories<br />Note: These are for the current release. See the <a href="http://xcat.sourceforge.net/yum/download.html">Download</a> page for the location of the latest snapshot repo, and other operating systems.</p>
+<pre><code>    cd /etc/yum.repos.d
+    wget http://xcat.sourceforge.net/yum/xcat-core/xCAT-core.repo
+    wget http://xcat.sourceforge.net/yum/xcat-dep/rh5/x86_64/xCAT-dep.repo
+    yum clean metadata
+    yum install xCAT</code></pre>
+<p>Verify the install</p>
+<pre><code>    source /etc/profile.d/xcat.sh
+    tabdump site</code></pre>
+<p>If the tabdump command works, xCAT is installed. If it doesn't work, check to ensure all previous steps completed sucessfully.</p>
+<p>Configure the site table.<br />This will set the dns to forward requests for the (dns_ext_ip) network, set the domain to (cluster_dom), set the master and nameserver to (dns_et_ip), and set eth1 to be the dhcp server interface.</p>
+<pre><code>    tabedit site
+    
+    #key,value,comments,disable
+    &quot;xcatdport&quot;,&quot;3001&quot;,,
+    &quot;xcatiport&quot;,&quot;3002&quot;,,
+    &quot;tftpdir&quot;,&quot;/tftpboot&quot;,,
+    &quot;master&quot;,&quot;(xcat_int_ip)&quot;,,
+    &quot;domain&quot;,&quot;(cluster_dom)&quot;,,
+    &quot;installdir&quot;,&quot;/install&quot;,,
+    &quot;timezone&quot;,&quot;America/Denver&quot;,,
+    &quot;nameservers&quot;,&quot;(xcat_int_ip)&quot;,,
+    &quot;forwarders&quot;,&quot;(dns_ext_ip)&quot;
+    &quot;dhcpinterfaces&quot;,&quot;eth1&quot;
+    &quot;ntpservers&quot;,&quot;0.north-america.pool.ntp.org&quot;</code></pre>
+<p>Setup the networks table</p>
+<pre><code>    tabedit networks</code></pre>
+<p>There should be an entry for each network the nodes need to access. In this case, DNS is forwarded to the 192.168.0.1 server:</p>
+<pre><code>    tabedit networks</code></pre>
+<pre><code>netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,dynamicrange,nodehostname,comments,disable
+    internal,&quot;10.10.10.0&quot;,&quot;255.255.255.0&quot;,&quot;eth1&quot;,&quot;10.10.10.1&quot;,&quot;10.10.10.1&quot;,&quot;10.10.10.1&quot;,&quot;10.10.10.1&quot;,,,&quot;10.10.10.200-10.10.10.254&quot;,,,
+    external,&quot;192.168.0.0&quot;,&quot;255.255.0.0&quot;,&quot;eth0&quot;,,,,&quot;192.168.0.1&quot;,,,,
+</code></pre>
+<h2 id="setup-the-xcat-tables"><a href="#TOC">Setup the xCAT tables</a></h2>
+<p>These commands will insert lines into the noderes,passwd,chain and nodetype tables for a generic setup. Each table will default the the nodes group (compute). If there is a row for an individual node, those options will override the compute group options.</p>
+<pre><code>    chdef -t group -o compute netboot=pxe tftpserver=(xcat_int_ip) nfsserver=(xcat_int_ip) installnic=eth0 primarynic=eth0
+    chtab key=system passwd.username=root passwd.password=cluster
+    chdef -t group -o compute os=centos5.2 arch=x86_64 profile=compute nodetype=osi
+    chdef -t group -o compute chain=&quot;runcmd=standby&quot; ondiscover=nodediscover</code></pre>
+<p>Add Nodes:<br />You can add nodes with one long command, or one table at a time. You can also use the chdef to change values in a table.</p>
+<p>One long line:</p>
+<pre><code>    nodeadd n01 groups=compute,all mac.interface=eth0 hosts.ip=x.x.x.x mac.mac=00:00:00:00:00:00 nodehm.mgt=ipmi nodehm.power=ipmi</code></pre>
+<p>Individual Tables:</p>
+<pre><code>    tabedit hosts
+    
+    xcat,(xcat_int_ip)
+    n01,(n01_ip)
+    n02,(n02_ip)
+    
+    tabedit mac
+    n01,eth0,(mac)
+    n02,eth0,(mac)
+    
+    tabedit nodelist
+    &quot;n01&quot;,&quot;compute,all&quot;,,,
+    &quot;n01-ipmi&quot;,&quot;ipmi,all&quot;,,,
+    &quot;n02&quot;,&quot;compute,all&quot;,,,
+    
+    tabedit nodehm
+    &quot;n01&quot;,&quot;ipmi&quot;,&quot;ipmi&quot;,,,,,,,,,,
+    &quot;n02&quot;,&quot;ipmi&quot;,&quot;ipmi&quot;,,,,,,,,,,</code></pre>
+<p>Create the hosts file</p>
+<pre><code>    makehosts all</code></pre>
+<p>Create the DHCP file</p>
+<pre><code>    makedhcp -n
+    makedhcp all
+    service dhcpd restart</code></pre>
+<p>assuming all the nodes and devices are in the &quot;all&quot; group, that command will work:<br /><em>Note: dhcpd does NOT need to be restarted after adding a node via makedhcp, but does after running the &quot;-n&quot; option which creates a new file</em></p>
+<p>You will probably want to update your chkconfig for dhcp so that the service starts when the server boots:</p>
+<pre><code>    chkconfig --level 345 dhcpd on</code></pre>
+<p>Setup DNS</p>
+<ul>
+<li><em>Note: Be sure to remove bind-chroot if you're using a centos 5.2 install (or any other system that uses it for that matter!) xCat doesn't work with bind-chroot, just the regular bind! (yum remove bind-chroot)</em></li>
+</ul>
+<p>Edit resolv.conf</p>
+<pre><code>    vi /etc/resolv.conf
+    set &quot;search (xcat_dom)&quot;
+    set &quot;nameserver (xcat_int_ip)&quot;</code></pre>
+<p>Build the DNS server</p>
+<pre><code>makedns
+makedns all
+service named restart</code></pre>
+<p>assuming all the nodes and devices are in the &quot;all&quot; group, this command will work:<br /><em>Note: named DOES need to be restarted after running a makedns command</em></p>
+<p>Update chkconfig:</p>
+<pre><code>    chkconfig --level 345 named on</code></pre>
+<p>If you want your nodes to be able to route to the Internet through the headnode, run these two lines of code to enable masquerading:</p>
+<pre><code>    echo &quot;iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE&quot; &gt;&gt; /etc/rc.local
+    echo &quot;echo 1 &lt; /proc/sys/net/ipv4/ip_forward&quot; &gt;&gt; /etc/rc.local</code></pre>
+<p>Then, run /etc/rc.local to have the change take effect, or reboot.</p>
+<p>The xCAT server should now be completely configured.</p>
+<p>Setup Images</p>
+<ul>
+<li>Note: Do this for the DVD ISO and '''NOT''' the cd!</li>
+</ul>
+<pre><code>    copycds CentOS-5.2-i386-bin-DVD.iso</code></pre>
+<p>Install the node!</p>
+<pre><code>    
+    rinstall n01</code></pre>
+<h2 id="advanced-features"><a href="#TOC">Advanced features</a></h2>
+<p>To create a netboot image:</p>
+<pre><code>    cd /opt/xcat/share/xcat/netboot/centos
+    ./genimage -i eth0 -n e1000,bnx2 -o centos5.2 -p compute
+    cd /install/netboot/centos5.2/x86_64/compute/rootimg/etc/
+    cp fstab fstab.ORIG
+    vi fstab</code></pre>
+<p>add these lines:</p>
+<pre><code>    compute_x86_64 / tmpfs rw 0 1
+    none /tmp tmpfs defaults,size=10m 0 2
+    none /var/tmp tmpfs defaults,size=10m 0 2    
+    packimage -o centos5.2 -p compute -a x86_64
+    nodeset (nodename) netboot
+    rpower (nodename) boot</code></pre>
+</body>
+</html>

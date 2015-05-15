@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#install-chef-on-ubuntu">Install Chef on Ubuntu</a><ul>
+<li><a href="#assign-the-chef-server">Assign the Chef server</a></li>
+<li><a href="#install-the-chef-server-and-workstation">Install the chef server and workstation</a><ul>
+<li><a href="#if-the-chef-server-and-the-workstation-are-on-the-same-node">If the chef server and the workstation are on the same node</a></li>
+<li><a href="#if-the-chef-server-and-the-workstation-are-not-on-the-same-node">If the chef server and the workstation are not on the same node</a></li>
+<li><a href="#if-the-chef-server-is-also-an-http-server">If the chef server is also an http server</a></li>
+</ul></li>
+<li><a href="#install-chef-client-on-nodes">Install chef client on nodes</a></li>
+</ul></li>
+<li><a href="#install-chef-on-redhat">Install Chef On Redhat</a><ul>
+<li><a href="#assign-the-chef-server-1">Assign the Chef server</a></li>
+<li><a href="#download-and-add-the-chef-kit-in-xcat">Download and add the chef kit in xCAT</a></li>
+<li><a href="#install-chef-server-and-workstation">Install chef server and workstation</a><ul>
+<li><a href="#if-the-chef-server-and-the-workstation-are-on-the-same-node-1">If the chef server and the workstation are on the same node</a></li>
+<li><a href="#if-the-chef-server-and-the-workstation-are-not-on-the-same-node-1">If the chef server and the workstation are not on the same node</a></li>
+<li><a href="#if-the-chef-server-is-also-an-http-server-1">If the chef server is also an http server</a></li>
+</ul></li>
+<li><a href="#install-chef-client">Install chef client</a></li>
+</ul></li>
+<li><a href="#test-chef-installation">Test Chef Installation</a></li>
+<li><a href="#using-chef">Using Chef</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#install-chef-on-ubuntu">Install Chef on Ubuntu</a></li>
+<li><a href="#assign-the-chef-server">Assign the Chef server</a></li>
+<li><a href="#install-the-chef-server-and-workstation">Install the chef server and workstation</a>
+<ul>
+<li><a href="#if-the-chef-server-and-the-workstation-are-on-the-same-node">If the chef server and the workstation are on the same node</a></li>
+<li><a href="#if-the-chef-server-and-the-workstation-are-not-on-the-same-node">If the chef server and the workstation are not on the same node</a></li>
+<li><a href="#if-the-chef-server-is-also-an-http-server">If the chef server is also an http server</a></li>
+</ul></li>
+<li><a href="#install-chef-client-on-nodes">Install chef client on nodes</a></li>
+<li><a href="#install-chef-on-redhat">Install Chef On Redhat</a></li>
+<li><a href="#assign-the-chef-server-1">Assign the Chef server</a></li>
+<li><a href="#download-and-add-the-chef-kit-in-xcat">Download and add the chef kit in xCAT</a></li>
+<li><a href="#install-chef-server-and-workstation">Install chef server and workstation</a>
+<ul>
+<li><a href="#if-the-chef-server-and-the-workstation-are-on-the-same-node-1">If the chef server and the workstation are on the same node</a></li>
+<li><a href="#if-the-chef-server-and-the-workstation-are-not-on-the-same-node-1">If the chef server and the workstation are not on the same node</a></li>
+<li><a href="#if-the-chef-server-is-also-an-http-server-1">If the chef server is also an http server</a></li>
+</ul></li>
+<li><a href="#install-chef-client">Install chef client</a></li>
+<li><a href="#test-chef-installation">Test Chef Installation</a></li>
+<li><a href="#using-chef">Using Chef</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p><strong>Note: This page is under construction</strong></p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>Chef is an an open-source automation configuration management tool written in Ruby and Erlang. It uses a pure-Ruby, domain-specific language (DSL) for writing system configuration &quot;recipes&quot; or &quot;cookbooks&quot;. Chef was written by Opscode (http://www.opscode.com/chef/) and is released as open source under the Apache License 2.0. Chef is a DevOps tool used for configuring cloud services or to streamline the task of configuring a company's internal servers.Chef supports a wide variety of cloud providers including Amazon AWS, Google App Engine, OpenStack and so on. OpenStack (http://www.openstack.org/) is an open source software that provides infrastructure for cloud computing.</p>
+<p>This doc discusses how to setup chef server, workstation and client within xCAT cluster. See the xCAT document [Deploying_OpenStack] for how to then kick off the OpenStack deployment using chef.</p>
+<p>Chef can be installed on many operating systems. Due to the time constraint, we'll limit it to Ubuntu 12 and rhels 6.x on x86_64 architecture for xCAT 2.8.1 release.</p>
+<p>Note: xCAT is automatically adding and authenticating the workstation to the server, and the clients to the server. So it's required that we should install chef-server at first, and then chef-workstation, and finally chef-client.</p>
+<h2 id="install-chef-on-ubuntu"><a href="#TOC">Install Chef on Ubuntu</a></h2>
+<p>Assumption:</p>
+<ul>
+<li>The xCAT management and all the nodes involved have external internet connection. If not, please setup and use a proxy server.</li>
+</ul>
+<h3 id="assign-the-chef-server"><a href="#TOC">Assign the Chef server</a></h3>
+<p>In xCAT 2.8.2 and above, we support that assigning chef server to each chef client.</p>
+<pre><code>      chdef &lt;chef-client_noderange&gt;  cfgmgr=chef cfgserver=&lt;chef-server_nodename&gt;</code></pre>
+<p>If the chef server and the chef workstation are not in one node, we also can assign the chef server to the chef workstation.</p>
+<pre><code>      chdef &lt;chef-workstattion_nodename&gt;  cfgmgr=chef cfgserver=&lt;chef-server_nodename&gt;</code></pre>
+<h3 id="install-the-chef-server-and-workstation"><a href="#TOC">Install the chef server and workstation</a></h3>
+<h4 id="if-the-chef-server-and-the-workstation-are-on-the-same-node"><a href="#TOC">If the chef server and the workstation are on the same node</a></h4>
+<p>1 If the chef server is the management node, then run</p>
+<pre><code>       /install/postscripts/install_chef_server
+       /install/postscripts/install_chef_workstation</code></pre>
+<p>2 If chefserver is not the management node, first add install_chef_server,install_chef_workstation to the postscripts table for the node,</p>
+<pre><code>       chdef -t node -o &lt;nodename&gt; -p postbootscripts=install_chef_server,install_chef_workstation</code></pre>
+<p>If the node is up and running, then run the following command to install the chef server and the workstation.</p>
+<pre><code>       updatenode &lt;nodename&gt; -P install_chef_server,install_chef_workstation</code></pre>
+<p>If the node is not up, then redeploy the node to get chef server and workstation installed.</p>
+<pre><code>       rsetboot &lt;nodename&gt; net
+       nodeset &lt;nodename&gt; osimage=&lt;image_name&gt;
+       rpower &lt;nodename&gt; boot</code></pre>
+<h4 id="if-the-chef-server-and-the-workstation-are-not-on-the-same-node"><a href="#TOC">If the chef server and the workstation are not on the same node</a></h4>
+<p>1 If the chef server is the management node.</p>
+<p>1.1 install the chef server, run</p>
+<pre><code>       /install/postscripts/install_chef_server</code></pre>
+<p>if the chef server is not the management node, first add install_chef_server to the postscripts table for the node,</p>
+<pre><code>       chdef -t node -o &lt;nodename&gt; -p postbootscripts=install_chef_server</code></pre>
+<p>If the node is up and running, then run the following command to install the chef server and the workstation.</p>
+<pre><code>       updatenode &lt;nodename&gt; -P install_chef_server</code></pre>
+<p>If the node is not up, run rsetboot/nodeset/rpower to redeploy the &lt;nodename&gt; to get chef server and workstation installed.</p>
+<p>1.2 install the workstation</p>
+<p>Before start installing the workstation, you should make sure the chef server is working well.</p>
+<pre><code>      xdsh &lt;noderange_server&gt; chef-server-ctl  status</code></pre>
+<p>first add install_chef_workstation to the postscripts table for the node,</p>
+<pre><code>       chdef -t node -o &lt;nodename_workstation&gt; -p postbootscripts=install_chef_workstation</code></pre>
+<p>If the node is up and running, then run the following command to install the chef workstation.</p>
+<pre><code>       updatenode &lt;nodename_workstation&gt; -P install_chef_workstation</code></pre>
+<p>If the node is not up, run rsetboot/nodeset/rpower to redeploy the &lt;nodename_workstation&gt; to get chef workstation installed.</p>
+<h4 id="if-the-chef-server-is-also-an-http-server"><a href="#TOC">If the chef server is also an http server</a></h4>
+<p>Chef uses an internal configuration of the nginx service to handle its httpd communications, which by default uses port 80. This may directly conflict with a configured httpd server on the same system. If your chef server also needs to run httpd, which is true if your chef server will run on your xCAT management node, you may need to configure a new port for the Chef nginx service:</p>
+<pre><code>      vi /etc/chef-server/chef-server.rb
+          # add this entry with a new port number of your choice:
+          nginx[&#39;non_ssl_port&#39;] = 4000</code></pre>
+<pre><code>      /usr/bin/chef-server-ctl reconfigure</code></pre>
+<p>To verify that both httpd and chef are running correctly:</p>
+<pre><code>      # service httpd status
+      httpd (pid  111) is running...</code></pre>
+<pre><code>      # knife client list
+      chef-validator
+      chef-webui</code></pre>
+<p>If you see the following error from knife commands:</p>
+<pre><code>      # knife client list
+      ERROR: Errno::ECONNRESET: Connection reset by peer - SSL_connect</code></pre>
+<p>This may be an indication that the nginx service is not running correctly. To verify:</p>
+<pre><code>      # ps -ef | grep -i nginx
+      root       929   913  0 19:08 ?        00:00:00 runsv nginx
+      root       937   929  0 19:08 ?        00:00:00 svlogd -tt /var/log/chef-server/nginx
+      root       952   929  0 19:08 ?        00:00:00 nginx: master process /opt/chef-server/embedded/sbin/nginx -c     /var/opt/chef-server/nginx/etc/nginx.conf
+      497        988   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        989   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        990   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        991   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        992   952  0 19:08 ?        00:00:00 nginx: cache manager process</code></pre>
+<p>If you do not see master and worker processes, nginx is not running correctly. Make sure you do not have a port conflict with your httpd service.</p>
+<h3 id="install-chef-client-on-nodes"><a href="#TOC">Install chef client on nodes</a></h3>
+<p>Before start installing the chef client, you should make sure the chef server/workstation is working well.</p>
+<pre><code>      xdsh &lt;noderange_workstation&gt; knife client list</code></pre>
+<p>first add install_chef_client to the postscripts table for the nodes,</p>
+<pre><code>       chdef -t node -o &lt;noderange&gt; -p postbootscripts=install_chef_client</code></pre>
+<p>If the node is up, then run the following command to install the chef client.</p>
+<pre><code>       updatenode &lt;noderange&gt; -P install_chef_client</code></pre>
+<p>If the node is not up, run rsetboot/nodeset/rpower to redeploy the &lt;noderange&gt; to get chef client installed.</p>
+<pre><code>       rsetbootseq &lt;noderange&gt; net
+       nodeset &lt;noderange&gt; osimage=&lt;image_name&gt;
+       rpower &lt;noderange&gt; boot</code></pre>
+<h2 id="install-chef-on-redhat"><a href="#TOC">Install Chef On Redhat</a></h2>
+<p>A kit will be used to install the chef server, workstation and client on RedHat and other platforms. Please refer to [Using_Software_Kits_in_OS_Images]for the general concept about kit.</p>
+<p>The name of the kit is called <strong>chef</strong>. The chef kit contains</p>
+<ul>
+<li>the chef server and chef packages from opscode (&lt;http://www.opscode.com/chef/install/&gt;)</li>
+<li>the necessary configuration scripts.</li>
+</ul>
+<p>There are 3 kit components from this kit:</p>
+<ul>
+<li>chef_server_kit</li>
+<li>chef_workstation_kit</li>
+<li>chef_client_kit</li>
+</ul>
+<p>The follow steps show how to install Chef server, workstation and client using the chef kit.</p>
+<h3 id="assign-the-chef-server-1"><a href="#TOC">Assign the Chef server</a></h3>
+<p>In xCAT 2.8.2 and above, we support that assigning chef server to each chef client.</p>
+<pre><code>      chdef &lt;chef-client_noderange&gt;  cfgmgr=chef cfgserver=&lt;chef-server_nodename&gt;</code></pre>
+<p>If the chef server and the chef workstation are not in one node, we also can assign the chef server to the chef workstation.</p>
+<pre><code>      chdef &lt;chef-workstattion_nodename&gt;  cfgmgr=chef cfgserver=&lt;chef-server_nodename&gt;</code></pre>
+<h3 id="download-and-add-the-chef-kit-in-xcat"><a href="#TOC">Download and add the chef kit in xCAT</a></h3>
+<pre><code>      cd /tmp
+      wget http://sourceforge.net/projects/xcat/files/kits/chef/x86_64/chef-11.4.0-1-rhels-6-x86_64.tar.bz2/download
+      addkit /tmp/chef-11.4.0-1-rhels-6-x86_64.tar.bz2</code></pre>
+<p>Now you can list the full names of the kit components from this kit:</p>
+<pre><code>       #lsdef -t kitcomponent | grep chef
+       chef_client_kit-11.4.0-1-rhels-6-x86_64  (kitcomponent)
+       chef_server_kit-11.0.6-1-rhels-6-x86_64  (kitcomponent)
+       chef_workstation_kit-11.4.0-1-rhels-6-x86_64  (kitcomponent)</code></pre>
+<h3 id="install-chef-server-and-workstation"><a href="#TOC">Install chef server and workstation</a></h3>
+<h4 id="if-the-chef-server-and-the-workstation-are-on-the-same-node-1"><a href="#TOC">If the chef server and the workstation are on the same node</a></h4>
+<p>First, add the chef_server_kit,chef_workstation_kit components to the image of the node that will be the chef server.</p>
+<p>To find out the name of the image for a node, run</p>
+<pre><code>       lsdef &lt;nodename&gt; -i provmethod</code></pre>
+<p>Then run</p>
+<pre><code>       addkitcomp -i &lt;image_name&gt; chef_server_kit,chef_workstation_kit</code></pre>
+<p>If there is no os image assigned to the node, please refer to the <a href="Adding_Puppet_in_xCAT_Cluster/#assign-os-image-to-a-node">Assign os image to a node</a> section.</p>
+<p>To install the chef server and workstation, please make sure yum is installed on the node. And then run updatenode or redeploy the node.</p>
+<pre><code>       updatenode &lt;nodename&gt; -P otherpkgs
+     or
+       rsetbootseq &lt;nodename&gt; net
+       nodeset &lt;nodename&gt; osimage=&lt;image_name&gt;
+       rpower &lt;nodename&gt; boot</code></pre>
+<h4 id="if-the-chef-server-and-the-workstation-are-not-on-the-same-node-1"><a href="#TOC">If the chef server and the workstation are not on the same node</a></h4>
+<p>1 Install the chef server</p>
+<p>First, add the chef_server_kit components to the image of the node that will be the chef server.</p>
+<p>To find out the name of the image for a node, run</p>
+<pre><code>       lsdef &lt;nodename&gt; -i provmethod</code></pre>
+<p>Then run</p>
+<pre><code>       addkitcomp -i &lt;image_name_for_server&gt; chef_server_kit</code></pre>
+<p>If there is no os image assigned to the node, please refer to the <a href="Adding_Puppet_in_xCAT_Cluster/#assign-os-image-to-a-node">Assign os image to a node</a>.</p>
+<p>To install the chef server, please make sure yum is installed on the node. And then run updatenode or redeploy the node.</p>
+<pre><code>       updatenode &lt;nodename&gt; -P otherpkgs</code></pre>
+<pre><code> or</code></pre>
+<pre><code>       rsetbootseq &lt;nodename&gt; net
+       nodeset &lt;nodename&gt; osimage=&lt;image_name&gt;
+       rpower &lt;nodename&gt; boot</code></pre>
+<p>2 Install the chef workstation</p>
+<p>Before start installing the workstation, you should make sure the chef server is working well.</p>
+<pre><code>      xdsh &lt;noderange_server&gt; chef-server-ctl  status</code></pre>
+<p>First, add the chef_workstation_kit components to the image of the node that will be the chef server.</p>
+<p>To find out the name of the image for a node, run</p>
+<pre><code>       lsdef &lt;nodename_workstation&gt; -i provmethod</code></pre>
+<p>Then run</p>
+<pre><code>       addkitcomp -i &lt;image_name_for_workstation&gt; chef_workstation_kit</code></pre>
+<p>If there is no os image assigned to the node, please refer to the <a href="Adding_Puppet_in_xCAT_Cluster/#assign-os-image-to-a-node">Assign os image to a node</a> section.</p>
+<p>To install the chef server and workstation, please make sure yum is installed on the node. And then run updatenode or redeploy the &lt;nodename_workstation&gt; .</p>
+<p>~~~~ updatenode <nodename_workstation> -P otherpkgs ~~~~ or ~~~~ rsetbootseq <nodename_workstation> net nodeset <nodename_workstation> osimage=<image_name> rpower <nodename_workstation> boot rsetbootseq <nodename_workstation> net ~~~~</p>
+<h4 id="if-the-chef-server-is-also-an-http-server-1"><a href="#TOC">If the chef server is also an http server</a></h4>
+<p>Chef uses an internal configuration of the nginx service to handle its httpd communications, which by default uses port 80. This may directly conflict with a configured httpd server on the same system. If your chef server also needs to run httpd, which is true if your chef server will run on your xCAT management node, you may need to configure a new port for the Chef nginx service:</p>
+<pre><code>      vi /etc/chef-server/chef-server.rb
+          # add this entry with a new port number of your choice:
+          nginx[&#39;non_ssl_port&#39;] = 4000</code></pre>
+<pre><code>      /usr/bin/chef-server-ctl reconfigure</code></pre>
+<p>To verify that both httpd and chef are running correctly:</p>
+<pre><code>      # service httpd status
+      httpd (pid  111) is running...
+      # knife client list
+      chef-validator
+      chef-webui</code></pre>
+<p>If you see the following error from knife commands:</p>
+<pre><code>      # knife client list
+      ERROR: Errno::ECONNRESET: Connection reset by peer - SSL_connect</code></pre>
+<p>This may be an indication that the nginx service is not running correctly. To verify:</p>
+<pre><code>      # ps -ef | grep -i nginx
+      root       929   913  0 19:08 ?        00:00:00 runsv nginx
+      root       937   929  0 19:08 ?        00:00:00 svlogd -tt /var/log/chef-server/nginx
+      root       952   929  0 19:08 ?        00:00:00 nginx: master process /opt/chef-server/embedded/sbin/nginx -c     /var/opt/chef-server/nginx/etc/nginx.conf
+      497        988   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        989   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        990   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        991   952  0 19:08 ?        00:00:00 nginx: worker process
+      497        992   952  0 19:08 ?        00:00:00 nginx: cache manager process</code></pre>
+<p>If you do not see master and worker processes, nginx is not running correctly. Make sure you do not have a port conflict with your httpd service.</p>
+<h3 id="install-chef-client"><a href="#TOC">Install chef client</a></h3>
+<p>Before start installing the chef client, you should make sure the chef server/workstation is working well.</p>
+<pre><code>      xdsh &lt;noderange_workstation&gt; knife client list</code></pre>
+<p>First, add the chef client_kit components to the image of the node that will be the chef client.</p>
+<p>To find out the name of the image for a node, run</p>
+<pre><code>       lsdef &lt;nodename_client&gt; -i provmethod</code></pre>
+<p>Then run</p>
+<pre><code>       addkitcomp -i &lt;image_name_for_client&gt; chef_client_kit</code></pre>
+<p>If there is no os image assigned to the node, please refer to the <a href="Adding_Puppet_in_xCAT_Cluster/#assign-os-image-to-a-node">Assign os image to a node</a> section.</p>
+<p>To install the chef client, please make sure yum is installed on all the node. And then run updatenode or redeploy the &lt;noderange_clients&gt;.</p>
+<p>~~~~ updatenode <noderange_clients> -P otherpkgs ~~~~ or ~~~~ rsetbootseq <noderange_clients> net nodeset <noderange_clients> osimage=<image_name> rpower <noderange_clients> boot ~~~~</p>
+<h2 id="test-chef-installation"><a href="#TOC">Test Chef Installation</a></h2>
+<pre><code>Add chef commands path to the path:</code></pre>
+<pre><code>     cat /etc/profile.d/chef.sh
+        PATH=/opt/chef/embedded/bin:$PATH
+        export PATH
+     xdcp &lt;noderange_workstations&gt;  /etc/profile.d/chef.sh  /etc/profile.d
+     xdsh &lt;noderange_workstations&gt; source /etc/profile.d/chef.sh</code></pre>
+<p>Check to see knife command work</p>
+<pre><code>     xdsh &lt;noderange_workstations&gt;  knife client list</code></pre>
+<p>The output should similar to the following:</p>
+<pre><code>     chef-validator
+     chef-webui
+     osrh2.ppd.pok.ibm.com</code></pre>
+<p>And you should see from the output that the chef-client is registered on the chef-server.</p>
+<h2 id="using-chef"><a href="#TOC">Using Chef</a></h2>
+<p>1. Remove the chef installation scripts from the node attributes(only for Ubuntu)</p>
+<p>Once we set up the chef environment, we need to remove the chef installation scripts from the node attributes to avoiding updating again.</p>
+<pre><code>     [root@ls21n01 ~]# lsdef oscn1 -i postbootscripts
+      Object name: oscn1
+          postbootscripts=otherpkgs,install_chef_server,install_chef_workstation
+      [root@ls21n01 ~]# chdef oscn1  postbootscripts=otherpkgs</code></pre>
+<p>2. About the chef cookbooks</p>
+<p>We always install the chef-server and chef-workstation on the same node. Before using the chef, you should put the chef cookbooks on the chef-workstation, such as</p>
+<p>/usr/openstack-cookbooks-repo/</p>
+<p>There are several basic directories and files in this repo:</p>
+<pre><code>      ls /usr/openstack-cookbooks-repo/
+      README  build  cookbooks  environment roles  ...</code></pre>
+<p>And then in the /usr/openstack-cookbooks-repo/, using knife command to upload the environment, cookbooks and roles:</p>
+<pre><code>     knife environment from file roles/example.json
+     knife cookbook upload -o cookbooks --all
+     knife role from file roles/*.rb</code></pre>
+<p>For instructions on using Chef to install OpenStack in your cluster, see the xCAT document [Deploying_OpenStack].</p>
+<p>3. You can get more information from the chef official site:</p>
+<pre><code>  http://www.opscode.com/chef/</code></pre>
+</body>
+</html>

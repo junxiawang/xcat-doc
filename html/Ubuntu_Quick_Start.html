@@ -1,0 +1,523 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-on-ubuntu-server">xCAT on Ubuntu Server</a></li>
+<li><a href="#preparing-the-management-node">Preparing the Management Node</a><ul>
+<li><a href="#configure-the-system-shell">Configure the system shell</a></li>
+<li><a href="#disable-dnsmasq">Disable dnsmasq</a></li>
+<li><a href="#obtaining-xcat-software">Obtaining xCAT Software</a><ul>
+<li><a href="#option-1-configure-the-xcat-software-internet-hosted-repository-has-internet-access">Option 1: Configure the xCAT Software Internet-Hosted Repository (Has Internet Access)</a></li>
+</ul></li>
+<li><a href="#create-the-operating-system-repository">Create the Operating System Repository</a><ul>
+<li><a href="#set-up-a-postinstall-script-optional">Set up a postinstall script (optional)</a></li>
+</ul></li>
+<li><a href="#customizing-system-packages">Customizing System Packages</a></li>
+<li><a href="#customizing-additional-packages">Customizing additional packages</a></li>
+<li><a href="#p-servers">P Servers</a></li>
+<li><a href="#x-servers">X Servers</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-on-ubuntu-server">xCAT on Ubuntu Server</a></li>
+<li><a href="#preparing-the-management-node">Preparing the Management Node</a>
+<ul>
+<li><a href="#install-the-operating-system">Install the Operating System</a></li>
+<li><a href="#configure-the-system-shell">Configure the system shell</a></li>
+<li><a href="#configure-the-network-interface">Configure the network interface</a></li>
+<li><a href="#configure-domain-name-resolution">Configure domain name resolution</a></li>
+<li><a href="#configure-the-hosts-file">Configure the hosts file</a></li>
+<li><a href="#disable-dnsmasq">Disable dnsmasq</a></li>
+</ul></li>
+<li><a href="#installing-xcat">Installing xCAT</a>
+<ul>
+<li><a href="#obtaining-xcat-software">Obtaining xCAT Software</a></li>
+<li><a href="#option-1-configure-the-xcat-software-internet-hosted-repository-has-internet-access">Option 1: Configure the xCAT Software Internet-Hosted Repository (Has Internet Access)</a></li>
+<li><a href="#option-2-download-the-xcat-software-has-not-internet-access-on-your-xcat-management-node">Option 2: Download the xCAT Software (Has not Internet Access on your xCAT Management Node)</a></li>
+</ul></li>
+<li><a href="#ls--1">ls -1</a>
+<ul>
+<li><a href="#configure-the-xcat-apt-key">Configure the xCAT apt-key</a></li>
+<li><a href="#configure-ubuntu-package-repositories">Configure Ubuntu Package repositories</a></li>
+</ul></li>
+<li><a href="#install-the-add-apt-repository-command">install the add-apt-repository command</a></li>
+<li><a href="#for-x86_64">For x86_64:</a></li>
+<li><a href="#for-ppc64el">For ppc64el:</a>
+<ul>
+<li><a href="#install-xcat">Install xCAT</a></li>
+<li><a href="#verify-xcat-installation">Verify xCAT installation</a></li>
+</ul></li>
+<li><a href="#add-xcat-commands-into-your-path">Add xCAT commands into your path</a></li>
+<li><a href="#display-the-installed-version-of-xcat">display the installed version of xcat</a></li>
+<li><a href="#view-the-site-table-contents">view the site table contents</a></li>
+<li><a href="#keyvaluecommentsdisable">key,value,comments,disable</a>
+<ul>
+<li><a href="#upgrade-xcat">Upgrade xCAT</a></li>
+</ul></li>
+<li><a href="#configure-xcat">Configure xCAT</a>
+<ul>
+<li><a href="#networks-table">networks Table</a></li>
+<li><a href="#passwd-table">passwd Table</a></li>
+<li><a href="#dhcp">DHCP</a></li>
+</ul></li>
+<li><a href="#deploying-nodes">Deploying Nodes</a>
+<ul>
+<li><a href="#create-the-operating-system-repository">Create the Operating System Repository</a></li>
+</ul></li>
+<li><a href="#run-copycds-on-the-image-located-in-tmp">run copycds on the image, located in /tmp</a></li>
+<li><a href="#list-out-the-osimages-created">list out the osimages created</a></li>
+<li><a href="#lsdef--t-osimage">lsdef -t osimage</a></li>
+<li><a href="#list-the-detail-information-of-certain-osimage">list the detail information of certain osimage</a></li>
+<li><a href="#lsdef--t-osimage-ubuntu14041-x86_64-install-compute">lsdef -t osimage ubuntu14.04.1-x86_64-install-compute</a>
+<ul>
+<li><a href="#creating-node-definitions-in-xcat">Creating node definitions in xCAT</a></li>
+<li><a href="#adding-nodes">Adding nodes</a></li>
+</ul></li>
+<li><a href="#see-noderange-man-page-for-various-ways-to-specify-a-large-set-of-nodes">See 'noderange' man page for various ways to specify a large set of nodes</a></li>
+<li><a href="#ie-cn01-c99-cn001-100-etc">i.e cn01-c99, cn[001-100], etc</a></li>
+<li><a href="#either-of-the-following-commands-can-be-used-to-display-defined-nodes">Either of the following commands can be used to display defined nodes</a>
+<ul>
+<li><a href="#configure-dns">Configure DNS</a></li>
+<li><a href="#configure-dhcp">Configure DHCP</a></li>
+</ul></li>
+<li><a href="#set-primarynic-and-installnic-to-use-mac-address">set primarynic and installnic to use MAC address</a></li>
+<li><a href="#run-makedhcp-to-add-the-nodes-to-dhcp">Run makedhcp to add the nodes to dhcp</a>
+<ul>
+<li><a href="#use-ubuntu-local-mirror">Use Ubuntu Local Mirror</a></li>
+<li><a href="#installing-statefuldiskful-nodes">Installing Stateful/Diskful Nodes</a></li>
+<li><a href="#begin-installation">Begin Installation</a></li>
+</ul></li>
+<li><a href="#if-the-miniiso-is-stored-in-tmp">if the mini.iso is stored in /tmp</a></li>
+<li><a href="#ubuntu-version-may-be-ubuntu14041"><ubuntu-version> may be &quot;ubuntu14.04.1&quot;</a></li>
+<li><a href="#arch-may-be-ppc64el"><arch> may be &quot;ppc64el&quot;</a>
+<ul>
+<li><a href="#installing-statelessdiskless-nodes">Installing Stateless/Diskless Nodes</a></li>
+<li><a href="#prepare-images">Prepare Images</a></li>
+</ul></li>
+<li><a href="#lsdef--t-osimage--o-ubuntu14041-x86_64-netboot-compute">lsdef -t osimage -o ubuntu14.04.1-x86_64-netboot-compute</a>
+<ul>
+<li><a href="#set-up-a-postinstall-script-optional">Set up a postinstall script (optional)</a></li>
+<li><a href="#begin-installation-1">Begin Installation</a></li>
+<li><a href="#update-images">Update Images</a></li>
+<li><a href="#monitor-installation">Monitor installation</a></li>
+</ul></li>
+<li><a href="#advanced-topics">Advanced Topics</a>
+<ul>
+<li><a href="#customizing-system-packages">Customizing System Packages</a></li>
+<li><a href="#customizing-additional-packages">Customizing additional packages</a></li>
+</ul></li>
+<li><a href="#lsdef--t-osimage--o-ubuntu14041-x86_64-netboot-compute-1">lsdef -t osimage -o ubuntu14.04.1-x86_64-netboot-compute</a></li>
+<li><a href="#find-the-dependencies-for-the-package-pkg_name">find the dependencies for the package <pkg_name></a></li>
+<li><a href="#download-the-packages">download the packages</a></li>
+<li><a href="#"></a></li>
+<li><a href="#do-not-modify-the-following-command">do not modify the following command</a></li>
+<li><a href="#apt-requires-the-name-packages-to-be-used">apt requires the name 'Packages' to be used</a>
+<ul>
+<li><a href="#installing-other-packages-with-ubuntu-official-mirrors">Installing other packages with Ubuntu official mirrors</a></li>
+</ul></li>
+<li><a href="#known-issues">Known Issues</a>
+<ul>
+<li><a href="#p-servers">P Servers</a></li>
+<li><a href="#x-servers">X Servers</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+
+<h2 id="xcat-on-ubuntu-server"><a href="#TOC">xCAT on Ubuntu Server</a></h2>
+<p>This documentation walk you through a very basic install of xCAT running on Ubuntu Linux.</p>
+<p>The following example will configure a single xCAT management node with two compute nodes.</p>
+<ul>
+<li>mn01 is the xCAT management node</li>
+<li>cn01 is a compute node, installed stateful/diskful</li>
+<li>cn02 is a compute node, installed stateless/diskless</li>
+</ul>
+<p>The Operating System used is Ubuntu Server 14.04 LTS (Trusty Tahr).</p>
+<h2 id="preparing-the-management-node"><a href="#TOC">Preparing the Management Node</a></h2>
+<p><strong>Pre-install Considerations:</strong> <em>xCAT utilizes the /install directory on the management node to store various configuration files, OS images, post install scripts, etc. It is recommended to create a separate filesystem, or partition, at least 30GB large for the /install directory.</em></p>
+<p>  ### Install the Operating System</p>
+<p>Obtain Ubuntu Server ISO from the Ubuntu download page and install onto the management node (mn01).</p>
+<p>It is recommended that the management node have connectivity to the internet in order to access various external repositories for package management. (Refer to Ubuntu's <a href="https://help.ubuntu.com/community/Repositories/CommandLine">Repositories/CommandLine</a> page for more information).</p>
+<p> </p>
+<h3 id="configure-the-system-shell"><a href="#TOC">Configure the system shell</a></h3>
+<p>From Ubuntu 6.10 onwards, the default system shell has been changed from /bin/sh to /bin/dash. (For more information, refer to <a href="https://wiki.ubuntu.com/DashAsBinSh">DashAsBinSh</a>). xCAT's shell scripts have been tested and developed using bash. Please switch to /bin/bash using one of the following commands:</p>
+<pre><code>    cd /bin/ &amp;&amp; ln -fs bash sh</code></pre>
+<p>or</p>
+<pre><code>    dpkg-reconfigure dash</code></pre>
+<p>and select no</p>
+<p>  ### Configure the network interface</p>
+<p>In this document, the networking scheme is kept simple and will only consist of a single active network interface. This interface will be used by xCAT as the provisioning network. Verify that provisioning interface in /etc/network/interfaces is configured with a static IP address.</p>
+<pre><code>auto eth0
+iface eth0 inet static
+    address 192.168.1.1
+    netmask 255.255.255.0</code></pre>
+<p>  ### Configure domain name resolution</p>
+<p>The management node is the DNS server for the xCAT managed cluster. Configure the /etc/resolv.conf file to use the IP address of the management node for the nameserver attribute.</p>
+<pre><code>search cluster.com
+nameserver 192.168.1.1</code></pre>
+<p>  ### Configure the hosts file</p>
+<p>The management node performs hostname to IP address resolution. Add IP address and hostname entries to the /etc/hosts file for all the machines in your xCAT managed cluster.</p>
+<pre><code>127.0.0.1       localhost.localdomain localhost
+
+192.168.1.1     mn01.cluster.com mn01
+
+192.168.1.10    cn01.cluster.com cn01
+192.168.1.11    cn02.cluster.com cn02</code></pre>
+<h3 id="disable-dnsmasq"><a href="#TOC">Disable dnsmasq</a></h3>
+<p>If the dnsmasq is installed on Ubuntu, it will be started automatically. The dnsmasq conflicts with the DHCP service that xCAT uses, so need to disable dnsmasq to make the DHCP work. The following two commands could be used to disable dnsmasq:</p>
+<pre><code>  /etc/init.d/dnsmasq stop
+  update-rc.d dnsmasq disable</code></pre>
+<p>  ## Installing xCAT</p>
+<h3 id="obtaining-xcat-software"><a href="#TOC">Obtaining xCAT Software</a></h3>
+<h4 id="option-1-configure-the-xcat-software-internet-hosted-repository-has-internet-access"><a href="#TOC">Option 1: Configure the xCAT Software Internet-Hosted Repository (Has Internet Access)</a></h4>
+<p>xCAT provides internet hosted software repositories for xcat-core and xcat-dep (dependencies) software packages.</p>
+<p>Create the xcat-core.list and xcat-deps.list files in /etc/apt/sources.list.d/ on your management node in the following format:</p>
+<pre><code>
+xcat-core.list:
+
+Latest Released (Stable) xCAT:
+
+    deb [arch=&lt;arch&gt;] http://sourceforge.net/projects/xcat/files/ubuntu/&lt;xcat-version&gt;/xcat-core &lt;ubuntu-release-name&gt; main
+
+Or Latest Snapshot Build(snapshot build that has not been tested thoroughly):
+
+    deb [arch=&lt;arch&gt;] http://sourceforge.net/projects/xcat/files/ubuntu/&lt;xcat-version&gt;/core-snap &lt;ubuntu-release-name&gt; main
+
+xcat-dep.list:
+    deb [arch=&lt;arch&gt;] http://sourceforge.net/projects/xcat/files/ubuntu/xcat-dep &lt;ubuntu-release-name&gt; main
+
+where: 
+    &lt;arch&gt; is &quot;amd64&quot; or &quot;ppc64el&quot;
+    &lt;xcat-version&gt; is the xCAT numerical major release version or &quot;devel&quot; for development builds.
+    &lt;ubuntu-release-name&gt; is the ubuntu release name  (14.04 LTS would be &quot;trusty&quot;). </code></pre>
+<p>  <strong>For Example, Ubuntu Server 14.04 LTS:</strong></p>
+<p>Add the following line into /etc/apt/sources.list.d/xcat-core.list:</p>
+<pre><code>deb [arch=amd64] http://sourceforge.net/projects/xcat/files/ubuntu/devel/core-snap trusty main
+</code></pre>
+<p>  Add the following line into /etc/apt/sources.list.d/xcat-dep.list:</p>
+<pre><code>deb [arch=amd64] http://sourceforge.net/projects/xcat/files/ubuntu/xcat-dep trusty main</code></pre>
+<p>  #### Option 2: Download the xCAT Software (Has not Internet Access on your xCAT Management Node)</p>
+<p>Download the xCAT core (Linux - Deb Package) and xCAT Dependency package from the <a href="Download_xCAT">xCAT Download</a> page:</p>
+<p><strong>xCAT core</strong></p>
+<p>Latest Released (Stable) xCAT:</p>
+<pre><code>
+http://sourceforge.net/projects/xcat/files/xcat/&lt;xcat-version&gt;.x_Ubuntu/xcat-core-&lt;xcat-version&gt;.tar.bz2
+</code></pre>
+<p>Latest Snapshot Build(snapshot build that has not been tested thoroughly):</p>
+<pre><code>http://sourceforge.net/projects/xcat/files/ubuntu/&lt;xcat-version&gt;/core-debs-snap.tar.bz2</code></pre>
+<p>where <xcat-version> is the xCAT numerical major release version or &quot;devel&quot; for development builds.</p>
+<p><strong>xCAT dep</strong> ~~~~ Download the latest package from:</p>
+<p>http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Ubuntu ~~~~</p>
+<pre><code>mkdir -p /root/xcat2
+cd /root/xcat2
+
+# ls -1 
+xcat-core-2.8.5.tar.bz2
+xcat-dep-ubuntu.tar.bz
+
+tar jxvf xcat-core-*.tar.bz2     # or core-debs-snap.tar.bz2 (devel or snapshot build)
+tar jxvf xcat-dep-ubuntu*.tar.bz</code></pre>
+<p>  Run the <strong>mklocalrepo.sh</strong> script in EACH of the xcat-core and xcat-dep directories to automatically add configuration files to /etc/apt/sources.list.d/</p>
+<pre><code>cd /root/xcat2/xcat-core
+./mklocalrepo.sh
+
+cd /root/xcat2/xcat-dep
+./mklocalrepo.sh</code></pre>
+<p>  ### Configure the xCAT apt-key</p>
+<p>Regardless of the option chosen above, apt-get is used to easily install xCAT. The xCAT GPG public key must be added for apt to verify the xCAT packages.</p>
+<p>Without the key, running 'apt-get update' will display the following error message: <em>The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 20E475A8DA736C68</em></p>
+<p><strong>Has Internet Access</strong></p>
+<pre><code>wget -O - &quot;http://sourceforge.net/projects/xcat/files/ubuntu/apt.key/download&quot; | apt-key add -</code></pre>
+<p><strong>Has NOT Internet Access</strong></p>
+<p>Download the key file from http://sourceforge.net/projects/xcat/files/ubuntu/apt.key/download and copy it to your xCAT MN, then import it with 'apt-key add' command.</p>
+<p>  ### Configure Ubuntu Package repositories</p>
+<p>The xCAT software has dependencies on various Ubuntu operating system packages and using apt-get will automatically pull in those dependencies. The main and universe repositories must be configured for this to work well. The following commands will add the necessary apt-repositories to the management node:</p>
+<p><strong>Has Internet Access</strong></p>
+<pre><code># install the add-apt-repository command
+apt-get install software-properties-common
+
+# For x86_64:
+add-apt-repository &quot;deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main&quot;
+add-apt-repository &quot;deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc)-updates main&quot;
+add-apt-repository &quot;deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe&quot;
+add-apt-repository &quot;deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc)-updates universe&quot;
+
+# For ppc64el:
+add-apt-repository &quot;deb http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc) main&quot;
+add-apt-repository &quot;deb http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc)-updates main&quot;
+add-apt-repository &quot;deb http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc) universe&quot;
+add-apt-repository &quot;deb http://ports.ubuntu.com/ubuntu-ports $(lsb_release -sc)-updates universe&quot;</code></pre>
+<p><strong>Has NOT Internet Access</strong></p>
+<p>Refer to the doc <a href="https://sourceforge.net/p/xcat/wiki/Installing_other_packages_with_Ubuntu_official_mirror">installing-other-packages-with-ubuntu-official-mirrors</a> to set up your local mirror.</p>
+<p>  ### Install xCAT</p>
+<p>Use the following commands to install xCAT.</p>
+<pre><code>apt-get clean all
+apt-get update
+apt-get install xcat</code></pre>
+<p>  ### Verify xCAT installation</p>
+<p>At this point, xCAT should have successfully installed. Verify the installation by running a few simple commands.</p>
+<pre><code>#
+# Add xCAT commands into your path 
+#
+source /etc/profile.d/xcat.sh
+
+#
+# display the installed version of xcat 
+#
+lsxcatd -a 
+
+#
+# view the site table contents
+#
+tabdump site
+#key,value,comments,disable
+&quot;blademaxp&quot;,&quot;64&quot;,,
+&quot;domain&quot;,&quot;ppd.pok.ibm.com&quot;,,
+...
+...</code></pre>
+<p>  ### Upgrade xCAT</p>
+<p>To upgrade the xCAT software, point the xcat-core and xcat-dep repositories to a later version, then run the following commands:</p>
+<pre><code>apt-get update
+apt-get upgrade xcat </code></pre>
+<p>  ## Configure xCAT</p>
+<p>  ### networks Table</p>
+<p>During xCAT installation, the 'makenetworks' command runs and creates entries into the xCAT networks table for each network that is detected on the management node.</p>
+<p>If there are additional networks that need to be configured, reference the following document: <a href="Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-a-network-table-setup-example">Appendix_A:_Network_Table_Setup_Example</a></p>
+<p>  ### passwd Table</p>
+<p>The xCAT passwd table needs to contain an entry for the &quot;system&quot; key. The system key specifies the password that will be used for the root userid on and nodes that is installed by xCAT. You will also need to add the userid/password for the hardware control being used. (i.e &quot;hmc&quot; for Power Servers; &quot;ipmi&quot; for X Servers)</p>
+<pre><code>tabedit passwd
+key,username,password,cryptmethod,comments,disable
+&quot;system&quot;,&quot;root&quot;,&quot;cluster&quot;,,,
+&quot;ipmi&quot;,&quot;USERID&quot;,&quot;PASSW0RD&quot;,,,</code></pre>
+<p>  ### DHCP</p>
+<p>Run <strong>makedhcp -n</strong> to create a new DHCP configuration file and add the network definitions.</p>
+<pre><code>makedhcp -n</code></pre>
+<p>  ## Deploying Nodes</p>
+<h3 id="create-the-operating-system-repository"><a href="#TOC">Create the Operating System Repository</a></h3>
+<p>Download the ISO image for the operating system onto your management node and run copycds.</p>
+<p>Copycds will copy the contents of the iso image to /install/<os>/<arch> on the management node.<br />In addition, default osimages will be added to the osimage table.</p>
+<pre><code>#
+# run copycds on the image, located in /tmp
+#
+/opt/xcat/bin/copycds /tmp/ubuntu-14.04.1-server-amd64.iso
+
+#
+# list out the osimages created
+#
+#lsdef -t osimage 
+ubuntu14.04.1-x86_64-install-compute  (osimage)
+ubuntu14.04.1-x86_64-install-hpc  (osimage)
+ubuntu14.04.1-x86_64-install-kvm  (osimage)
+ubuntu14.04.1-x86_64-netboot-compute  (osimage)
+ubuntu14.04.1-x86_64-statelite-compute  (osimage)
+
+# list the detail information of certain osimage
+#lsdef -t osimage ubuntu14.04.1-x86_64-install-compute</code></pre>
+<p>Repeat the above for each operating system you want to provision using xCAT.</p>
+<p>  ### Creating node definitions in xCAT</p>
+<p>  #### Adding nodes</p>
+<p>Use the <strong>mkdef</strong> command to create the initial node definition for the two compute nodes.</p>
+<pre><code>#
+# See &#39;noderange&#39; man page for various ways to specify a large set of nodes
+# i.e cn01-c99, cn[001-100], etc
+#
+mkdef -t node -o cn01,cn02 groups=compute,all</code></pre>
+<p>  To view the nodes defined:</p>
+<pre><code>#
+# Either of the following commands can be used to display defined nodes    
+#
+nodels
+lsdef -t node </code></pre>
+<p>  To view specific information about the node object:</p>
+<pre><code>lsdef -t node -o cn01</code></pre>
+<p>  #### Configure DNS</p>
+<p>Ensure that ROOTDIR is not set in /etc/bind/named.conf</p>
+<p>Configure the forwarders attribute in the xCAT site table to your site wide DNS servers.<br />The management node will forward any request that it cannot answer to these servers.</p>
+<pre><code>chdef -t site forwarders=1.2.3.4,1.2.3.5
+</code></pre>
+<p>  Run the makedns command to set up domain name services on the management node.</p>
+<pre><code>makedns -n
+</code></pre>
+<p>  #### Configure DHCP</p>
+<p>xCAT can use the physical MAC address on the network interface devices to assign IP addresses. The MAC address can be located either from the back panel of the servers, or from the physical network adapter.</p>
+<p>Locate the MAC addresses and add entries to the compute node definitions.</p>
+<pre><code>
+chdef -t node -o cn01 mac=&quot;xx:xx:xx:xx:xx:xx&quot;
+chdef -t node -o cn02 mac=&quot;yy:yy:yy:yy:yy:yy&quot;
+
+#
+# set primarynic and installnic to use MAC address
+#
+chdef -t node -o cn01,cn02 primarynic=mac installnic=mac
+
+#
+# Run makedhcp to add the nodes to dhcp 
+#
+makedhcp cn01,cn02</code></pre>
+<p>  ### Use Ubuntu Local Mirror For ubuntu, the installation ISO only includes a quite limited subset of the packages in the ubuntu official mirror. To install some essential or latest packages included in the mirrors but not in the ISO during provisioning, you can add certain Internet ubuntu official mirror to the &quot;pkgdir&quot; attribute of osimage.</p>
+<p>Take ubuntu 14.04.1 LTS for example, this can be done with the following command:</p>
+<pre><code> chdef -t osimage -o ubuntu14.04.1-ppc64el-install-compute -p pkgdir=&quot;http://ports.ubuntu.com/ubuntu-ports trusty main,http://ports.ubuntu.com/ubuntu-ports trusty-updates main&quot;</code></pre>
+<p>As shown above, the installation with ubuntu official mirror requires the internet access. In the environment without internet access, a local mirror can be used instead of the online ubuntu official mirror.</p>
+<p>If you can NOT access Internet and want to use local mirror, refer to the following steps to enable the local mirror repository.</p>
+<p>  <strong>Prerequisite</strong></p>
+<p>Set up your local mirror first. Refer to doc <strong><a href="https://sourceforge.net/p/xcat/wiki/Installing_other_packages_with_Ubuntu_official_mirror/">Installing_other_packages_with_Ubuntu_official_mirror</a></strong> for the steps to create local ubuntu official mirror.</p>
+<p>xCAT ONLY supports the local mirror to be http format. So you must set up your local mirror in a local http server.</p>
+<p>For example: My local http server is 10.3.5.36, I set up a local mirror with URL 'http://10.3.5.36/install/ubuntu-ports/'.</p>
+<p>  <strong>Set local mirror path to osimage.pkgdir</strong></p>
+<p>For the target osimage, you can specify multiple local http mirror to the osimage.pkgdir attribute.</p>
+<pre><code>  chdef -t osimage -o ubuntu14.04.1-ppc64el-install-compute -p pkgdir=&#39;/install/ubuntu14.04.1/ppc64el,http://10.3.5.36/install/ubuntu-ports/ trusty main,http://10.3.5.36/install/ubuntu-ports/ trusty-updates main&#39;</code></pre>
+<p>  <strong>NOTE for Diskless:</strong> Since we need the <strong>First HTTP Mirror</strong> in osimage.pkgdir to generate Ubuntu osimage bootstraps, the <strong>First HTTP Mirror</strong> must be a full repository instead of a update one like ' trusty-updates'.</p>
+<p>  <strong>Install Otherpkgs</strong></p>
+<p>There's doc to describe how to use Internet mirror to install otherpkgs. See <a href="https://sourceforge.net/p/xcat/wiki/Installing_other_packages_with_Ubuntu_official_mirror">installing-other-packages-with-ubuntu-official-mirrors</a></p>
+<p>You can replace the internet mirror with local http mirror to do the ohter packages install.</p>
+<p>  ### Installing Stateful/Diskful Nodes</p>
+<p>A stateful or diskful node is a node where the operating system is installed onto the physical disk (hard drive). The state of the operating system is saved onto the disks and will be persistent on subsequent reboots.</p>
+<p>  #### Begin Installation</p>
+<p>To install a stateful/diskful install of Ubuntu Server 14.04.1, we will use osimage=<em>ubuntu14.04.1-x86_64-install-compute</em>.</p>
+<p>Use the <strong><a href="http://xcat.sourceforge.net/man1/rsetboot.1.html">rsetboot</a></strong> command to force the compute node to boot from network (&quot;net&quot;) on the next reboot.</p>
+<pre><code>rsetboot cn01 net</code></pre>
+<p>  Use the <strong><a href="http://xcat.sourceforge.net/man8/nodeset.8.html">nodeset</a></strong> command to set the next boot state for the node. This tells xCAT what do to on the next boot of the node.</p>
+<pre><code>nodeset cn01 osimage=ubuntu14.04.1-x86_64-install-compute</code></pre>
+<p>  <strong>Note:</strong> You may encounter an error when running nodeset command where the initrd.gz file is not found for netboot. This is required for Ubuntu to successfully boot from network. It's provided by Ubuntu in a mini.iso file at http://cdimage.ubuntu.com/netboot/14.04/ Download and copy the ../install/initrd.gz file to the netboot directory:</p>
+<pre><code>#
+# if the mini.iso is stored in /tmp 
+#
+mkdir /tmp/iso
+mount -o loop /tmp/mini.iso /tmp/iso
+
+#
+# &lt;ubuntu-version&gt; may be &quot;ubuntu14.04.1&quot;
+# &lt;arch&gt; may be &quot;ppc64el&quot;
+#
+mkdir -p /install/&lt;ubuntu-version&gt;/&lt;arch&gt;/install/netboot
+cp /tmp/iso/install/initrd.gz /install/&lt;ubuntu-version&gt;/&lt;arch&gt;/install/netboot/
+umount /tmp/iso
+rmdir /tmp/iso 
+</code></pre>
+<p>  Reboot the node to start the install</p>
+<pre><code>rpower cn01 boot</code></pre>
+<p>  ### Installing Stateless/Diskless Nodes</p>
+<p>A stateless or diskless node is a node where the operating system is installed into memory. The state of the machine is held in memory (RAM) and will not persist on subsequent reboots of the node. The state will return to what has been set in the master image.</p>
+<p>  #### Prepare Images</p>
+<p>To install a stateless/diskless install of Ubuntu Server 14.04.1, we will use osimage=<em>ubuntu14.04.1-x86_64-netboot-compute</em>.</p>
+<p>Take a look at the default osimage created for <em>netboot-compute</em>:</p>
+<pre><code># lsdef -t osimage -o ubuntu14.04.1-x86_64-netboot-compute
+Object name: ubuntu14.04.1-x86_64-netboot-compute
+    exlist=/opt/xcat/share/xcat/netboot/ubuntu/compute.exlist
+    imagetype=linux
+    osarch=x86_64
+    osname=Linux
+    osvers=ubuntu14.04.1
+    otherpkgdir=/install/post/otherpkgs/ubuntu14.04.1/x86_64
+    pkgdir=/install/ubuntu14.04.1/x86_64
+    pkglist=/opt/xcat/share/xcat/netboot/ubuntu/compute.ubuntu14.04.pkglist
+    profile=compute
+    provmethod=netboot
+    rootimgdir=/install/netboot/ubuntu14.04.1/x86_64/compute</code></pre>
+<h4 id="set-up-a-postinstall-script-optional"><a href="#TOC">Set up a postinstall script (optional)</a></h4>
+<p>Postinstall scripts for diskless images are analogous to postscripts for diskful installation. The postinstall script is run by genimage near the end of its processing. You can use it to do anything to your image that you want done every time you generate this kind of image. In the script you can install rpms that need special flags, or tweak the image in some way. There are some examples shipped in /opt/xcat/share/xcat/netboot/<distro>. You could create a postinstall script to be used by genimage, then point to it in your osimage definition.</p>
+<p><strong>Note:</strong> By default, the Ubuntu stateless image does not setup the locales, if the locales settings matters for the applications run on the stateless compute nodes, you could set the postinstall script to setup the locales for the stateless nodes.</p>
+<pre><code>    chdef -t osimage ubuntu14.04.1-x86_64-netboot-compute postinstall=/opt/xcat/share/xcat/netboot/ubuntu/compute.postinstall</code></pre>
+<p>  The rootimgdir attribute points to the location on the management node where the stateless image will reside. The first time you look at this location, it should not exist.</p>
+<pre><code>ls /install/netboot/ubuntu14.04.1/x86_64/compute
+ls: cannot access /install/netboot/ubuntu14.04.1/x86_64/compute: No such file or directory</code></pre>
+<p> <br />Run <strong><a href="http://xcat.sourceforge.net/man1/genimage.1.html">genimage</a></strong> to generate a stateless image</p>
+<pre><code>genimage ubuntu14.04.1-x86_64-netboot-compute</code></pre>
+<p>  At this point, you have the opportunity to change any files in the image by modifying the files under the rootimgdir. It is recommended that any modifications done to your image is via postscripts. This allows the changes to be automated and repeatable. See <a href="https://sourceforge.net/p/xcat/wiki/Using_Provmethod%3Dinstall,netboot_or_statelite/#generatepack-the-image">Generate/Packing Image</a> for more information about customizing the images.</p>
+<p>If no changes are required, continue to the next step.</p>
+<p>Run <strong><a href="http://xcat.sourceforge.net/man1/packimage.1.html">packimgage</a></strong> to pack the stateless image and create the ramdisk.</p>
+<pre><code>packimage ubuntu14.04.1-x86_64-netboot-compute</code></pre>
+<p>  #### Begin Installation</p>
+<p>Use the <strong><a href="http://xcat.sourceforge.net/man1/rsetboot.1.html">rsetboot</a></strong> command to force the compute node to boot from network (&quot;net&quot;) on the next reboot.</p>
+<pre><code>rsetboot cn02 net</code></pre>
+<p>  Use the <strong><a href="http://xcat.sourceforge.net/man8/nodeset.8.html">nodeset</a></strong> command to set the next boot state for the node. This tells xCAT what do to on the next boot of the node.</p>
+<pre><code>nodeset cn02 osimage=ubuntu14.04.1-x86_64-netboot-compute</code></pre>
+<p>  Reboot the node to start the install</p>
+<pre><code>rpower cn02 boot</code></pre>
+<p>  #### Update Images</p>
+<p>If you need to make changes and update your stateless images at any time:</p>
+<ul>
+<li>Make the necessary changes to the object definitions and postscripts</li>
+<li>Run genimage to re-generate the image</li>
+<li>Run packimage to re-pack the image and create the ramdisk</li>
+<li>Run nodeset to tell xCAT to reinstall on next boot</li>
+<li>Reboot the stateless node to pick up the new changes</li>
+</ul>
+<p>  ### Monitor installation</p>
+<p>Use the <strong><a href="http://xcat.sourceforge.net/man1/rcons.1.html">rcons</a></strong> command to monitor the console and watch the install process.</p>
+<pre><code>rcons cn01
+rcons cn02</code></pre>
+<p>  ## Advanced Topics</p>
+<h3 id="customizing-system-packages"><a href="#TOC">Customizing System Packages</a></h3>
+<p>Refer to <em><a href="https://sourceforge.net/p/xcat/wiki/Using_Updatenode/#add-additional-software-linux-only">Add additional Software (Linux Only)</a></em> for information on installing additional OS system packages using the pkglist files.</p>
+<h3 id="customizing-additional-packages"><a href="#TOC">Customizing additional packages</a></h3>
+<p>xCAT provides an <strong>otherpkgs</strong> mechanism that allows you to install additional debian packages (*.deb) that are not provided by the distribution. To use this, you need to create and maintain a local debian package repository.</p>
+<p>Looking at the default osimage created for <em>netboot-compute</em>:</p>
+<pre><code># lsdef -t osimage -o ubuntu14.04.1-x86_64-netboot-compute
+Object name: ubuntu14.04.1-x86_64-netboot-compute
+    exlist=/opt/xcat/share/xcat/netboot/ubuntu/compute.exlist
+    imagetype=linux
+    osarch=x86_64
+    osname=Linux
+    osvers=ubuntu14.04.1
+    otherpkgdir=/install/post/otherpkgs/ubuntu14.04.1/x86_64
+    pkgdir=/install/ubuntu14.04.1/x86_64
+    pkglist=/opt/xcat/share/xcat/netboot/ubuntu/compute.ubuntu14.04.pkglist
+    profile=compute
+    provmethod=netboot
+    rootimgdir=/install/netboot/ubuntu14.04.1/x86_64/compute</code></pre>
+<p>  The otherpkgdir specifies a directory that we can use as a base directory for the package repository. Create a directory under here to save all the packages in your local repository</p>
+<pre><code>mkdir -p /install/post/otherpkgs/ubuntu14.04.1/x86_64/&lt;my_custom_dir&gt;</code></pre>
+<p>  Install dpkg-dev on to the management node</p>
+<pre><code>apt-get install dpkg-dev</code></pre>
+<p>  Download the debian packages and their dependency packages</p>
+<pre><code>cd /install/post/otherpkgs/ubuntu14.04.1/x86_64/&lt;my_custom_dir&gt;
+
+#
+# find the dependencies for the package &lt;pkg_name&gt;
+#
+apt-rdepends &lt;pkg_name&gt; | grep -v Depends
+
+#
+# download the packages
+#
+apt-get download -d &lt;pkg_name&gt;</code></pre>
+<p>  Run <strong>dpkg-scanpackages</strong> to create the repository for apt</p>
+<pre><code>cd /install/post/otherpkgs/ubuntu14.04.1/x86_64/&lt;my_custom_dir&gt;
+
+# 
+# do not modify the following command
+# apt requires the name &#39;Packages&#39; to be used
+#
+dpkg-scanpackages . &gt; Packages</code></pre>
+<p>  Create an otherpkgs package list file and add the <pkg_name> to the list</p>
+<pre><code>vi /install/custom/install/ubuntu14.04.1/compute.otherpkgs.pkglist
+
+
+&lt;my_custom_dir&gt;/xxx.deb
+...
+...</code></pre>
+<p>  Assign the pkglist file to the osimage object definition</p>
+<pre><code>chdef -t osimage  ubuntu14.04.1-x86_64-netboot-compute \
+ otherpkgdir=&quot;/install/post/otherpkgs/ubuntu14.04.1/x86_64/&lt;my_custom_dir&gt;&quot; \
+ otherpkglist=&quot;/install/custom/install/ubuntu14.04.1/compute.otherpkgs.pkglist&quot;</code></pre>
+<p> <br />### Installing other packages with Ubuntu official mirrors</p>
+<p>See the following for for <a href="Installing_other_packages_with_Ubuntu_official_mirror">Installing other packages with Ubuntu official mirror</a></p>
+<p>  ## Known Issues</p>
+<h3 id="p-servers"><a href="#TOC">P Servers</a></h3>
+<p>Running Ubuntu Server 14.04 (ppc64el) VMs, rcons does not work:</p>
+<p>To get around this, open Kimchi at URL https://<PowerKVM_IP>:8001 Under &quot;Actions&quot;, click &quot;connect&quot; and input the password you set before running mkvm.</p>
+<p>Then you should be able to get the console.</p>
+<h3 id="x-servers"><a href="#TOC">X Servers</a></h3>
+</body>
+</html>

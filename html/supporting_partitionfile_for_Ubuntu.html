@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#the-mini-design-of-supporting-partitionfile-for-ubuntu">The mini-design of supporting partitionfile for Ubuntu</a><ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#design-consideration">Design Consideration</a></li>
+<li><a href="#interface-and-implementation">Interface and Implementation</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#the-mini-design-of-supporting-partitionfile-for-ubuntu">The mini-design of supporting partitionfile for Ubuntu</a></li>
+<li><a href="#background">Background</a></li>
+<li><a href="#tabdump--d-linuximage">tabdump -d linuximage</a></li>
+<li><a href="#design-consideration">Design Consideration</a></li>
+<li><a href="#alternatively-you-may-specify-a-disk-to-partition-if-the-system-has-only">Alternatively, you may specify a disk to partition. If the system has only</a></li>
+<li><a href="#one-disk-the-installer-will-default-to-using-that-but-otherwise-the-device">one disk the installer will default to using that, but otherwise the device</a></li>
+<li><a href="#name-must-be-given-in-traditional-non-devfs-format-so-eg-devhda-or">name must be given in traditional, non-devfs format (so e.g. /dev/hda or</a></li>
+<li><a href="#devsda-and-not-eg-devdiscsdisc0disc">/dev/sda, and not e.g. /dev/discs/disc0/disc).</a></li>
+<li><a href="#for-example-to-use-the-first-scsisata-hard-disk">For example, to use the first SCSI/SATA hard disk:</a></li>
+<li><a href="#d-i-partman-autodisk-string-devsda">d-i partman-auto/disk string /dev/sda</a></li>
+<li><a href="#if-you-have-a-way-to-get-a-recipe-file-into-the-d-i-environment-you-can">If you have a way to get a recipe file into the d-i environment, you can</a></li>
+<li><a href="#just-point-at-it">just point at it.</a></li>
+<li><a href="#d-i-partman-autoexpert_recipe_file-string-hd-mediarecipe">d-i partman-auto/expert_recipe_file string /hd-media/recipe</a></li>
+<li><a href="#interface-and-implementation">Interface and Implementation</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h1 id="the-mini-design-of-supporting-partitionfile-for-ubuntu"><a href="#TOC">The mini-design of supporting partitionfile for Ubuntu</a></h1>
+<h2 id="background"><a href="#TOC">Background</a></h2>
+<p>In xCAT, there is a attribute to specify the customized disk partition file for linux image provision. The detail:</p>
+<pre><code>
+#tabdump -d linuximage
+partitionfile:  The path of the configuration file which will be used to partition the disk for the node. For stateful osimages,two types of files are supported: &quot;&lt;partition file absolute path&gt;&quot; which contains a partitioning definition that will be inserted directly into the generated autoinst configuration file and must be formatted for the corresponding OS installer (e.g. kickstart for RedHat, autoyast for SLES).  &quot;s:&lt;partitioning script absolute path&gt;&quot; which specifies a shell script that will be run from the OS installer configuration file %pre section;  the script must write the correct partitioning definition into the file /tmp/partitionfile on the node which will be included into the configuration file during the install process. For statelite osimages, partitionfile should specify &quot;&lt;partition file absolute path&gt;&quot;;  see the xCAT Statelite documentation for the xCAT defined format of this configuration file.
+</code></pre>
+<p>However, this feature has not been supported in Ubuntu provisioning yet. Since there are some special syntax in preseed to specify the partition related parameters, the design should be as flexible as possible to support the regular/LVM/Raid partition method in preseed, while keeping a consistent user interface with existed Redhat/SLES partition file customization.</p>
+<h2 id="design-consideration"><a href="#TOC">Design Consideration</a></h2>
+<p>Using preseeding to partition the harddisk is limited to what is supported by “partman-auto”. You can choose to partition either existing free space on a disk or a whole disk. The layout of the disk can be determined by using a predefined recipe, a custom recipe from a recipe file or a recipe included in the preconfiguration file. Preseeding of advanced partition setups using RAID, LVM and encryption is supported, but not with the full flexibility possible when partitioning during a non-preseeded install. “partman-auto” requires some parameters to finish the customized partition automation. Some mandatory parameters:</p>
+<pre><code>
+# Alternatively, you may specify a disk to partition. If the system has only
+# one disk the installer will default to using that, but otherwise the device
+# name must be given in traditional, non-devfs format (so e.g. /dev/hda or
+# /dev/sda, and not e.g. /dev/discs/disc0/disc).
+# For example, to use the first SCSI/SATA hard disk:
+#d-i partman-auto/disk string /dev/sda
+ # Or provide a recipe of your own...
+# If you have a way to get a recipe file into the d-i environment, you can
+# just point at it.
+#d-i partman-auto/expert_recipe_file string /hd-media/recipe
+ </code></pre>
+<p>Besides the parameters listed above, there are some optional paramters which should be taken into consideration for some special cases.</p>
+<p>“partman-auto/disk” should be specified with the disk(s) to partition, “partman-auto/expert_recipe_file” should be specified with the recipe file which specifies the layout of the partitions.</p>
+<p>For ubuntu, the linuximage.partitionfile should include both the disks(or the script to determine it) and recipe file (or the script to generate it).</p>
+<h2 id="interface-and-implementation"><a href="#TOC">Interface and Implementation</a></h2>
+<p>The value of linuximage.partitionfile should include one or more of the following values delimited with “,” :</p>
+<pre><code>
+d:&lt;absolute path to the disk file&gt;
+&lt;absolute path to the recipe file&gt;
+ 
+sr:&lt;absolute path to the recipe script&gt;
+sd:&lt;absolute path to the disk script&gt;
+ </code></pre>
+<p>The <strong>disk file</strong> contains the names of the disks to partition in traditional, non-devfs format, delimited with space “ ”, for example,</p>
+<pre><code>
+/dev/sda /dev/sdb 
+</code></pre>
+<p>The detailed information of the <strong>recipe file</strong> can be found in the files partman-auto-recipe.txt and partman-auto-raid-recipe.txt included in the debian-installer package. Both files are also available from the debian-installer source repository.</p>
+<p>The <strong>disk script</strong> runs before partitioning and writes the <strong>disk file</strong> described above which containing the names of disks to partition,in traditional, non-devfs format and delimited with space “ ”, to a file /tmp/partitiondisk .</p>
+<p>The <strong>recipe script</strong> writes the <strong>recipe file</strong> described above to a file /tmp/partitionfile and sets other required “partman-auto” paramters with “debconf-set”.</p>
+<p>If the <strong>disk file(script)</strong> or the <strong>recipe file(script)</strong> is not specified in linuximage.partitionfile, the default partition scheme will be used.</p>
+</body>
+</html>

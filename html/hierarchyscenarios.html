@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>this is some text before the table</p>
+<pre><code>   this
+    is
+    code
+    before 
+     the 
+        table</code></pre>
+<p>this is text after code before the table</p>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=7,25,40;
+-->
+
+
+<p>| Option | Example | Remarks -------------|---------|--------- P:tmpfs <br>C:tmpfs | &quot;ALL&quot;,&quot;/root/testblank/&quot;,,, <br>&quot;ALL&quot;,&quot;/root/testblanktempfschild&quot;,&quot;tempfs&quot;,, | Both the parent and the child are mounted to tmpfs on the booted node following their respective options.Only the parent are mounted to the local file system. P:tmpfs <br>C:persistent| &quot;ALL&quot;,&quot;/root/testblank/&quot;,,, <br>&quot;ALL&quot;,&quot;/root/testblank/testpersfile&quot;,&quot;persistent&quot;,,| Both the parent and the child are mounted to tmpfs on the booted node following their respective options. Only the parent is mounted to the local file system. P:persistent <br>C:tmpfs|&quot;ALL&quot;,&quot;/root/testblank/&quot;,&quot;persistent&quot;,, <br>&quot;ALL&quot;,&quot;/root/testblank/tempfschild&quot;,,,| Not permitted now. But plan to support it. P:persistent <br>C:persistent|&quot;ALL&quot;,&quot;/root/testblank/&quot;,&quot;persistent&quot;,, <br>&quot;ALL&quot;,&quot;/root/testblank/testpersfile&quot;,&quot;persistent&quot;,,| Both the parent and the child are mounted to tmpfs on the booted node following their respective options. Only the parent are mounted to the local file system. P:ro <br>C:any | | Not permitted P:tmpfs <br>C:ro| | Both the parent and the child are mounted to tmpfs on the booted node following their respective options. Only the parent are mounted to the local file system. P:tmpfs <br>C:con | | Both the parent and the child are mounted to tmpfs on the booted node following their respective options. Only the parent are mounted to the local file system. P:link <br>C:link |&quot;ALL&quot;,&quot;/root/testlink/&quot;,&quot;link&quot;,, <br>&quot;ALL&quot;,&quot;/root/testlink/testlinkchild&quot;,&quot;link&quot;,, | Both the parent and the child are created in tmpfs on the booted node following their respective options; there's only one symbolic link of the parent is created in the local file system. P: link <br>C:link,persistent |&quot;ALL&quot;,&quot;/root/testlinkpers/&quot;,&quot;link&quot;,, <br>ALL&quot;,&quot;/root/testlink/testlinkchild&quot;,&quot;link,persistent&quot; | Both the parent and the child are created in tmpfs on the booted node following their respective options; there's only one symbolic link of the parent is created in the local file system. P:link persistent <br>C:link |&quot;ALL&quot;,&quot;/root/testlinkpers/&quot;,&quot;link,persistent&quot;,, <br>&quot;ALL&quot;,&quot;/root/testlink/testlinkchild&quot;,&quot;link&quot; |NOT permitted P:link, persistent <br>C:link, persistent |&quot;ALL&quot;,&quot;/root/testlinkpers/&quot;,&quot;link,persistent&quot;,, <br>&quot;ALL&quot;,&quot;/root/testlink/testlinkperschild&quot;,&quot;link,persistent&quot;,, |Both the parent and the child are created in tmpfs on the booted node following the &quot;link,persistent&quot; way; there's only one symbolic link of the parent is created in the local file system. P:link <br>C:link,ro |&quot;ALL&quot;,&quot;/root/testlink/&quot;,&quot;link&quot;,, <br>&quot;ALL&quot;,&quot;/root/testlink/testlinkro&quot;,&quot;link,ro&quot;,, |Both the parent and the child are created in tmpfs on the booted node, there's only one symbolic link of the parent is created in the local file system. P:link <br>C:link,con |&quot;ALL&quot;,&quot;/root/testlink/&quot;,&quot;link&quot;,, <br>&quot;ALL&quot;,&quot;/root/testlink/testlinkconchild&quot;,&quot;link,con&quot;,, |Both the parent and the child are created in tmpfs on the booted node, there's only one symbolic link of the parent in the local file system. P:link.persistent <br>C:link,ro | |NOT Permitted P:link,persistent <br>C:link,con | |NOT Permitted P:tmpfs <br>C:link | |NOT Permitted P:link <br>C:persistent | |NOT Permitted</p>
+<!---
+end_xcat_table
+-->
+
+<p>this is some text after the table</p>
+<pre><code>   this
+    is
+    code
+     after 
+     the 
+        table</code></pre>
+<p>this is text after code after the table</p>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#states">States</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#states">States</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>For various elements, there is a concept of relative health. To the extent possible, evaluate and summarize the health of things into an understandable enumeration.</p>
+<h1 id="states"><a href="#TOC">States</a></h1>
+<ul>
+<li>'ok': Nothing at all wrong. If associated with an event, indicating an informational thing</li>
+<li>'warning': A condition exists that does not impact performance or expose risk of data loss. For example a fan failure, non-critical thermal situation, etc.</li>
+<li>'critical': A condition exists that impacts performance and/or represents an imminent risk of data loss, but workload is currently still proceeding. Thermal throttling, degraded array, critical temperature)</li>
+<li>'failed': Condition has caused data loss and/or interruption of workload.</li>
+</ul>
+</body>
+</html>

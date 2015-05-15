@@ -1,0 +1,381 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#windows-deployment-process">Windows Deployment process</a></li>
+<li><a href="#the-supported-windows-os">The Supported Windows OS</a></li>
+<li><a href="#aik-and-adk">AIK and ADK</a></li>
+<li><a href="#example-environment">Example Environment</a></li>
+</ul></li>
+<li><a href="#setup-xcat-management-node">Setup xCAT Management Node</a><ul>
+<li><a href="#setup-samba-on-xcat-management-node">Setup Samba on xCAT Management Node</a></li>
+</ul></li>
+<li><a href="#create-winpe">Create WinPE</a><ul>
+<li><a href="#install-the-technician-computer">Install the Technician Computer</a></li>
+<li><a href="#install-aik-automated-install-kit">Install AIK (Automated Install Kit)</a></li>
+<li><a href="#install-adk-microsoft-assessment-and-deployment-kit">Install ADK (Microsoft Assessment and Deployment Kit)</a></li>
+<li><a href="#copy-the-xcat-tools-to-technode">Copy the xCAT Tools to technode</a></li>
+<li><a href="#add-device-drivers-for-winpe">Add Device Drivers for WinPE</a></li>
+<li><a href="#create-winpe-on-technode">Create WinPE on technode</a></li>
+</ul></li>
+<li><a href="#create-windows-osimage">Create Windows osimage</a><ul>
+<li><a href="#download-the-installation-iso-of-windows-server-2008">Download the Installation ISO of Windows Server 2008</a></li>
+<li><a href="#generate-windows-osimage">Generate Windows osimage</a></li>
+<li><a href="#install-additional-drivers-for-compute-node">Install Additional Drivers for Compute Node</a></li>
+</ul></li>
+<li><a href="#run-post-and-postboot-scripts-after-deployment">Run Post and Postboot Scripts after Deployment</a><ul>
+<li><a href="#customize-the-mypostscript.tmpl-optional">Customize the mypostscript.tmpl (Optional)</a></li>
+<li><a href="#create-post-scripts-and-post-boot-scripts">Create post scripts and post boot scripts</a></li>
+<li><a href="#copy-all-the-scripts-to-installwinpostscripts">Copy all the scripts to /install/winpostscripts</a></li>
+<li><a href="#set-the-scripts-for-node-or-osimage">Set the Scripts for Node or Osimage</a></li>
+<li><a href="#enable-the-precreatemypostscripts">Enable the precreatemypostscripts</a></li>
+</ul></li>
+<li><a href="#support-multiple-winpe-optional">Support Multiple WinPE (Optional)</a><ul>
+<li><a href="#specify-winpe-for-osimage">Specify WinPE for osimage</a></li>
+<li><a href="#enable-the-proxydhcp-service-on-xcat-mnsn">Enable the Proxydhcp Service on xCAT MN/SN</a></li>
+<li><a href="#disable-the-proxydhcp-support-for-specific-node">Disable the Proxydhcp Support for Specific Node</a></li>
+</ul></li>
+<li><a href="#configure-disk-partition-optional">Configure Disk Partition (Optional)</a><ul>
+<li><a href="#the-format-of-osimage.partitionfile">The format of osimage.partitionfile</a></li>
+<li><a href="#change-the-setting">Change the setting</a></li>
+</ul></li>
+<li><a href="#configure-secondary-nics-optional">Configure Secondary Nics (Optional)</a><ul>
+<li><a href="#set-installnic">Set Installnic</a></li>
+<li><a href="#set-gateway-attribute">Set Gateway Attribute</a></li>
+</ul></li>
+<li><a href="#define-and-deploy-windows-compute-node">Define and Deploy Windows Compute Node</a><ul>
+<li><a href="#define-a-windows-compute-node">Define a Windows Compute Node</a></li>
+<li><a href="#deploy-the-windows-node-node1">Deploy the Windows Node node1</a></li>
+</ul></li>
+<li><a href="#reference"><strong>Reference</strong></a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#windows-deployment-process">Windows Deployment process</a></li>
+<li><a href="#the-supported-windows-os">The Supported Windows OS</a></li>
+<li><a href="#aik-and-adk">AIK and ADK</a></li>
+<li><a href="#example-environment">Example Environment</a></li>
+<li><a href="#setup-xcat-management-node">Setup xCAT Management Node</a></li>
+<li><a href="#setup-samba-on-xcat-management-node">Setup Samba on xCAT Management Node</a></li>
+<li><a href="#create-winpe">Create WinPE</a></li>
+<li><a href="#install-the-technician-computer">Install the Technician Computer</a></li>
+<li><a href="#install-aik-automated-install-kit">Install AIK (Automated Install Kit)</a></li>
+<li><a href="#install-adk-microsoft-assessment-and-deployment-kit">Install ADK (Microsoft Assessment and Deployment Kit)</a></li>
+<li><a href="#copy-the-xcat-tools-to-technode">Copy the xCAT Tools to technode</a></li>
+<li><a href="#add-device-drivers-for-winpe">Add Device Drivers for WinPE</a></li>
+<li><a href="#create-winpe-on-technode">Create WinPE on technode</a></li>
+<li><a href="#create-windows-osimage">Create Windows osimage</a></li>
+<li><a href="#download-the-installation-iso-of-windows-server-2008">Download the Installation ISO of Windows Server 2008</a></li>
+<li><a href="#generate-windows-osimage">Generate Windows osimage</a></li>
+<li><a href="#install-additional-drivers-for-compute-node">Install Additional Drivers for Compute Node</a></li>
+<li><a href="#run-post-and-postboot-scripts-after-deployment">Run Post and Postboot Scripts after Deployment</a></li>
+<li><a href="#customize-the-mypostscripttmpl-optional">Customize the mypostscript.tmpl (Optional)</a></li>
+<li><a href="#create-post-scripts-and-post-boot-scripts">Create post scripts and post boot scripts</a></li>
+<li><a href="#copy-all-the-scripts-to-installwinpostscripts">Copy all the scripts to /install/winpostscripts</a></li>
+<li><a href="#set-the-scripts-for-node-or-osimage">Set the Scripts for Node or Osimage</a></li>
+<li><a href="#enable-the-precreatemypostscripts">Enable the precreatemypostscripts</a></li>
+<li><a href="#support-multiple-winpe-optional">Support Multiple WinPE (Optional)</a></li>
+<li><a href="#specify-winpe-for-osimage">Specify WinPE for osimage</a></li>
+<li><a href="#enable-the-proxydhcp-service-on-xcat-mnsn">Enable the Proxydhcp Service on xCAT MN/SN</a></li>
+<li><a href="#disable-the-proxydhcp-support-for-specific-node">Disable the Proxydhcp Support for Specific Node</a></li>
+<li><a href="#configure-disk-partition-optional">Configure Disk Partition (Optional)</a></li>
+<li><a href="#the-format-of-osimagepartitionfile">The format of osimage.partitionfile</a></li>
+<li><a href="#change-the-setting">Change the setting</a></li>
+<li><a href="#configure-secondary-nics-optional">Configure Secondary Nics (Optional)</a></li>
+<li><a href="#set-installnic">Set Installnic</a></li>
+<li><a href="#set-gateway-attribute">Set Gateway Attribute</a></li>
+<li><a href="#define-and-deploy-windows-compute-node">Define and Deploy Windows Compute Node</a></li>
+<li><a href="#define-a-windows-compute-node">Define a Windows Compute Node</a></li>
+<li><a href="#deploy-the-windows-node-node1">Deploy the Windows Node node1</a></li>
+<li><a href="#reference"><strong>Reference</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>xCAT supports to deploy Windows Operating System from a Linux xCAT management node. The usage is similar with Linux deployment except the creating of WinPE and BCD need be run on a Windows Technician computer. This document focus on the procedure of setting up Windows deployment environment.</p>
+<h3 id="terminology"><a href="#TOC">Terminology</a></h3>
+<ul>
+<li>WinPE - Windows Preinstallation Environment. Which is the deployment tool to execute the partitioning, deployment and configuration during Windows OS deployment.</li>
+<li>BCD - Boot Configuration Data. Which is used to specify the location of WinPE files.</li>
+<li>Technician Computer - It is a computer which is installed Windows OS and is used to create WinPE and BCD.</li>
+<li>ADK - Microsoft Assessment and Deployment Kit</li>
+<li>AIK - Windows Automated Installation Kit</li>
+</ul>
+<h3 id="windows-deployment-process"><a href="#TOC">Windows Deployment process</a></h3>
+<ol style="list-style-type: decimal">
+<li>Install AIK or ADK on your Technician Computer for creating WinPE which will be used to perform the deployment process.</li>
+<li>Create WinPE and BCD on Technician Computer.</li>
+<li>Run copycds command to copy Windows iso to xCAT management node and create Windows osimage.</li>
+<li>Configure Windows osimage.</li>
+<li>Define node and assign osimage.</li>
+<li>Perform the deployment.</li>
+</ol>
+<h3 id="the-supported-windows-os"><a href="#TOC">The Supported Windows OS</a></h3>
+<pre><code>Windows 7
+Windows Server 2008
+Windows Server 2008 r2
+Windows 8
+Windows Server 2012
+Windows Server 2012 r2</code></pre>
+<h3 id="aik-and-adk"><a href="#TOC">AIK and ADK</a></h3>
+<p>WinPE is the installer to initiate a Windows deployment. xCAT supports to use genimage.cmd (base on tool ADK) and genimage.bat (base on tool AIK) to create WinPE.</p>
+<p>Refer to following list for the relationship between genimage.bat,genimage.cmd and WinPE versions. It's important to choose the correct genimage command base on your target deployment OS.</p>
+<ul>
+<li><p>WinPE which created by genimage.bat</p>
+<p>WinPE version: 3.0 Supported target Windows versions: Windows server 2008 and Windows server 2008r2. The doc mentions it also support Windows 8 and Windows server 2012, but xCAT recommends to use WinPE 4.0 which is generated by genimage.cmd for Windows server 2012 deployment.</p></li>
+<li><p>WinPE which created by genimage.cmd</p>
+<p>WinPE version: 4.0 Supported target Windows versions: Windows 8 and Windows server 2012.</p></li>
+</ul>
+<p>Reference for the matrix of WinPE and supported Windows verions.</p>
+<pre><code>http://technet.microsoft.com/en-us/library/hh824993</code></pre>
+<h3 id="example-environment"><a href="#TOC">Example Environment</a></h3>
+<ul>
+<li>A xCAT Management Node: mn1 (OS: rhels 6.4) - xCAT has been installed and setup correctly. The xCAT 2.8.4 and higher is needed for features: multiple WinPE, disk configuration, nics configuration and running postscripts/postbootscripts.</li>
+<li>A Technician Computer: technode (OS: Windows Server 2008)</li>
+<li>A Windows Compute Node: node1 - The target node for deploying windows 2008 server Operating System.</li>
+<li>Target Windows Operating System: Windows Server 2008</li>
+</ul>
+<h2 id="setup-xcat-management-node"><a href="#TOC">Setup xCAT Management Node</a></h2>
+<p>Assume you are familiar with the setup of xCAT management node and the basic configuration of it has been done correctly.</p>
+<h3 id="setup-samba-on-xcat-management-node"><a href="#TOC">Setup Samba on xCAT Management Node</a></h3>
+<p>samba server is used to supply network service for Windows node deployment from Linux xCAT management node. It must be set up correctly at very beginning.</p>
+<ul>
+<li>Install samba rpm package</li>
+</ul>
+<pre><code>    yum install samba</code></pre>
+<ul>
+<li>Configure samba service</li>
+</ul>
+<p>Edit /etc/samba/smb.conf . In the [global] section, change security to:</p>
+<pre><code>    security = share</code></pre>
+<p>Export /install directory in samba servcie:</p>
+<pre><code>    [install]
+    path = /install
+    public = yes
+    writable = yes</code></pre>
+<ul>
+<li>Restart the Samba server to take effect the configuration</li>
+</ul>
+<pre><code>    chkconfig smb on
+    service smb restart</code></pre>
+<ul>
+<li>Create a directory at the /install for file sharing between mn1 and technode.</li>
+</ul>
+<pre><code>    mkdir -p /install/support
+    chmod 777 /install/support</code></pre>
+<h2 id="create-winpe"><a href="#TOC">Create WinPE</a></h2>
+<h3 id="install-the-technician-computer"><a href="#TOC">Install the Technician Computer</a></h3>
+<p>Install the Operating System on the 'technode' first, and install the AIK or ADK base on your target OS for compute node.</p>
+<pre><code>**OS:**       Windows 7, Windows 8, Windows Server 2008 or Windows Server 2012.
+**Hardware:** A common x86_64 server or Lap top.</code></pre>
+<h3 id="install-aik-automated-install-kit"><a href="#TOC">Install AIK (Automated Install Kit)</a></h3>
+<p>AIK is necessary for the deployment of Windows 7, Windows server 2008 and Windows Server 2008 r2. The AIK must be installed in the default directory.</p>
+<p><strong>Download AIK</strong></p>
+<p>On the management node, download the Automated Install Kit (AIK) ISO: <a href="http://www.microsoft.com/downloads/en/details.aspx?FamilyID=696DD665-9F76-4177-A811-39C26D3B3B34&amp;displaylang=en">AIK</a>. e.g. the downloaded iso name is KB3AIK_EN.iso.</p>
+<p><strong>Copy AIK Installation files to technode</strong></p>
+<ul>
+<li>Mount the KB3AIK_EN.iso to a directory:</li>
+</ul>
+<pre><code>    mount -o loop KB3AIK_EN.iso /mnt</code></pre>
+<ul>
+<li>Copy all the files to the samba sharing directory:</li>
+</ul>
+<pre><code>    cp -a /mnt/* /install/support</code></pre>
+<ul>
+<li>Map samba sharing directory on technode</li>
+</ul>
+<pre><code>    Click: start-&gt;compute-&gt;Map Network Drive to map &amp;#92;&amp;#92;mn1&amp;#92;install to a free partition z:
+</code></pre>
+<p><strong>Install the AIK</strong></p>
+<pre><code>Run the z:\support\wAIKAMD64 to install the AIK on &#39;technode&#39;.</code></pre>
+<h3 id="install-adk-microsoft-assessment-and-deployment-kit"><a href="#TOC">Install ADK (Microsoft Assessment and Deployment Kit)</a></h3>
+<p>ADK is necessary for the deployment of Windows 8, Windows server 2012 and Windows Server 2012 r2. The ADK must be installed in the default directory.</p>
+<p>The ADK can be downloaded and installed from <a href="http://www.microsoft.com/en-us/download/details.aspx?id=30652">ADK</a>. If your 'technode' cannot access Internet, use any Windows node to download the ADK installation file and copy them to 'technode' and execute the installation.</p>
+<h3 id="copy-the-xcat-tools-to-technode"><a href="#TOC">Copy the xCAT Tools to technode</a></h3>
+<p>On the xCAT management node mn1, copy all files from the directory /opt/xcat/share/xcat/netboot/windows/ to the shared directory /install/support.</p>
+<pre><code>    cp -a /opt/xcat/share/xcat/netboot/windows/* /install/support/</code></pre>
+<h3 id="add-device-drivers-for-winpe"><a href="#TOC">Add Device Drivers for WinPE</a></h3>
+<p>WinPE is a small Windows system which is running in memory to execute the deployment process. It needs to access network and hardware to complete the deployment. The basic drivers for network and hardware need be installed in WinPE. genimage.x command will search the c:\drivers directory to get the additional drivers for WinPE.</p>
+<p>Copy the necessary drivers to technode:c:\drivers</p>
+<pre><code>    log in technode
+    create directory c:\drivers
+    copy drivers to c:\drivers</code></pre>
+<p>e.g. Download network drivers for IBM system x server: <a href="http://www-947.ibm.com/support/entry/portal/docdisplay?brand=5000020&amp;lndocid=MIGR-64537">network driver</a>. And run the driver file like brcm_dd_nic_11.7.4_windows_32-64.exe to save the driver to the c:\drivers\.</p>
+<h3 id="create-winpe-on-technode"><a href="#TOC">Create WinPE on technode</a></h3>
+<p>Log into 'technode' and open a cmd window from start-&gt;run interface. In the cmd window, copy the samba mapping directory z:\support to your local system partition c:\xCAT. Then chdir to the 'c:\xCAT'.</p>
+<p><strong>Run genimage.bat to create WinPE for Windows 7 and Windows Server 2008</strong></p>
+<pre><code>    genimage.bat amd64
+    Copy all files from technode:c:/WinPE_64/pxe/* to mn1:/tftpboot using samba service.</code></pre>
+<p><strong>Run genimage.cmd to create WinPE for Windows 8 and Windows Server 2012</strong></p>
+<pre><code>    genimage.cmd amd64
+    Copy all files from technode:c:/WinPE_64/media/* to mn1:/tftpboot using samba service.</code></pre>
+<h2 id="create-windows-osimage"><a href="#TOC">Create Windows osimage</a></h2>
+<h3 id="download-the-installation-iso-of-windows-server-2008"><a href="#TOC">Download the Installation ISO of Windows Server 2008</a></h3>
+<p>The ISO's for Windows Server 2008 can be downloaded from <a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=13C7300E-935C-415A-A79C-538E933D5424&amp;WT.sp=_technet_,dcsjwb9vb00000c932fd0rjc7_5p3t&amp;displaylang=en">iso</a>.</p>
+<h3 id="generate-windows-osimage"><a href="#TOC">Generate Windows osimage</a></h3>
+<p>Run the copycds command on the mn1 to copy the files from ISO of windows server 2008 to the xCAT installation directory (default is /install).</p>
+<pre><code>    copycds Win2k8.iso</code></pre>
+<p>Then you can get a osimage definition like following:</p>
+<pre><code>    lsdef -t osimage win2k8-x86_64-install-enterprise
+    Object name: win2k8-x86_64-install-enterprise
+       imagetype=windows
+       osarch=x86_64
+       osdistroname=win2k8-x86_64
+       osname=Windows
+       osvers=win2k8
+       profile=enterprise
+       provmethod=install
+       template=/opt/xcat/share/xcat/install/windows/enterprise.win2k8.x86_64.tmpl</code></pre>
+<h3 id="install-additional-drivers-for-compute-node"><a href="#TOC">Install Additional Drivers for Compute Node</a></h3>
+<p>During the deployment, the additional drivers will be searched from the mn1:/install/drivers/&lt;os&gt;/&lt;arch&gt;/. For osimage win2k8-x86_64-install-enterprise, you can copy the additional drivers to mn1:/install/drivers/win2k8/x86_64/ before the installation.</p>
+<h2 id="run-post-and-postboot-scripts-after-deployment"><a href="#TOC">Run Post and Postboot Scripts after Deployment</a></h2>
+<h3 id="customize-the-mypostscript.tmpl-optional"><a href="#TOC">Customize the mypostscript.tmpl (Optional)</a></h3>
+<p>The mypostscript.tmpl is a template which is used to create the mypostscript script which includes environment variables and postscripts to run in compute node. The default path is /opt/xcat/share/xcat/templates/mypostscript/mypostscript.tmpl. If you want to customize it, copy it to /install/postscripts/mypostscript.tmpl and customize it obeys the rules in <a href="http://sourceforge.net/apps/mediawiki/xcat/index.php?title=Postscripts_and_Prescripts#Using_the_mypostscript_template">how to use mypostscript.tmpl</a>.</p>
+<h3 id="create-post-scripts-and-post-boot-scripts"><a href="#TOC">Create post scripts and post boot scripts</a></h3>
+<p>The scripts can be any file which can be run in Windows OS.</p>
+<p>Since Windows OS recognizes the file type by the postfix, all the postscripts which are created for Windows compute node should have correct postfix like .bat, .cmd, .vbs, .ps1</p>
+<p>When running of postscripts, the running log will be written to c:\xcatpost\xcat.log. Admin can check the log at anytime for checking and debugging.</p>
+<h3 id="copy-all-the-scripts-to-installwinpostscripts"><a href="#TOC">Copy all the scripts to /install/winpostscripts</a></h3>
+<p>On the xCAT management node, copy the postscripts/postbootscripts to /install/winpostscripts. If there are files which will be called by your scripts, also copy them to /install/winpostscripts</p>
+<pre><code>    cp &lt;scripts&gt; /install/winpostscripts</code></pre>
+<h3 id="set-the-scripts-for-node-or-osimage"><a href="#TOC">Set the Scripts for Node or Osimage</a></h3>
+<p>Set the scripts in postscript and postbootscripts attributes for corresponding nodes or osimage. Note: The scripts which are set by postscripts.xcatdefaults will be ignored.</p>
+<p>~~~~ chdef <node> postscript=&quot;xx arg1 arg2,yy&quot; postbootscripts=&quot;aa,bb arg1&quot; ~~~~ chdef -t osoimage <osimage name> postscript=xx,yy postbootscripts=aa,bb</p>
+<h3 id="enable-the-precreatemypostscripts"><a href="#TOC">Enable the precreatemypostscripts</a></h3>
+<p>In the first pass support, the <strong>precreatemypostscripts</strong> must be enabled. That means for any changes in postscript/postscripts attributes or mypostscript.tmpl, the nodeset command must be run to refresh the mypostscript.</p>
+<pre><code>    chdef -t site clustersite precreatemypostscripts=1</code></pre>
+<h2 id="support-multiple-winpe-optional"><a href="#TOC">Support Multiple WinPE (Optional)</a></h2>
+<p>For WinPE to enable the network device and hard driver on a specific node, the drivers of nics and hard disks need be injected to WinPE when creating it. That means it's possible to make multiple WinPEs for different hardware. Plus the restriction that deploying of different Windows versions need different version of WinPE, xCAT offers a mechanism for node/osimage to choose a proper WinPE for Windows deployment.</p>
+<p>Choose ADK or AIK base on the target d\ployment Windows version. Copy the specify drivers for the WinPE to c:\drivers and run genimage.cmd or genimage.bat base on the selected ADK or AIK to generate WinPE.</p>
+<p>A WinPE name needs be specified to identify the WinPE when running genimage.x</p>
+<pre><code>    e.g. genimage.cmd amd64 &lt;winpe name&gt;</code></pre>
+<p>The winpe will be created in c:\WinPE_64\media(or pxe)\winboot/&lt;winpe name&gt;, you need to copy the whole directory <strong>winboot</strong> to /tftpboot/ on xCAT MN.</p>
+<h3 id="specify-winpe-for-osimage"><a href="#TOC">Specify WinPE for osimage</a></h3>
+<p>The WinPE is bound to osimage. Set the path of WinPE to the target osimage. Note: The value for winpepath attribute must be a relative path to /tftpboot directory. If the real path of winpe is '/tftpboot/winboot/winpe1/', the value for winpepath should be set to 'winboot/winpe1'.</p>
+<pre><code>    chdef -t osimage win2k8-x86_64-install-enterprise winpepath=winboot/&amp;lt;winpe name&gt;</code></pre>
+<h3 id="enable-the-proxydhcp-service-on-xcat-mnsn"><a href="#TOC">Enable the Proxydhcp Service on xCAT MN/SN</a></h3>
+<p>To support multiple WinPE, the proxydhcp-xcat service must be enabled. You can enable it via setupproxydhcp attribute (this attribute belongs to xCAT management node or service node).</p>
+<p>Add the xCAT management node to xCAT database</p>
+<pre><code>    xcatconfig -m</code></pre>
+<p>Enable the proxydhcp service in xCAT management node</p>
+<pre><code>    chdef &lt;xcat MN/SN&gt; setupproxydhcp=1 (or &#39;yes&#39;)</code></pre>
+<p>Restart the xcatd to make the change take effect</p>
+<pre><code>    service xcatd restart</code></pre>
+<h3 id="disable-the-proxydhcp-support-for-specific-node"><a href="#TOC">Disable the Proxydhcp Support for Specific Node</a></h3>
+<p>By default, xCAT considers all nodes are proxydhcp protocol supported. If you have node which does not support proxydhcp protocol, disable the proxydhcp operation for this node.</p>
+<pre><code>    chdef &lt;node&gt; supportproxydhcp=0 (or &#39;no&#39;)</code></pre>
+<h2 id="configure-disk-partition-optional"><a href="#TOC">Configure Disk Partition (Optional)</a></h2>
+<p>By default, Windows OS will be installed to the first partition of first disk on the compute node. To support the disk customization, two additional attributes are added in osimage object to specify the disk/partition configuration.</p>
+<ul>
+<li>osimage.installto - The disk and partition that the Windows will be deployed to. The valid format is &lt;disk&gt;:&lt;partition&gt;. If not set, default value is 0:1 for bios boot mode(legacy) and 0:3 for uefi boot mode; If setting to 1, it means 1:1 for bios boot and 1:3 for uefi boot;</li>
+<li>osimage.partitionfile - The path of partition configuration file. Since the partition configuration for bios boot mode and uefi boot mode are different, this configuration file should include two parts if customer wants to support both bios and uefi mode. If customer just wants to support one of the modes, specify one of them anyway.</li>
+</ul>
+<p>To simplify the setting, the [INSTALLTO] section also can be added in the partitionfile as an alternative setting of osimage.installto. The installto setting in partitionfile has high priority.</p>
+<h3 id="the-format-of-osimage.partitionfile"><a href="#TOC">The format of osimage.partitionfile</a></h3>
+<pre><code>    [INSTALLTO]0:1  (OPTIONAL of osimage.installto)
+    [BIOS]
+    &lt;Disk&gt;
+        &lt;DiskID&gt;0&lt;/DiskID&gt;
+        &lt;WillWipeDisk&gt;true&lt;/WillWipeDisk&gt;
+        &lt;CreatePartitions&gt;
+               &lt;CreatePartition wcm:action=&quot;add&quot;&gt;
+                      &lt;Order&gt;1&lt;/Order&gt;
+                      &lt;Type&gt;Primary&lt;/Type&gt;
+                      &lt;Size&gt;200000&lt;/Size&gt;
+                  &lt;/CreatePartition&gt;
+               &lt;CreatePartition wcm:action=&quot;add&quot;&gt;
+                      &lt;Order&gt;2&lt;/Order&gt;
+                      &lt;Type&gt;Primary&lt;/Type&gt;
+                      &lt;Size&gt;2000&lt;/Size&gt;
+                  &lt;/CreatePartition&gt;
+               &lt;CreatePartition wcm:action=&quot;add&quot;&gt;
+                      &lt;Order&gt;3&lt;/Order&gt;
+                      &lt;Type&gt;Extended&lt;/Type&gt;
+                      &lt;Extend&gt;true&lt;/Extend&gt;
+                  &lt;/CreatePartition&gt;
+               &lt;CreatePartition wcm:action=&quot;add&quot;&gt;
+                      &lt;Order&gt;4&lt;/Order&gt;
+                      &lt;Type&gt;Logical&lt;/Type&gt;
+                      &lt;Size&gt;2000&lt;/Size&gt;
+                  &lt;/CreatePartition&gt;
+           &lt;/CreatePartitions&gt;
+    &lt;/Disk&gt;
+    [EFI]
+    xxxx</code></pre>
+<h3 id="change-the-setting"><a href="#TOC">Change the setting</a></h3>
+<pre><code>    chdef -t osimage win2k8r2-x86_64-install-enterprise installto=&#39;1:1&#39;
+    chdef -t osimage win2k8r2-x86_64-install-enterprise paritionfile=&lt;path of configuration file&gt;</code></pre>
+<h2 id="configure-secondary-nics-optional"><a href="#TOC">Configure Secondary Nics (Optional)</a></h2>
+<p>By default, the installnic will be configured through dhcp. The secondary nics will not be configured. This section describes how to use the nics table to configure the installnic and secondary nics.</p>
+<p>The interface name in Windows OS is like 'Local Area Connection' (first interface), 'Local Area Connection 2' (second interface) and 'Local Area Connection x' (next interface).</p>
+<p>The IP for nics need be configured in nics table like following. The corresponding entry in networks table must be configured correctly, otherwise the interface will be ignored if cannot find correct netmask for the ip from networks table.</p>
+<pre><code>    **nics table**
+    node,nicips,nichostnamesuffixes,nictypes,niccustomscripts,nicnetworks,nicaliases,comments,disable
+    &quot;node1&quot;,&quot;Local Area Connection 3!192.168.13.250,Local Area Connection 2!192.168.12.250&quot;,,,,,,,
+
+
+    **networks table**
+    #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,staticrange,staticrangeincrement,nodehostname,ddnsdomain,vlanid,domain,comments,disable
+    &quot;192_168_13_0-255_255_255_0&quot;,&quot;192.168.13.0&quot;,&quot;255.255.255.0&quot;,,&quot;192.168.13.254&quot;,,,,,,,,&quot;1&quot;,,,,,,</code></pre>
+<p>In this example, the IP of interface 'Local Area Connection 2' will be set to '192.168.12.250'. And IP of interface 'Local Area Connection 3' will be set to '92.168.13.250'. Since no setting for 'Local Area Connection' (first interface) is specified, it will keep to use dhcp to get network configuration(this is the default setting for an active interface).</p>
+<h3 id="set-installnic"><a href="#TOC">Set Installnic</a></h3>
+<p>The installnic (The nic which is installed on compute node for OS deployment) will only be set to static if the key site.setinstallnic is set to '1' or 'yes', otherwise the installnic will keep to get IP from dhcp server even if it is set in nics table.</p>
+<p>The node.installnic or node.primarynic is used to specify the name of instlalnic. For Windows deployment, it must be specified. Otherwise xCAT will consider all the interfaces in nics table as non-installnic.</p>
+<pre><code>    chdef -t site clustersite setinstallnic=1
+    chdef &lt;node&gt;  installnic=&#39;Local Area Connection&#39;</code></pre>
+<h3 id="set-gateway-attribute"><a href="#TOC">Set Gateway Attribute</a></h3>
+<p>Only the gateway from the intallnic network will be set to default gateway for Windows compute node. The gateway which is set in other networks will be ignored.</p>
+<h2 id="define-and-deploy-windows-compute-node"><a href="#TOC">Define and Deploy Windows Compute Node</a></h2>
+<h3 id="define-a-windows-compute-node"><a href="#TOC">Define a Windows Compute Node</a></h3>
+<ul>
+<li>Define the compute node node1 on the management node</li>
+</ul>
+<pre><code>    mkdef -t node -o node1 groups=win2k8 arch=x86_64 mgt=ipmi netboot=xnba</code></pre>
+<ul>
+<li>Set the IP and Mac address for the node1:</li>
+</ul>
+<pre><code>    chdef node1 mac=xx:xx:xx:xx:xx:xx
+    chdef node1 ip=xxx:xxx:xxx:xxx (Or editing /etc/hosts and add the mapping of IP and node name.)</code></pre>
+<ul>
+<li>Add the default password for the new installed compute node:</li>
+</ul>
+<pre><code>    tabdump passwd
+     key,username,password,cryptmethod,authdomain,comments,disable
+     ...
+     &quot;system&quot;,&quot;root&quot;,&quot;password&quot;,,,,
+     &quot;system&quot;,&quot;Administrator&quot;,&quot;password&quot;,,,,</code></pre>
+<ul>
+<li>Add the Windows license key for the node1:</li>
+</ul>
+<pre><code>    chtab node=node01 prodkey.product=win2k8 prodkey.key=XXXXX-XXXXX-XXXXX-XXXXX-XXXXX</code></pre>
+<p>If you do not specify a license key, the KMS key will be used for deployment.</p>
+<ul>
+<li>Set the timezone for the Windows compute node:</li>
+</ul>
+<p>Windows compute node only can accept the Windows recognized timezone format, set the site.wintimezone to the correct value.</p>
+<pre><code>    chdef -t site wintimezone=&quot;Eastern Standard Time&quot;</code></pre>
+<h3 id="deploy-the-windows-node-node1"><a href="#TOC">Deploy the Windows Node node1</a></h3>
+<pre><code>    makehosts node1
+    makedns node1
+    nodeset node1 osimage=win2k8-x86_64-install-enterprise
+    rsetboot node1 net
+    rpower node1 on  (or manually power on)</code></pre>
+<h2 id="reference"><a href="#TOC"><strong>Reference</strong></a></h2>
+<p>You can get more detail description about how to deploy a windows system: http://www-01.ibm.com/support/docview.wss?uid=tss1wp101770</p>
+</body>
+</html>

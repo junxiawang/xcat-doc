@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>{{:Design Warning}}</p>
+<p>The verification for node (Include service node or compute node) definitioin and status after the installation/netboot is very important for user to know that the node is ready for installation or has been installed succeeded. This mini-design lists the items that should be checked before and after the installation for a node. The check activity should be implemented in a perl script and called by the nodecheck command.</p>
+<p>Verify the node definition before the install/netboot:</p>
+<ul>
+<li>dns: (the name resolution for the node, short name)</li>
+<li>dhcp: (has correct dhcpd.conf and correct section in the lease file)</li>
+<li>conserver: The node has a section in the /etc/conserver.cf</li>
+<li>The hcp is pingable</li>
+<li>Has correct bootloader file for the node (yaboot, pxelinux, xnba)</li>
+<li>The correct bootloader configuration file has been created</li>
+<li>Check the attributes: noderes.netboot, noderes.tftpserver,noderes.nfsserver,noderes.installnic,noderes.xcatmaster</li>
+<li><p>Diskfull</p></li>
+<li>autoyast/kickstart configuration file has been created</li>
+<li>copycds has been run for the specific os</li>
+<li><p>The kernel, initrd have been copied to correct location</p></li>
+<li><p>Diskless</p></li>
+<li>The specific osimage has been created</li>
+<li><p>The kernel and osimage has been copied to the correct location</p></li>
+<li><p>Statelite</p></li>
+<li>The specific osimage has been created</li>
+<li>The kernel and osimage has been copied to the correct location</li>
+<li><p>The statelite,litefile,litetree table</p></li>
+<li>passwd table has correct entries (omapi,xcat,system)</li>
+<li>The password in the ppchcp,ppcdirect,ipmi tables</li>
+<li><p>Display a configuration after the check</p></li>
+<li>Display: node name, node IP,mac address, os, profile, path of autoyast/kickstart configuration file, kernel parameters,</li>
+<li>List the postscripts, postbootscripts which will be run during the installation</li>
+<li><p>List the syncfile, pkglist, otherpkgs.pkglist which will be run for the node</p></li>
+<li><p>virtualization node ...</p></li>
+</ul>
+<p>Verify the node status after the install/netboot:</p>
+<ul>
+<li>dns: the node name of MN/SN can be resolved from the compute node</li>
+<li>Can ssh to the node without passwd from the MN/SN</li>
+<li>The node status is correct</li>
+<li>The files in the synclist have been synced to the node</li>
+<li>The pkgs in the otherpkgs.pkglist have been synced to the node</li>
+</ul>
+<p>Service node specific:</p>
+<ul>
+<li>The xCAT and dependency packages have been installed (xCATsn instead of xCAT)</li>
+<li>All the processes of xCAT have been started</li>
+<li>The database has been configured correctly. (/etc/xcat/cfgloc)</li>
+<li>The credentials have been gotten from MN. Should check the compatibility with the ones on MN.</li>
+<li>.ssh/ has correct configuration so that MN can ssh to SN without password</li>
+<li>The syslog has been redirected to the MN</li>
+<li>The service like tftp,nfs,http... have been started base on the definition of the service node. (servicenode table)</li>
+<li>The installation resource from the management node (/install mount from MN?)</li>
+<li>Has correct files in /install/postscripts</li>
+</ul>
+</body>
+</html>

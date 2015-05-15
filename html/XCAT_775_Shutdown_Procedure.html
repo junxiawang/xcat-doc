@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#cluster-shutdown-assumptions">Cluster Shutdown Assumptions</a></li>
+<li><a href="#cluster-shutdown-process">Cluster Shutdown Process</a></li>
+<li><a href="#user-access">User access</a></li>
+<li><a href="#site-utility-functions">Site utility functions</a></li>
+<li><a href="#preparing-to-stop-loadleveler">Preparing to stop Loadleveler</a><ul>
+<li><a href="#method-1---draining-loadleveler-jobs">Method 1 - Draining LoadLeveler jobs</a></li>
+<li><a href="#method-2---stopping-loadleveler-jobs">Method 2 - Stopping LoadLeveler jobs</a></li>
+</ul></li>
+<li><a href="#stopping-loadleveler">Stopping LoadLeveler</a></li>
+<li><a href="#stop-gfps-and-unmount-the-filesystem">Stop GFPS and unmount the filesystem</a></li>
+<li><a href="#optional---capture-the-hfi-link-status">Optional - Capture the HFI link status</a></li>
+<li><a href="#shutdown-compute-nodes">Shutdown Compute nodes</a></li>
+<li><a href="#other-utility-nodes">Other Utility nodes</a></li>
+<li><a href="#shutdown-the-storage-nodes">Shutdown the storage nodes</a></li>
+<li><a href="#shutdown-the-service-nodes">Shutdown the service nodes</a></li>
+<li><a href="#power-off-the-cecs">Power off the CECs</a></li>
+<li><a href="#place-the-frames-in-rack-standby-mode">Place the frames in rack standby mode</a></li>
+<li><a href="#turn-off-the-frames">Turn off the frames</a></li>
+<li><a href="#shutdown-ems-and-hmcs">Shutdown EMS and HMCs</a></li>
+<li><a href="#turn-off-the-external-disks-attached-to-the-ems">Turn off the external disks attached to the EMS</a></li>
+<li><a href="#optional---turn-off-breakers-or-disconnect-power">Optional - Turn off breakers or disconnect power</a></li>
+<li><a href="#cluster-shutdown-process-is-now-complete">Cluster Shutdown Process is now complete</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#cluster-shutdown-assumptions">Cluster Shutdown Assumptions</a></li>
+<li><a href="#cluster-shutdown-process">Cluster Shutdown Process</a></li>
+<li><a href="#user-access">User access</a></li>
+<li><a href="#site-utility-functions">Site utility functions</a></li>
+<li><a href="#preparing-to-stop-loadleveler">Preparing to stop Loadleveler</a></li>
+<li><a href="#method-1---draining-loadleveler-jobs">Method 1 - Draining LoadLeveler jobs</a></li>
+<li><a href="#method-2---stopping-loadleveler-jobs">Method 2 - Stopping LoadLeveler jobs</a></li>
+<li><a href="#stopping-loadleveler">Stopping LoadLeveler</a></li>
+<li><a href="#stop-gfps-and-unmount-the-filesystem">Stop GFPS and unmount the filesystem</a></li>
+<li><a href="#optional---capture-the-hfi-link-status">Optional - Capture the HFI link status</a></li>
+<li><a href="#shutdown-compute-nodes">Shutdown Compute nodes</a></li>
+<li><a href="#other-utility-nodes">Other Utility nodes</a></li>
+<li><a href="#shutdown-the-storage-nodes">Shutdown the storage nodes</a></li>
+<li><a href="#shutdown-the-service-nodes">Shutdown the service nodes</a></li>
+<li><a href="#power-off-the-cecs">Power off the CECs</a></li>
+<li><a href="#place-the-frames-in-rack-standby-mode">Place the frames in rack standby mode</a></li>
+<li><a href="#turn-off-the-frames">Turn off the frames</a></li>
+<li><a href="#shutdown-ems-and-hmcs">Shutdown EMS and HMCs</a></li>
+<li><a href="#turn-off-the-external-disks-attached-to-the-ems">Turn off the external disks attached to the EMS</a></li>
+<li><a href="#optional---turn-off-breakers-or-disconnect-power">Optional - Turn off breakers or disconnect power</a></li>
+<li><a href="#cluster-shutdown-process-is-now-complete">Cluster Shutdown Process is now complete</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>This cookbook will provide information about shutting down the xCAT HPC system Power 775 hardware and software along with verification steps as the system is being shutdown.</p>
+<p>Please refer to the start-up process to review the Overview and Dependencies sections as they describe the general hardware roles and inter dependencies which affect starting and shutting down the cluster.</p>
+<p>[XCAT_775_Startup_Procedure]</p>
+<p>The examples in this document are for a Linux environment. All commands assume root access on the EMS.</p>
+<p>Everything described in this document is only supported in xCAT 2.6.6 and above. If you have other system p hardware, see XCAT System p Hardware Management .</p>
+<p>Furthermore, this is intended only as a post-installation procedure.</p>
+<p>More information about the Power 775 related software can be found at:</p>
+<p>https://www.ibm.com/developerworks/wikis/display/hpccentral/IBM+HPC+Clustering+with+Power+775+Overview https://www.ibm.com/developerworks/wikis/display/hpccentral/IBM+HPC+Clustering+with+Power+775+-+Cluster+Guide</p>
+<h2 id="terminology"><a href="#TOC">Terminology</a></h2>
+<p>To make this document consistent with the cluster start-up process the terminology section will be shared and can be found at:</p>
+<p><a href="XCAT_775_Startup_Procedure/#terminology">XCAT_775_Startup_Procedure/#terminology</a></p>
+<h2 id="cluster-shutdown-assumptions"><a href="#TOC">Cluster Shutdown Assumptions</a></h2>
+<p>This section will document the assumptions that are being made regarding the state of the cluster prior to shutting it down.</p>
+<p>Shutting down an HPC cluster is a task which requires planning and preparation. Care must be taken to inform users that this cluster shutdown operation is going to take place. Removing user access to the cluster and stopping the jobs in the LoadLeveler queue are critical first steps in the shutdown of the cluster.</p>
+<p>Note: When timing the shutdown process for any shutdown benchmarking the draining of running jobs should not be considered part of the IBM HPC cluster shutdown process. This is excluded because it is totally dependent on how long a user job runs to completion and therefore could not be considered part of the actual shutdown. Once all jobs have been stopped then the official timing of the IBM HPC cluster shutdown process can begin. For a complete site shutdown process the time it takes to drain the jobs could be included, but will vary depending on where each job is in its execution.</p>
+<h2 id="cluster-shutdown-process"><a href="#TOC">Cluster Shutdown Process</a></h2>
+<p>The sections below will describe the steps necessary to shutdown the cluster. Each step will outline the process and verifications steps needed to complete the step prior to moving to the next step.</p>
+<p>The cluster shutdown process is generally faster than the start-up process. During the start-up process it is necessary to manually start some daemons and the hardware verification during start-up is a longer process then shutting down the system.</p>
+<h2 id="user-access"><a href="#TOC">User access</a></h2>
+<p>Care must be taken to make sure that any users of the cluster are logged off and that their access has been stopped during this process.</p>
+<h2 id="site-utility-functions"><a href="#TOC">Site utility functions</a></h2>
+<p>Any site specific utility nodes which are used to login, or backup or restore user data or other function related to the cluster should be disabled or stopped.</p>
+<p>If login nodes are being used then any new users should be prevented from being logged in to the cluster.</p>
+<pre><code>     $ xdsh login -v &#39;echo cluster down 4 power cycle &gt; /etc/nologin&#39;</code></pre>
+<h2 id="preparing-to-stop-loadleveler"><a href="#TOC">Preparing to stop Loadleveler</a></h2>
+<p>In order to shutdown the cluster it is key that all user jobs are drained or cancelled. This document is assuming that the administrator has a thorough understanding of job management and scheduling in order to drain or cancel all jobs. There are two methods to accomplish this task, draining the jobs and cancelling the jobs.</p>
+<p>Environmental site conditions affect whether to drain or cancel the jobs. If the shutdown is a scheduled shutdown with sufficient time for the jobs to complete then draining the jobs is the best practice. A shutdown which does not allow for all of the jobs to complete will require the jobs to be cancelled.</p>
+<p>Shutdown scheduling and preparation for this task in advance is needed especially when draining jobs to allow sufficient time for them to complete.</p>
+<h3 id="method-1---draining-loadleveler-jobs"><a href="#TOC">Method 1 - Draining LoadLeveler jobs</a></h3>
+<p>Draining the jobs is the preferred method but is only attainable when there is time to allow the jobs to complete before the cluster needs to be shutdown. To drain all jobs in the cluster perform the following steps:</p>
+<p>To begin draining the jobs on compute and service nodes:</p>
+<pre><code>    $ xdsh compute -v -f 999 -l loadl llrctl drain</code></pre>
+<p>To monitor the status of the jobs issue llstatus to one of the service nodes. in this example a service node called f01sv01 is being used:</p>
+<pre><code>    $ xdsh f01sv01-v llstatus</code></pre>
+<p>Note: Since the draining process is allowing the jobs to complete this step will continue as long as it takes for the longest running job to complete. A knowledge of the jobs and how long they run will help determine the length of this task.</p>
+<h3 id="method-2---stopping-loadleveler-jobs"><a href="#TOC">Method 2 - Stopping LoadLeveler jobs</a></h3>
+<p>To keep any new jobs from starting in Loadleveler:</p>
+<pre><code>    $ xdsh compute -v-f 999 -l loadl llrctl drain
+    
+    $ xdsh service -v llctl drain</code></pre>
+<p>Wait for running jobs to complete, or alternately, if the jobs can be terminated and restarted, flush the jobs on the compute nodes by entering:</p>
+<pre><code>    $ xdsh compute -v llrctl flush</code></pre>
+<p>Note: In the job command file, 'restart=yes' has to be specified. Otherwise, it will be similar to llcancel. The jobs running on a node will be gone forever after you flush that node.</p>
+<p>To monitor the status of the jobs issue llstatus to one of the service nodes. in this example a service node called f01sv01 is being used:</p>
+<pre><code>    $ xdsh f01sv01-v llstatus</code></pre>
+<h2 id="stopping-loadleveler"><a href="#TOC">Stopping LoadLeveler</a></h2>
+<p>Shutting down LoadLeveler early in the process reduces any chances of jobs being submitted and also eliminates any LoadLeveler dependencies on the cluster.</p>
+<p>As was discussed in the Cluster Shutdown Assumptions section it is necessary to drain or cancel all jobs and removed users from the system. This section is assuming that all jobs have been either drained or canceled using the steps described earlier. Since there are no jobs active in the system this step will describe shutting LoadLeveler down.</p>
+<p>LoadLeveler needs to be stopped on all compute node and service node.</p>
+<pre><code>    $ xdsh compute -v -f 999 -l loadl llrctl stop
+    
+
+    $ xdsh service -v -l loadl llctl stop</code></pre>
+<h2 id="stop-gfps-and-unmount-the-filesystem"><a href="#TOC">Stop GFPS and unmount the filesystem</a></h2>
+<p>Once Loadleveler has been stopped GPFS can also be stopped. <strong>It is important to make sure that all applications that need to access files within GPFS are stopped prior to performing this step.</strong> A single command can be run on any storage node to complete this step. For this example we will use a storage node called f01st01 (for frame one storage node one):</p>
+<pre><code>    $ xdsh f01st01 -v mmshutdown -a
+
+or GFPS can also be stopped by shutting it down on login and compute nodes first and then the storage nodes. 
+    
+    $ xdsh compute,login -f 999 -v mmshutdown
+  
+
+    $ xdsh storage -v mmshutdown</code></pre>
+<p>Note: This will shutdown gpfs everywhere it is running on the cluster. Once it completes GPFS is down and no longer available.</p>
+<h2 id="optional---capture-the-hfi-link-status"><a href="#TOC">Optional - Capture the HFI link status</a></h2>
+<p>Prior to shutting down the compute lpars it may be useful to get a state of the HFI link status. This is useful if there are any HFI errors prior to shutting down so that they are understood when starting the cluster back up. This can be done by listing the connection state for the BPAs and FSPs as well as listing the CEC link status.</p>
+<p>Verify CNM has successfully contacted all BPAs and FSPs by issuing the following command.</p>
+<pre><code>    $ lsnwcomponents
+</code></pre>
+<p>The following should match the number of CEC drawers that are in the cluster.</p>
+<pre><code>    $ lsnwloc | grep -v EXCLUDED | wc -l</code></pre>
+<p>If the number is incorrect then check for any issues that cause a CEC drawer to be excluded by CNM.</p>
+<pre><code>    $ lsnwloc | grep EXCLUDED </code></pre>
+<h2 id="shutdown-compute-nodes"><a href="#TOC">Shutdown Compute nodes</a></h2>
+<p>WIth both LoadLeveler and GPFS stopped the next step is to shutdown the compute nodes. The compute nodes are shutdown first because other nodes within the cluster do not depend on the compute nodes.</p>
+<pre><code>    $ xdsh compute -v -f 999 shutdown -h now </code></pre>
+<p>To verify that the compute nodes have been shutdown:</p>
+<pre><code>    $ rpower compute state</code></pre>
+<h2 id="other-utility-nodes"><a href="#TOC">Other Utility nodes</a></h2>
+<p>This is the step where any utility nodes (login, backup, etc...) are shutdown. This example shuts down the login nodes.</p>
+<pre><code>    $ xdsh login -v shutdown -h now </code></pre>
+<p>Verify that the login nodes have stopped.</p>
+<pre><code>    $ rpower login state</code></pre>
+<h2 id="shutdown-the-storage-nodes"><a href="#TOC">Shutdown the storage nodes</a></h2>
+<p>At this point Loadleveler, GPFS, and the compute nodes are down. This means that all dependencies on the storage nodes have been stopped and the storage nodes can be shutdown.</p>
+<pre><code>    $ xdsh storage -v shutdown -h now</code></pre>
+<p>To verify that the storage nodes have shutdown:</p>
+<pre><code>    $ rpower storage state</code></pre>
+<h2 id="shutdown-the-service-nodes"><a href="#TOC">Shutdown the service nodes</a></h2>
+<p>With the compute and storage nodes are down there are no more dependencies on the service nodes and the service nodes can be shutdown.</p>
+<pre><code>    $ xdsh service -v shutdown -h now </code></pre>
+<p>To verify that the service nodes have been shutdown:</p>
+<pre><code>    $ rpower service state</code></pre>
+<h2 id="power-off-the-cecs"><a href="#TOC">Power off the CECs</a></h2>
+<p>This section will describe the process for shutting the CECs down.</p>
+<p>Once the compute, utility nodes (if any), storage, and service nodes are shutdown the cecs can be powered off.</p>
+<pre><code>    $ rpower cec off</code></pre>
+<p>To verify that the cec are off:</p>
+<pre><code>    $ rpower cec state</code></pre>
+<h2 id="place-the-frames-in-rack-standby-mode"><a href="#TOC">Place the frames in rack standby mode</a></h2>
+<p>Once all of the CECs are powered off and the Central Network Manager is off the frames can be placed in rack standby mode.</p>
+<pre><code>    $ rpower frame rackstandby</code></pre>
+<p>To validate the frames are in rack standby issue:</p>
+<pre><code>    $ rpower frame state </code></pre>
+<h2 id="turn-off-the-frames"><a href="#TOC">Turn off the frames</a></h2>
+<p>Once the frames have entered rack standby they are ready for power off.</p>
+<p>Manually turn of the red switch for each frame</p>
+<h2 id="shutdown-ems-and-hmcs"><a href="#TOC">Shutdown EMS and HMCs</a></h2>
+<p>Once the all nodes and cecs are down and the frames are in rack standby the EMS and HMCs can be shutdown. Depending on the goal for this shutdown process this step may be skipped.</p>
+<p>If the goal was to shutdown only the 775 servers and attached storage, then those steps are complete and you can stop here.</p>
+<p>If the goal is to completely restart the entire cluster, including the EMS and HMCs, then you should continue with the shutting down of the HMCs and the EMS.</p>
+<p>Log onto the HMC and issues this command to shutdown the HMCs:</p>
+<pre><code>    $ hmcshutdown -t now</code></pre>
+<p>If SSH is configured this can be accomplished with:</p>
+<pre><code>    $ ssh -l hscroot &amp;lt;hmchostname&amp;gt; hmcshutdown -t now</code></pre>
+<p>Now shutdown both the primary and backup EMS servers.</p>
+<p>Start with the backup EMS by issuing shutdown</p>
+<pre><code>    $ shutdown -h now</code></pre>
+<p>On the primary EMS shutdown the following deamons in order:</p>
+<p>Stop Teal</p>
+<pre><code>    $ service teal stop</code></pre>
+<p>Stop xcatd</p>
+<pre><code>    $ service xcatd stop</code></pre>
+<p>Stop dhcp</p>
+<pre><code>    $ service dhcpd stop</code></pre>
+<p>Stop named</p>
+<pre><code>    $ service named stop</code></pre>
+<p>Stop the xcat db</p>
+<pre><code>    $ su - xcatdb
+    $ db2stop
+    $ exit</code></pre>
+<p>If the stop is not successful, use force.</p>
+<pre><code>    $ su - xcatdb
+    $db2stop force
+    $ exit</code></pre>
+<p>unmount the shared filesystems</p>
+<p>Note: Your site directory names may vary from this sample</p>
+<pre><code>    $ umount /dev/sdc1 /etc/xcat
+    $ umount /dev/sdc2 /install
+    $ umount /dev/sdc3 ~/.xcat
+    $ umount /dev/sdc4 /databaseloc </code></pre>
+<p>Now shutdown the primary EMS</p>
+<pre><code>    $ shutdown -h now </code></pre>
+<p>Once the primary is shutdown, the backup can be shutdown. Login on to the backup EMS and issue:</p>
+<pre><code>    $ shutdown -h now </code></pre>
+<h2 id="turn-off-the-external-disks-attached-to-the-ems"><a href="#TOC">Turn off the external disks attached to the EMS</a></h2>
+<p>Once the primary and backup EMS are shutdown you can turn of the external disk drives.</p>
+<h2 id="optional---turn-off-breakers-or-disconnect-power"><a href="#TOC">Optional - Turn off breakers or disconnect power</a></h2>
+<p>Now that all of the cluster related hardware is turned off and the EMS and HMCs are down the power for the management rack and the 775 frames can be turned off. If you have breaker switches, these could be used. If not the power can be disconneted from the management rack and the frames.</p>
+<p>Note: care must be taken when handling power to the hardware.</p>
+<p>Disconnect power cords on 775 rack Disconnect power on management rack...</p>
+<h2 id="cluster-shutdown-process-is-now-complete"><a href="#TOC">Cluster Shutdown Process is now complete</a></h2>
+<p>All software and hardware for the cluster has been stopped at this point and the process is complete.</p>
+</body>
+</html>

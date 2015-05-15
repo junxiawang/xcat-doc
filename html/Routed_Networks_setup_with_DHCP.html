@@ -1,0 +1,19 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p>To enable DHCP to work in environments where the network switches handle DHCP forwarding you need to mark the subnets in the network table with a tag indicating that they are &quot;remote&quot;. The way that this is accomplished is by using the management interface name field in the subnet (&quot;mgtifname&quot;) designating it as a &quot;<strong>!remote!</strong>&quot; interface. Here is an example of such a subnet definition:</p>
+<pre><code>#netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,nodehostname,comments,disable
+&quot;rem1&quot;,&quot;192.168.0.0&quot;,&quot;255.255.255.0&quot;,&quot;!remote!&quot;,,,&quot;192.168.0.197&quot;,&quot;9.0.9.1,9.0.8.1,192.168.0.1&quot;,,,,,,</code></pre>
+<hr />
+<p>After you get this entry in the networks table, you need to tell the site table which networks the management node is attached to. This is done by having the following value in the site table:</p>
+<pre><code>&quot;dhcpinterface&quot;,&quot;!remote!&quot;,,</code></pre>
+<p>You may have as many &quot;remote&quot; subnets as are necessary.</p>
+</body>
+</html>

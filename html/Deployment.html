@@ -1,0 +1,17 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>xCAT supports a variety of deployment mechanisms. A summary matrix that applies to xCAT 2.0 RC2:</p>
+<p>RHEL5/CentOS5 Fedora 8 Fedora 9 SLES10 RHEL4/CentOS4</p>
+<p>Disk Install kickstart kicksstart kickstart autoyast kickstart</p>
+<p>Stateful Diskless kickstart kickstart kickstart autoyast Not supported</p>
+<p>Stateless Diskless Implemented Implemented 90% Implemented (some upstart-related tweaks needed) Implemented (squashfs/nfs not tested) Not yet implemented (Requires geninitrd modifications for RHEL4 era utilities)</p>
+<p>Note that currently imaging based solutions (systemimage/partimage) are not yet conveniently wrapped.</p>
+</body>
+</html>

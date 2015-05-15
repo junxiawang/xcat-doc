@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>This guide describes the initial iteration of the xCAT support for booting a node over an HFI network with AIX 71B.</p>
+<ol style="list-style-type: decimal">
+<li>Install xCAT and DB2 on AIX management node.
+<ol style="list-style-type: decimal">
+<li>Install and configure an xCAT management node. See the following xCAT document for details: [XCAT_AIX_Cluster_Overview_and_Mgmt_Node]</li>
+<li>DB2 supports remote access from service node to management node and HPC software. Configure DB2 on management node following document: [Setting_Up_DB2_as_the_xCAT_DB]</li>
+<li>To setup the hardwares and create the hardware connections between management node and BPA/FSPs in PERCS without HMC, please contact IBM to get the latest hardware server, fsp-api builds and instructions, following document include hardware management and making hardware connections: [XCAT_System_p_Hardware_Management]</li>
+<li><p>To use HPC software, you need to install additional xCAT package which is not installed by default. The package is distributed in xCAT-core tarball:</p>
+<pre><code>rpm -Uvh xCAT-IBMhpc*.rpm</code></pre></li>
+</ol></li>
+<li><p>Download HFI packages</p>
+<p>There are several seperate packages required for boot over HFI including NIM server/HFI device driver/xCAT scripts. Contact IBM to get the builds. In this example, we assume all the packages have been downloaded and extracted to /hfi folder on management node. Following are the required AIX packages:</p>
+<pre><code>bootpd
+cpio
+dd/README
+dd/devices.chrp.IBM.HFI
+dd/devices.common.IBM.hfi
+dd/if_hf
+dd/xCATaixHFIdd.bnd
+nim/bos.sysmgt
+scripts/confighfi
+scripts/confignim
+scripts/synclist</code></pre></li>
+<li><p>Update the /etc/hosts file In the Power 775 system, the management node will only have Ethernet NIC. Service node will have local disks, Ethernet NIC and HFI network. The compute nodes will not have a local disk or an Ethernet NIC. Since there are no local disks, the nodes will run the OS in diskless mode, and since there are no Ethernet NICs, the HFI/ISR network will be used for client/server communications, including boot.</p>
+<p>The examples in this guide assume the following IP addresses and hostnames:</p>
+<pre><code>10.0.0.208 c250mgrs03-pvt //management node
+10.7.2.5 c250f07c02ap05.ppd.pok.ibm.com c250f07c02ap05 //host name and IP of the ethernet network interface on service node.
+20.7.2.5 c250f07c02ap05-hf0.ppd.pok.ibm.com c250f07c02ap05-hf0 //service node
+21.7.2.5 c250f07c02ap05-hf1.ppd.pok.ibm.com c250f07c02ap05-hf1 //service node
+22.7.2.5 c250f07c02ap05-hf2.ppd.pok.ibm.com c250f07c02ap05-hf2 //service node
+23.7.2.5 c250f07c02ap05-hf3.ppd.pok.ibm.com c250f07c02ap05-hf3 //service node
+20.7.2.9 c250f07c02ap09-hf0.ppd.pok.ibm.com c250f07c02ap09-hf0 //compute node
+21.7.2.9 c250f07c02ap09-hf1.ppd.pok.ibm.com c250f07c02ap09-hf1 //compute node
+22.7.2.9 c250f07c02ap09-hf2.ppd.pok.ibm.com c250f07c02ap09-hf2 //compute node
+23.7.2.9 c250f07c02ap09-hf3.ppd.pok.ibm.com c250f07c02ap09-hf3 //compute node</code></pre>
+Make sure /etc/hosts on Management node contains hostnames for the ethernet interface and the HFI interface for the service node(s).</li>
+<li><p>Define the service node and compute node</p>
+<p>If there is no HMC configured to manage the Power 775 hardwares, you have to define the service nodes and compute nodes manually. If the hardwares are managed by HMC, you can use xCAT command &quot;rscan&quot; to generate the compute node definition. See <a href="http://xcat.sourceforge.net/man1/rscan.1.html">man page of rscan</a> for more details.</p>
+<p>This is an example of service node definition in a <a href="http://xcat.sourceforge.net/man5/xcatstanzafile.5.html">mkdef stanza file</a>:</p>
+<pre><code>c250f07c02ap05:
+objtype=node
+arch=ppc64
+cons=fsp
+groups=all,service //Specify service group indicate this is a service node.
+hcp=f07c02fsp1_a //FSP node definition that managed it.
+id=5
+installnic=en0
+ip=10.7.2.5
+mgt=fsp
+monserver=10.0.0.208
+nfsserver=10.0.0.208
+nodetype=lpar,osi
+os=AIX
+parent=f07c02fsp1_a //Set to Fsp that manage it.
+postbootscripts=servicenode
+pprofile=c250f07c02ap05
+primarynic=en0
+provmethod=1040A_SN
+setupconserver=0
+setupdhcp=1
+setupftp=1
+setupnfs=1
+setuptftp=1
+tftpserver=10.0.0.208
+xcatmaster=10.0.0.208</code></pre></li>
+</ol>
+<p>This is an example of the compute node's definition:</p>
+<pre><code>    c250f07c02ap09-hf0:
+    objtype=node
+    arch=ppc64
+    cons=fsp
+    currchain=boot
+    currstate=boot
+    groups=lpar,all
+    hcp=Server-9125-F2C-SNP7IH019-A
+    id=9
+    ip=10.4.32.224
+    mgt=fsp
+    nodetype=lpar,osi
+    os=AIX
+    parent=Server-9458-100-SNBPCF007-A
+    pprofile=xcatnode9
+    servicenode=c250f07c02ap05
+    xcatmaster=c250f07c02ap05-hf0</code></pre>
+<p>You can put the definition into one stanza file and import it to xCAT with the mkdef xCAT command.</p>
+<pre><code>    cat /percs/hfi/c250f07c02ap09-hf0.stanza | mkdef -z</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>Install service node(s) and install HFI device drivers and NIM to service node(s).
+<ol style="list-style-type: decimal">
+<li><p>Create NIM image for service node</p>
+<pre><code>mknimimage -s /percs/aiximages/aix/ 1040A_SN</code></pre></li>
+</ol></li>
+</ol>
+<p>where /install/aiximages/1040a/aix/ contains the AIX image.</p>
+<p><strong>Note:</strong> If there are existing resource, you can specify the resource type and value as an option of mknimimage so mknimimage will not create same resource type. For example you have copied one lpp_source &quot;1040A_SN_lpp_source&quot; to /install/nim/lpp_source and created NIM lpp source &quot;1040A_SN_lpp_source&quot; then you can just use it to avoiding creating new lpp_source with command:</p>
+<pre><code>        mknimimage -s /install/aiximages/1040a/aix/ 1040A_SN lpp_source=1040A_SN_lpp_source spot=1040A_SN -f
+
+2. Add required service node software Following steps add the HFI device driver, replace the NIM with new version, and replace the bootpd birnay for HFI support. Please aware that this software is to work with HFI support. There is still some other software needing to be installed on service node. Please check the &quot;Add required service node software&quot; in service node setup document for more packages: [Setting_Up_an_AIX_Hierarchical_Cluster#Add_required_service_node_software] 
+3. Update the HFI device driver to lpp source 
+
+        inutoc /hfi/dd/
+        nim -o update -a packages=all -a source=/hfi/dd/ 1040A_SN_lpp_source
+
+4. Define HFI device driver installp bundle 
+
+        nim -o define -t installp_bundle -a server=master -a location=/hfi/dd/xCATaixHFIdd.bnd xCATaixHFIdd
+
+5. Assign HFI devices drivers isntallp bundle to service node image so they will be installed during service node installation. 
+
+        chdef -t osimage -o 1040A_SN installp_bundle=xCATaixHFIdd,xCATaixSN71</code></pre>
+<p>Where installp_bundle should have been defined when installing required service node software.</p>
+<pre><code>6. Configure HFI interfaces with postscript 
+
+        cp /hfi/scripts/confighfi /install/postscripts/
+        cp /hfi/scripts/confignim /install/postscripts/
+        chdef -t osimage -o 1040A_SN synclists=/hfi/scripts/synclist
+        chdef c250f07c02ap05 postscripts=confighfi,confignim
+
+7. If you are using an existing NIM resource including HPC softwares, two steps needs to be done to automatically install and configure the HPC softwares 
+  1. Create installp bundles which specified what are HPC softwares need to be installed: 
+
+            mkdir -p /install/nim/installp_bundle
+            cp /opt/xcat/share/xcat/IBMhpc/IBMhpc_base.bnd /install/nim/installp_bundle
+            nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/IBMhpc_base.bnd IBMhpc_base
+            cp /opt/xcat/share/xcat/IBMhpc/IBMhpc_all.bnd /install/nim/installp_bundle
+            nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/IBMhpc_all.bnd IBMhpc_all
+            chdef -t osimage -o 1040A_SN installp_bundle=&quot;xCATaixHFIdd,xCATaixSN71,IBMhpc_base,IBMhpc_all&quot;
+
+  2. Assign the postscripts to service node to configure the HPC softwares automatically. 
+
+            cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.postbootscript /install/postscripts
+            cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.postscript /install/postscripts
+            cp -p /opt/xcat/share/xcat/IBMhpc/gpfs/gpfs_updates /install/postscripts
+            cp -p /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license /install/postscripts
+            cp -p /opt/xcat/share/xcat/IBMhpc/pe/pe_install /install/postscripts
+            cp -p /opt/xcat/share/xcat/IBMhpc/essl/essl_install /install/postscripts
+            cp -p /opt/xcat/share/xcat/IBMhpc/loadl/loadl_install /install/postscripts
+            chdef c250f07c02ap05 postscripts=confighfi,confignim,IBMhpc.postbootscript</code></pre>
+<p>For more details and steps about HPC integration, please review following page: [Setting_up_all_IBM_HPC_products_in_a_Stateful_Cluster]</p>
+<pre><code>8. Then follow the service node setup document starting from &quot;Section Define xCAT networks&quot; to install service node. [Setting_Up_an_AIX_Hierarchical_Cluster] 
+9. Check if HFI interfaces are up after service node is setup. 
+
+        xdsh c250f07c02ap05 ifconfig hf0</code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li><p>Create a diskless image for the compute nodes.</p>
+<pre><code>mknimimage -V -f -r -t diskless -s /percs/aiximages/aix 1040A_CN</code></pre></li>
+</ol>
+<p>where /install/AIX71GOLD/ contains the AIX 710 GOLD source images.</p>
+<p>Same as diskfull images creation, if there are existing resource, you can specify the resource type and value as an option of mknimimage so mknimimage will not create same resource type. For example, you have copied one lpp_source 1040A_CN_lpp_source to /install/nim/lpp_source, then you can just use it to avoiding creating new lpp_source with command:</p>
+<pre><code>    mknimimage -V -f -r -t diskless -s /install/AIX71GOLD/ 1040A_CNlpp_source=1040A_CN_lpp_source spot=1040A_CN 1040A_CN</code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li><p>Update the spot</p>
+<p>Note: Skip this step if you are using the existing image including HFP softwares since all the packages have been updated into the image</p>
+See the following doc for updating and adding required software Setting_Up_an_AIX_Hierarchical_Cluster#Install_the_cluster_nodes</li>
+<li><p>Create an xCAT HFI network definition</p>
+<p>Run a command similar to the following:</p>
+<pre><code>mkdef -t network -o hfinet net=20.0.0.0 mask=255.0.0.0 gateway=20.7.2.5</code></pre></li>
+<li><p>Install HFI device driver into spot</p>
+<p>(Skip this step if you are using the existing image including HFP softwares since all the packages have been updated)</p>
+<p>Install the HFI device driver into the spot on the management node.</p>
+<pre><code>inutoc /hfi/dd/
+nim -o update -a packages=all -a source=/hfi/dd 1040A_CN_lpp_source</code></pre></li>
+</ol>
+<p>where: /percs/hfi/dd contains the HFI device driver installp packages.</p>
+<pre><code>    chdef -t osimage -o 1040A_CN installp_bundle=&quot;xCATaixHFIdd,xCATaixCN71&quot;</code></pre>
+<p>Where xCATaixCN71 should have been defined when add the additional softwares into spot.</p>
+<pre><code>    mknimimage -u 1040A_CN</code></pre>
+<ol start="10" style="list-style-type: decimal">
+<li><p>synchronize /etc/hosts to SPOT to bring up all the HFI interfaces on compute nodes</p>
+<pre><code>chdef -t osimage -o 1040A_CN synclists=/hfi/scripts/synclist
+mknimimage -u 1040A_CN</code></pre></li>
+<li><p>If you are using the existing NIM resource including HPC softwares, you need to assign the postscripts to computes node to configure the HPC softwares automatically.(Optional)</p>
+<pre><code>chdef c250f07c02ap09-hf0 postscripts=IBMhpc.postbootscript</code></pre></li>
+<li><p>Initialize console for the compute node.</p>
+<pre><code>makeconservercf</code></pre></li>
+<li><p>Add confighfi postscript to compute node to config HFI interfaces automatically.</p>
+<pre><code>cp /hfi/scripts/confighfi /install/postscripts/
+chdef c250f07c02ap09-hf0 postscripts=confighfi,IBMhpc.postbootscript</code></pre></li>
+</ol>
+<p>Note: remove the IBMhpc.postbootscript if you are not using a diskless image with HPC softwares.</p>
+<ol start="14" style="list-style-type: decimal">
+<li><p>Get the MAC address of the compute node</p>
+<pre><code>getmacs c250f07c02ap09-hf0 -D --hfi</code></pre></li>
+<li><p>Initialize the AIX/NIM diskless nodes</p>
+<pre><code>mkdsklsnode -i 1040A_CN c250f07c02ap09-hf0 --hfi -f -V</code></pre></li>
+<li><p>Open remote console</p>
+<p>Open another window, login to the management node (ih1901) and run the following command to watch the installation from the console:</p>
+<pre><code>rcons c250f07c02ap09-hf0</code></pre></li>
+<li><p>Boot the compute node</p>
+<pre><code>rnetboot c250f07c02ap09-hf0 --hfi</code></pre></li>
+</ol>
+</body>
+</html>

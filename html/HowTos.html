@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#quick-starts">Quick Starts</a></li>
+<li><a href="#osimage-deployment">OS/Image Deployment</a></li>
+<li><a href="#subsystem-deployment-notes">Subsystem Deployment Notes</a></li>
+<li><a href="#security">Security</a></li>
+<li><a href="#user-management">User Management</a></li>
+<li><a href="#virtual-clusters">Virtual Clusters</a></li>
+<li><a href="#advanced-xcat-notes">Advanced xCAT Notes</a></li>
+<li><a href="#hpc-integration">HPC Integration</a></li>
+<li><a href="#web-service-api">Web Service API</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#quick-starts">Quick Starts</a></li>
+<li><a href="#osimage-deployment">OS/Image Deployment</a></li>
+<li><a href="#subsystem-deployment-notes">Subsystem Deployment Notes</a></li>
+<li><a href="#security">Security</a></li>
+<li><a href="#user-management">User Management</a></li>
+<li><a href="#virtual-clusters">Virtual Clusters</a></li>
+<li><a href="#advanced-xcat-notes">Advanced xCAT Notes</a></li>
+<li><a href="#hpc-integration">HPC Integration</a></li>
+<li><a href="#web-service-api">Web Service API</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>Note: this page contains user-contributed information about using xCAT. While these howtos contain some very useful information, they are not always updated for new versions of xCAT and therefore are, in some cases, out of date. Use the howtos with that in mind. See the [XCAT_Documentation] page for information that is tested and updated with each xCAT release (to the best of our ability).</p>
+<h2 id="quick-starts"><a href="#TOC">Quick Starts</a></h2>
+<ul>
+<li><a href="https://sourceforge.net/p/xcat/wiki/HowTos/attachment/xCATOverview.pdf">xCAT Overview</a></li>
+<li><a href="covers%20migrating%20from%20xCAT%201.3%20on%20standard%201U%20IPMI%20enabled%20machines">Quick_Install_Tutorial</a></li>
+<li><a href="Basic_Install">Basic xCAT Install</a></li>
+<li><a href="Basic_install_DHCP">xCAT Install utilizing an existing DHCP/DNS server</a></li>
+<li><a href="Intro_to_xCAT_Tables">A Brief introduction to xCAT tables</a></li>
+<li><a href="IBM_Blade_Center_HowTo">IBM Blade Center HowTo (For Starters)</a></li>
+</ul>
+<h2 id="osimage-deployment"><a href="#TOC">OS/Image Deployment</a></h2>
+<p>Here are notes for deploying specific operating systems. Most of them (Like RH5) are well documented. Please update this list as needed with notes for things you run into while installing newer or different operating systems.</p>
+<ul>
+<li><a href="Node_Discovery">Using automatic node discovery and MAC collection</a></li>
+<li>[XCAT_Virtualization_with_VMWare] (now on the Documentation page)</li>
+<li><a href="SLES10.1">SLES 10 SP1 Notes (xCAT 2.0.2)</a></li>
+<li><a href="SLES11.0">SLES 11 Notes (xCAT 2.2 core snap)</a></li>
+<li>[Getting_Started_with_xCAT2_2.4.2_on_SUSE_SLES_11.1]</li>
+<li><a href="XCAT_Xen">Xen + xCAT Notes (xCAT 2.1)</a></li>
+<li><a href="XCAT_Windows">Windows Server 2008 Deployment</a> (now on the Documentation page)</li>
+<li>[XCAT_2.x_firmware,bios,cmos_flashing_Instructions]</li>
+<li>[ISCSI_Windows_using_xCAT_software_initiator]</li>
+<li><a href="Fedora10kvm">Fedora 10 + KVM Notes</a></li>
+<li><a href="Partimage">Imaging (w/Partimage)</a></li>
+<li><a href="BootTarget">Custom Boot Targets</a></li>
+<li>[ISCSI_RHEL5.3_using_xCAT_software_initiator]</li>
+<li><a href="IB-stateless">Add IB to stateless Image</a></li>
+<li>[XCAT_Virtualization_with_KVM] (now on the Documentation page)</li>
+<li><a href="XCAT_vSMP_Foundation">vSMP Foundation + xCAT</a></li>
+<li><a href="Console">Console Settings</a></li>
+<li>[Custom_Node_Installation]</li>
+<li>[XCAT_on_Cisco_UCS_B-Series_Blades]</li>
+<li>[XCAT_on_C-Series_Rack_mount_Servers]</li>
+</ul>
+<h2 id="subsystem-deployment-notes"><a href="#TOC">Subsystem Deployment Notes</a></h2>
+<p>This page is to place documentation on installing common cluster deployment software, like Moab, Torque, Maui, GPFS, or other infrastructure software necessary for the admin get users running on the cluster.</p>
+<ul>
+<li><a href="Stateless_GPFS">How to Install Stateless GPFS</a></li>
+<li><a href="Moab_Adaptive_Computing">Moab Adaptive Computing Installation</a></li>
+<li>[Dynamic_server_provisioning_with_xCAT_and_TORQUE]</li>
+<li><a href="Maui">Maui Installation</a></li>
+<li><a href="Ganglia">Ganglia Installation</a></li>
+</ul>
+<h2 id="security"><a href="#TOC">Security</a></h2>
+<ul>
+<li>[Updating_credentials_throughout_the_cluster]</li>
+<li>[Firewall_ports]</li>
+<li>[Disable_node_to_node_root_passwordless_access]</li>
+</ul>
+<h2 id="user-management"><a href="#TOC">User Management</a></h2>
+<ul>
+<li><a href="Granting_Users_xCAT_privileges">Granting Users xCAT privileges &amp; Setting Up a Remote Client</a> (now on the Documentation page)</li>
+<li>[Setting_Up_Mounted_User_Home_Directory]</li>
+</ul>
+<h2 id="virtual-clusters"><a href="#TOC">Virtual Clusters</a></h2>
+<ul>
+<li>[Using_VirtualBox_Nodes]</li>
+<li>[XCAT_Virtualization_with_RHEV]</li>
+</ul>
+<h2 id="advanced-xcat-notes"><a href="#TOC">Advanced xCAT Notes</a></h2>
+<ul>
+<li>[Routed_Networks_setup_with_DHCP]</li>
+<li>[Linux_AIX_mixed_cluster_configuration]</li>
+</ul>
+<h2 id="hpc-integration"><a href="#TOC">HPC Integration</a></h2>
+<ul>
+<li>[Setting_up_the_IBM_HPC_Stack_in_an_xCAT_Cluster] (now on the Documentation page)</li>
+</ul>
+<h2 id="web-service-api"><a href="#TOC">Web Service API</a></h2>
+<ul>
+<li>[Setup_of_Web_Service_API]</li>
+<li>[XCAT_REST_API_Development_Guideline]</li>
+</ul>
+</body>
+</html>

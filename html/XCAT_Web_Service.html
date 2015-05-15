@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#classxcat-green-headingweb-service-architecture">class=&quot;xcat-green-heading&quot;Web Service Architecture</a></li>
+<li><a href="#classxcat-green-headingweb-service-output">class=&quot;xcat-green-heading&quot;Web Service Output</a></li>
+<li><a href="#classxcat-green-headingweb-service-status-codes">class=&quot;xcat-green-heading&quot;Web Service Status Codes</a></li>
+<li><a href="#classxcat-green-headingweb-service-security">class=&quot;xcat-green-heading&quot;Web Service Security</a></li>
+<li><a href="#classxcat-green-headingws-reference-links">class=&quot;xcat-green-heading&quot;WS Reference Links</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#classxcat-green-headingweb-service-architecture">class=&quot;xcat-green-heading&quot;Web Service Architecture</a></li>
+<li><a href="#classxcat-green-headingweb-service-output">class=&quot;xcat-green-heading&quot;Web Service Output</a></li>
+<li><a href="#classxcat-green-headingweb-service-status-codes">class=&quot;xcat-green-heading&quot;Web Service Status Codes</a></li>
+<li><a href="#classxcat-green-headingweb-service-security">class=&quot;xcat-green-heading&quot;Web Service Security</a></li>
+<li><a href="#classxcat-green-headingws-reference-links">class=&quot;xcat-green-heading&quot;WS Reference Links</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+
+<p>http://server/xcatws/ is the root of the web service. The next piece of the URI specifies the base resource a Request is being sent to, for instance, a GET sent to http://server/xcatws/nodes/ would be handled by the nodes resource. Often users of xCAT 2.x make changes to their cluster by changing data directly in the database. This will be exposed via the resource tables. For example, to access the nodepos data table, use http://server/xcatws/tables/nodepos.</p>
+<h2 id="classxcat-green-headingweb-service-architecture"><a href="#TOC">class=&quot;xcat-green-heading&quot;Web Service Architecture</a></h2>
+<p>Representational State Transfer (REST) has been chosen as the architecture for the xCAT Web Service interface. A simple explanation can be found at <a href="http://en.wikipedia.org/wiki/Representational_State_Transfer">REST on Wikipedia</a></p>
+<h2 id="classxcat-green-headingweb-service-output"><a href="#TOC">class=&quot;xcat-green-heading&quot;Web Service Output</a></h2>
+<p>The outputs supported by the Web Service are HTML, JSON and XML. HTML is the default format. The format can be specified by setting the 'format' field of a request. For example:</p>
+<p>https://myxcatserver/xcatws/tables?format=json</p>
+<h2 id="classxcat-green-headingweb-service-status-codes"><a href="#TOC">class=&quot;xcat-green-heading&quot;Web Service Status Codes</a></h2>
+<p>Here are the HTTP defined status codes that the Web Service can return.</p>
+<p>401 Unauthorized<br />403 Forbidden<br />404 Not Found<br />405 Method Not Allowed<br />406 Not Acceptable<br />408 Request Timeout<br />417 Expectation Failed<br />418 I'm a teapot<br />503 Service Unavailable</p>
+<p>200 OK<br />201 Created</p>
+<h2 id="classxcat-green-headingweb-service-security"><a href="#TOC">class=&quot;xcat-green-heading&quot;Web Service Security</a></h2>
+<p>SSL will be used to protect the data sent between the client and the Web Service. The xCAT passwd table will control access and the user id and password will be passed in the userName and password fields. A GET example:</p>
+<p>https://myserver/xcatws/tables?userName=foo&amp;password=bar</p>
+<h2 id="classxcat-green-headingws-reference-links"><a href="#TOC">class=&quot;xcat-green-heading&quot;WS Reference Links</a></h2>
+<p>Misc Links:<br />REST: http://en.wikipedia.org/wiki/Representational_State_Transfer<br />REST: http://rest.elkstein.org/2008/02/what-is-rest.html<br />HTTP Status codes: http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html<br />HTTP Request Methods: http://tools.ietf.org/html/rfc2616#section-9.1<br />HTTP Request Tool: http://soft-net.net/SendHTTPTool.aspx (haven't tried it yet)<br />HTTP PATCH: http://tools.ietf.org/html/rfc5789<br />HTTP BASIC Security: http://httpd.apache.org/docs/2.2/mod/mod_auth_basic.html<br />Asynchronous Rest: http://www.infoq.com/news/2009/07/AsynchronousRest<br />General JSON: http://www.json.org/<br />JSON wrapping: http://search.cpan.org/~makamaka/JSON-2.27/lib/JSON.pm<br />Apache CGI: http://httpd.apache.org/docs/2.2/howto/cgi.html<br />Perl CGI: http://perldoc.perl.org/CGI.html</p>
+</body>
+</html>

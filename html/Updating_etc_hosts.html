@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#update-etchosts">Update /etc/hosts</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#update-etchosts">Update /etc/hosts</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h2 id="update-etchosts"><a href="#TOC">Update /etc/hosts</a></h2>
+<p>All of the cluster nodes should be added to the /etc/hosts file on the xCAT management node. You can either edit the /etc/hosts file by hand, or use [http://xcat.sourceforge.net/man8/makehosts.8.html makehosts].</p>
+<p>If you edit the file by hand, it should look similar to:</p>
+<pre><code>
+127.0.0.1  localhost localhost.localdomain
+50.1.2.3  mgmtnode-public mgmtnode-public.cluster.com
+10.0.0.100  mgmtnode mgmtnode.cluster.com
+10.0.0.1  node1 node1.cluster.com
+10.0.0.2  node2 node2.cluster.com</code></pre>
+<p>On AIX systems the order of the short hostname and long hostname are typically reversed.</p>
+<p>If your node names and IP addresses follow a regular pattern, you can easily populate /etc/hosts by putting a regular expression in the xCAT hosts table and then running '''makehosts'''. To do this, you need to first create an initial definition of the nodes in the database, if you haven't done that already:</p>
+<pre><code>mkdef node[01-80] groups=compute,all</code></pre>
+<p>Next, put a regular expression in the hosts table. The following example will associate IP address 10.0.0.1 with node1, 10.0.0.2 with node2, etc:</p>
+<pre><code>chdef -t group -o compute ip=&#39;|node(\d+)|10.0.0.($1+0)|&#39;</code></pre>
+<p>Then run</p>
+<pre><code>makehosts compute</code></pre>
+<p>and the following entries will be added to /etc/hosts:</p>
+<pre><code>
+10.0.0.1 node01 node01.cluster.com
+10.0.0.2 node02 node02.cluster.com
+10.0.0.3 node03 node03.cluster.com
+</code></pre>
+<p>For an explanation of the regular expressions, see the [http://xcat.sourceforge.net/man5/xcatdb.5.html xCAT database man page].</p>
+<p>Note that it is a convention of xCAT that for Linux systems the short hostname is the primary hostname for the node, and the long hostname is an alias.</p>
+<p>On AIX the order is typically reversed. To have the long hostname be the primary hostname, you can use the -l option on the [http://xcat.sourceforge.net/man8/makehosts.8.html makehosts] command.</p>
+</body>
+</html>

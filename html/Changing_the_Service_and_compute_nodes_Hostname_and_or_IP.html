@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#changing-the-hosthameip-address-on-the-linux-nodes-managed-by-xcat">Changing the Hosthame/IP address on the Linux nodes managed by xCAT</a><ul>
+<li><a href="#changing-nodes-that-are-service-nodes">Changing nodes that are Service Nodes</a><ul>
+<li><a href="#database-changes-for-service-nodes">Database Changes for Service Nodes</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#changing-domain-names">Changing domain names</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#changing-the-hosthameip-address-on-the-linux-nodes-managed-by-xcat">Changing the Hosthame/IP address on the Linux nodes managed by xCAT</a></li>
+<li><a href="#changing-nodes-that-are-service-nodes">Changing nodes that are Service Nodes</a>
+<ul>
+<li><a href="#database-changes-for-service-nodes">Database Changes for Service Nodes</a></li>
+</ul></li>
+<li><a href="#changing-domain-names">Changing domain names</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p>This document is a general process for Linux and may not cover all cluster configuration.</p>
+<h2 id="changing-the-hosthameip-address-on-the-linux-nodes-managed-by-xcat"><a href="#TOC">Changing the Hosthame/IP address on the Linux nodes managed by xCAT</a></h2>
+<p>If you need to change the hostname and/or the ip address of a compute node, you need to do the following on the Management Node. If the node is a Service Node, you still do the following and then also the additional steps outlined below. Change your networks table definitions, to match the new cluster setup.</p>
+<pre><code>
+lsdef -t network -l</code></pre>
+<p>Remove the nodes from DNS configuration</p>
+<pre><code>
+makedns -d &lt;noderange&gt;
+</code></pre>
+<p>Remove the nodes from the DHCP configuration</p>
+<pre><code>
+makedhcp -d &lt;noderange&gt;
+</code></pre>
+<p>Remove the nodes from the conserver configuration</p>
+<pre><code>makeconservercf -d &lt;noderange&gt;
+</code></pre>
+<p>Change the hostname in the xCAT database (This command only supports one at a time). For many nodes you will have to write a script.</p>
+<pre><code> chdef -t node -o node1 -n node2  (changes node1 to node2 in the database)
+</code></pre>
+<p>Change the name and ip address in the /etc/hosts file If you do not use the hosts table in xCAT to create the /etc/hosts file, then edit the /etc/hosts file and change your hostnames/ipaddresses. If you use the xCAT hosts table, and your nodes are defined by name in the hosts table, the hosts table will have been updated with the new names when we changed the node name using chdef command. If the hosts tables contains a reqular expression, you will have to rework the regular expression to match your new hostnames/ip addresses. If not using a regular expression in the hosts table, then you can run</p>
+<pre><code>nodech &lt;newnodename&gt; hosts.ip=&quot;x.xx.xx.xx&quot; - will change the ip address for the new hostname in the hosts table.
+ makehosts &lt;noderange&gt; - adds the all the nodes in the noderange back into /etc/hosts from the definition in the xCAT hosts table.
+</code></pre>
+<p>Configure the new names into the DNS setup</p>
+<pre><code>makedns -n
+</code></pre>
+<p>Configure the new names into the DHCP setup</p>
+<pre><code>
+makedhcp -a</code></pre>
+<p>Configure the new names for conserver</p>
+<pre><code>
+makeconservercf</code></pre>
+<p>Update the service nodes If you are using service nodes to install the nodes, and using /etc/hosts for hostname resolution, you will need to copy the new /etc/hosts from the Management Node to the service nodes and run makedns -n on the service nodes.</p>
+<pre><code>
+ xdcp &lt;servicenodes&gt;  /etc/hosts /etc/hosts
+ xdsh &lt;servicenodes&gt; makedns -n</code></pre>
+<p>Now you will reinstall the nodes to pick up all changes</p>
+<pre><code>
+nodeset &lt;noderange&gt;  netboot (diskless)  or install (diskfull)</code></pre>
+<p>Use your normal command to install the nodes (rinstall,rnetboot,etc).</p>
+<h3 id="changing-nodes-that-are-service-nodes"><a href="#TOC">Changing nodes that are Service Nodes</a></h3>
+<p>In addition to the steps for changing any managed Linux node, if the node is a service node then you must also do the following: If the ip address that changed for the Service Node, is the node-facing ip address, then change the xcatmaster attribute for all nodes managed by the service node to the new hostname/ip address Change any other setting in the database for the use of the service node by the old ip address. One way to check for this is to run the following, where 10.6.1.1 is the old address of the service node:</p>
+<pre><code>
+ lsdef -t node -l | grep &quot;10.6.0.1&quot;
+ nfsserver=10.6.0.1
+ servicenode=10.6.0.1</code></pre>
+<p>You can see the old address shows up in several attributes, for example conserver. To find out which nodes have that invalid address, run</p>
+<pre><code>
+ nfsserver=&quot;10.6.0.1&quot;
+ cn1  (node)
+ cn2  (node)
+ cn3  (node)
+ cn4  (node)</code></pre>
+<p>So to change the nfsserver address for cn1,cn2,cn3,cn4 run the following:</p>
+<pre><code>
+ chdef -t node cn1-cn4 nfsserver=&lt;newipaddress&gt;</code></pre>
+<p>You will need to do the same for any other attributes assigned the old ip address of the Service Node.</p>
+<h4 id="database-changes-for-service-nodes"><a href="#TOC">Database Changes for Service Nodes</a></h4>
+<p>If the ip address that changes for the Service Nodes, is the address facing the Management Node, then there are required database changes on the Management Node. The database server on the Management Node has been setup to allow access from the service nodes which are database clients. This access is by hostname and/or ip address. You will need to change that access for the new hostnames and/or ip address. This affects MySQL and PostgreSQL database servers. You probably want to remove the access allowed by the old address or hostname.</p>
+<p>The following links tell you how to setup the new access:</p>
+<p>For MySQL:</p>
+<p><a href="Setting_Up_MySQL_as_the_xCAT_DB/#granting-or-revoking-access-to-the-mysql-database-to-service-node-clients">Setting_Up_MySQL_as_the_xCAT_DB granting-or-revoking-access-to-the-mysql-database-to-service-node-clients</a></p>
+<p>For PostgreSQL:</p>
+<p>You will need to add/change the ip address that allow access to the PostgreSQL server as documented in this procedure:</p>
+<p><a href="Setting_Up_PostgreSQL_as_the_xCAT_DB/#setting-up-the-service-nodes-hierarchy">Setting_Up_PostgreSQL_as_the_xCAT_DB setting-up-the-service-nodes-hierarchy</a></p>
+<h2 id="changing-domain-names"><a href="#TOC">Changing domain names</a></h2>
+<p>If you need to change the domain name on the cluster, review the following documentation.</p>
+<p><a href="Changing_the_Management_Node_Hostname_and_or_IP/#domain-name-changed">Changing_the_Management_Node_Hostname_and_or_IP domain-name-changed</a></p>
+</body>
+</html>

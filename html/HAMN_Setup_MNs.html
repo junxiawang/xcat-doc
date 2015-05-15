@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#setup-xcat-on-the-primary-management-node">Setup xCAT on the Primary Management Node</a></li>
+<li><a href="#setup-xcat-on-the-standby-management-node">Setup xCAT on the Standby Management Node</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#setup-xcat-on-the-primary-management-node">Setup xCAT on the Primary Management Node</a></li>
+<li><a href="#setup-xcat-on-the-standby-management-node">Setup xCAT on the Standby Management Node</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h2 id="setup-xcat-on-the-primary-management-node"><a href="#TOC">Setup xCAT on the Primary Management Node</a></h2>
+<p>The procedure described in [Setting_Up_a_Linux_xCAT_Mgmt_Node] or [XCAT_AIX_Cluster_Overview_and_Mgmt_Node] can be used for the xCAT setup on the primary management node. If DB2 will be used as the xCAT database system, please refer to the doc [Setting_Up_DB2_as_the_xCAT_DB].</p>
+<h2 id="setup-xcat-on-the-standby-management-node"><a href="#TOC">Setup xCAT on the Standby Management Node</a></h2>
+<p>The procedure described in [Setting_Up_a_Linux_xCAT_Mgmt_Node] or [XCAT_AIX_Cluster_Overview_and_Mgmt_Node] can also be used for the xCAT setup on the standby management node. The database system on the standby management node should be the same as the one running on the primary management node.</p>
+<p>If shared disks are used between the two management nodes, when setting up the standby management node, the shared disks should not be mounted on the standby management node. Make sure the xcatd can be up and running with whatever database is used as part of the xCAT setup verification on the standby management node.</p>
+<p>When installing and configuring DB2 software on the standby management node, you should follow the instructions in [Setting_Up_DB2_as_the_xCAT_DB]. Install DB2 and run db2sqlsetup to setup the xCAT database.</p>
+<p>After the xCAT setup is done on the standby management node, perform the following additional configuration steps:</p>
+<ul>
+<li>Make sure the primary management node can resolve the hostname of the standby management node, and vice versa.</li>
+<li>Setup ssh authentication between the primary management node and standby management node. It should be setup as &quot;passwordless ssh authentication&quot; and it should work in both directions. The summary of this procedure is:
+<ul>
+<li>cat keys from /.ssh/id_rsa.pub on the primary management node and add them to /.ssh/authorized_keys on the standby management node. Remove the standby management node entry from /.ssh/known_hosts on the primary management node prior to issuing ssh to the standby management node.</li>
+<li>cat keys from /.ssh/id_rsa.pub on the standby management node and add them to /.ssh/authorized_keys on the primary management node. Remove the primary management node entry from /.ssh/known_hosts on the standby management node prior to issuing ssh to the primary management node.</li>
+</ul></li>
+<li>Make sure the time on the primary management node and standby management node is synchronized. Some tips on setting up the timezone and time:
+<ul>
+<li>Command echo $TZ returns the current timezone setting</li>
+<li>Command date and chtz can be used to adjust the time and timezone.</li>
+<li>To setup ntp on the management nodes on AIX:</li>
+<li>Update the /etc/ntp.conf file with a valid ntp server.</li>
+<li>stopsrc -s xntpd</li>
+<li>startsrc -s xntpd</li>
+<li>Use ntpq -p to show the peer status of the ntp server, should see * to left of server after successful association with server is established</li>
+</ul></li>
+<li>Stop the xcatd daemon and DHCP service, for example, using commands stopsrc -s xcatd and stoprsc -s dhcpsd on AIX. You also need to modify the system configuration to prevent the xcatd and DHCP from being started automatically after reboots. For example, use chkconfig command on Linux and use rmssys command on AIX:</li>
+</ul>
+<p>On AIX:</p>
+<pre><code>       stopsrc -s xcatd
+       rmssys -s xcatd</code></pre>
+<p>On Linux:</p>
+<pre><code>       service xcatd stop
+       chkconfig --level 345 xcatd off
+       service dhcpd stop
+       chkconfig --level 2345 dhcpd off</code></pre>
+<ul>
+<li>Stop the HPC software daemons like TEAL, CNM, LL and GPFS and modify system configuration to prevent them from being started automatically.</li>
+<li>(Optional) Backup the xCAT database tables for the current configuration on primary management node, using command dumpxCATdb -p &lt;backupdir&gt;</li>
+</ul>
+</body>
+</html>

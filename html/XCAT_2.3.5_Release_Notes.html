@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#changes-in-2.3.5-since-2.3.4">Changes in 2.3.5 Since 2.3.4</a></li>
+<li><a href="#bugs-fixed-in-2.3.5">Bugs Fixed in 2.3.5</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#changes-in-235-since-234">Changes in 2.3.5 Since 2.3.4</a></li>
+<li><a href="#bugs-fixed-in-235">Bugs Fixed in 2.3.5</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the 2.3.4 release. Also see the [XCAT_2.3.4_Release_Notes].</p>
+<h2 id="changes-in-2.3.5-since-2.3.4"><a href="#TOC">Changes in 2.3.5 Since 2.3.4</a></h2>
+<ul>
+<li>Add CentOS5.5 disc id</li>
+<li>Backport 2.4 Cisco trunk mode support</li>
+<li>Add an option to skip automatic setup of ftp</li>
+<li>Be explicit about vm placement on power on in the face of vmware clusters</li>
+</ul>
+<h2 id="bugs-fixed-in-2.3.5"><a href="#TOC">Bugs Fixed in 2.3.5</a></h2>
+<ul>
+<li>PBS_HOME wrong, should be /var/spool/torque (not /var/spool/pbs)</li>
+<li>fix error rinstall compute node1 interpreting noderange as compute,node1 (feature 2991651)</li>
+<li>fix rsync multiple nodes hierarchy problem building from file name ( multiple SNsyncfiledir in path)</li>
+<li>Fix problem where pxelinux.cfg directory missing would fail</li>
+<li>Fix configuration datastore identification in vmware environments not using xCAT auto-attach when scsi is requested</li>
+<li>Backport dealing with questions interfering with poweron of vmware vms</li>
+<li>Backport scsi disk feature from 2.4 vmware support</li>
+<li>Backport ToolsCenter fixes from 2.4 branch</li>
+<li>Fix rspconfig network for IBM BladeCenter</li>
+<li>Many more bugs were fixed in 2.3.4. For details see http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945 .</li>
+</ul>
+</body>
+</html>

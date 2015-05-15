@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>{{:Design Warning}}</p>
+<p>This feature will enable the dynamic node group support for xCAT.</p>
+<p>1. <strong>Starting point:</strong> nodegroup manpage is a good start point for us to interpret the dynamic node groups support. The manpage does indicate several implementation hints and most of the description in nodegroup manpage seems reasonable.</p>
+<p>2. <strong>Dynamic node group defintion location:</strong> The table &quot;nodegroup&quot; is a perfect place to store the dynamic node group definition, and the nodegroup manpage also indicates that the table nodegroup can be used to store the dynamic node group definition.<br />3. <strong>User interface changes:</strong> The dynamic node : 1groups user interfaces can be grouped into two categories) create, display, modify, delete the dynamic node group definition. 2) Pass the dynamic node group to any xCAT command.<br />To create, display, modify, delete the dynamic node group definition, the users can simply use tabedit, tabdump, chdef to achieve this.</p>
+<p>For example, the users can use tabedit or use mkdef/chdef to create/modify the dynamic node group definition.</p>
+<pre><code>mkdef -t group -o grp1 grouptype=dynamic -d -w &quot;mgt=hmc&quot; -w &quot;hcp=c76v1hmc04&quot;  </code></pre>
+<p>Note the mkdef command has been enhanced with the -d flag, see man mkdef.</p>
+<p>The dynamic node group behaves the same as the static node group when passing to the xCAT commands. For example, in command &quot;nodels grp1&quot;, the grp1 can be dynamic node group or dynamic node group, it should not makes any difference.<br />4. <strong>Selection string syntax:</strong> The dynamic node groups selection string basic syntax is the same as the <em>def commands selection string syntax.A list of &quot;attr</em>val&quot; pairs, where the * can be &quot;==&quot;, &quot;=~&quot;, &quot;!=&quot; or &quot;!~&quot;. Each -w flag will be followed by one pair. For example, the -w &quot;mgthmc&quot; -w &quot;hcp=~c1hmc04&quot;.<br />5. <strong>Coordinate with the static node groups:</strong> Since the static node groups definition and the dynamic node groups definition are not stored in the same location, so there may be some confliction between the dynamic node groups and the static node groups. For example, if the node1 is included in dynamic node groups grp1, but the users can use <em>chdef -t node1 nodegroups=grp1</em> to add node1 into grp1 statically, when the users trying to use chdef or mkdef to add a node to a dynamic node group manually, a warning message will be displayed to indicate that the the node group is a dynamic node group and should not add a node into a dynamic node group statically, when users run nodels<br /><strong>6. manpage and documentation updates:</strong> The nodegroup manpage needs to be updated to remove the &quot;Not supported yet!&quot;. The mkdef manpage needs to be updated to enable the &quot;-d | --dynamic&quot; flag. Since the node group is used widely in the xCAT docs, plan to add a separate section to describe the dynamic/static node groups.</p>
+<p>Here is an example of using dynamic node group.<br />[<script type="text/javascript">
+<!--
+h='&#120;&#x63;&#x61;&#116;&#x6d;&#110;';a='&#64;';n='&#114;&#x6f;&#x6f;&#116;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'<code>'+e+'</code>'+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#114;&#x6f;&#x6f;&#116;&#32;&#x61;&#116;&#32;&#120;&#x63;&#x61;&#116;&#x6d;&#110;</noscript> ~]# tabdump nodegroup</p>
+<ol style="list-style-type: decimal">
+<li>groupname,grouptype,members,wherevals,comments,disable</li>
+</ol>
+<p>...<br />&quot;grp1&quot;,&quot;dynamic&quot;,,&quot;mgt==hmc::hcp==c1hmc04&quot;,,<br />[<script type="text/javascript">
+<!--
+h='&#120;&#x63;&#x61;&#116;&#x6d;&#110;';a='&#64;';n='&#114;&#x6f;&#x6f;&#116;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'<code>'+e+'</code>'+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#114;&#x6f;&#x6f;&#116;&#32;&#x61;&#116;&#32;&#120;&#x63;&#x61;&#116;&#x6d;&#110;</noscript> ~]#<br />[<script type="text/javascript">
+<!--
+h='&#120;&#x63;&#x61;&#116;&#x6d;&#110;';a='&#64;';n='&#114;&#x6f;&#x6f;&#116;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'<code>'+e+'</code>'+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#114;&#x6f;&#x6f;&#116;&#32;&#x61;&#116;&#32;&#120;&#x63;&#x61;&#116;&#x6d;&#110;</noscript> ~]# nodels grp1<br />c1fsp01<br />c1fsp02<br />[<script type="text/javascript">
+<!--
+h='&#120;&#x63;&#x61;&#116;&#x6d;&#110;';a='&#64;';n='&#114;&#x6f;&#x6f;&#116;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'<code>'+e+'</code>'+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#114;&#x6f;&#x6f;&#116;&#32;&#x61;&#116;&#32;&#120;&#x63;&#x61;&#116;&#x6d;&#110;</noscript> ~]#</p>
+</body>
+</html>

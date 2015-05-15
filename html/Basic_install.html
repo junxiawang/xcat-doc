@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#assumptions">Assumptions</a></li>
+<li><a href="#network-setup">Network setup</a></li>
+<li><a href="#install-the-operating-system">Install the operating system</a></li>
+<li><a href="#install-xcat">Install xCAT</a></li>
+<li><a href="#setup-the-xcat-tables">Setup the xCAT tables</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#assumptions">Assumptions</a></li>
+<li><a href="#network-setup">Network setup</a></li>
+<li><a href="#install-the-operating-system">Install the operating system</a></li>
+<li><a href="#install-xcat">Install xCAT</a></li>
+<li><a href="#setup-the-xcat-tables">Setup the xCAT tables</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p>This page gives directions for creating an xCAT server that utilizes your networks existing DHCP/DNS server. These directions are specific to CentOS 5.2 x86_64, but could be generalized for other installations</p>
+<h2 id="assumptions"><a href="#TOC">Assumptions</a></h2>
+<p>In this tutorial, the following assumptions are made:</p>
+<ul>
+<li>IP of dhcp/nameserver is 10.10.10.1</li>
+<li>IP of headnode (xcat) is 10.10.10.100</li>
+</ul>
+<h2 id="network-setup"><a href="#TOC">Network setup</a></h2>
+<p>This setup assumes your xcat node has eth0 plugged into your network, along with the compute nodes.</p>
+<h2 id="install-the-operating-system"><a href="#TOC">Install the operating system</a></h2>
+<p>A basic Desktop install will do fine. Turn off the Firewall and SELinux to be able to access the node from your network</p>
+<h2 id="install-xcat"><a href="#TOC">Install xCAT</a></h2>
+<p>Add the xCAT package repositories<br />Note: These are for the current release. See the <a href="http://xcat.sourceforge.net/yum/download.html">Download</a> page for the location of the latest snapshot repo, and other operating systems.</p>
+<pre><code>    cd /etc/yum.repos.d
+    wget http://xcat.sourceforge.net/yum/xcat-core/xCAT-core.repo
+    wget http://xcat.sourceforge.net/yum/xcat-dep/rh5/x86_64/xCAT-dep.repo
+    yum clean metadata
+    yum install xCAT</code></pre>
+<p>Verify the install</p>
+<pre><code>    
+    source /etc/profile.d/xcat.sh
+    tabdump site</code></pre>
+<p>If the tabdump command works, xCAT is installed.</p>
+<p>Enter the nodes into your DHCP and DNS servers unless they are already there. This requires the MAC addresses of all the nodes, and should assign them names and static IPs. You will also need the MAC addresses for the mac table, so that xCAT can identify them as it PXE boots them.</p>
+<h2 id="setup-the-xcat-tables"><a href="#TOC">Setup the xCAT tables</a></h2>
+<p>The Site table - this table defines your xCAT environment<br />The default values will probably look just like this:</p>
+<pre><code>tabdump site
+
+#key,value,comments,disable
+&quot;xcatdport&quot;,&quot;3001&quot;,,
+&quot;xcatiport&quot;,&quot;3002&quot;,,
+&quot;tftpdir&quot;,&quot;/tftpboot&quot;,,
+&quot;master&quot;,&quot;10.10.10.100&quot;,,
+&quot;domain&quot;,&quot;cridomain&quot;,,
+&quot;installdir&quot;,&quot;/install&quot;,,
+&quot;timezone&quot;,&quot;America/Denver&quot;,,
+&quot;nameservers&quot;,&quot;10.10.10.1&quot;,,</code></pre>
+<p>Setup the nodelist table</p>
+<pre><code>tabedit nodelist
+&quot;n01&quot;,&quot;compute,all&quot;,,,
+&quot;n01-ipmi&quot;,&quot;ipmi,all&quot;,,,
+&quot;n02&quot;,&quot;compute,all&quot;,,,
+...</code></pre>
+<p>Setup the mac table</p>
+<pre><code>n01,eth0,00:11:22:33:44:55:66
+n02,eth0,00:11:22:33:44:55:67
+...</code></pre>
+<p>Setup the nodehm table</p>
+<pre><code>tabedit nodehm
+&quot;n01&quot;,&quot;ipmi&quot;,&quot;ipmi&quot;,,,,,,,,,,
+&quot;n02&quot;,&quot;ipmi&quot;,&quot;ipmi&quot;,,,,,,,,,,
+...</code></pre>
+<p>Setup the noderes,passwd,chain and nodetype tables</p>
+<pre><code>chdef -t group -o compute netboot=pxe tftpserver=10.10.10.100 nfsserver=10.10.10.100 installnic=eth0 primarynic=eth0
+chtab key=system passwd.username=root passwd.password=cluster
+chdef -t group -o compute os=centos5.2 arch=x86_64 profile=compute nodetype=osi
+chdef -t group -o compute chain=&quot;runcmd=standby&quot; ondiscover=nodediscover</code></pre>
+<p>The networks table should look similar to this by default:</p>
+<pre><code>tabedit networks
+ ,&quot;10.10.10.0&quot;,&quot;255.255.255.0&quot;,&quot;eth0&quot;,,,&quot;10.10.10.100&quot;,&quot;10.10.10.1&quot;,,,,</code></pre>
+<p>Setup Images</p>
+<p>do this for the DVD and '''NOT''' the cd!</p>
+<pre><code>    copycds CentOS-5.2-i386-bin-DVD.iso
+    mknb x86_64</code></pre>
+<p>Install the node</p>
+<pre><code>    rinstall n01</code></pre>
+<p>To create a netboot image:</p>
+<pre><code>cd /opt/xcat/share/xcat/netboot/centos  
+./genimage -i eth0 -n e1000,bnx2 -o centos5.2 -p compute  
+cd /install/netboot/centos5.2/x86_64/compute/rootimg/etc/  
+cp fstab fstab.ORIG  
+vi fstab </code></pre>
+<p>add these lines:</p>
+<pre><code>
+compute_x86_64 / tmpfs rw 0 1  
+none /tmp tmpfs defaults,size=10m 0 2  
+none /var/tmp tmpfs defaults,size=10m 0 2  </code></pre>
+<p>Now run these commands</p>
+<pre><code>packimage -o centos5.2 -p compute -a x86_64  
+nodeset (nodename) netboot  
+rpower (nodename) boot </code></pre>
+</body>
+</html>

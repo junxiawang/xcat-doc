@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#supported-xcat-cross-distribution-hardware-control-and-os-installation-environments">Supported xCAT cross-distribution hardware control and OS installation environments</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#supported-xcat-cross-distribution-hardware-control-and-os-installation-environments">Supported xCAT cross-distribution hardware control and OS installation environments</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="supported-xcat-cross-distribution-hardware-control-and-os-installation-environments"><a href="#TOC">Supported xCAT cross-distribution hardware control and OS installation environments</a></h2>
+<p>Notes:</p>
+<p><strong>a.</strong> All the &quot;yes&quot; and &quot;no&quot; statements in the table are referring to hardware control and os provisioning, for the general purpose management like file sync and parallel commands, we do not see any obvious problem with any of the combination.</p>
+<p><strong>b.</strong> The &quot;yes&quot; means should work but may or may not have been verified by the xCAT development/testing team.</p>
+<p><strong>c.</strong> For diskless node, need another node that has the same os version and arch with the compute nodes to create diskless image, see <a href="Building_a_Stateless_Image_of_a_Different_Architecture_or_OS">Building_a_Stateless_Image_of_a_Different_Architecture_or_OS</a> for more details</p>
+<!---
+begin_xcat_table;
+numcols=7;
+colwidths=20,20,20,20,20,20,20;
+-->
+
+
+<p>| | RedHat ppc64 CN | SLES ppc64 CN | RedHat x86_64 CN | SLES x86_64 CN | Ubuntu x86_64 CN | RedHat ppc64le CN | SLES ppc64le CN | Ubuntu ppc64el CN | AIX CN ------------|--------------|------------|---------------|-------------|---------------|-----------|-----------|-----------|----------- |RedHat ppc64 MN/SN | yes | yes | yes<sup>1</sup> | yes<sup>1</sup> | yes<sup>1</sup> | yes | yes | yes | no |SLES ppc64 MN/SN | yes | yes | yes<sup>1</sup> | yes<sup>1</sup> | yes<sup>1</sup>| yes | yes | yes | no |RedHat x86_64 MN/SN | yes<sup>4</sup> | yes<sup>4</sup> | yes | yes | yes | yes | yes | yes | no |SLES x86_64 MN/SN | yes<sup>4</sup> | yes<sup>4</sup> | yes | yes | yes | yes | yes | yes | no |Ubuntu x86_64 MN/SN | yes<sup>5</sup> | yes<sup>5</sup> | yes | yes | yes | yes | yes | yes | no |RedHat ppc64le MN/SN | yes<sup>2<sup>| yes<sup>2<sup>| yes | yes | yes | yes | yes | yes | no |SLES ppc64le MN/SN | no| no| yes | yes | yes | yes | yes | yes | no |Ubuntu ppc64el MN/SN | yes<sup>3<sup>| yes<sup>3<sup>| yes | yes | yes | yes | yes | yes | no |AIX MN/SN | no | no | no | no | no | no | no | no | yes</p>
+<!---
+end_xcat_table
+-->
+
+<p>Notes:</p>
+<p><strong>1.</strong> To manage x86_64 servers from ppc64/ppc64le nodes, will need to install the packages <strong>xnba-undi</strong> <strong>elilo-xcat</strong> and <strong>syslinux-xcat</strong> manually on the management node. And manually run command &quot;cp /opt/xcat/share/xcat/netboot/syslinux/pxelinux.0 /tftpboot/&quot;</p>
+<p><strong>2.</strong> If the compute nodes are DFM managed systems, will need xCAT 2.9.1 or high versions and the ppc64le DFM and ppc64le hardware server on the management node.</p>
+<p><strong>3.</strong> If the compute nodes are DFM managed systems, will need xCAT 2.10 or high versions and the ppc64le DFM and ppc64le hardware server on the management node.</p>
+<p><strong>4.</strong> If the compute nodes are DFM managed systems, will need the ppc64le DFM and ppc64le hardware server on the management node.</p>
+<p><strong>5.</strong> Does not support DFM managed compute nodes, hardware control does not work.</p>
+</body>
+</html>

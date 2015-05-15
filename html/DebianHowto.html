@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#what-works">What Works</a></li>
+<li><a href="#known-issues">Known Issues</a></li>
+<li><a href="#todos">ToDo's</a></li>
+<li><a href="#ubuntu-mn-dependancies">Ubuntu MN dependancies</a><ul>
+<li><a href="#universe-repository">Universe Repository</a></li>
+</ul></li>
+<li><a href="#ubuntu-mn-howto">Ubuntu MN Howto</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#what-works">What Works</a></li>
+<li><a href="#known-issues">Known Issues</a></li>
+<li><a href="#todos">ToDo's</a></li>
+<li><a href="#ubuntu-mn-dependancies">Ubuntu MN dependancies</a></li>
+<li><a href="#universe-repository">Universe Repository</a></li>
+<li><a href="#ubuntu-mn-howto">Ubuntu MN Howto</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><strong>This doc is deprecated. See [Ubuntu_Quick_Start].</strong></p>
+<p>See http://xcat.ocf.co.uk/devel</p>
+<p>SVN at http://svn.ocf.co.uk/xcat -- probably need a better viewer for this</p>
+<p>^^ Need to merge all this into one at some point ^^</p>
+<p>https://sourceforge.net/tracker/?func=detail&amp;aid=3047018&amp;group_id=208749&amp;atid=1006948</p>
+<p>Instead of the createrepo as below for RPM based machines</p>
+<pre><code>createrepo .</code></pre>
+<p>we need to do the following to create a repo for debian/ubuntu</p>
+<pre><code>dpkg-scanpackages . /dev/null | gzip -9c &amp;gt; Packages.gz</code></pre>
+<h2 id="what-works"><a href="#TOC">What Works</a></h2>
+<ul>
+<li>statefull installs of
+<ul>
+<li>ubuntu 9.10</li>
+<li>ubuntu 10.04 LTS</li>
+<li>ubuntu 10.04.1 LTS</li>
+<li>ubuntu 10.10</li>
+</ul></li>
+<li>copycds
+<ul>
+<li>ubuntu 9.10</li>
+<li>ubuntu 10.04 LTS</li>
+<li>ubuntu 10.04.1 LTS</li>
+<li>ubuntu 10.10</li>
+<li>debian 5.0.6</li>
+</ul></li>
+</ul>
+<h2 id="known-issues"><a href="#TOC">Known Issues</a></h2>
+<ol style="list-style-type: decimal">
+<li>debootstrap in el5 will not work with lucid (10.04 and 10.04.1), but works on el6
+<ul>
+<li>debootstrap works with 9.10 and 10.10</li>
+</ul></li>
+<li>Syslog still doesn't work (Working on a FIX)</li>
+<li>nbroot/nbkernel not done yet (FIXED by using alien) (need to create own)</li>
+<li>yaboot-xcat can only be compiled on ppc therefore used alien</li>
+<li>No stateless of statelite support yet, will come in the next devel release of the ubuntu PATCH set</li>
+<li>Deb package issues
+<ul>
+<li>some postinst/postrm scripts may not work as attended, please report any problems here</li>
+</ul></li>
+<li>Installation of the deb packages doesn't start/configure xCAT correctly, although the relevant debs have the postinst scrip as the RPMS, prob need to change the deb that does the xcatconfig -i
+<ol style="list-style-type: decimal">
+<li>rm -rf /etc/*.sqlite</li>
+<li>xcatconfig -i</li>
+<li>service xcatd start</li>
+</ol></li>
+</ol>
+<h2 id="todos"><a href="#TOC">ToDo's</a></h2>
+<ul>
+<li>Fix debs
+<ul>
+<li>create debian folders for: and make proper debs instead of using alien</li>
+<li>nbroot</li>
+<li>nbkernel</li>
+<li>yaboot-xcat</li>
+<li>fix postinst/postrm issues if any reported</li>
+<li>Add proper copyrights/Licensing (DONE)</li>
+<li>Sign all packages (DONE)</li>
+</ul></li>
+<li>Fix postscripts
+<ul>
+<li>otherpkgs (works OK with v0.1 i.e. xCAT 2.4.3)</li>
+<li>syslog</li>
+</ul></li>
+<li>Add support for stateless</li>
+<li>Add support for statelite</li>
+<li>test in VMs
+<ul>
+<li>KVM</li>
+<li>virtual box</li>
+<li>xen</li>
+<li>vmware</li>
+</ul></li>
+<li>move repository to debian format such that I have dists and pools (better way of management) i.e. so that the following entries would work in the apt source files (DONE)
+<ul>
+<li>deb http://xcat.ocf.co.uk/devel/debs maverick main universe xcat-core xcat-deps</li>
+</ul></li>
+</ul>
+<h2 id="ubuntu-mn-dependancies"><a href="#TOC">Ubuntu MN dependancies</a></h2>
+<p>below are the dependancies that do not come from the main CD/DVD of the ubuntu/debian. So these are required from the universe repositories, I have added these as part of the xcat-deps dependancies.</p>
+<h3 id="universe-repository"><a href="#TOC">Universe Repository</a></h3>
+<ul>
+<li>libnet-ssleay-perl</li>
+<li>libio-socket-ssl-perl</li>
+<li>libio-stty-perl</li>
+<li>libexpect-perl</li>
+<li>libossp-uuid-perl</li>
+<li>libcrypt-ssleay-perl</li>
+<li>libfcgi-perl</li>
+<li>libsoap-lite-perl</li>
+<li>libnet-libidn-perl</li>
+<li>fping</li>
+<li>ipmitool</li>
+</ul>
+<h2 id="ubuntu-mn-howto"><a href="#TOC">Ubuntu MN Howto</a></h2>
+<ul>
+<li>Install node with ubuntu10.10</li>
+<li><p>Add the following into /etc/apt/sources.list.d/xcat-core.list</p>
+<p>deb http://xcat.ocf.co.uk/devel/debs/xcat-core/. /</p></li>
+<li><p>Add the following into /etc/apt/sources.list.d/xcat-dep.list</p>
+<p>deb http://xcat.ocf.co.uk/devel/debs/xcat-deps/ubuntu10.10/x86_64/. /</p></li>
+<li>Run apt-get update</li>
+<li>run apt-get install xcat</li>
+<li>You may run into trouble, if you do run the following commands
+<ul>
+<li>. /etc/profile.d/xcat.sh</li>
+<li>xcatconfig -i -d</li>
+<li>apt-get -f install</li>
+</ul></li>
+<li>get the ubuntu patches from xCAT-ubuntu-0.2.pre.tgz
+<ul>
+<li>Untar the file</li>
+<li>run ./install.sh</li>
+<li>This should patch the xCAT for use with Ubuntu/Debian</li>
+</ul></li>
+<li><p>Now you should be able deploy nodes statefull to all nodes.</p></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview"><strong>Overview</strong></a></li>
+<li><a href="#mellanox-switch-ssh-syslog-and-snmp-configuration">Mellanox Switch SSH, syslog and SNMP Configuration</a><ul>
+<li><a href="#define-mellanox-switch-in-database">Define Mellanox Switch in Database</a><ul>
+<li><a href="#switches-table">switches Table</a></li>
+<li><a href="#nodehm-table">nodehm table</a></li>
+<li><a href="#nodetype-table">nodetype table</a></li>
+<li><a href="#passwd-table">passwd table</a></li>
+</ul></li>
+<li><a href="#setup-ssh-keys">** setup ssh keys **</a></li>
+<li><a href="#xdsh-and-the-mellanox-switch">xdsh and the Mellanox Switch</a><ul>
+<li><a href="#xdsh-mellanox-config-file">xdsh Mellanox config file</a></li>
+<li><a href="#return-codes-from-mellanox">Return codes from Mellanox</a></li>
+</ul></li>
+<li><a href="#consolidate-syslog-to-mnsn">Consolidate syslog to MN/SN</a></li>
+<li><a href="#trap-snmp-alerts-on-mnsn">Trap SNMP alerts on MN/SN</a></li>
+<li><a href="#commands-supported">Commands Supported</a></li>
+</ul></li>
+<li><a href="#ufm-xdsh-syslog-and-snmp-configuration">UFM xdsh, syslog and SNMP Configuration</a><ul>
+<li><a href="#set-up-xdsh-to-ufm-and-backup">set up xdsh to UFM and backup</a></li>
+<li><a href="#consolidate-syslogs">consolidate syslogs</a></li>
+<li><a href="#get-snmp-traps-to-xcat-mn">get SNMP traps to xCAT mn</a></li>
+<li><a href="#consolidate-all-ufm-logs">consolidate all UFM logs</a></li>
+<li><a href="#feed-node-names-to-ufm">feed node names to UFM</a></li>
+</ul></li>
+<li><a href="#docs">Docs</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview"><strong>Overview</strong></a></li>
+<li><a href="#mellanox-switch-ssh-syslog-and-snmp-configuration">Mellanox Switch SSH, syslog and SNMP Configuration</a></li>
+<li><a href="#define-mellanox-switch-in-database">Define Mellanox Switch in Database</a>
+<ul>
+<li><a href="#switches-table">switches Table</a></li>
+<li><a href="#nodehm-table">nodehm table</a></li>
+<li><a href="#nodetype-table">nodetype table</a></li>
+<li><a href="#passwd-table">passwd table</a></li>
+</ul></li>
+<li><a href="#-setup-ssh-keys-">** setup ssh keys **</a></li>
+<li><a href="#xdsh-and-the-mellanox-switch">xdsh and the Mellanox Switch</a>
+<ul>
+<li><a href="#xdsh-mellanox-config-file">xdsh Mellanox config file</a></li>
+<li><a href="#return-codes-from-mellanox">Return codes from Mellanox</a></li>
+</ul></li>
+<li><a href="#consolidate-syslog-to-mnsn">Consolidate syslog to MN/SN</a></li>
+<li><a href="#trap-snmp-alerts-on-mnsn">Trap SNMP alerts on MN/SN</a></li>
+<li><a href="#commands-supported">Commands Supported</a></li>
+<li><a href="#ufm-xdsh-syslog-and-snmp-configuration">UFM xdsh, syslog and SNMP Configuration</a></li>
+<li><a href="#set-up-xdsh-to-ufm-and-backup">set up xdsh to UFM and backup</a></li>
+<li><a href="#consolidate-syslogs">consolidate syslogs</a></li>
+<li><a href="#get-snmp-traps-to-xcat-mn">get SNMP traps to xCAT mn</a></li>
+<li><a href="#consolidate-all-ufm-logs">consolidate all UFM logs</a></li>
+<li><a href="#feed-node-names-to-ufm">feed node names to UFM</a></li>
+<li><a href="#docs">Docs</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="overview"><a href="#TOC"><strong>Overview</strong></a></h2>
+<p>This design is for a xCAT configuration and support of the Mellanox Switch, UFM, and Mellanox adapters. The function planned is:</p>
+<ul>
+<li>Mellanox switches:
+<ul>
+<li>set up ssh</li>
+<li>use the ssh capability to query and set settings via rspconfig or straight thru xdsh</li>
+<li>trap snmp alerts on the MN/SN</li>
+<li>channel snmp alerts into TEAL for analysis (TEAL team will work on this)</li>
+<li>consolidate syslog to MN/SN</li>
+<li>channel syslog entries into TEAL for analysis (TEAL team will work on this) ??</li>
+<li>a TEAL analyzer that will do the following for the snmp alerts and syslog entries: (NM team will work on this??)</li>
+<li>associate the IB info with the correct node</li>
+<li>associate link errors with benign events like powering off nodes</li>
+<li>apply thresholds to link errors and create a TEAL alert when a threshold has been exceeded</li>
+</ul></li>
+<li>UFM
+<ul>
+<li>set up xdsh to UFM and backup</li>
+<li>list settings for UFM and backup to help admin make sure they are in sync</li>
+<li>give UFM the xcat node names so the UFM error events will have that info in it (dependent on Mellanox providing a way to give them the node names)</li>
+<li>get SNMP alerts - documentation only, no need to automate</li>
+<li>channel snmp alerts into TEAL for analysis (TEAL team will work on this)</li>
+<li>a TEAL analyzer that will do the same things mentioned for the switch events above ??</li>
+<li>consolidate syslog to MN/SN</li>
+<li>investigate consolidating UFM-specific log files to MN/SN ??</li>
+</ul></li>
+<li>Mellanox IB Adapters:
+<ul>
+<li>install libraries in the node OS image</li>
+<li>configure adapters at node boot time</li>
+</ul></li>
+</ul>
+<h2 id="mellanox-switch-ssh-syslog-and-snmp-configuration"><a href="#TOC">Mellanox Switch SSH, syslog and SNMP Configuration</a></h2>
+<h3 id="define-mellanox-switch-in-database"><a href="#TOC">Define Mellanox Switch in Database</a></h3>
+<p>Use the following chdef command to define the mellanox switch ( for example mswitch).</p>
+<pre><code> chdef -t node -o mswitch groups=all nodetype=switch mgt=switch</code></pre>
+<p>Add the ssh user name and password to the <strong>switches</strong> table:</p>
+<pre><code> tabch switch=mswitch switches.sshusername=admin switches.sshpassword=admin switches.switchtype=MellanoxIB</code></pre>
+<p>The switches table will look like this:</p>
+<pre><code>#switch,snmpversion,username,password,privacy,auth,linkports,sshusername,sshpassword,switchtype,comments,disable
+ &quot;mswitch&quot;,,,,,,,&quot;admin&quot;,&quot;admin&quot;,&quot;MellanoxIB&quot;,,</code></pre>
+<p>If there is one admin and one password for all the switches then put an entry in the xCAT passwd table for the admin id and password to use to login. This is need to setup the ssh keys, so then the Mellanox commands can be run from the Management Node using xdsh.</p>
+<pre><code>#key,username,password,cryptmethod,comments,disable
+&quot;switch&quot;,&quot;admin&quot;,&quot;admin&quot;,,,</code></pre>
+<h4 id="switches-table"><a href="#TOC">switches Table</a></h4>
+<p>Three new attributes will be added to the switches table:</p>
+<p>sshuserid -- ssh user name.</p>
+<p>sshpassword -- ssh password.</p>
+<p>switchtype -- the type of the switch. The valid value is: MellanxIB.</p>
+<h4 id="nodehm-table"><a href="#TOC">nodehm table</a></h4>
+<p>Attribute mgt would be set to &quot;switch&quot;.</p>
+<h4 id="nodetype-table"><a href="#TOC">nodetype table</a></h4>
+<p>Attribute nodetype would be set to &quot;switch&quot;.</p>
+<h4 id="passwd-table"><a href="#TOC">passwd table</a></h4>
+<p>Use &quot;switch&quot; as the key for he default username and password for all the switches.</p>
+<h3 id="setup-ssh-keys"><a href="#TOC">** setup ssh keys **</a></h3>
+<p><strong>rspconfig</strong> will be used to setup the ssh keys to the switch for passwordless ssh access.</p>
+<pre><code>rspconfig mswitch sshcfg=enable/disable</code></pre>
+<h3 id="xdsh-and-the-mellanox-switch"><a href="#TOC">xdsh and the Mellanox Switch</a></h3>
+<p>xdsh must create a special ssh command for the switch.</p>
+<p>The syntax of a working command to the switch is the following:</p>
+<pre><code>ssh admin@9.114.54.129 &#39;cli &quot;enable&quot; &quot;configure terminal&quot; &quot;show ssh server host-keys&quot;&#39;</code></pre>
+<p>The input to xdsh will be the following:</p>
+<pre><code>xdsh mswitch -l admin --devicetype IBSwitch::Mellanox  &#39;enable;configure terminal;show ssh server host-keys&#39;</code></pre>
+<p>Then xdsh should be able to construct the correct syntax of the command. Note&quot; cli is required on all commands, so xdsh should add it. For example, xdsh will send:</p>
+<pre><code>ssh admin@mswitch cli &quot;enable&quot; &quot;configure terminal&quot; &quot;show ssh server host-keys&quot; </code></pre>
+<h4 id="xdsh-mellanox-config-file"><a href="#TOC">xdsh Mellanox config file</a></h4>
+<p>xdsh will have a config file for the Mellanox switch. The file name will be: /var/opt/xcat/IBSwitch/Mellanox/config. The contents are:</p>
+<pre><code>[main]
+[xdsh]
+pre-command=cli
+post-command=NULL</code></pre>
+<p>A sample is shipped in /opt/xcat/share/xcat/ib/scripts/Mellanox/config.</p>
+<p>We can add the return code command to the post-command if available.</p>
+<h4 id="return-codes-from-mellanox"><a href="#TOC">Return codes from Mellanox</a></h4>
+<p>Right now all commands good and bad return only the good return from ssh. Need to work with them to get a command like we have for QLogic &quot;showLastRetcode&quot;.</p>
+<h3 id="consolidate-syslog-to-mnsn"><a href="#TOC">Consolidate syslog to MN/SN</a></h3>
+<p>Use the following command to consolidate the syslog to the MN or the SN:</p>
+<pre><code> rspconfig mswitch logdest=&amp;lt;ip&amp;gt;</code></pre>
+<h3 id="trap-snmp-alerts-on-mnsn"><a href="#TOC">Trap SNMP alerts on MN/SN</a></h3>
+<p>This will be done through the monitoring plugin called snmpmon. New code will be added to support Mellanox IB swith. The code will use rspconfig under the cover. Supported rspconfig commands are described in next section.</p>
+<p>First, get http://www.mellanox.com/related-docs/prod_ib_switch_systems/MELLANOX-MIB.zip, unzip it. Copy the mib file MELLANOX-MIB.txt to /usr/share/snmp/mibs directory on the mn and sn (if the sn is the snmp trap destination.)</p>
+<p>Then,</p>
+<p>To configure, run:</p>
+<pre><code> monadd snmpmon &amp;lt;mswitch&amp;gt;
+ moncfg snmpmon &amp;lt;mswitch&amp;gt;</code></pre>
+<p>To start monitoring, run:</p>
+<pre><code> monstart snmpmon &amp;lt;mswitch&amp;gt;</code></pre>
+<p>To stop monitoring, run:</p>
+<pre><code> monstop snmpmon &amp;lt;mswitch&amp;gt;</code></pre>
+<p>To deconfigure, run:</p>
+<pre><code> mondecfg snmpmon &amp;lt;mswitch&amp;gt;</code></pre>
+<h3 id="commands-supported"><a href="#TOC">Commands Supported</a></h3>
+<p>Setup the snmp alert destination:</p>
+<pre><code>rspconfig &amp;lt;switch&amp;gt; snmpdest=&amp;lt;ip&amp;gt; [remove]
+   where &quot;remove&quot; means to remove this ip from the snmp destination list.</code></pre>
+<p>Enable/disable setting the snmp traps.</p>
+<pre><code>rspconfig &amp;lt;switch&amp;gt; alert=enable/disable</code></pre>
+<p>Define the read only community for snmp version 1 and 2.</p>
+<pre><code>rspconfig &amp;lt;switch&amp;gt; community=&amp;lt;string&amp;gt;</code></pre>
+<p>Enable/disable snmp function on the swithc.</p>
+<pre><code> rspconfig &amp;lt;switch&amp;gt; snmpcfg=enable/disable</code></pre>
+<p>Enable/disable ssh-ing to the switch without password.</p>
+<pre><code>rspconfig &amp;lt;switch&amp;gt; sshcfg=enable/disable</code></pre>
+<p>Setup the syslog remove receiver for this switch, and also define the minimum level of severity of the logs that are sent. The valid levels are: emerg, alert, crit, err, warning, notice, info, debug, none, remove. &quot;remove&quot; means to remove the given ip from the receiver list.</p>
+<pre><code>rspconfig &amp;lt;switch&amp;gt; logdest=&amp;lt;ip&amp;gt; [&amp;lt;level&amp;gt;]</code></pre>
+<p>For doing other tasks on the switch, use xdsh. For example:</p>
+<pre><code> xdsh mswitch -l admin --devicetype IBSwitch::Mellanox  &#39;show logging&#39;</code></pre>
+<h2 id="ufm-xdsh-syslog-and-snmp-configuration"><a href="#TOC">UFM xdsh, syslog and SNMP Configuration</a></h2>
+<p>UFM server are just regular Linix boxes with UFM installed. xCAT can help install and configure the UFM servers. The xCAT mn can send remote command to UFM through xdsh. It can also collect SNMP traps and syslogs from the UFM servers.</p>
+<h3 id="set-up-xdsh-to-ufm-and-backup"><a href="#TOC">set up xdsh to UFM and backup</a></h3>
+<p>Assume we have two hosts with UFM installed, called host1 and host2. First define the two hosts in the xCAT cluster. Usually the network that the UFM hosts are in a different than the compute nodes, make sure to assign correct servicenode and xcatmaster in the noderes table. And also make sure to assign correct os and arch values in the nodetype table for the UFM hosts. For example:</p>
+<pre><code> mkdef -t node -o host1,host2 groups=ufm,all os=sles11.1 arch=x86_64 servicenode=10.0.0.1 xcatmaster=10.0.0.1</code></pre>
+<p>Then exchange the SSH key so that it can run xdsh.</p>
+<pre><code> xdsh host1,host2 -K</code></pre>
+<p>Now we can run xdsh on the UFM hosts.</p>
+<pre><code> xdsh ufm date</code></pre>
+<h3 id="consolidate-syslogs"><a href="#TOC">consolidate syslogs</a></h3>
+<p>Run the following command to make the UFM hosts to send the syslogs to the xCAT mn:</p>
+<pre><code> updatenode ufm -P syslog</code></pre>
+<p>To test, runt the following commands on the UFM hosts and see if the xCAT mn receives the new messages in /var/log/messages</p>
+<pre><code> logger xCAT &quot;This is a test&quot;</code></pre>
+<h3 id="get-snmp-traps-to-xcat-mn"><a href="#TOC">get SNMP traps to xCAT mn</a></h3>
+<p>You need to have the Advanced License for UFM in order to send SNMP traps.</p>
+<p>1. Copy the mib file to /usr/share/snmp/mibs directory on the mn.</p>
+<pre><code>  scp ufmhost:/opt/ufm/files/conf/vol_ufm3_0.mib /usr/share/snmp/mibs</code></pre>
+<p>where ufmhost is the host where UFM is installed.</p>
+<p>2. On the UFM host, open the /opt/ufm/conf/gv.cfg configuration file. Under the [Notifications] line, set</p>
+<pre><code> snmp_listeners = &amp;lt;IP Address 1&amp;gt;[:&amp;lt;port 1&amp;gt;][,&amp;lt;IP Address 2&amp;gt;[:&amp;lt;port 2&amp;gt;]…]</code></pre>
+<p>the default port is 162. For example:</p>
+<pre><code>   ssh ufmhost
+   vi /opt/ufm/conf/gv.cfg
+
+   ....
+   [Notifications]
+   snmp_listeners = 10.0.0.1
+ where 10.0.0.1 is the the ip address of the management node.</code></pre>
+<p>3. On the UFM host, restart the ufmd.</p>
+<pre><code> service ufmd restart</code></pre>
+<p>4. From UFM GUI, click on the &quot;Config&quot; tab; bring up the &quot;Event Management&quot; Policy Table. Then select the SNMP check boxes for the events you are interested in to enable the system to send an SNMP traps for these events. Click &quot;OK&quot;.</p>
+<h3 id="consolidate-all-ufm-logs"><a href="#TOC">consolidate all UFM logs</a></h3>
+<p>There are different logs on a UFM hosts besides syslogs. It's better to consolidate them to the xCAT mn. This item has low priority for now. It will be implemented later.</p>
+<h3 id="feed-node-names-to-ufm"><a href="#TOC">feed node names to UFM</a></h3>
+<p>UFM will use the REST API(v2) for xCAT functions. It will get the node info and incorporate these info into the events. The REST APIs can be found here:</p>
+<p>[REST_API_v2]</p>
+<h2 id="docs"><a href="#TOC">Docs</a></h2>
+<ul>
+<li>Managing Mellonox switch. (new)</li>
+<li>xCAT Monitoring (update)</li>
+</ul>
+</body>
+</html>

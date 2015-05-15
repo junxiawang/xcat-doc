@@ -1,0 +1,343 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#overview-of-cluster-setup-process">Overview of Cluster Setup Process</a></li>
+<li><a href="#distro-specific-steps">Distro-specific Steps</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+</ul></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#configure-xcat">Configure xCAT</a><ul>
+<li><a href="#optionalsetup-the-dhcp-interfaces-in-site-table"><strong>(Optional)Setup the DHCP interfaces in site table</strong></a></li>
+</ul></li>
+<li><a href="#discover-and-define-your-system-p-hardware">Discover and Define Your System p Hardware</a></li>
+<li><a href="#setting-up-a-linux-hierarchical-cluster">Setting up a Linux Hierarchical Cluster</a></li>
+<li><a href="#complete-the-definition-of-the-compute-nodes">Complete the Definition of the Compute Nodes</a><ul>
+<li><a href="#define-xcat-groups">Define xCAT groups</a></li>
+<li><a href="#update-the-attributes-of-the-node">Update the attributes of the node</a><ul>
+<li><a href="#rhel-7-notes"><strong>RHEL 7 Notes</strong></a></li>
+</ul></li>
+<li><a href="#configure-conserver">Configure conserver</a><ul>
+<li><a href="#update-conserver-configuration"><strong>Update conserver configuration</strong></a></li>
+<li><a href="#check-rcons"><strong>Check rcons</strong></a></li>
+</ul></li>
+<li><a href="#check-hardware-control-setup-to-the-nodes">Check hardware control setup to the nodes</a></li>
+<li><a href="#update-the-mac-table-with-the-address-of-the-nodes">Update the mac table with the address of the node(s)</a><ul>
+<li><a href="#configure-dhcp"><strong>Configure DHCP</strong></a></li>
+</ul></li>
+<li><a href="#optionalset-up-customization-scripts">(Optional)Set up customization scripts</a></li>
+</ul></li>
+<li><a href="#install-stateful-nodes">Install Stateful Nodes</a><ul>
+<li><a href="#begin-installation">Begin Installation</a></li>
+<li><a href="#use-network-boot-to-start-the-installation">Use network boot to start the installation</a></li>
+</ul></li>
+<li><a href="#stateless-node-deployment">Stateless Node Deployment</a><ul>
+<li><a href="#use-network-boot-to-start-the-installation-for-the-nodes">Use network boot to start the installation for the nodes</a></li>
+<li><a href="#check-the-installation-result">Check the installation result</a></li>
+<li><a href="#remove-an-image">Remove an image</a></li>
+</ul></li>
+<li><a href="#statelite-node-deployment">Statelite Node Deployment</a></li>
+<li><a href="#advanced-features">Advanced features</a><ul>
+<li><a href="#use-the-driver-update-disk">Use the driver update disk:</a></li>
+<li><a href="#setup-kdump-service-over-ethernethfi-on-diskless-linux-for-xcat-2.6-and-higher">Setup Kdump Service over Ethernet/HFI on diskless Linux (for xCAT 2.6 and higher)</a><ul>
+<li><a href="#generate-rootimage-for-disklessstatelite"><strong>Generate rootimage for diskless/statelite</strong></a></li>
+<li><a href="#the-remaining-steps">The Remaining Steps</a></li>
+<li><a href="#additional-configuration">Additional configuration</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+<li><a href="#appendix-a-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix A: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-b-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix B: Install your Management Node to a new Release of Linux</strong></a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#overview-of-cluster-setup-process">Overview of Cluster Setup Process</a></li>
+<li><a href="#distro-specific-steps">Distro-specific Steps</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#configure-xcat">Configure xCAT</a>
+<ul>
+<li><a href="#optionalsetup-the-dhcp-interfaces-in-site-table"><strong>(Optional)Setup the DHCP interfaces in site table</strong></a></li>
+</ul></li>
+<li><a href="#discover-and-define-your-system-p-hardware">Discover and Define Your System p Hardware</a></li>
+<li><a href="#setting-up-a-linux-hierarchical-cluster">Setting up a Linux Hierarchical Cluster</a></li>
+<li><a href="#complete-the-definition-of-the-compute-nodes">Complete the Definition of the Compute Nodes</a></li>
+<li><a href="#define-xcat-groups">Define xCAT groups</a></li>
+<li><a href="#update-the-attributes-of-the-node">Update the attributes of the node</a>
+<ul>
+<li><a href="#rhel-7-notes"><strong>RHEL 7 Notes</strong></a></li>
+</ul></li>
+<li><a href="#configure-conserver">Configure conserver</a>
+<ul>
+<li><a href="#update-conserver-configuration"><strong>Update conserver configuration</strong></a></li>
+<li><a href="#check-rcons"><strong>Check rcons</strong></a></li>
+</ul></li>
+<li><a href="#check-hardware-control-setup-to-the-nodes">Check hardware control setup to the nodes</a></li>
+<li><a href="#update-the-mac-table-with-the-address-of-the-nodes">Update the mac table with the address of the node(s)</a>
+<ul>
+<li><a href="#configure-dhcp"><strong>Configure DHCP</strong></a></li>
+</ul></li>
+<li><a href="#optionalset-up-customization-scripts">(Optional)Set up customization scripts</a></li>
+<li><a href="#install-stateful-nodes">Install Stateful Nodes</a></li>
+<li><a href="#begin-installation">Begin Installation</a></li>
+<li><a href="#use-network-boot-to-start-the-installation">Use network boot to start the installation</a></li>
+<li><a href="#stateless-node-deployment">Stateless Node Deployment</a></li>
+<li><a href="#use-network-boot-to-start-the-installation-for-the-nodes">Use network boot to start the installation for the nodes</a></li>
+<li><a href="#check-the-installation-result">Check the installation result</a></li>
+<li><a href="#remove-an-image">Remove an image</a></li>
+<li><a href="#statelite-node-deployment">Statelite Node Deployment</a></li>
+<li><a href="#advanced-features">Advanced features</a></li>
+<li><a href="#use-the-driver-update-disk">Use the driver update disk:</a></li>
+<li><a href="#setup-kdump-service-over-ethernethfi-on-diskless-linux-for-xcat-26-and-higher">Setup Kdump Service over Ethernet/HFI on diskless Linux (for xCAT 2.6 and higher)</a>
+<ul>
+<li><a href="#generate-rootimage-for-disklessstatelite"><strong>Generate rootimage for diskless/statelite</strong></a></li>
+<li><a href="#the-remaining-steps">The Remaining Steps</a></li>
+<li><a href="#additional-configuration">Additional configuration</a></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+<li><a href="#appendix-a-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix A: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-b-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix B: Install your Management Node to a new Release of Linux</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p><strong>Note: if you are using P775 hardware, do not use this document.</strong> Use: [XCAT_pLinux_Clusters_775].</p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>This cookbook provides instructions on how to use xCAT to create and deploy a Linux cluster on IBM power system machines. <strong>Note: if you are using P775 hardware, do not use this document.</strong> Use: [XCAT_pLinux_Clusters_775].</p>
+<p>The power system machines have the following characteristics:</p>
+<ul>
+<li>May have multiple LPARs (an LPAR will be the target machine to install an operating system image on, i.e. the LPAR will be the compute node).</li>
+<li>The Ethernet card and SCSI disk can be virtual devices.</li>
+<li>An HMC or xCAT DFM (Direct FSP/BPA Management) is used for the HCP (hardware control point) to control them.</li>
+</ul>
+<p>xCAT supports three types of installations for compute nodes: Diskfull installation (Statefull), Diskless Stateless, and <a href="XCAT_Linux_Statelite">Diskless Statelite</a>. xCAT also supports hierarchical clusters where one or more service nodes are used to handle the installation and management of compute nodes. (Instructions and references will be given later in this document for setting up a hierarchical cluster.)</p>
+<p>This document will guide you through installing xCAT on your management node, configuring your cluster, deploying a Linux operating system to your compute nodes, and optionally upgrading firmware on your power system hardware.</p>
+<h3 id="overview-of-cluster-setup-process"><a href="#TOC">Overview of Cluster Setup Process</a></h3>
+<p>Here is a summary of the steps required to set up the cluster and what this document will take you through:</p>
+<ol style="list-style-type: decimal">
+<li>Prepare the management node - doing these things before installing the xCAT software helps the process to go more smoothly.</li>
+<li>Install the xCAT software on the management node.</li>
+<li>Configure some cluster wide information</li>
+<li>Define a little bit of information in the xCAT database about the ethernet switches and nodes - this is necessary to direct the node discovery process.</li>
+<li>Have xCAT configure and start several network daemons - this is necessary for both node discovery and node installation.</li>
+<li>Discovery the nodes - during this phase, xCAT configures the FSP's and collects many attributes about each node and stores them in the database.</li>
+<li>Set up the OS images and install the nodes.</li>
+</ol>
+<h3 id="distro-specific-steps"><a href="#TOC">Distro-specific Steps</a></h3>
+<ul>
+<li>[RH] indicates that step only needs to be done for RHEL and Red Hat based distros (CentOS, Scientific Linux, and in most cases Fedora).</li>
+<li>[SLES] indicates that step only needs to be done for SLES.</li>
+</ul>
+<h3 id="command-man-pages-and-database-attribute-descriptions"><a href="#TOC">Command Man Pages and Database Attribute Descriptions</a></h3>
+<ul>
+<li>All of the commands used in this document are described in the <a href="http://xcat.sourceforge.net/man1/xcat.1.html">xCAT man pages</a>.</li>
+<li>All of the database attributes referred to in this document are described in the <a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xCAT database object and table descriptions</a>.</li>
+</ul>
+<h2 id="prepare-the-management-node-for-xcat-installation"><a href="#TOC">Prepare the Management Node for xCAT Installation</a></h2>
+<p><a href="Prepare_the_Management_Node_for_xCAT_Installation">Prepare_the_Management_Node_for_xCAT_Installation</a></p>
+<h2 id="install-xcat-on-the-management-node"><a href="#TOC">Install xCAT on the Management Node</a></h2>
+<p><a href="Install_xCAT_on_the_Management_Node">Install_xCAT_on_the_Management_Node</a></p>
+<h2 id="configure-xcat"><a href="#TOC">Configure xCAT</a></h2>
+<p><a href="Configuring_xCAT">Configuring_xCAT</a></p>
+<h4 id="optionalsetup-the-dhcp-interfaces-in-site-table"><a href="#TOC"><strong>(Optional)Setup the DHCP interfaces in site table</strong></a></h4>
+<p>To set up the site table dhcp interfaces for your system p cluster, identify the correct interfaces that xCAT should listen to on your management node and service nodes:</p>
+<pre><code>     chdef -t site dhcpinterfaces=&#39;pmanagenode|eth1;service|eth0&#39;
+     makedhcp -n
+     service dhcpd restart</code></pre>
+<h2 id="discover-and-define-your-system-p-hardware"><a href="#TOC">Discover and Define Your System p Hardware</a></h2>
+<p>The next steps are to discover your hardware on the nextwork, defined it in the xCAT database, configure xCAT's hardware control, and do the initial definition of the LPARs as the compute nodes. These steps are explained in the following 2 documents. Use the one that applies to your environment:</p>
+<ul>
+<li>For DFM managed system p cluster, use <a href="XCAT_System_p_Hardware_Management_for_HMC_Managed_Systems">XCAT System p Hardware Management for HMC Managed Systems</a></li>
+<li>For HMC managed system p cluster, use <a href="xCAT_System_p_Hardware_Management_for_DFM_Managed_Systems">xCAT System p Hardware Management for DFM Managed Systems</a></li>
+</ul>
+<p>After performing the steps in one of those documents, return here and continue on in this document.</p>
+<h2 id="setting-up-a-linux-hierarchical-cluster"><a href="#TOC">Setting up a Linux Hierarchical Cluster</a></h2>
+<p>For large clusters, you can distribute most of the xCAT services from the management node to xCAT service nodes. Doing so, creates a &quot;hierarchical cluster&quot;. The following document describes additional xCAT management node configuration for a Linux Hierarchical Cluster, how to install your service nodes, and how to configure your compute nodes to be managed by service nodes.</p>
+<p>[Setting_Up_a_Linux_Hierarchical_Cluster]</p>
+<p>Setting up a hierarchical cluster assumes more advanced knowledge of xCAT node definition, deployment, and management. If this is your first time setting up an xCAT cluster, you should skip this step for now and experiment with a simple cluster managed directly from your xCAT management node to become familiar with all the different concepts and processes.</p>
+<h2 id="complete-the-definition-of-the-compute-nodes"><a href="#TOC">Complete the Definition of the Compute Nodes</a></h2>
+<p>The hardware management documents explained how to get the LPARs of the CECs defined as nodes in the xCAT database. Before deploying an OS on the nodes, you must set some additional attributes of the nodes.</p>
+<h3 id="define-xcat-groups"><a href="#TOC">Define xCAT groups</a></h3>
+<p>See the following <a href="Node_Group_Support">Node Group Support</a>,for more details on how to define xCAT groups. For the example below add the compute group to the nodes.</p>
+<pre><code>    chdef -t node -o pnode1,pnode2 -p groups=compute</code></pre>
+<h3 id="update-the-attributes-of-the-node"><a href="#TOC">Update the attributes of the node</a></h3>
+<pre><code>    chdef -t node -o pnode1 netboot=yaboot tftpserver=192.168.0.1 nfsserver=192.168.0.1
+    monserver=192.168.0.1 xcatmaster=192.168.0.1 installnic=mac primarynic=mac</code></pre>
+<p><strong>Note:</strong></p>
+<p>*Make sure the attributes &quot;installnic&quot; and &quot;primarynic&quot; are set up by the correct Ethernet or HFI Interface of compute node. Otherwise the compute node installation may hang on requesting information from an incorrect interface. The &quot;installnic&quot; and &quot;primarynic&quot; can also be set to mac address if you are not sure about the Ethernet interface name, the mac address can be got through getmacs command. The installnic&quot; and &quot;primarynic&quot; can also be set to keyword &quot;mac&quot;, which means that the network interface specified by the mac address in the mac table will be used.</p>
+<p>*Make sure that the address used above ( 192.168.0.1) is the address of the Management Node as known by the node. Also make sure site.master has this address.</p>
+<p>*Make sure the attributes &quot;netboot&quot; is set correctly according to the OS and hardware platform:</p>
+<pre><code>
+&quot;pxe&quot; or &quot;xnba&quot;: for X86* platform;
+&quot;yaboot&quot;: for IBM Power platform;
+&quot;grub2-tftp&quot; or &quot;grub2-http&quot;: for IBM Power LE platform, Redhat7.x and newer Redhat family on Power BE platform. The difference between the 2 is the file transfer protocol of grub2 to fetch the os kernel and initrd;
+&quot;grub2&quot;: same as &quot;grub2-tftp&quot; to keep backward compatibility.
+</code></pre>
+<h4 id="rhel-7-notes"><a href="#TOC"><strong>RHEL 7 Notes</strong></a></h4>
+<p>*If you are using RHEL7, &quot;yaboot&quot; is deprecated, the netboot method for system P must be set to &quot;grub2&quot;.</p>
+<pre><code>    chdef -t node -o pnode1 netboot=grub2</code></pre>
+<p>*Redhat 7 provides methods for consistent and predictable network device naming for network interfaces. These features change the name of network interfaces from traditional &quot;eth[0...9]&quot; to predictable network device names, see<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html">CONSISTENT NETWORK DEVICE NAMING</a>. In case you need to preserve the &quot;ethX&quot; naming scheme, please specify the option &quot;net.ifnames=0&quot; in &quot;addkcmdline&quot; attribute of node or osimage to prevent the consistent network device renaming.</p>
+<pre><code>    chdef -t node -o pnode1 -p addkcmdline=net.ifnames=0</code></pre>
+<h3 id="configure-conserver"><a href="#TOC">Configure conserver</a></h3>
+<p>The xCAT rcons command uses the conserver package to provide support for multiple read-only consoles on a single node and the console logging. For example, if a user has a read-write console session open on node node1, other users could also log in to that console session on node1 as read-only users. This allows sharing a console server session between multiple users for diagnostic or other collaborative purposes. The console logging function will log the console output and activities for any node with remote console attributes set to the following file which an be replayed for debugging or any other purposes:</p>
+<pre><code>    /var/log/consoles/&lt;node_name&gt;</code></pre>
+<p>Note: /var/log/consoles/<node_name> is the default console logging file, could be changed through updating the &quot;logfile&quot; attribute in /etc/conserver.cf</p>
+<h4 id="update-conserver-configuration"><a href="#TOC"><strong>Update conserver configuration</strong></a></h4>
+<p>Each xCAT node with remote console attributes set should be added into the conserver configuration file to make the rcons work. The xCAT command <strong>makeconservercf</strong> will put all the nodes into conserver configuration file /etc/conserver.cf. The makeconservercf command must be run when there is any node definition changes that will affect the conserver, such as adding new nodes, removing nodes or changing the nodes' remote console settings.</p>
+<p>To add or remove new nodes for conserver support:</p>
+<pre><code>    makeconservercf
+    service conserver stop
+    service conserver start</code></pre>
+<h4 id="check-rcons"><a href="#TOC"><strong>Check rcons</strong></a></h4>
+<p>The functions rnetboot and getmacs depend on conserver functions, check it is available.</p>
+<pre><code>    rcons pnode1</code></pre>
+<p>If it works ok, you will get into the console interface of the pnode1. If it does not work, review your rcons setup as documented in previous steps.</p>
+<h3 id="check-hardware-control-setup-to-the-nodes"><a href="#TOC">Check hardware control setup to the nodes</a></h3>
+<p>See if you setup is correct at this point, run rpower to check node status:</p>
+<pre><code>    rpower pnode1 stat</code></pre>
+<h3 id="update-the-mac-table-with-the-address-of-the-nodes"><a href="#TOC">Update the mac table with the address of the node(s)</a></h3>
+<p><strong>Before run getmacs, make sure the node is off.</strong> The reason is the HMC may not be able to shutdown linux nodes which are in running state.</p>
+<p>You can force the lpar shutdown with:</p>
+<pre><code>    rpower pnode1 off</code></pre>
+<p>Run the getmacs command with -D flag to get the mac address of the system p node:</p>
+<pre><code>    getmacs -D pnode1 </code></pre>
+<p>The getmacs -D command will reboot the nodes to openfirmware console and input openfirmware commands to list the network adapters, and then use the ping test to try which network adapter is connected to the management node. This is a time consuming process and does not handle the scalability configuration well, if the system p nodes are managed through DFM and the nodes only have virtual network adapters(LHEA and SEA), use getmacs command without -D will make the process be much quicker, but the only problem is that getmacs will not be able to know which network adapter could be used to connect to the management node.</p>
+<pre><code>    getmacs pnode1</code></pre>
+<p>The output looks like following:</p>
+<pre><code>    pnode1:
+    Type Location Code MAC Address Full Path Name Ping Result Device Type
+    ent U9133.55A.10E093F-V4-C5-T1 f2:60:f0:00:40:05 /vdevice/l-lan@30000005 virtual</code></pre>
+<p>And the Mac address will be written into the xCAT mac table. Run to verify:</p>
+<pre><code>    tabdump mac</code></pre>
+<h4 id="configure-dhcp"><a href="#TOC"><strong>Configure DHCP</strong></a></h4>
+<p>Add the defined nodes into the DHCP configuration:</p>
+<pre><code>     makedhcp pnode1</code></pre>
+<p>Restart the dhcp service:</p>
+<pre><code>     service dhcpd restart</code></pre>
+<h3 id="optionalset-up-customization-scripts"><a href="#TOC">(Optional)Set up customization scripts</a></h3>
+<p>xCAT supports the running of customization scripts on the nodes when they are installed. You can see what scripts xCAT will run by default by looking at the xcatdefaults entry in the xCAT postscripts table. The postscripts attribute of the node definition can be used to specify the comma separated list of the scripts that you want to be executed on the nodes. The order of the scripts in the list determines the order in which they will be run.</p>
+<p>To check current postscript and postbootscripts setting:</p>
+<pre><code>    tabdump postscripts</code></pre>
+<p>For example, if you want to have your two scripts called foo and bar run on node node01 you could add them to the postscripts table:</p>
+<pre><code>chdef -t node -o node01 -p postscripts=foo,bar</code></pre>
+<p>For more information on creating and setting up customization scripts: [Postscripts_and_Prescripts]</p>
+<h2 id="install-stateful-nodes"><a href="#TOC">Install Stateful Nodes</a></h2>
+<p><a href="Installing_Stateful_Linux_Nodes">Installing_Stateful_Linux_Nodes</a></p>
+<h3 id="begin-installation"><a href="#TOC">Begin Installation</a></h3>
+<pre><code>nodeset compute osimage=mycomputeimage</code></pre>
+<p>Now boot your nodes...</p>
+<h3 id="use-network-boot-to-start-the-installation"><a href="#TOC">Use network boot to start the installation</a></h3>
+<pre><code>    rnetboot compute</code></pre>
+<p>The rnetboot is a time consuming process and does not handle the scalability configuration well, if the system p nodes are managed through DFM, the commands rbootseq and rpower will make the process be much more effective:</p>
+<pre><code>    rbootseq compute net 
+    rpower compute reset
+</code></pre>
+<p><a href="Monitor_Installation">Monitor_Installation</a></p>
+<p><a href="Install_Additional_Packages">Install_Additional_Packages</a></p>
+<p><a href="Install_OS_Updates">Install_OS_Updates</a></p>
+<h2 id="stateless-node-deployment"><a href="#TOC">Stateless Node Deployment</a></h2>
+<p>The following section (and its subsections) is the standard xCAT procedure for building and deploying a linux stateless image. Some of the example commands refer to the x86_64 architecture, but the procedure is the same on ppc64. Just replace x86_64 with ppc64. Also, when it comes time to boot the nodes, use rnetboot instead of rpower.</p>
+<p><a href="Using_Provmethod=osimagename">Using_Provmethod=osimagename</a></p>
+<h3 id="use-network-boot-to-start-the-installation-for-the-nodes"><a href="#TOC">Use network boot to start the installation for the nodes</a></h3>
+<pre><code>    rnetboot compute</code></pre>
+<p>When the statelss node is and up and running, the xCAT postscripts will set the node to boot from network, so you could use <strong>rpower compute reset</strong> for the subsequent stateless bootups.</p>
+<p>The rnetboot is a time consuming process and does not handle the scalability configuration well, if the system p nodes are managed through DFM, the commands rbootseq and rpower will make the process be much more effective:</p>
+<pre><code>    rbootseq compute net 
+    rpower compute reset
+</code></pre>
+<h3 id="check-the-installation-result"><a href="#TOC">Check the installation result</a></h3>
+<p>After the node installation is completed successfully, the node's status will be changed to <strong>booted</strong>, the following command to check the node's status:</p>
+<pre><code>    lsdef compute -i status</code></pre>
+<p>When the node's status is changed to <strong>booted</strong>, you can also check ssh service on the node is working and you can login without password.</p>
+<p>Note: Do not run ssh or xdsh against the node until the node installation is completed successfully. Running ssh or xdsh against the node before the node installation completed may result in ssh hostkeys issues.</p>
+<p>If ssh is working but cannot login without password, setup the ssh key to the compute node using xdsh:</p>
+<pre><code>    xdsh compute -K</code></pre>
+<p>After exchanging ssh key, following command should work.</p>
+<pre><code>    xdsh compute date</code></pre>
+<h3 id="remove-an-image"><a href="#TOC">Remove an image</a></h3>
+<p>If you want to remove an image, rmimage is used to remove the Linux stateless or statelite image from the file system. It is better to use this command than just remove the filesystem yourself, because it also remove appropriate links to real files system that may be distroyed on your Management Node, if you just use the rm -rf command.</p>
+<p>You can specify the &lt;os&gt;, &lt;arch&gt; and &lt;profile&gt; value to the rmimagecommand:</p>
+<pre><code>    rmimage -o &lt;os&gt; -a &lt;arch&gt; -p &lt;profile&gt;</code></pre>
+<p>Or, you can specify one imagename to the command:</p>
+<pre><code>    rmimage &lt;imagename&gt;</code></pre>
+<h2 id="statelite-node-deployment"><a href="#TOC">Statelite Node Deployment</a></h2>
+<p>Statelite is an xCAT feature which allows you to have mostly stateless nodes (for ease of management), but tell xCAT that just a little bit of state should be kept in a few specific files or directories that are persistent for each node. If you would like to use this feature, refer to the [XCAT_Linux_Statelite] documentation.</p>
+<h2 id="advanced-features"><a href="#TOC">Advanced features</a></h2>
+<h3 id="use-the-driver-update-disk"><a href="#TOC">Use the driver update disk:</a></h3>
+<p>Refer to [Using_Linux_Driver_Update_Disk].</p>
+<h3 id="setup-kdump-service-over-ethernethfi-on-diskless-linux-for-xcat-2.6-and-higher"><a href="#TOC">Setup Kdump Service over Ethernet/HFI on diskless Linux (for xCAT 2.6 and higher)</a></h3>
+<p>Follow [Kdump over Ethernet or HFI for Linux diskless nodes] to define the diskless image object.</p>
+<h4 id="generate-rootimage-for-disklessstatelite"><a href="#TOC"><strong>Generate rootimage for diskless/statelite</strong></a></h4>
+<p>Follow <a href="XCAT_pLinux_Clusters/#stateless-node-deployment">XCAT_pLinux_Clusters#Stateless_node_deployment</a> to generate the diskless rootimg . Follow <a href="XCAT_Linux_Statelite">XCAT_Linux_Statelite</a> to generate the statelite image.</p>
+<h4 id="the-remaining-steps"><a href="#TOC">The Remaining Steps</a></h4>
+<p>Follow the documents including [<a href="http://sourceforge.net/apps/mediawiki/xcat/index.php?title=XCAT_pLinux_Clusters">xCAT_pLinux_Clusters</a>] and [<a href="http://sourceforge.net/apps/mediawiki/xcat/index.php?title=XCAT_Linux_Statelite">xCAT_Linux_Statelite</a>] to setup the diskless/statelite image, and to make the specified noderange booting with the diskless/statelite image.</p>
+<h4 id="additional-configuration"><a href="#TOC">Additional configuration</a></h4>
+<p>After noderange booted up with the diskless/statelite image, add a dynamic ip range into networks table to the network used for compute node installation. This dynamic ip range should be large enough accommodate all of the nodes on the network. For example:</p>
+<pre><code>     #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,nodehostname,ddnsdomain,vlanid,comments,disable
+     &quot;hfinet&quot;,&quot;20.0.0.0&quot;,&quot;255.0.0.0&quot;,&quot;hf0&quot;,&quot;20.7.4.1&quot;,&quot;20.7.4.1&quot;,&quot;20.7.4.1&quot;,&quot;20.7.4.1&quot;,,,&quot;20.7.4.100-20.7.4.200&quot;,,,,,</code></pre>
+<h2 id="references"><a href="#TOC">References</a></h2>
+<ul>
+<li><a href="http://xcat.sf.net/">xCAT web site</a></li>
+<li><a href="http://xcat.sf.net/man1/xcat.1.html">xCAT man pages</a></li>
+<li><a href="http://xcat.sf.net/man5/xcatdb.5.html">xCAT DB table descriptions</a></li>
+<li><a href="Monitoring_an_xCAT_Cluster">Monitoring Your Cluster with xCAT</a></li>
+<li>[XCAT_AIX_Cluster_Overview_and_Mgmt_Node]</li>
+<li><a href="http://xcat.wiki.sourceforge.net/">xCAT wiki</a></li>
+<li><a href="http://xcat.org/mailman/listinfo/xcat-user">xCAT mailing list</a></li>
+<li><a href="https://sourceforge.net/tracker/?group_id=208749&amp;atid=1006945">xCAT bugs</a></li>
+<li><a href="https://sourceforge.net/tracker/?group_id=208749&amp;atid=1006948">xCAT feature requests</a></li>
+</ul>
+<h2 id="appendix-a-migrate-your-management-node-to-a-new-service-pack-of-linux"><a href="#TOC"><strong>Appendix A: Migrate your Management Node to a new Service Pack of Linux</strong></a></h2>
+<p>If you need to migrate your xCAT Management Node with a new SP level of Linux, for example rhels6.1 to rhels6.2 you should as a precautionary measure:</p>
+<ul>
+<li>Backup database and save critical files to be used if needed to reference or restore using xcatsnap. Move the xcatsnap log and *gz file off the Management Node.</li>
+<li>Backup images and custom data in /install and move off the Management Node.</li>
+<li>service xcatd stop</li>
+<li>service xcatd stop on any service nodes</li>
+<li>Migrate to the new SP level of Linux.</li>
+<li>service xcatd start</li>
+</ul>
+<p>If you have any Service Nodes:</p>
+<ul>
+<li>Migrate to the new SP level of linux and reinstall the servicenode with xCAT following normal procedures.</li>
+<li>service xcatd start</li>
+</ul>
+<p>The document:</p>
+<p><a href="Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux">Setting_Up_a_Linux_xCAT_Mgmt_Node#Appendix_D:_Upgrade_your_Management_Node_to_a_new_Service_Pack_of_Linux</a> gives a sample procedure on how to update the management node or service nodes to a new service pack of Linux.</p>
+<h2 id="appendix-b-install-your-management-node-to-a-new-release-of-linux"><a href="#TOC"><strong>Appendix B: Install your Management Node to a new Release of Linux</strong></a></h2>
+<p>First backup critical xCAT data to another server so it will not be loss during OS install.</p>
+<ul>
+<li>Back up the xcat database using xcatsnap, important config files and other system config files for reference and for restore later. Prune some of the larger tables:</li>
+</ul>
+<pre><code>   tabprune eventlog -a
+   tabprune auditlog -a</code></pre>
+<ul>
+<li>Run xcatsnap ( will capture database, config files) and copy to another host. By default it will create in /tmp/xcatsnap two files, for example:</li>
+</ul>
+<pre><code>    xcatsnap</code></pre>
+<p>produces:</p>
+<pre><code>    /tmp/xcatsnap.hpcrhmn.10110922.log
+    /tmp/xcatsnap.hpcrhmn.10110922.tar.gz</code></pre>
+<ul>
+<li>Back up from /install directory, all images, custom setup data that you want to save. and move to another server. xcatsnap will not backup images.</li>
+</ul>
+<p>After the OS install:</p>
+<ul>
+<li>Proceed to to setup the xCAT MN as a new xCAT MN using the instructions in this document.</li>
+</ul>
+</body>
+</html>

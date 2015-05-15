@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#current-postscript-process-on-linux">Current postscript process on Linux</a><ul>
+<li><a href="#problem">Problem</a></li>
+<li><a href="#new-design-for-postscript-process">New design for postscript process</a></li>
+<li><a href="#details-of-the-different-scenarios">Details of the different scenarios</a></li>
+</ul></li>
+<li><a href="#postscript-process-for-aix">Postscript process for AIX</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#current-postscript-process-on-linux">Current postscript process on Linux</a></li>
+<li><a href="#problem">Problem</a></li>
+<li><a href="#new-design-for-postscript-process">New design for postscript process</a></li>
+<li><a href="#details-of-the-different-scenarios">Details of the different scenarios</a></li>
+<li><a href="#postscript-process-for-aix">Postscript process for AIX</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="current-postscript-process-on-linux"><a href="#TOC">Current postscript process on Linux</a></h2>
+<p>On Linux, xCAT postscripts are executed during the init.d process via xcatdsklspost when a node boots up the first time. xcatdsklspost gets all the postscripts and environmental variables for the node from its master. It then runs the postscripts one by one. Node's DHCP server is used as its master. updatenode command also uses xcatdsklspost for running postscripts.</p>
+<h3 id="problem"><a href="#TOC">Problem</a></h3>
+<p>In a flat network, even if we set the noderes.xcatmaster for a node, any service node can respond to the DHCP request for the node. When the node's original DHCP server is down, updatenode will fail because xcatdsklspost cannot get all the postscripts from its DHCP server. In this case, the node's service node is alive, but updatenode cannot be run successfully. This problem also prevents nodes from being moved from one service node to another.</p>
+<h3 id="new-design-for-postscript-process"><a href="#TOC">New design for postscript process</a></h3>
+<p>Retry logic will be added to the wget call (for getting the postscripts from the master) in xcatdsklspost. It will try to get the hostname of the master from the following sources in order:</p>
+<ol style="list-style-type: decimal">
+<li>the parameter passed to xcatdsklspost through -M flag (from updatenode).</li>
+<li>/etc/xcatinfo file. (This is where we record the SN hostname when we think we know the correct one.)</li>
+<li>the parameter passed to xcatdsklspost through -m flag (from updatenode). (This is the SN that was chosen by the MN in the top down direction - from noderes.servicenode.)</li>
+<li>the DHCP server it got the DHCP response from. (This is the original SN to respond to it, but it may or may not be the correct SN, depending on the scenario.)</li>
+</ol>
+<p>/etc/xcatinfo file is used to save the node's master for later use. At the end of the xcatdsklspost script, it will save the value from the environmental variable MASTER to the file. This file contains a line like &quot;XCATSERVER=&lt;svr_name&gt;&quot;.</p>
+<h3 id="details-of-the-different-scenarios"><a href="#TOC">Details of the different scenarios</a></h3>
+<ul>
+<li>Diskless case: /etc/xcatinfo file is empty when the node is first booted up. The node gets a dhcp response from one of the SNs.
+<ul>
+<li>In the SN pool case (noderes.xcatmaster is blank): this is the SN that will service this node. When the postscripts run, Postage.pm will fill in itself as MASTER (because noderes.xcatmaster is blank), and xcatdsklspost will put that in /etc/xcatinfo for safekeeping, in case the dhclient info expires. Updatenode will make use of /etc/xcatinfo.</li>
+<li>In the subdivided SN case (noderes.xcatmaster has an explicit value): this may <strong>not</strong> be the correct SN for this node. When the postscripts run, Postage.pm will fill in noderes.xcatmaster as MASTER, and xcatdsklspost will put that in /etc/xcatinfo. Updatenode will make use of /etc/xcatinfo.</li>
+</ul></li>
+<li>Full install case:
+<ul>
+<li>In the SN pool case: the kickstart/autoyast template does <strong>not</strong> fill in /etc/xcatinfo during nodeset (because noderes.xcatmaster is not set for this node). The node will get a dhcp response. This is the SN that will service this node. When the postscripts run, Postage.pm will fill in itself as MASTER (because noderes.xcatmaster is blank), and xcatdsklspost will put that in /etc/xcatinfo for safekeeping, in case the dhclient info expires or they use hardeths. Updatenode will make use of /etc/xcatinfo.</li>
+<li>In the subdivided SN case: svr_name in /etc/xcatinfo will be set to noderes.xcatmaster in the kickstart/autoyast template during nodeset (because noderes.xcatmaster has an explicit value). When xcatdsklspost runs, it will use this /etc/xcatinfo file. When the postscripts run, Postage.pm will fill in noderes.xcatmaster as MASTER, and xcatdsklspost will put that in /etc/xcatinfo (which is the same value as before). Updatenode will make use of /etc/xcatinfo.</li>
+</ul></li>
+<li>Updatenode: Passing the node's service nodes to xcatdsklspost in a parameter through -m flag is done by updatenode command only. If the noderes.xcatmaster is set for the node, the -m is set to this value. Otherwise, -m is the value of the network interface facing the node from a server node that sends the command. If the mn is the node's service node, -m is the value of site.master. But remember that this value is only used if there is not a good value in /etc/xcatinfo. In this case, the -m value will be used to contact the SN, and when xcatdsklspost runs it will get this value in MASTER and put it in /etc/xcatinfo. In this way, updatenode changed the node's record of who its SN is (if the original SN wasn't reachable). How do we explicity change the SN for a node? Another parameter to xcatdsklspost (-M) will always override the /etc/xcatinfo file (and have its value set in the xcatinfo file as a result of the xcatdsklespost processing). This flag is set when updatenode -s (a new flag) is used by the user.</li>
+</ul>
+<h2 id="postscript-process-for-aix"><a href="#TOC">Postscript process for AIX</a></h2>
+<p>During an AIX diskfull install or diskless boot the xCAT &quot;xcataixpost&quot; script is run. Among other things it will run whatever additional postscripts are specified.</p>
+<p>When postscripts are run on AIX nodes the name of the server is read from the /etc/xcatinfo file. This file was originally created to preserve the information from the NIM /etc/niminfo file that is automatically created during the node installation (by NIM). This copy of the niminfo file was needed because the niminfo file is changed when an xCAT SN is configured as a NIM master. The xcatinfo file is now also being used it the Linux process.</p>
+<p>Diskfull install flow:</p>
+<p>During the creation of a diskfull image (using mknimimage) a NIM script resource is automatically defined using the xCAT &quot;xcataixscript&quot; script. NIM runs this script during the node install. This script will read the /etc/niminfo file and create the /etc/xcatinfo file. It will also mount/copy postscripts to the node and add the xCAT &quot;xcataixpost&quot; script to the /etc/inittab file.</p>
+<p>During the initial reboot of the node the &quot;xcataixpost&quot; is run. It gets the name of the server from /etc/xcatinfo, requests the node-unique postscript from the server and runs the postscripts for the node. (It also sets the password, removes itself from inittab etc.)</p>
+<p>Note: In the current design the /etc/xcatinfo file is only created once. The &quot;xcataixpost&quot; script will check for it and create one if it's not there but will not overwrite it.</p>
+<p>Diskless boot flow:</p>
+<p>During the creation of a diskless image the mknimimage command automatically updates the NIM SPOT resource. It adds &quot;xcataixpost&quot; to the image and it adds an entry for it in the /etc/inittab file contained in the image.</p>
+<p>When the node is booted the script checks for the xcatinfo file, and if not there, it creates one. It will then mount/copy the postscripts, request the node-unique postscript and run the list of postscripts that have been specified.</p>
+<p>Updatenode flow:</p>
+<p>The updatenode support for running postscripts on AIX uses xdsh to call the &quot;xcataixpost&quot; script on the nodes.</p>
+<p>(New support: )</p>
+<p>The updatenode command will be modified to support the &quot;-s|--sn&quot; option. This option will cause the the /etc/xcatinfo file on the node to be updated.</p>
+<p>For AIX nodes the updatenode command will call the xcataixpost script with either the &quot;-m &lt;servername&gt;&quot; or &quot;-M &lt;servername&gt;&quot; option. The &quot;-M&quot; option will mean to reset the xcatinfo file. It will be used if the updatenode command is called with the &quot;-s&quot; option. The &quot;-m&quot; option will be used otherwise and will provide a backup server name that may be used if the server named in the xcatinfo file is not reachable.</p>
+<p>The server name is determined when the process_request part of the updatenode command runs on the MN or SN. It will be the value of the &quot;xcatmaster&quot; attribute in the node definition or, if not set, it will default to the name of the server as known by the node. The name of the server as known by the node will be determined by calling the getFacingIP(&lt;nodename&gt;) routine.</p>
+</body>
+</html>

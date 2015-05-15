@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#requirementrestriction">Requirement/Restriction</a></li>
+<li><a href="#external-interfaces">External Interfaces</a><ul>
+<li><a href="#packages">Packages</a></li>
+<li><a href="#imgcapture-changes">imgcapture changes</a></li>
+<li><a href="#sysclone-osimage-repository">sysclone osimage repository</a></li>
+<li><a href="#nodeset-not-changed">nodeset not changed</a></li>
+</ul></li>
+<li><a href="#internal-implementation">Internal Implementation</a><ul>
+<li><a href="#imgcapture.pm-changed">imgcapture.pm changed</a></li>
+<li><a href="#anaconda.pm-changed">anaconda.pm changed</a></li>
+</ul></li>
+<li><a href="#design-considerations">Design Considerations</a><ul>
+<li><a href="#xcat-sysclone-rpm">xcat-sysclone rpm</a></li>
+<li><a href="#updatenode">updatenode</a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#requirementrestriction">Requirement/Restriction</a></li>
+<li><a href="#external-interfaces">External Interfaces</a></li>
+<li><a href="#packages">Packages</a></li>
+<li><a href="#imgcapture-changes">imgcapture changes</a></li>
+<li><a href="#sysclone-osimage-repository">sysclone osimage repository</a></li>
+<li><a href="#nodeset-not-changed">nodeset not changed</a></li>
+<li><a href="#internal-implementation">Internal Implementation</a></li>
+<li><a href="#imgcapturepm-changed">imgcapture.pm changed</a></li>
+<li><a href="#anacondapm-changed">anaconda.pm changed</a></li>
+<li><a href="#design-considerations">Design Considerations</a></li>
+<li><a href="#xcat-sysclone-rpm">xcat-sysclone rpm</a></li>
+<li><a href="#updatenode">updatenode</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>NOTE: This page is still under construction.</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>Imaged Provisioning leverages an open source tool called <a href="http://www.systemimager.org">SystemImager</a>. SystemImager is software that automates GNU/Linux installs, software distribution, and production deployment. The standard method of image creation in SystemImager involves cloning of a pre-installed machine, the golden-client. In this way, the user can customize and tweak the golden-client’s configuration according to his needs, verify it’s proper operation, and be assured that the image, once deployed, will behave in the same way as the golden-client. The main goal of the project is to make deployment of large numbers of computers easy.</p>
+<p>xCAT integrates the image creation and system cloning features from SystemImager, to have the ability of capturing osimage from a diskful node(as golden client in SystemImager term) to clone diskful nodes with this osimage. This is a new provision methos, we call it &quot;<strong>sysclone</strong>&quot;.</p>
+<h2 id="requirementrestriction"><a href="#TOC">Requirement/Restriction</a></h2>
+<ul>
+<li><strong>sysclone</strong> is supported in xcat2.8 or beyond.</li>
+<li>No hierarchy support in xcat2.8. (need discuss if we really need hierarchy support, or requirement driven?)</li>
+<li>AIX is not supported. If you want AIX cloning install, refer to AIX mksysb procedure.</li>
+<li>RedHat6.x on System x(x3550) have been tested, Software RAID or LVM are not included.</li>
+<li>The node we will capture osimage from(the golden client) should be a diskful Linux node, managed by the xCAT management node, and the remote shell between the management node and the node should have been configured.</li>
+<li>Ensure SystemImager packages have been already installed on both the management node and the golden client. Use updatenode/otherpackages to install them on the golden client.(will document this procedure in sysclone documentation.)</li>
+<li>The hard disk on the target nodes must be equal or larger than the golden client.</li>
+</ul>
+<h2 id="external-interfaces"><a href="#TOC">External Interfaces</a></h2>
+<h3 id="packages"><a href="#TOC">Packages</a></h3>
+<p>Since SystemImager packages are a little big(about 20M for each arch), we will make a separate xcat-dep tarball xcat-sysclone to pick them up. The user can download this tarball from xCAT download site only when he wants to use the <strong>sysclone</strong> provmethod.</p>
+<p>We do not want the user to download SystemImager packages from SystemImager official download site directly, because it might be very possible that someone will contribute new codes to this open source project while it might break our functions. The xcat-sysclone tarball has been tested by our fvt, should be more stable.</p>
+<p>Package list for SystemImager:</p>
+<pre><code>   size   rpm
+   60039  perl-AppConfig-1.52-4.noarch.rpm
+   88234  systemconfigurator-2.2.11-1.noarch.rpm
+   22120  systemimager-bittorrent-4.2.0-0.91svn4568.el6.noarch.rpm  (optional)
+   72488  systemimager-client-4.2.0-0.91svn4568.el6.noarch.rpm
+   49024  systemimager-common-4.2.0-0.91svn4568.el6.noarch.rpm
+   53344  systemimager-flamethrower-4.2.0-0.91svn4568.el6.noarch.rpm  (optional)
+  408760  systemimager-server-4.2.0-0.91svn4568.el6.noarch.rpm
+23361484  systemimager-x86_64boot-standard-4.2.0-0.91svn4568.el6.noarch.rpm  (optional)
+17929592  systemimager-x86_64initrd_template-4.2.0-0.91svn4568.el6.noarch.rpm</code></pre>
+<p>Provide sysclone.&lt;osname&gt;.&lt;arch&gt;.otherpkgs.pkglists to help install SystemImager packages onto the golden client. For example, sysclone.rhels6.x86_64.otherpkgs.pkglist</p>
+<p><strong>Question</strong>: do we need to build these rpms by ourselves as xcat-dep does? or can download them directly as shared by other SystemImager contributors?</p>
+<h3 id="imgcapture-changes"><a href="#TOC">imgcapture changes</a></h3>
+<p>The existing imgcapture command is used to capture an osimage from a diskful Linux node, then install stateless/statelite nodes. Since <strong>sysclone</strong> is different than the original imgcapture usage, so add a new flag -t|--type. -t diskless(or some other word) is used to keep the original logic, -t sysclone is used for the new logic. We can reduce the effect to the existing logic by this.</p>
+<p>usage change:</p>
+<pre><code>  imgcapture &amp;lt;node&amp;gt; -t sysclone -o &amp;lt;osimage&amp;gt;     #The &amp;lt;node&amp;gt; is the golden client in systemimager term. 
+  imgcapture &amp;lt;node&amp;gt; -t diskless xxxxx </code></pre>
+<p>In imgcapture &lt;node&gt; -t sysclone, the osimage is not predefined, imgcapture will create the osimage definition after capture completed. Set osimage.provmethod=sysclone to identify this new provmethod.</p>
+<p>Here is an example of basic diskful osimage definition:</p>
+<pre><code>Object name: rhels6.3-x86_64-install-compute
+   imagetype=linux
+   osarch=x86_64
+   osdistroname=rhels6.3-x86_64
+   osname=Linux
+   osvers=rhels6.3
+   otherpkgdir=/install/post/otherpkgs/rhels6.3/x86_64
+   pkgdir=/install/rhels6.3/x86_64
+   pkglist=/opt/xcat/share/xcat/install/rh/compute.rhels6.x86_64.pkglist
+   profile=compute
+   provmethod=install
+   template=/opt/xcat/share/xcat/install/rh/compute.rhels6.x86_64.tmpl</code></pre>
+<p>Here is an example of sysclone osimage definition:</p>
+<pre><code>Object name: rhel6.3img
+   imagetype=linux
+   osarch=x86_64
+   osdistroname= (changed!)
+   osname=Linux
+   osvers=rhels6.3
+   otherpkgdir=/install/post/otherpkgs/rhels6.3/x86_64
+   pkgdir= (changed!)
+   pkglist= (changed!)
+   profile= (changed!)
+   provmethod=sysclone (changed!)
+   template= (changed!)
+   postscripts=efibootloader,update_network(new added!)</code></pre>
+<h3 id="sysclone-osimage-repository"><a href="#TOC">sysclone osimage repository</a></h3>
+<p>The sysclone osimage repository is located in /install/sysclone/images/&lt;osimage&gt; by default, it's specified in /etc/systemimager/systemimager.conf:</p>
+<pre><code>  DEFAULT_IMAGE_DIR = /install/sysclone/images 
+  DEFAULT_OVERRIDE_DIR = /install/sysclone/overrides 
+  AUTOINSTALL_SCRIPT_DIR = /install/sysclone/scripts 
+
+
+Note: since the scripts and overrides can be shared among different images, so they are separate directories under /install/sysclone. These directories are used by rsync daemon. </code></pre>
+<p><strong>Question</strong>: currently we do not support customizing the location for the sysclone osimage, which means all sysclone osimages will be put in the same home directory /install/sysclone/images. We might need to check with PCM team if this could work for them. If PCM requires a different home directory, we need to add a new flag to imgcapture to specify the image location, such as -l|--location.</p>
+<h3 id="nodeset-not-changed"><a href="#TOC">nodeset not changed</a></h3>
+<p>This implementation does not impact the external interface of nodeset, just use it as before.</p>
+<h2 id="internal-implementation"><a href="#TOC">Internal Implementation</a></h2>
+<h3 id="imgcapture.pm-changed"><a href="#TOC">imgcapture.pm changed</a></h3>
+<ul>
+<li><p>On the golden client:</p>
+<p>Use xCAT::Utils-&gt;runxcmd to execute xdsh to the golden client:</p></li>
+<li>Check if systemimager packages have been installed. Report error and exit if not.</li>
+<li>Fix the shipped default inittab - /usr/share/systemimager/boot/x86_64/standard/initrd_template/etc/inittab, make output to tty instead of askfirst.</li>
+<li><p>LANG=C si_prepareclient --server &lt;xcatmaster&gt; --my-modules --yes</p></li>
+<li><p>On the management node:</p></li>
+<li><p>Configure sysclone image repository in /etc/systemimager/systemimager.conf:</p>
+<p>DEFAULT_IMAGE_DIR = /install/sysclone/images DEFAULT_OVERRIDE_DIR = /install/sysclone/overrides AUTOINSTALL_SCRIPT_DIR = /install/sysclone/scripts</p></li>
+<li>LANG=C si_getimage -golden-client &lt;node&gt; -image &lt;osimage&gt; -ip-assignment dhcp -post-install reboot -quiet -update-script YES</li>
+<li><p>Create xcat osimage definition.</p></li>
+</ul>
+<h3 id="anaconda.pm-changed"><a href="#TOC">anaconda.pm changed</a></h3>
+<p>Add a new subroutine mksysclone(), similar with mkinstall() except:</p>
+<ul>
+<li>Modify /etc/systemimager/cluster.xml to associate the osimage with target node.</li>
+<li><p>Copy the scripts below from /install/postscripts/ to /install/systemimager/scripts/post-install:</p>
+<pre><code>  runxcatpost     # used as a starter to run &quot;xcatdsklspost 1 -m&quot; for postscripts including efibootloader, update_network, or any customer specified postscripts.</code></pre></li>
+</ul>
+<p><strong>Question</strong>: do we need to run xcatdsklspost by default? or just let user run updatenode after cloning completed?</p>
+<ul>
+<li>Copy kernel and initrd retrieved from golden client to /tftpboot/xcat/&lt;osver&gt;/&lt;arch&gt;/&lt;profile&gt;/</li>
+</ul>
+<p><strong>Question</strong>: will /tftpboot/xcat/&lt;osver&gt;/&lt;arch&gt;/&lt;profile&gt;/ be changed to /tftpboot/xcat/&lt;osimage&gt;? since for sysclone osimage, we have empty osimage.profile.</p>
+<ul>
+<li><p>Modify /tftpboot/xcat/xnba/nodes/&lt;node&gt;.elilo</p>
+<p>remove repo=xxx ks=xxx add ramdisk_size=200000</p></li>
+</ul>
+<h2 id="design-considerations"><a href="#TOC">Design Considerations</a></h2>
+<h3 id="xcat-sysclone-rpm"><a href="#TOC">xcat-sysclone rpm</a></h3>
+<p>This feature brings new otherpkgs.pkglists(so far sysclone.rhels6.x86_64.otherpkgs.pkglist, will add other pkglists for other os and arch) and new postscripts(efibootloader, update_network), so maybe it's ok to build a separate rpm, let's say xcat-sysclone, to ship these new files, we can specify systemimager rpms as xcat-sysclone dependencies in spec file, so when xcat-sysclone installed, the corresponding systemimager rpms can be installed automatically on xcat management node.</p>
+<p>But there are other code changes not included in the new files, such as imgcapture.pm, anaconda.pm(maybe sles.pm, etc..later), so not sure if we really need to build this new rpm or just merge the changes to existing xcat core.</p>
+<h3 id="updatenode"><a href="#TOC">updatenode</a></h3>
+<p>After the compute node is cloned, we can take it as a common diskful node, so updatenode can be used to perform the following node updates:</p>
+<ul>
+<li>Distribute and synchronize files.</li>
+<li>Install or update software on diskfull nodes.</li>
+<li>Run postscripts.</li>
+<li>Update the ssh keys and host keys.</li>
+</ul>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce, Jarrod, Guang Cheng</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: imgcapture</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

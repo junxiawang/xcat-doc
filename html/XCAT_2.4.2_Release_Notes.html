@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-in-2.4.2-since-2.4.1">New Function in 2.4.2 Since 2.4.1</a></li>
+<li><a href="#bugs-fixed-in-2.4.2">Bugs Fixed in 2.4.2</a></li>
+<li><a href="#known-issues-and-work-around">Known Issues and Work Around</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-in-242-since-241">New Function in 2.4.2 Since 2.4.1</a></li>
+<li><a href="#bugs-fixed-in-242">Bugs Fixed in 2.4.2</a></li>
+<li><a href="#known-issues-and-work-around">Known Issues and Work Around</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the 2.4.1 release. Also see the [XCAT_2.4.1_Release_Notes].</p>
+<h2 id="new-function-in-2.4.2-since-2.4.1"><a href="#TOC">New Function in 2.4.2 Since 2.4.1</a></h2>
+<ul>
+<li>xCAT integration support for the IBM HPC software stack with the new optional xCAT-IBMhpc rpm. See [Setting_up_the_IBM_HPC_Stack_in_an_xCAT_Cluster].</li>
+<li>chvm to manipulate storage/processor/memory parameters of VMWare guests</li>
+<li>rmigrate -f support to perform offline migration of VMWare guests from dead hypervisors</li>
+<li>rsetboot -p flag for IPMI devices to request persistence where supported</li>
+<li>bmcsetup may now auto-detect lan channels for wider IPMI hardware support</li>
+<li>Enhanced IBM ToolsCenter/ASU support</li>
+<li>statelite - The directory and its sub-items can be put into the litefile table</li>
+</ul>
+<h2 id="bugs-fixed-in-2.4.2"><a href="#TOC">Bugs Fixed in 2.4.2</a></h2>
+<ul>
+<li>2.3 Stateless image compatibility was addressed</li>
+<li>Fix yaboot in SLES11 POWER installations</li>
+<li>Detection of SLES11/SP1 media is fixed</li>
+</ul>
+<p>Many bugs were fixed in 2.4.2. For details see the <a href="http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945">Tracker Bugs</a>, or check the subversion commit history for the 2.4 branch for 5/1 - 5/20.</p>
+<h2 id="known-issues-and-work-around"><a href="#TOC">Known Issues and Work Around</a></h2>
+<ul>
+<li>Problem with getmacs on PS701/702</li>
+</ul>
+<p>The getmacs command does NOT work correctly.</p>
+<p>For PS701, user can display the MAC address by rinv command, then select the correct mac address and set to attribute mac.mac for installation.</p>
+<p>For PS702, user need to get the MAC address from SMS interface or from ARP table if the machine is in up state, then select the correct mac address and set to attribute mac.mac for installation.</p>
+</body>
+</html>

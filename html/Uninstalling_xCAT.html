@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#removing-xcat">Removing xCAT</a><ul>
+<li><a href="#backup-your-xcat-database-if-you-want-to-keep-it"><strong>Backup your xCAT database</strong> ( if you want to keep it)</a></li>
+<li><a href="#save-your-node-information">Save your node information</a></li>
+<li><a href="#save-your-networks-information">Save your networks information</a></li>
+<li><a href="#clean-up-tftpboot">Clean up tftpboot</a></li>
+<li><a href="#cleanup-dhcp">Cleanup dhcp</a></li>
+<li><a href="#clean-up-etchosts">Clean up /etc/hosts</a></li>
+<li><a href="#remove-nodes-from-dns">Remove nodes from DNS</a></li>
+<li><a href="#stop-xcatd-and-clean-up-network-services"><strong>Stop xcatd and clean up network services</strong></a><ul>
+<li><a href="#stop-xcatd"><strong>Stop xcatd</strong></a></li>
+<li><a href="#clean-up-network-servicesoptional"><strong>Clean up network services(Optional)</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#remove-xcat-rpms">Remove xCAT rpms</a><ul>
+<li><a href="#remove-oss-prerequisites-installed-for-xcatoptional"><strong>Remove OSS prerequisites installed for xCAT(Optional)</strong></a></li>
+<li><a href="#remove-root-ssh-keysoptional"><strong>Remove root ssh keys(Optional)</strong></a></li>
+<li><a href="#remove-xcat-credentials"><strong>Remove xCAT credentials</strong></a></li>
+<li><a href="#remove-xcat-data-directories"><strong>Remove xCAT data directories</strong></a></li>
+<li><a href="#remove-extraneous-files"><strong>Remove Extraneous files</strong></a></li>
+<li><a href="#clean-up-system-files-that-were-updated-by-xcat-optional"><strong>Clean up system files that were updated by xCAT (optional)</strong></a></li>
+</ul></li>
+<li><a href="#remove-databases">Remove Databases</a></li>
+<li><a href="#document-test-record">Document Test Record</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#removing-xcat">Removing xCAT</a></li>
+<li><a href="#backup-your-xcat-database--if-you-want-to-keep-it"><strong>Backup your xCAT database</strong> ( if you want to keep it)</a></li>
+<li><a href="#save-your-node-information">Save your node information</a></li>
+<li><a href="#save-your-networks-information">Save your networks information</a></li>
+<li><a href="#clean-up-tftpboot">Clean up tftpboot</a></li>
+<li><a href="#cleanup-dhcp">Cleanup dhcp</a></li>
+<li><a href="#clean-up-etchosts">Clean up /etc/hosts</a></li>
+<li><a href="#remove-nodes-from-dns">Remove nodes from DNS</a></li>
+<li><a href="#stop-xcatd-and-clean-up-network-services"><strong>Stop xcatd and clean up network services</strong></a>
+<ul>
+<li><a href="#stop-xcatd"><strong>Stop xcatd</strong></a></li>
+<li><a href="#clean-up-network-servicesoptional"><strong>Clean up network services(Optional)</strong></a></li>
+</ul></li>
+<li><a href="#remove-xcat-rpms">Remove xCAT rpms</a></li>
+<li><a href="#remove-oss-prerequisites-installed-for-xcatoptional"><strong>Remove OSS prerequisites installed for xCAT(Optional)</strong></a></li>
+<li><a href="#remove-root-ssh-keysoptional"><strong>Remove root ssh keys(Optional)</strong></a></li>
+<li><a href="#remove-xcat-credentials"><strong>Remove xCAT credentials</strong></a></li>
+<li><a href="#remove-xcat-data-directories"><strong>Remove xCAT data directories</strong></a></li>
+<li><a href="#remove-extraneous-files"><strong>Remove Extraneous files</strong></a></li>
+<li><a href="#clean-up-system-files-that-were-updated-by-xcat-optional"><strong>Clean up system files that were updated by xCAT (optional)</strong></a></li>
+<li><a href="#remove-databases">Remove Databases</a></li>
+<li><a href="#document-test-record">Document Test Record</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="removing-xcat"><a href="#TOC">Removing xCAT</a></h2>
+<h3 id="backup-your-xcat-database-if-you-want-to-keep-it"><a href="#TOC"><strong>Backup your xCAT database</strong> ( if you want to keep it)</a></h3>
+<pre><code>dumpxCATdb -p &lt;path to where to save the database&gt;</code></pre>
+<h3 id="save-your-node-information"><a href="#TOC">Save your node information</a></h3>
+<p>To create a stanza file of your node definitions (all group), run the following:</p>
+<pre><code>lsdef -z all</code></pre>
+<h3 id="save-your-networks-information"><a href="#TOC">Save your networks information</a></h3>
+<p>To create a stanza file of your network information, run the following:</p>
+<pre><code>lsdef -z -t network -l </code></pre>
+<h3 id="clean-up-tftpboot"><a href="#TOC">Clean up tftpboot</a></h3>
+<p>To clean up the node information in tftpboot</p>
+<pre><code>  nodeset all offline</code></pre>
+<h3 id="cleanup-dhcp"><a href="#TOC">Cleanup dhcp</a></h3>
+<p>You may want to remove all nodes from dhcp.</p>
+<pre><code>makedhcp -d &lt;noderange&gt;</code></pre>
+<h3 id="clean-up-etchosts"><a href="#TOC">Clean up /etc/hosts</a></h3>
+<p>You may want to remove you cluster nodes from /etc/hosts</p>
+<pre><code>vi /etc/hosts
+tabedit hosts  (remove all the nodes from the hosts table)</code></pre>
+<h3 id="remove-nodes-from-dns"><a href="#TOC">Remove nodes from DNS</a></h3>
+<p>After removing all the nodes from /etc/hosts and the hosts table.</p>
+<pre><code>makedns -n</code></pre>
+<h3 id="stop-xcatd-and-clean-up-network-services"><a href="#TOC"><strong>Stop xcatd and clean up network services</strong></a></h3>
+<h4 id="stop-xcatd"><a href="#TOC"><strong>Stop xcatd</strong></a></h4>
+<p>For Linux:</p>
+<pre><code>service xcatd stop</code></pre>
+<p>For AIX:</p>
+<pre><code>stopsrc -s xcatd</code></pre>
+<h4 id="clean-up-network-servicesoptional"><a href="#TOC"><strong>Clean up network services(Optional)</strong></a></h4>
+<p>xCAT uses various network services on the management node and service nodes, the network services setup by xCAT may need to be cleaned up on the management node and service nodes before uninstalling xCAT.</p>
+<ul>
+<li>NFS: stop nfs service, unexport all the file systems exported by xCAT, and remove the xCAT file systems from /etc/exports.</li>
+<li>HTTP: stop http service, remove the xcat.conf in the http configuration directory.</li>
+<li>TFTP: stop tftp service, remove the tftp files created by xCAT in tftp directory.</li>
+<li>DHCP: stop dhcp service, remove the configuration made by xCAT in dhcp configuration files.</li>
+<li>DNS: stop the named service, remove the named entries created by xCAT from the named database.</li>
+</ul>
+<h2 id="remove-xcat-rpms"><a href="#TOC">Remove xCAT rpms</a></h2>
+<p>Run rpm -qa | grep xCAT and remove the rpms output as in the example:</p>
+<pre><code>xCAT-nbkernel-x86_64-2.6.18_92-4.noarch
+xCAT-nbkernel-ppc64-2.6.18_92-4.noarch
+xCAT-nbroot-oss-x86_64-2.0-snap200801291344.noarch
+xCAT-web-2.2-snap200904011710.noarch
+xCAT-server-2.3-snap200907061256.noarch
+xCAT-rmc-2.3-snap200905291339.noarch
+xCAT-2.3-snap200907061256.x86_64
+xCAT-nbroot-core-ppc64-2.3-snap200907061256.noarch
+xCAT-nbkernel-x86-2.6.18_92-4.noarch
+xCAT-nbroot-oss-x86-2.0-snap200804021050.noarch
+xCAT-nbroot-oss-ppc64-2.0-snap200801291320.noarch
+xCAT-client-2.3-snap200907061256.noarch
+perl-xCAT-2.3-snap200907061256.noarch
+xCAT-nbroot-core-x86-2.3-snap200907061256.noarch
+xCAT-nbroot-core-x86_64-2.2-snap200904010841.noarch</code></pre>
+<h3 id="remove-oss-prerequisites-installed-for-xcatoptional"><a href="#TOC"><strong>Remove OSS prerequisites installed for xCAT(Optional)</strong></a></h3>
+<pre><code>rpm -e fping-2.2b1-1
+rpm -e perl-Digest-MD5-2.36-1
+rpm -e perl-Net_SSLeay.pm-1.30-1
+rpm -e perl-IO-Socket-SSL-1.06-1
+rpm -e perl-IO-Stty-.02-1
+rpm -e perl-IO-Tty-1.07-1
+rpm -e perl-Expect-1.21-1
+rpm -e conserver-8.1.16-2
+rpm -e expect-5.42.1-3
+rpm -e tk-8.4.7-3
+rpm -e tcl-8.4.7-3
+rpm -e perl-DBD-SQLite-1.13-1
+rpm -e perl-DBI-1.55-1
+          .
+          .
+          .</code></pre>
+<h3 id="remove-root-ssh-keysoptional"><a href="#TOC"><strong>Remove root ssh keys(Optional)</strong></a></h3>
+<pre><code>rm -rf $ROOTHOME/.ssh (Be caution: do not remove the $ROOTHOME/.ssh if do not plan to remove /install/postscripts/_ssh directory)</code></pre>
+<h3 id="remove-xcat-credentials"><a href="#TOC"><strong>Remove xCAT credentials</strong></a></h3>
+<pre><code> rm -rf $ROOTHOME/.xcat</code></pre>
+<h3 id="remove-xcat-data-directories"><a href="#TOC"><strong>Remove xCAT data directories</strong></a></h3>
+<p>For Linux:</p>
+<pre><code>rm -rf /install (for AIX this include the nim directory with images which you may not want to remove)</code></pre>
+<p>For AIX or Linux:</p>
+<pre><code>rm -rf /tftpboot/xcat* (**Note: Remember to uninstall the packages elilo-xcat and xnba-undi, otherwise the next install of xCAT will fail.**)
+rm -rf /tftpboot/etc
+rm -rf /etc/xcat
+rm -rf /etc/sysconfig/xcat ( may not exist)
+rm /mnt/xcat</code></pre>
+<h3 id="remove-extraneous-files"><a href="#TOC"><strong>Remove Extraneous files</strong></a></h3>
+<pre><code>rm /tmp/genimage*
+rm /tmp/packimage*
+rm /tmp/mknb*
+rm /etc/yum.repos.d/*</code></pre>
+<h3 id="clean-up-system-files-that-were-updated-by-xcat-optional"><a href="#TOC"><strong>Clean up system files that were updated by xCAT (optional)</strong></a></h3>
+<p>There are multiple system configuration files that may have been updated while using xCAT to manage your cluster. In most cases you can determine what files have been updated by understanding the function of the commands that you run or by reading the xCAT documentation. There is no automated way to know what files should be cleaned up or removed. You will have to determine on a case by case basis whether or not a particular file should be updated to remove any leftover entries.</p>
+<p>For example, on AIX management nodes the /etc/profile and /etc/environment files are automatically updated by xCAT when it was installed. They include updates to the PATH (for xCAT and possibly MySQL) and PERL5LIB environment variables. It is not likely that these additions would cause a problem if they were left in the files but you can remove them if desired.</p>
+<h2 id="remove-databases"><a href="#TOC">Remove Databases</a></h2>
+<p>For PostgreSQL: See <a href="Setting_Up_PostgreSQL_as_the_xCAT_DB/#removing-postgresql-database">Removing xCAT from PostgreSQL</a></p>
+<p>For DB2: See <a href="Setting_Up_DB2_as_the_xCAT_DB/#removing-xcat-from-db2-and-the-xcat-db2-database">Removing xCAT from DB2</a></p>
+<p>For MySQL: <a href="Setting_Up_MySQL_as_the_xCAT_DB/#removing-mysql-xcatd-database">Removing MySQL xcatd Database</a></p>
+<h2 id="document-test-record"><a href="#TOC">Document Test Record</a></h2>
+<p>Tested by Ting Ting Li on Aug. 6 2014 against xCAT 2.8.5</p>
+</body>
+</html>

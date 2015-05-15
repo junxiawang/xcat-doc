@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#feature-purpose">Feature purpose</a></li>
+<li><a href="#external-interface">External interface</a></li>
+<li><a href="#internal">Internal</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#feature-purpose">Feature purpose</a></li>
+<li><a href="#external-interface">External interface</a></li>
+<li><a href="#internal">Internal</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="feature-purpose"><a href="#TOC">Feature purpose</a></h2>
+<p>To fill in the osimage attribute automatically when define or change define of osimage. The main osimage attributes included are: template(only for diskfull), pkglist, pkgdir, otherpkglist, otherpkgdir, exlist(only for diskless), postinstall(only for diskless), rootimgdir</p>
+<h2 id="external-interface"><a href="#TOC">External interface</a></h2>
+<ol style="list-style-type: decimal">
+<li>add an option &quot;-u&quot; for mkdef/chdef comand to automatically set osimage attribute.</li>
+<li><p>For chdef, if no attr=value parameter specified, just redo the file seaching.</p>
+<p>mkdef imagename -u provmethod=&lt;install|netboot|statelite&gt; profile=&lt;xxx&gt; [attr=value] chdef imagename -u [provmethod=&lt;install|netboot|statelite&gt;]|[profile=&lt;xxx&gt;]|[attr=value]<br />cat stanza_file | mkdef -z -u cat stanza_file | chdef -z -u</p></li>
+</ol>
+<p>note: The provmethod and profile options are pre-requisite for mkdef. If osvers or osarch is not specified, the corresponding value of the management node will be used.</p>
+<p>The commands may work as the following:</p>
+<pre><code>[root@rhmn ~]# mkdef redhat6img -u profile=compute provmethod=statelite
+1 object definitions have been created or modified.
+[root@rhmn ~]# lsdef -t osimage redhat6img
+Object name: redhat6img
+   exlist=/opt/xcat/share/xcat/netboot/rh/compute.rhels6.x86_64.exlist
+   imagetype=linux
+   osarch=x86_64
+   osdistroname=rhels6.2-x86_64
+   osname=Linux
+   osvers=rhels6.2
+   otherpkgdir=/install/post/otherpkgs/rhels6.2/x86_64
+   pkgdir=/install/rhels6.2/x86_64
+   pkglist=/opt/xcat/share/xcat/netboot/rh/compute.rhels6.x86_64.pkglist
+   postinstall=/opt/xcat/share/xcat/netboot/rh/compute.rhels6.x86_64.postinstall
+   profile=compute
+   provmethod=statelite
+   rootimgdir=/install/netboot/rhels6.2/x86_64/compute
+[root@rhmn ~]# chdef redhat6img -u provmethod=install
+1 object definitions have been created or modified.
+[root@rhmn ~]# lsdef -t osimage redhat6img           
+Object name: redhat6img
+   imagetype=linux
+   osarch=x86_64
+   osdistroname=rhels6.2-x86_64
+   osname=Linux
+   osvers=rhels6.2
+   otherpkgdir=/install/post/otherpkgs/rhels6.2/x86_64
+   pkgdir=/install/rhels6.2/x86_64
+   pkglist=/opt/xcat/share/xcat/install/rh/compute.rhels6.x86_64.pkglist
+   profile=compute
+   provmethod=install
+   template=/opt/xcat/share/xcat/install/rh/compute.rhels6.x86_64.tmpl</code></pre>
+<p>The following examples show that the original options are alse working if option '-u' is added.</p>
+<pre><code>[root@rhmn ~]# chdef -t osimage -o redhat6img -u -n rh6img
+Changed the object name from redhat6img to rh6img.
+[root@rhmn ~]# mkdef redhat6img -u profile=compute provmethod=install
+1 object definitions have been created or modified.
+[root@rhmn ~]# chdef redhat6img,rh6img -u osarch=ppc64
+2 object definitions have been created or modified.
+[root@rhmn ~]# lsdef -t osimage rh6img
+Object name: rh6img
+   imagetype=linux
+   osarch=ppc64
+   osdistroname=rhels6.2-ppc64
+   osname=Linux
+   osvers=rhels6.2
+   otherpkgdir=/install/post/otherpkgs/rhels6.2/ppc64
+   pkgdir=/install/rhels6.2/ppc64
+   pkglist=/opt/xcat/share/xcat/install/rh/compute.rhels6.ppc64.pkglist
+   profile=compute
+   provmethod=install
+   template=/opt/xcat/share/xcat/install/rh/compute.rhels6.ppc64.tmpl</code></pre>
+<h2 id="internal"><a href="#TOC">Internal</a></h2>
+<p>1. If option '-u' specified, try to search files(tmpl_file, otherpkgs_list_file, pkglist_file, synclist_file) based on the specified parameters (osarch,osvers,provmethod,profile,imagetype). First search customized path(<span class="math"><em>i</em><em>n</em><em>s</em><em>t</em><em>a</em><em>l</em><em>l</em><em>r</em><em>o</em><em>o</em><em>t</em> / <em>c</em><em>u</em><em>s</em><em>t</em><em>o</em><em>m</em> / <em>n</em><em>e</em><em>t</em><em>b</em><em>o</em><em>o</em><em>t</em> / </span>osname), and then default path(/opt/xcat/share/xcat/netboot/$osname/).</p>
+<p>2. Treat those searched files as specified parameters passing into the main process of mkdef or chdef.</p>
+<p>3. Update osimage table and linuximage table.</p>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce Potter, Guang Cheng, Ling Gao, Linda</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

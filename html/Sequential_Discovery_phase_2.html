@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#external-interface">External Interface</a></li>
+<li><a href="#internal-design">Internal Design</a></li>
+<li><a href="#furture-consideration">Furture consideration</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#external-interface">External Interface</a></li>
+<li><a href="#internal-design">Internal Design</a></li>
+<li><a href="#furture-consideration">Furture consideration</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="external-interface"><a href="#TOC">External Interface</a></h2>
+<p>1. Add a new flag &quot;-n&quot; to nodediscoverstart, to specify to run makedns &lt;nodename&gt; for any new discovered node. This is useful mainly for non-predefined configuration, before running the &quot;nodediscoverstart -n&quot;, the user needs to run makedns -n to initialize the named setup on the management node.</p>
+<p>2. Add a new argument osimage=xxx to nodediscoverstart, to specify the discovered nodes will be associated with the osimage and start the os provisioning automatically.</p>
+<p>3. If the bmciprange is specified with nodediscoverstart, will setup the BMC for any new discovered nodes automatically during the sequential discovery process. A new flag &quot;-s|--skipbmcsetup&quot; is added to skip the bmcsetup, if the user does not want to run bmcsetup for whatever reason, could specify the &quot;-s|--skipbmcsetup&quot; with nodediscoverstart command to skip the bmcsetup.</p>
+<h2 id="internal-design"><a href="#TOC">Internal Design</a></h2>
+<p>1. If the -n is specified with nodediscoverstart command, will add a new element &quot;dns=yes&quot; in site.<strong>SEQDiscover, then the subroutine findme could check whether the dns=yes is in site.</strong>SEQDiscover, if yes, run makedns &lt;nodename&gt; for any new discovered node.</p>
+<p>2. The osimage=xxx will be added to site.__SEQDiscover by the existing code logic, the subroutine findme will know if the osimage=xxx is specified. In general, the osimage should be the last element in the chain attribute, if the osimage is not already in the chain attribute, sequential discovery code will append the osimage at the end of chain attribute; if the osimage is already in the chain attribute, sequential discovery code will replace the existing osimage name with the new one specified with nodediscoverstart command.</p>
+<p>3. If the bmciprange in site.__SEQDiscover, the findme subroutine will add the runcmd=bmcsetup to the node's chain attribute. If the runcmd=bmcsetup is not already in the chain attribute of the node, sequential discovery code will add the runcmd=bmcsetup at the beginning of the chain attribute automatically; if the bmcsetup is already in the chain attribute of the node, then sequential discovery code will not add multiple runcmd=bmcsetup in the chain attribute.</p>
+<p>If the -s|--skipbmcsetup is specified with nodediscoverstart command, the nodediscoverstart subroutine will add the &quot;skipbmcsetup=yes&quot; to site.__SEQDiscover, the findme subroutine will check the skipbmcsetup and remove the runcmd=bmcsetup from the node's chain attribute.</p>
+<h2 id="furture-consideration"><a href="#TOC">Furture consideration</a></h2>
+<p>The current design of sequential discovery uses the groups=xxx with nodediscoverstart to inherit attributes from node groups, if the user needs to specify more node attributes for any new discovered node, the user could create node groups with the designated attributes, and specify the groups=xxx with nodediscoverstart the inherit the node attributes from the node group, this mechanism could work, but might be a little bit complex for the users, if we get customer requirements on simplifying this in the future, we could use the &quot;free-form node attributes&quot; with nodediscoverstart, like this:</p>
+<p>nodediscoverstart &lt;noderange&gt; attr1=val1 attr2=val2 attr3=val3 ...</p>
+<p>where the attr1,attr2,attr3,... are node attributes, the sequential discovery code will set the attributes for any new discovered nodes based on the arguments of nodediscoverstart.</p>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce Potter, Jarrod Johnson</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: profile disocvery</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: update doc and manpage for nodediscover* command</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

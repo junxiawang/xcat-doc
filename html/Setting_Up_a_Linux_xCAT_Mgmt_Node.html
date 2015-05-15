@@ -1,0 +1,534 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#hardware-features-required"><strong>Hardware features required</strong></a><ul>
+<li><a href="#sles-setup-zypper"><strong>[SLES] Setup Zypper</strong></a></li>
+</ul></li>
+<li><a href="#prepare-for-the-download-and-install-of-xcat-for-an-mn-that-does-not-have-direct-internet-access"><strong>Prepare For the Download and Install of xCAT For an MN That Does <em>Not Have</em> Direct Internet Access</strong></a><ul>
+<li><a href="#download-and-unpack-the-tarballs">Download and Unpack the Tarballs</a></li>
+<li><a href="#setup-yum-or-zypper-repositories-for-xcat-and-dependencies">Setup YUM or zypper repositories for xCAT and Dependencies</a></li>
+</ul></li>
+<li><a href="#get-the-requisite-packages-from-the-distro"><strong>Get the Requisite Packages From the Distro</strong></a></li>
+<li><a href="#install-xcat-and-dependencies-on-the-mn-yumzypper"><strong>Install xCAT and Dependencies on the MN (yum/zypper)</strong></a><ul>
+<li><a href="#additional-steps"><strong>Additional Steps</strong></a></li>
+</ul></li>
+<li><a href="#install-xcat-and-deps-on-the-mn-without-yumzypper"><strong>Install xCAT and Deps on the MN ( without yum/zypper)</strong></a></li>
+<li><a href="#test-xcat-installation"><strong>Test xCAT Installation</strong></a></li>
+<li><a href="#update-xcat-software-at-a-later-time"><strong>Update xCAT Software at a Later Time</strong></a><ul>
+<li><a href="#without-yumzypper">Without Yum/Zypper</a></li>
+<li><a href="#with-yumzypper">With Yum/Zypper</a></li>
+</ul></li>
+<li><a href="#appendix-a-network-table-setup-example"><strong>Appendix A: Network Table Setup Example</strong></a></li>
+<li><a href="#appendix-b-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix B: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-c-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix C: Install your Management Node to a new Release of Linux</strong></a></li>
+<li><a href="#appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix D: Upgrade your Management Node to a new Service Pack of Linux</strong></a><ul>
+<li><a href="#d.1.-prior-to-the-upgrade"><strong>D.1. Prior to the upgrade</strong></a></li>
+<li><a href="#d.2-upgrade-from-dvd"><strong>D.2 Upgrade from DVD</strong></a></li>
+<li><a href="#d.3-upgrade-using-installer-good-only-for-minor-upgrade"><strong>D.3 Upgrade using installer (good only for minor upgrade)</strong></a></li>
+<li><a href="#d.4-after-the-upgrade"><strong>D.4 After the upgrade</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#hardware-features-required"><strong>Hardware features required</strong></a></li>
+<li><a href="#sles-setup-zypper"><strong>[SLES] Setup Zypper</strong></a></li>
+<li><a href="#prepare-for-the-download-and-install-of-xcat-for-an-mn-that-does-_not-have_-direct-internet-access"><strong>Prepare For the Download and Install of xCAT For an MN That Does <em>Not Have</em> Direct Internet Access</strong></a></li>
+<li><a href="#download-and-unpack-the-tarballs">Download and Unpack the Tarballs</a></li>
+<li><a href="#setup-yum-or-zypper-repositories-for-xcat-and-dependencies">Setup YUM or zypper repositories for xCAT and Dependencies</a></li>
+<li><a href="#get-the-requisite-packages-from-the-distro"><strong>Get the Requisite Packages From the Distro</strong></a></li>
+<li><a href="#install-xcat-and-dependencies-on-the-mn-yumzypper"><strong>Install xCAT and Dependencies on the MN (yum/zypper)</strong></a></li>
+<li><a href="#additional-steps"><strong>Additional Steps</strong></a></li>
+<li><a href="#install-xcat-and-deps-on-the-mn--without-yumzypper"><strong>Install xCAT and Deps on the MN ( without yum/zypper)</strong></a></li>
+<li><a href="#test-xcat-installation"><strong>Test xCAT Installation</strong></a></li>
+<li><a href="#update-xcat-software-at-a-later-time"><strong>Update xCAT Software at a Later Time</strong></a></li>
+<li><a href="#without-yumzypper">Without Yum/Zypper</a></li>
+<li><a href="#with-yumzypper">With Yum/Zypper</a></li>
+<li><a href="#appendix-a-network-table-setup-example"><strong>Appendix A: Network Table Setup Example</strong></a></li>
+<li><a href="#appendix-b-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix B: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-c-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix C: Install your Management Node to a new Release of Linux</strong></a></li>
+<li><a href="#appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix D: Upgrade your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#d1-prior-to-the-upgrade"><strong>D.1. Prior to the upgrade</strong></a></li>
+<li><a href="#d2-upgrade-from-dvd"><strong>D.2 Upgrade from DVD</strong></a></li>
+<li><a href="#d3-upgrade-using-installer-good-only-for-minor-upgrade"><strong>D.3 Upgrade using installer (good only for minor upgrade)</strong></a></li>
+<li><a href="#d4-after-the-upgrade"><strong>D.4 After the upgrade</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p><strong>Note: this document is no longer maintained, the same information is available in the [XCAT_iDataPlex_Cluster_Quick_Start] and the [XCAT_iDataPlex_Advanced_Setup] documents. They can be used to setup the Linux Management node, even if your cluster is not iDataPlex.</strong></p>
+<p><strong>If you are using Flex servers follow [XCAT_system_x_support_for_IBM_Flex] or [XCAT_system_p_support_for_IBM_Flex] to set up the management node.</strong></p>
+<h2 id="hardware-features-required"><a href="#TOC"><strong>Hardware features required</strong></a></h2>
+<p>Hardware requirements for your xCAT management node are dependent on your cluster size and configuration. A minimum requirement for an xCAT Management Node or Service Node that is dedicated to running xCAT to install a small cluster ( &lt;release&gt;/&lt;arch&gt;/xCAT-dep.repo . For example:</p>
+<pre><code>    wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh6/ppc64/xCAT-dep.repo</code></pre>
+<h3 id="sles-setup-zypper"><a href="#TOC"><strong>[SLES] Setup Zypper</strong></a></h3>
+<p><strong>[SLES11]:</strong></p>
+<pre><code>    zypper ar -t rpm-md http://sourceforge.net/projects/xcat/files/yum/stable/xcat-core xCAT-core
+    
+    
+    zypper ar -t rpm-md http://sourceforge.net/projects/xcat/files/yum/xcat-dep/&lt;release&gt;/&lt;arch&gt; xCAT-dep
+    </code></pre>
+<p><strong>[SLES10.2+]:</strong></p>
+<pre><code>    
+    zypper sa -t rpm-md http://sourceforge.net/projects/xcat/files/yum/stable/xcat-core xCAT-core 
+    
+    
+    zypper sa -t rpm-md http://sourceforge.net/projects/xcat/files/yum/xcat-dep/&lt;release&gt;/&lt;arch&gt; xCAT-dep</code></pre>
+<h2 id="prepare-for-the-download-and-install-of-xcat-for-an-mn-that-does-not-have-direct-internet-access"><a href="#TOC"><strong>Prepare For the Download and Install of xCAT For an MN That Does <em>Not Have</em> Direct Internet Access</strong></a></h2>
+<h3 id="download-and-unpack-the-tarballs"><a href="#TOC">Download and Unpack the Tarballs</a></h3>
+<p>Go to the [Download_xCAT] site and download the level of xCAT tarball you want. Go to the <a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Linux">xCAT Dependencies Download</a> page and download the latest xCAT dependency tarball.</p>
+<p>Copy the xCAT tarball files to the Management Node (MN) and untar them:</p>
+<pre><code>    mkdir /root/xcat2
+    cd /root/xcat2
+    tar jxvf xcat-dep-*.tar.bz2
+    tar jxvf xcat-core-2.*.tar.bz2
+           OR
+    tar jxvf core-rpms-snap.tar.bz2</code></pre>
+<h3 id="setup-yum-or-zypper-repositories-for-xcat-and-dependencies"><a href="#TOC">Setup YUM or zypper repositories for xCAT and Dependencies</a></h3>
+<p>Point yum/zypper to the local repositories for xCAT and its dependencies:</p>
+<p><strong>[RH]</strong></p>
+<pre><code>    
+    cd /root/xcat2/xcat-dep/&amp;lt;release&amp;gt;/&amp;lt;arch&amp;gt;
+    ./mklocalrepo.sh
+    cd /root/xcat2/xcat-core
+    ./mklocalrepo.sh</code></pre>
+<p><strong>[SLES 11]:</strong></p>
+<pre><code>    
+     zypper ar file:///root/xcat2/xcat-dep/sles11/&amp;lt;arch&amp;gt; xCAT-dep 
+     zypper ar file:///root/xcat2/xcat-core  xcat-core</code></pre>
+<p>You can check a zypper repository using &quot;zypper lr -d&quot;, or remove a zypper repository using &quot;zypper rr&quot;.</p>
+<p><strong>[SLES 10.2+]:</strong></p>
+<pre><code>    
+    zypper sa file:///root/xcat2/xcat-dep/sles10/&amp;lt;arch&amp;gt; xCAT-dep
+    zypper sa file:///root/xcat2/xcat-core xcat-core</code></pre>
+<p>You can check a zypper repository using &quot;zypper sl -d&quot;, or remove a zypper repository using &quot;zypper sd&quot;.</p>
+<h2 id="get-the-requisite-packages-from-the-distro"><a href="#TOC"><strong>Get the Requisite Packages From the Distro</strong></a></h2>
+<p>xCAT depends on several packages that come from the Linux distro. Follow this section to create the repository of the OS on the Management Node.</p>
+<p><strong>[RHEL] Setup repository</strong></p>
+<p>To make the necessary RHEL RPM prereqs available to the xCAT install process, mount the RHEL CD/DVD or ISO and then create a repo file in /etc/yum.repos.d that points to it.</p>
+<p><strong>If you have the RHEL iso files:</strong></p>
+<p><strong>If the RHEL distro only has one iso file:</strong></p>
+<p>Copy the iso file to any directory, such as /iso</p>
+<pre><code>    mkdir /iso
+    cp RHEL5.2-Server-20080430.0-ppc-DVD.iso /iso/</code></pre>
+<p>Mount the iso file to a directory such as /iso/rhels5.2</p>
+<pre><code>    cd /iso
+    mkdir /iso/rhels5.2
+    mount -o loop RHEL5.2-Server-20080430.0-ppc-DVD.iso /iso/rhels5.2</code></pre>
+<p>Create a YUM repository file, for example, rhel-dvd.repo, under directory /etc/yum.repos.d. The YUM repository contents should look like:</p>
+<pre><code>    [rhe-5-server]
+    name=RHEL 5 SERVER packages
+    baseurl=file:///iso/rhels5.2/Server
+    enabled=1
+    gpgcheck=1</code></pre>
+<p>Note: To make the YUM repository work persistently after management node reboot, the iso mount needs to be added into the /etc/fstab, or add the mount command into Linux startup scripts.</p>
+<p><strong>If the RHEL distro has more than one iso files</strong></p>
+<p><strong>For each iso file:</strong></p>
+<ul>
+<li>Loopback mount the iso file</li>
+<li>For the 1st iso file only, cd to the mounted directory and run: rpm --import RPM-GPG-KEY-redhat-release</li>
+<li>Copy the RPMs from the Server subdirectory of the mounted directory to a directory on your hard disk (for example /rhels5.3). You can put the RPMs from all of the iso files into the same directory.</li>
+<li>cd into the newly created RPM directory, install the createrepo RPM, and run: createrepo .</li>
+<li>Create a YUM repository file, for example, rhel-cd.repo, in directory /etc/yum.repos.d. The YUM repository contents should look like:</li>
+</ul>
+<pre><code>    [rhel-5.3]
+    name=RHEL 5.3 from directory
+    baseurl=file:///rhels5.3
+    enabled=1
+    gpgcheck=1</code></pre>
+<p><strong>For either case above:</strong></p>
+<p>change directory to where the RHEL CD image is and run</p>
+<pre><code>    cd /iso/rhels5.2
+    rpm --import RPM-GPG-KEY-redhat-release</code></pre>
+<p>Check that the repo is set up correctly by looking for one rpm:</p>
+<pre><code>    yum list screen</code></pre>
+<p><strong>[SLES] Setup repository</strong></p>
+<p>If you have a SLES ISO:</p>
+<pre><code>    mkdir /iso
+    copy SLES11-DVD-ppc-GM-DVD1.iso to /iso/
+    mkdir /iso/1
+    cd /iso
+    mount -o loop SLES11-DVD-ppc-GM-DVD1.iso 1
+    zypper ar [../../../iso/1 file:///iso/1] sles11</code></pre>
+<p>Check that the repo is set up correctly by looking for one rpm:</p>
+<pre><code>    zypper search --match-exact -s screen</code></pre>
+<p><strong>[FEDORA] Setup the repository</strong></p>
+<p>If your management node <em>has access</em> to the internet, you can simply create a file called <strong>/etc/yum.repos.d/fedora-internet.repo</strong> that contains:</p>
+<pre><code>    [fedora-everything]
+    name=Fedora $releasever - $basearch
+    failovermethod=priority
+    #baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything
+    /$basearch/os/
+    mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&amp;arch=$basearch
+    enabled=1
+    gpgcheck=1
+    gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora [../../../etc/pki/rpm-gpg/RPM-GPG-KEY
+    file:///etc/pki/rpm-gpg/RPM-GPG-KEY]</code></pre>
+<p>Check that the repo is set up correctly by looking for one rpm:</p>
+<pre><code>    yum list screen</code></pre>
+<p>If your management node <em>does not have internet access</em>, then download the iso of Fedora OS and setup the repository like <strong>[RHEL] Setup repository</strong> part.</p>
+<p>For Fedora Operating System, xCAT still needs some packages which are not included in the installation iso, you need to download them from internet, copy them to the MN, and create a local YUM repository:</p>
+<p>**Note: The value of &lt;releasever&gt; in following link can be the release number of Fedora, it can be 8,9,12,13,14. **</p>
+<pre><code>cd /root/xcat2/xcat-dep/fedoara/x86_64
+export BASEURL=http://download.fedora.redhat.com/pub/fedora/linux/releases/&lt;releasever&gt;/Everything/x86_64/os/Packages/</code></pre>
+<pre><code>  
+**[Fedora8]**
+    
+    wget $BASEURL/perl-Net-SNMP-5.2.0-1.fc8.1.noarch.rpm
+    wget $BASEURL/perl-XML-Simple-2.17-1.fc8.noarch.rpm
+    wget $BASEURL/perl-Crypt-DES-2.05-4.fc7.x86_64.rpm
+    wget $BASEURL/net-snmp-perl-5.4.1-4.fc8.x86_64.rpm
+    wget $BASEURL/ksh-20070628-1.1.fc8.x86_64.rpm
+    wget $BASEURL/perl-IO-Socket-INET6-2.51-2.fc8.1.noarch.rpm
+    wget $BASEURL/dhcp-3.0.6-10.fc8.x86_64.rpm
+    wget $BASEURL/syslinux-3.36-7.fc8.x86_64.rpm
+    wget $BASEURL/mtools-3.9.11-2.fc8.x86_64.rpm
+    wget $BASEURL/expect-5.43.0-9.fc8.x86_64.rpm
+    wget $BASEURL/perl-DBD-SQLite-1.12-2.fc8.1.x86_64.rpm
+    wget $BASEURL/perl-Expect-1.20-1.fc8.1.noarch.rpm
+    wget $BASEURL/perl-IO-Tty-1.07-2.fc8.1.x86_64.rpm
+    wget $BASEURL/scsi-target-utils-0.0-1.20070803snap.fc8.x86_64.rpm
+    wget $BASEURL/perl-Net-Telnet-3.03-5.1.noarch.rpm
+    wget $BASEURL/perl-TimeDate-1.16.6.fc8.noarch.rpm
+    wget $BASEURL/perl-DateTime-0.41-1.fc8.x86_64.rpm
+    wget $BASEURL/perl-DateTime-Set-0.25-4.fc7.noarch.rpm
+    wget $BASEURL/perl-MailTools-1.77-2.fc8.noarch.rpm
+    wget $BASEURL/perl-Set-Infinite-0.61-3.fc7.noarch.rpm
+    wget $BASEURL/perl-MIME-Lite-3.01-5.fc8.1.noarch.rpm
+    wget $BASEURL/perl-version-0.7203-2.fc8.x86_64.rpm
+    wget $BASEURL/perl-SOAP-Lite-0.68-5.fc8.noarch.rpm</code></pre>
+<p><strong>[Fedora9]</strong></p>
+<pre><code>
+You need to download rpm packages which are same with the Fedata8, but net-snmp-5.4.1-19.fc9 is needed for Fedora9. </code></pre>
+<p>[<strong>Fedora12</strong>]</p>
+<pre><code>    wget $BASEURL/expect-5.43.0-19.fc12.i686.rpm
+    wget $BASEURL/net-snmp-perl-5.4.2.1-18.fc12.x86_64.rpm
+    wget $BASEURL/syslinux-3.75-4.fc12.x86_64.rpm
+    wget $BASEURL/dhcp-4.1.0p1-12.fc12.x86_64.rpm
+    wget $BASEURL/perl-XML-Simple-2.18-5.fc12.noarch.rpm
+    wget $BASEURL/ksh-20090630-1.fc12.x86_64.rpm
+    wget $BASEURL/perl-Test-Simple-0.92-82.fc12.x86_64.rpm
+    wget $BASEURL/perl-Net-Telnet-3.03-9.fc12.noarch.rpm
+    wget $BASEURL/ipmitool-1.8.11-4.fc12.x86_64.rpm
+    wget $BASEURL/perl-Crypt-PasswdMD5-1.3-5.fc12.noarch.rpm
+    wget $BASEURL/perl-DBD-SQLite-1.25-4.fc12.x86_64.rpm</code></pre>
+<p><strong>[Fedora13]</strong></p>
+<pre><code>    
+    wget $BASEURL/dhcp-4.1.1-15.fc13.x86_64.rpm
+    wget $BASEURL/ipmitool-1.8.11-4.fc13.x86_64.rpm
+    wget $BASEURL/syslinux-3.84-1.fc13.x86_64.rpm
+    wget $BASEURL/ksh-20100309-3.fc13.x86_64.rpm
+    wget $BASEURL/net-snmp-perl-5.5-12.fc13.x86_64.rpm
+    wget $BASEURL/expect-5.43.0-19.fc12.i686.rpm
+    wget $BASEURL/perl-Test-Simple-0.92-112.fc13.x86_64.rpm
+    wget $BASEURL/perl-Crypt-PasswdMD5-1.3-6.fc13.noarch.rpm
+    wget $BASEURL/perl-DBD-SQLite-1.27-3.fc13.x86_64.rpm</code></pre>
+<p><strong>[Fedora14]</strong></p>
+<pre><code>    
+    wget $BASEURL/expect-5.44.1.15-1.fc14.x86_64.rpm
+    wget $BASEURL/ipmitool-1.8.11-5.fc14.x86_64.rpm
+    wget $BASEURL/ksh-20100701-1.fc14.x86_64.rpm
+    wget $BASEURL/net-snmp-perl-5.5-20.fc14.x86_64.rpm
+    wget $BASEURL/perl-Crypt-SSLeay-0.58-1.fc14.x86_64.rpm
+    wget $BASEURL/perl-DBD-SQLite-1.29-3.fc14.x86_64.rpm
+    wget $BASEURL/perl-Test-Simple-0.94-2.fc14.noarch.rpm
+    wget $BASEURL/perl-XML-LibXML-1.70-5.fc14.x86_64.rpm
+    wget $BASEURL/perl-XML-NamespaceSupport-1.11-2.fc14.noarch.rpm
+    wget $BASEURL/perl-XML-SAX-0.96-10.fc14.noarch.rpm
+    wget $BASEURL/syslinux-4.02-3.fc14.x86_64.rpm</code></pre>
+<p>Since the dhcp packages of Fedara14 have issue to handle the omshell command, download the following two pakcages from fedora13 URL.</p>
+<pre><code>    wget $BASEURL13/dhclient-4.1.1-15.fc13.x86_64.rpm
+    wget $BASEURL13/dhcp-4.1.1-15.fc13.x86_64.rpm</code></pre>
+<p>At last, in this directory, run following command to create the local repository.</p>
+<pre><code>    createrepo .</code></pre>
+<h2 id="install-xcat-and-dependencies-on-the-mn-yumzypper"><a href="#TOC"><strong>Install xCAT and Dependencies on the MN (yum/zypper)</strong></a></h2>
+<p><strong>[RH]:</strong></p>
+<pre><code>    yum clean metadata
+    yum install xCAT    # or yum install xCAT --nogpgcheck</code></pre>
+<p><strong>[SLES]:</strong></p>
+<pre><code>    zypper install xCAT</code></pre>
+<p>To get to xCAT commands</p>
+<pre><code>    source /etc/profile.d/xcat.sh</code></pre>
+<h3 id="additional-steps"><a href="#TOC"><strong>Additional Steps</strong></a></h3>
+<p><strong>[fedora15/redhat6.1]:</strong></p>
+<p>xCAT built a new conserver-xcat rpm package to replace the conserver rpm package for fedora15 and later. The 2.7 version of xCAT (and later) will automatically require conserver-xcat. For earlier versions of xCAT, uninstall conserver and install conserver-xcat manually before installing or upgrading xCAT:</p>
+<pre><code>    rpm -e --force conserver
+    yum install conserver-xcat</code></pre>
+<h2 id="install-xcat-and-deps-on-the-mn-without-yumzypper"><a href="#TOC"><strong>Install xCAT and Deps on the MN ( without yum/zypper)</strong></a></h2>
+<p>If you chose not to use yum or zypper, then you will be managing all the dependencies that are needed for xCAT and it's dependency package. You may want to make sure the entire OS is installed on the Management Node to avoid having to search for missing dependencies. We recommend that you use yum/zipper for the install to avoid having to worry about missing dependencies.</p>
+<p>You will need to download the xCAT rpms and dependencies as was described in Download and Install xCAT 2 For an MN That Does Not Have Internet Access.</p>
+<p>A list of all the dependencies and xCAT rpms must be input to rpm. There are cross dependencies, xCAT requires some dependency rpms and some of the dependency rpms require xCAT rpms. For xCAT 2.4 and greater, atftp rpm is replaced with atftp-xcat rpm. You need to remove atftp rpm from the xcat-dep/&lt;release&gt;/&lt;arch&gt; directory before running the following commands.</p>
+<pre><code>    cd /root/xcat2
+    rpm -Uvh xcat-dep/&lt;release&gt;/&lt;arch&gt;/*.rpm xcat-core/perl-xCAT*.rpm xcat-core/xCAT-2*.&lt;arch&gt;.rpm xcat-core/xCAT-client*.rpm 
+    xcat-core/xCAT-nbroot-core*.rpm xcat-core/xCAT-server*.rpm --replacepkgs</code></pre>
+<p>for example:</p>
+<pre><code>rpm -Uvh xcat-dep/fedora9/x86_64/*.rpm xcat-core/perl-xCAT*.rpm xcat-core/xCAT-2*.x86_64.rpm xcat-core/xCAT-client*.rpm 
+xcat-core/xCAT-nbroot-core*.rpm xcat-core/xCAT-server*.rpm --replacepkgs</code></pre>
+<p><strong>You can add these optional rpms to the list:</strong></p>
+<pre><code>xcat-core/xCAT-rmc*.rpm xcat-core/xCAT-IBMhpc*.rpm xcat-core/xCAT-UI*.rpm </code></pre>
+<p>for rmc monitoring, hpc stack support and the web interface.</p>
+<p>Do not install xCATsn*- this is only for a service node.</p>
+<p>Note: The tftp client in the open firmware of Power 5 is only compatible with tftp-server instead of atftp-xcat/atftp rpm which is required by xCAT2. So you have to remove the atftp-xcat/atftp rpm with --nodeps flag first and then install the tftp-server. This is not required for Power6 or later.</p>
+<p>The rpms installed on the MN, without the optional rpms, should look similar to this:</p>
+<pre><code>    
+    xCAT-nbkernel-x86_64-2.6.18_92-4.noarch
+    perl-xCAT-2.4-snap201005031505.noarch
+    xCAT-nbkernel-ppc64-2.6.18_92-4.noarch
+    xCAT-nbroot-oss-x86_64-2.0-snap200801291344.noarch
+    xCAT-nbroot-core-ppc64-2.4-snap201005031505.noarch
+    xCAT-nbkernel-x86-2.6.18_92-4.noarch
+    xCAT-client-2.4-snap201005031505.noarch
+    xCAT-nbroot-core-ppc64-2.4-snap201004300946.noarch
+    xCAT-nbroot-oss-x86-2.0-snap200804021050.noarch
+    xCAT-nbroot-oss-ppc64-2.0-snap200801291320.noarch
+    xCAT-nbroot-core-x86-2.4-snap201005031505.noarch
+    xCAT-2.4-snap201005031505.x86_64
+    xCAT-nbroot-core-x86_64-2.2-snap200904010841.noarch
+    xCAT-server-2.4-snap201005031505.noarch</code></pre>
+<p><strong>Install/Update Service Node ( without yum/zypper)</strong></p>
+<p>You use the same process to as in the Install/Update xCAT and Deps on the MN ( without yum/zypper) for downloading and installing except one rpms changes.</p>
+<p>Instead of the installing the xcat-core/xCAT-2<em>.rpm which is for the MN, you will install the xcat-core/xCATsn-2</em>.rpm for the service node.</p>
+<p>So the command would look like the following:</p>
+<pre><code>    
+    cd /root/xcat2
+    rpm -Uvh xcat-dep/&lt;release&gt;/&lt;arch&gt;/*.rpm xcat-core/perl-xCAT*.rpm xcat-core/**xCATsn-2*.rpm** xcat-core/xCAT-client*.rpm 
+    xcat-core/xCAT-nbroot-core*.rpm xcat-core/xCAT-server*.rpm --replacepkgs</code></pre>
+<h2 id="test-xcat-installation"><a href="#TOC"><strong>Test xCAT Installation</strong></a></h2>
+<p>Add command to the path:</p>
+<pre><code>    source /etc/profile.d/xcat.sh</code></pre>
+<p>Check to see the database is initialized:</p>
+<pre><code>    tabdump site</code></pre>
+<p>The output should similar to the following:</p>
+<pre><code>    key,value,comments,disable
+    &quot;xcatdport&quot;,&quot;3001&quot;,,
+    &quot;xcatiport&quot;,&quot;3002&quot;,,
+    &quot;tftpdir&quot;,&quot;/tftpboot&quot;,,
+    &quot;installdir&quot;,&quot;/install&quot;,,
+         .
+         .</code></pre>
+<h2 id="update-xcat-software-at-a-later-time"><a href="#TOC"><strong>Update xCAT Software at a Later Time</strong></a></h2>
+<p>If you need to update the xCAT 2 rpms later:</p>
+<h3 id="without-yumzypper"><a href="#TOC">Without Yum/Zypper</a></h3>
+<ul>
+<li><strong>If the management node does not have access to the internet</strong>: download the new version of <a href="http://xcat.sourceforge.net/#download">xCAT Download</a> and untar and install as before.</li>
+</ul>
+<pre><code>    cd /root/xcat2
+    tar jxvf core-rpms-snap.tar.bz2
+          OR
+    tar jxvf xcat-core-2.x.tar.bz2</code></pre>
+<h3 id="with-yumzypper"><a href="#TOC">With Yum/Zypper</a></h3>
+<ul>
+<li>If the management node has access to the internet, the yum/zypper command below will pull the updates directly from the xCAT site.</li>
+</ul>
+<p><strong>[RH]:</strong></p>
+<p>If you want to just update the xCAT rpms then run the below command. Note: this will not apply the changes that may have been made to the xCAT deps packages.</p>
+<pre><code>    yum update &#39;*xCAT*&#39;</code></pre>
+<p>If you want to make all updates for xCAT, xCAT rpms and deps, run the following command. This command may also pick up additional OS updates.</p>
+<pre><code>
+    
+    yum update</code></pre>
+<p><strong>[SLES]:</strong></p>
+<p>If you want to just update the xCAT rpms then run the below commands. Note: this will not apply the changes that may have been made to the xCAT deps packages.</p>
+<pre><code>    zypper refresh
+    zypper update -t package &#39;*xCAT*&#39;</code></pre>
+<p>If you want to make all updates for xCAT, xCAT rpms and deps, run the following commands. These command may also pick up additional OS updates.</p>
+<pre><code>    zypper refresh
+    zypper update</code></pre>
+<p>Note: If you have a service node stateless image in a hierarchical configuration , don't forget to update the image with the new xCAT rpms to keep the service node at the same level as the management Node.</p>
+<h2 id="appendix-a-network-table-setup-example"><a href="#TOC"><strong>Appendix A: Network Table Setup Example</strong></a></h2>
+<p>[[img src=Networks_setup.png]]</p>
+<p>And the following table shows all network IP addresses of the cluster:</p>
+<p>Network Table</p>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,10,30;
+-->
+
+
+<p>|Machine name |IP Address |Alias |--------------|------------|---------------- |managementnode.pub.site.net|10.0.12.53|managementnode.site.net |managementnode.priv.site.net|92.168.1.10| |node01.pub.site.net|10.0.12.61| |node02.pub.site.net|10.0.12.62| |node01.infiniband.site.net|10.0.6.236| |node02.infiniband.site.net|10.0.6.237| |node01.10g.site.net|10.0.17.14|node01.site.net |node02.10g.site.net|10.0.17.15|node02.site.net |node01.priv.site.net|192.168.1.21| |node02.priv.site.net|192.168.1.22|</p>
+<!---
+end_xcat_table
+-->
+
+
+<p>All networks in the cluster must be defined in the networks table which can be modified with the command chtab,chdef or with the command tabedit .</p>
+<p>The xCAT 2 installation ran the command makenetworks which created the following entry:</p>
+<pre><code>    # tabdump networks
+    #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,    logservers,dynamicrange,nodehostname,comments,disable
+    &quot;10_0_12_0-255_255_255_0&quot;,&quot;192.168.1.0&quot;,&quot;255.255.255.0&quot;,&quot;eth1&quot;
+    ,,,&quot;192.168.1.10&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,,,,
+    &quot;192_168_1_0-255_255_255_0,&quot;10.0.12.0&quot;,&quot;255.255.255.0&quot;,&quot;eth0&quot;
+    ,,,&quot;10.0.12.53&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,,,,</code></pre>
+<p>• Update the private network of this table as follow:</p>
+<pre><code>    # chdef -t network -o &quot;pvtnet&quot; net=192.168.1.0 mask=255.255.255.0 mgtifname=eth0\
+    dhcpserver=192.168.1.10 tftpserver=192.168.1.10\
+    nameservers=10.0.12.10,10.0.17.10\
+    dynamicrange=192.168.1.21-192.168.1.22</code></pre>
+<p>• Disable the entry for the public network:</p>
+<pre><code>    # chtab net=10.0.12.0 networks.disable=1
+    # tabdump networks
+    #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,  -
+    logservers,dynamicrange,nodehostname,comments,disable
+    &quot;10_0_12_0-255_255_255_0&quot;,&quot;10.0.12.0&quot;,&quot;255.255.255.0&quot;,&quot;eth1&quot;,,,
+    &quot;10.0.12.53&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,,,,&quot;1&quot; 
+    &quot;pvtnet&quot;,&quot;192.168.1.0&quot;,&quot;255.255.255.0&quot;,&quot;eth0&quot;,,
+    &quot;192.168.1.10&quot;,&quot;192.168.1.10&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,&quot;192.168.1.21-192.168.1.22&quot;,,,,,,</code></pre>
+<h2 id="appendix-b-migrate-your-management-node-to-a-new-service-pack-of-linux"><a href="#TOC"><strong>Appendix B: Migrate your Management Node to a new Service Pack of Linux</strong></a></h2>
+<p>If you need to migrate your xCAT Management Node with a new level of Linux, you should as a precautionary measure:</p>
+<ul>
+<li>Backup database and save critical files to be used if needed to reference or restore using xcatsnap. Move the xcatsnap log and *gz file off the Management Node.</li>
+<li>Backup images and custom data in /install and move off the Management Node.</li>
+<li>service xcatd stop</li>
+<li>service xcatd stop on any service nodes</li>
+<li>Migrate to the new level of Linux ( e.g. Redhat 6.0 to Redhat 6.1).</li>
+<li>service xcatd start</li>
+</ul>
+<p>If you have any Service Nodes:</p>
+<ul>
+<li>Migrate to the new level of linux or reinstall with the new level of linux.</li>
+<li>service xcatd start</li>
+</ul>
+<p>Note if you are using DB2 and moving from Redhat 6.0 and 6.1, you will have to upgrade from FixPack4 to FixPack5 of release 9.7 of DB2. <a href="Setting_Up_DB2_as_the_xCAT_DB/#appendix_b_installing_db2_fix_packs">Setting_Up_DB2_as_the_xCAT_DB/#appendix_b_installing_db2_fix_packs</a></p>
+<h2 id="appendix-c-install-your-management-node-to-a-new-release-of-linux"><a href="#TOC"><strong>Appendix C: Install your Management Node to a new Release of Linux</strong></a></h2>
+<p>First backup critical xCAT data to another server so it will not be loss during OS install.</p>
+<ul>
+<li>Back up the xcat database using xcatsnap, important config files and other system config files for reference and for restore later. Prune some of the larger tables:</li>
+<li><ul>
+<li>tabprune eventlog -a</li>
+<li>tabprune auditlog -a</li>
+<li>tabprune isnm_perf -a (Power 775 only)</li>
+<li>tabprune isnm_perf_sum -a (Power 775 only)</li>
+</ul></li>
+<li>Run xcatsnap ( will capture database, config files) and copy to another host. By default it will create in /tmp/xcatsnap two files, for example:
+<ul>
+<li>xcatsnap.hpcrhmn.10110922.log</li>
+<li>xcatsnap.hpcrhmn.10110922.tar.gz</li>
+</ul></li>
+<li>Back up from /install directory, all images, custom setup data that you want to save. and move to another server. xcatsnap will not backup images.</li>
+</ul>
+<p>After the OS install:</p>
+<ul>
+<li>Proceed to to setup the xCAT MN as a new xCAT MN using the instructions in this document.</li>
+</ul>
+<h2 id="appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux"><a href="#TOC"><strong>Appendix D: Upgrade your Management Node to a new Service Pack of Linux</strong></a></h2>
+<p><strong>Note: use this procedure at your own risk:</strong></p>
+<p><strong>1) It is not fully tested.</strong></p>
+<p><strong>2) It is not formally supported according to the Linux documentation.</strong></p>
+<p><strong>3) This is only an example to upgrade RHEL 6 to RHEL 6.1, it <em>might</em> work for similar upgrade scenarios.</strong></p>
+<h3 id="d.1.-prior-to-the-upgrade"><a href="#TOC"><strong>D.1. Prior to the upgrade</strong></a></h3>
+<p>Do the following before the upgrade:</p>
+<ol style="list-style-type: decimal">
+<li><p>Stop xcatd, teal, cnmd and the db2 database on the management node. Service Nodes and compute nodes should be powered off per these instructions.</p></li>
+<li><p>Make a list of your system's current packages for later reference:</p></li>
+</ol>
+<pre><code>       rpm -qa --qf &#39;%{NAME} %{VERSION}-%{RELEASE} %{ARCH}&#39; &amp;gt; ~/old-pkglist.txt</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>(Optional, recommended by RedHat doc) Make a backup of any system configuration data and backup any other important data</li>
+</ol>
+<pre><code>       tar czf /tmp/etc-`date +%F`.tar.gz /etc 
+       mv /tmp/etc-*.tar.gz /home/</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Record the kernel version and release info of your current system</li>
+</ol>
+<pre><code>       uname -a
+       cat /etc/*release*</code></pre>
+<p>Then you can choose either upgrade from DVD (D.2) or upgrade use installer (D.3).</p>
+<h3 id="d.2-upgrade-from-dvd"><a href="#TOC"><strong>D.2 Upgrade from DVD</strong></a></h3>
+<p>Details of the OS upgrade process can be obtained from &lt;RedHat Enterprise Linux Installation Guide&gt; -upgrade an Existing Installation http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/pdf/Installation_Guide/Red_Hat_Enterprise_Linux-6-Installation_Guide-en-US.pdf</p>
+<p>Here are the basic steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Insert RedHat 6.1 installation DVD to DVD-ROM (or other boot device)</p></li>
+<li><p>Reboot the system from a RedHat 6.1 installation DVD (or other boot media)</p></li>
+<li><p>Enter the kernel option linux upgradeany at the boot: prompt.</p></li>
+<li><p>Follow the dialog -Upgrade and Existing Installation ,then step by step</p></li>
+</ol>
+<h3 id="d.3-upgrade-using-installer-good-only-for-minor-upgrade"><a href="#TOC"><strong>D.3 Upgrade using installer (good only for minor upgrade)</strong></a></h3>
+<ol style="list-style-type: decimal">
+<li><p>copycds /iso/RHEL6.1-20110510.1-Server-ppc64-DVD1.iso</p></li>
+<li><p>Modify the yum repository file under /etc/yum.repos.d, for example:</p></li>
+</ol>
+<p>Change from:</p>
+<pre><code>    [rhe-6.0-server]
+    
+    name=RHEL 6.0 SERVER packages
+    
+    baseurl=file:///install/rhels6/ppc64/Server
+    
+    enabled=1
+    
+    gpgcheck=1</code></pre>
+<p>to:</p>
+<pre><code>    [rhe-6.1-server]
+    
+    name=RHEL 6.1 SERVER packages
+    
+    baseurl=file:///install/rhels6.1/ppc64/Server 
+    
+    enabled=1
+    
+    gpgcheck=1</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li><p>To ensure that you only upgrade RedHat in this step, temporarily rename/move all other repo definition files in the /etc/yum.repos.d directory.</p></li>
+<li><p>Perform upgrade</p></li>
+</ol>
+<pre><code>       yum clean metadata
+       yum -y update</code></pre>
+<p>During the update, I saw an error with updating glibc, not sure if it will impact the operating system:</p>
+<pre><code>    
+     Updating:  glibc-2.12-1.25.el6.ppc64 
+
+    Non-fatal POSTIN scriptlet failure in rpm package glibc-2.12-1.25.el6.ppc64 
+
+    telinit:error.c:319: Assertion failed in nih_error_get: context_stack&amp;nbsp;!= NULL 
+
+    /usr/sbin/glibc_post_upgrade: While trying to execute /sbin/telinit child terminated  abnormally 
+
+    warning: %post(glibc-2.12-1.25.el6.ppc64) scriptlet failed, exit status 118 </code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Reboot the management node</li>
+</ol>
+<h3 id="d.4-after-the-upgrade"><a href="#TOC"><strong>D.4 After the upgrade</strong></a></h3>
+<ol style="list-style-type: decimal">
+<li>Verify the operating system has been updated</li>
+</ol>
+<pre><code>       uname -a
+       cat /etc/*release*</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Check the operating system packages list, there might be some packages be uninstalled during the upgrade, reinstall any packages that were uninstalled during upgrade</li>
+</ol>
+<pre><code>       awk &#39;{print $1}&#39; ~/old-pkglist.txt | sort | uniq &amp;gt; ~/old-pkgnames.txt
+       rpm -qa --qf &#39;%{NAME}&#39; | sort | uniq &amp;gt; ~/new-pkgnames.txt
+       diff -u ~/old-pkgnames.txt ~/new-pkgnames.txt | grep &#39;^-&#39; | sed &#39;s/^-//&#39; &amp;gt; /tmp/pkgs-toinstall.txt</code></pre>
+<p>If there is any package name in /tmp/pkgs-toinstall.txt, you need to install these packages either using yum or rpm command</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Verify the network configuration files that are being used by xCAT are not changed, like:</li>
+</ol>
+<pre><code>       /etc/dhcpd/dhcpd.conf
+       /var/lib/dhcpd/dhcpd.leases
+       /etc/ssh/sshd_config
+       /etc/exports 
+       /etc/httpd/conf.d/xcat.conf</code></pre>
+<p>(any other files that need to be checked?)</p>
+<ol start="4" style="list-style-type: decimal">
+<li>Verify xcatd and some network services used by xCAT are still running, for example:</li>
+</ol>
+<pre><code>       service xcatd status
+       service named status
+       service httpd status
+       service xinetd status
+       service ntpd status
+       service vsftpd status</code></pre>
+<p>end of doc</p>
+</body>
+</html>

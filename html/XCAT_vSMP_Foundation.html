@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#howto-setup-vsmp-foundation-using-xcat">HOWTO Setup vSMP Foundation using xCAT</a></li>
+<li><a href="#booting-vsmp-foundation-for-cloud-from-xcat">Booting vSMP Foundation for Cloud from xCAT</a></li>
+<li><a href="#pxe-booting-from-vsmp-foundation-for-cloud">PXE booting from vSMP Foundation for Cloud</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#howto-setup-vsmp-foundation-using-xcat">HOWTO Setup vSMP Foundation using xCAT</a></li>
+<li><a href="#booting-vsmp-foundation-for-cloud-from-xcat">Booting vSMP Foundation for Cloud from xCAT</a></li>
+<li><a href="#pxe-booting-from-vsmp-foundation-for-cloud">PXE booting from vSMP Foundation for Cloud</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p>*****NOTE<strong>* This is a new feature and has been submitted via tracker with ID: 2953727 to be included in v2.4</strong></p>
+<h2 id="howto-setup-vsmp-foundation-using-xcat"><a href="#TOC">HOWTO Setup vSMP Foundation using xCAT</a></h2>
+<p>Directions for vSMP Foundation setup using xCAT and then explaining how to netboot an OS on the aggregated system. This example uses RHEL5.3, but any supported OS could be used in its place.</p>
+<p>This document will guide you through the process of setting up xCAT first to boot a vSMP Foundation system and then to PXE boot an OS from vSMP Foundation. The example below has the following setup:</p>
+<ul>
+<li>2 node vSMP Foundation system - hostnames: scalemp-1, scalemp-2</li>
+<li>vSMP Foundation for Cloud 2.1 images</li>
+<li>PXE booting RHEL Server 5.3 netboot image</li>
+<li>ibm120 (10.0.0.10) is the management node/xCAT server</li>
+<li>all network services are running on ibm120 - dhcp server, tftp, named, etc</li>
+</ul>
+<h2 id="booting-vsmp-foundation-for-cloud-from-xcat"><a href="#TOC">Booting vSMP Foundation for Cloud from xCAT</a></h2>
+<p>You will need to define nodes in hosts, mac, and nodelist tables.</p>
+<pre><code>tabedit mac
+
+#node,interface,mac,comments,disable
+&quot;scalemp-1&quot;,&quot;eth0&quot;,&quot;00:24:E8:60:C2:7D&quot;,,
+&quot;scalemp-2&quot;,&quot;eth0&quot;,&quot;00:24:E8:60:BC:D4&quot;,,
+
+tabedit hosts
+
+#node,ip,hostnames,otherinterfaces,comments,disable
+&quot;scalemp-1&quot;,&quot;10.0.0.12&quot;,,,,
+&quot;scalemp-2&quot;,&quot;10.0.0.13&quot;,,,,
+
+# tabedit nodelist
+
+#node,groups,status,appstatus,primarysn,comments,disable
+&quot;scalemp-1&quot;,&quot;compute,all&quot;,&quot;booted&quot;,,,,
+&quot;scalemp-2&quot;,&quot;compute,all&quot;,&quot;configuring&quot;,,,,</code></pre>
+<p>With that information we can now build some of the required config files.</p>
+<p>Run the following:</p>
+<pre><code> makehosts all
+ makedhcp -n
+ makedhcp all
+ service dhcpd restart</code></pre>
+<p>You should also verify that dhcpd is set to run on startup. Next we need to setup DNS.</p>
+<p>Edit /etc/resolv.conf where (xcat_dom) and (xcat_int_ip) are the domain and internal IP you wish to use.</p>
+<pre><code>vi /etc/resolv.conf
+
+set &quot;search (xcat_dom)&quot;
+set &quot;nameserver (xcat_int_ip)&quot;</code></pre>
+<p>Now build the DNS server</p>
+<pre><code> makedns
+ makedns all
+ service named restart</code></pre>
+<p>Also verify that the named server will begin on startup.</p>
+<p>Define an entry in noderes which will be used for these nodes. Usually compute is fine.</p>
+<pre><code>tabedit noderes
+
+#node,servicenode,netboot,tftpserver,nfsserver,monserver,nfsdir,installnic,primarynic,cmdinterface,xcatmaster,current_osimage,next_osimage,nimserver,comments,disable
+&quot;compute&quot;,,&quot;pxe&quot;,&quot;10.0.0.10&quot;,&quot;10.0.0.10&quot;,,,&quot;eth0&quot;,&quot;eth0&quot;,,,,,,,</code></pre>
+<p>Define an entry in the networks table for the networks which need to be defined.</p>
+<pre><code>tabedit networks
+
+#netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,nodehostname,comments,disable
+,&quot;10.0.0.0&quot;,&quot;255.255.255.0&quot;,&quot;eth0&quot;,&quot;10.0.0.1&quot;,&quot;10.0.0.10&quot;,&quot;10.0.0.10&quot;,&quot;10.0.0.10&quot;,,,&quot;10.0.0.11-10.0.0.254&quot;,,,</code></pre>
+<p>Create an entry for a primary and secondary boot profiles in the boottarget table, referring to memdisk as the kernel and the vSMP Foundation image file as the initrd.</p>
+<p>You will need to generate your own image files and place them in /tftpboot. Here I've generated a primary and secondary image of 2.1 and placed them in /tftpboot.</p>
+<pre><code>tabedit boottarget
+
+#bprofile,kernel,initrd,kcmdline,comments,disable
+&quot;scalemp-primary&quot;,&quot;memdisk&quot;,&quot;scalemp.2.1.p&quot;,,,
+&quot;scalemp-secondary&quot;,&quot;memdisk&quot;,&quot;scalemp.2.1.s&quot;,,,</code></pre>
+<p>Define the nodes in the nodetype table and use the boot profile which should be used for that particular node (ex: primary or secondary)</p>
+<pre><code>tabedit nodetype
+
+#node,os,arch,profile,nodetype,comments,disable
+&quot;scalemp-1&quot;,&quot;boottarget&quot;,&quot;x86_64&quot;,&quot;scalemp-primary&quot;,,,
+&quot;scalemp-2&quot;,&quot;boottarget&quot;,&quot;x86_64&quot;,&quot;scalemp-secondary&quot;,,,</code></pre>
+<p>Run nodeset on each node</p>
+<pre><code>nodeset scalemp-[1-2] netboot</code></pre>
+<h2 id="pxe-booting-from-vsmp-foundation-for-cloud"><a href="#TOC">PXE booting from vSMP Foundation for Cloud</a></h2>
+<p>Define a new vm node, which has the same name as the primary node with &quot;-vsmp&quot; appended to it. You <strong>must</strong> follow this naming convention.</p>
+<p>Add it to the nodelist table:</p>
+<pre><code>tabedit nodelist
+
+#node,groups,status,appstatus,primarysn,comments,disable
+&quot;scalemp-1&quot;,&quot;compute,all&quot;,&quot;booted&quot;,,,,
+&quot;scalemp-2&quot;,&quot;compute,all&quot;,&quot;configuring&quot;,,,,
+&quot;scalemp-1-vsmp&quot;,&quot;vsmp,all&quot;,&quot;booted&quot;,,,,</code></pre>
+<p>Add it to noderes with netboot type of vsmppxe</p>
+<pre><code>tabedit noderes
+
+#node,servicenode,netboot,tftpserver,nfsserver,monserver,nfsdir,installnic,primarynic,cmdinterface,xcatmaster,current_osimage,next_osimage,nimserver,comments,disable
+&quot;scalemp-1-vsmp&quot;,,&quot;vsmppxe&quot;,&quot;10.0.0.10&quot;,&quot;10.0.0.10&quot;,,,&quot;eth0&quot;,&quot;eth0&quot;,,,,,,,
+&quot;compute&quot;,,&quot;pxe&quot;,&quot;10.0.0.10&quot;,&quot;10.0.0.10&quot;,,,&quot;eth0&quot;,&quot;eth0&quot;,,,,,,,</code></pre>
+<p>Add an entry for the vm node in the nodetype table with rhels5.3 as the OS (if an OS image not already present you'll have to run genimage, packimage, etc)</p>
+<pre><code>tabedit nodetype
+
+#node,os,arch,profile,nodetype,comments,disable
+&quot;scalemp-1&quot;,&quot;boottarget&quot;,&quot;x86_64&quot;,&quot;scalemp-primary&quot;,,,
+&quot;scalemp-2&quot;,&quot;boottarget&quot;,&quot;x86_64&quot;,&quot;scalemp-secondary&quot;,,,
+&quot;scalemp-1-vsmp&quot;,&quot;rhels5.3&quot;,&quot;x86_64&quot;,&quot;vsmp&quot;,,,</code></pre>
+<p>Run nodeset on the vm node.</p>
+<pre><code>nodeset scalemp-1-vsmp netboot</code></pre>
+<p>That's it! Now powercycle the nodes and they should first load vSMP Foundation and then if the boot device in vSMP Foundation is set to PXE boot from the first NIC on the primary it will load the RHEL 5.3 netboot image.</p>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#interface">Interface</a><ul>
+<li><a href="#configure-that-how-to-partition-the-local-disk">Configure that how to partition the local disk</a></li>
+<li><a href="#configure-the-files-in-the-litefile-table">Configure the files in the litefile table</a></li>
+</ul></li>
+<li><a href="#implementation-details">Implementation details</a><ul>
+<li><a href="#create-the-script-localdisk-to-perform-the-partitioning">Create the script 'localdisk' to perform the partitioning</a></li>
+<li><a href="#add-the-handling-of-getpartition-command-in-xcatd-and-getpartition.pm-plugin">Add the handling of 'getpartition' command in xcatd and 'getpartition.pm' plugin</a></li>
+<li><a href="#add-the-binaries-which-are-needed-to-perform-the-script-localdisk">Add the binaries which are needed to perform the script 'localdisk'</a></li>
+<li><a href="#perform-the-script-localdisk">Perform the script 'localdisk'</a></li>
+<li><a href="#handle-the-litefile-with-option-localdisk">Handle the litefile with option 'localdisk'</a></li>
+</ul></li>
+<li><a href="#limitation">Limitation</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#interface">Interface</a></li>
+<li><a href="#configure-that-how-to-partition-the-local-disk">Configure that how to partition the local disk</a></li>
+<li><a href="#configure-the-files-in-the-litefile-table">Configure the files in the litefile table</a></li>
+<li><a href="#implementation-details">Implementation details</a></li>
+<li><a href="#create-the-script-localdisk-to-perform-the-partitioning">Create the script 'localdisk' to perform the partitioning</a></li>
+<li><a href="#add-the-handling-of-getpartition-command-in-xcatd-and-getpartitionpm-plugin">Add the handling of 'getpartition' command in xcatd and 'getpartition.pm' plugin</a></li>
+<li><a href="#add-the-binaries-which-are-needed-to-perform-the-script-localdisk">Add the binaries which are needed to perform the script 'localdisk'</a></li>
+<li><a href="#perform-the-script-localdisk">Perform the script 'localdisk'</a></li>
+<li><a href="#handle-the-litefile-with-option-localdisk">Handle the litefile with option 'localdisk'</a></li>
+<li><a href="#limitation">Limitation</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{: Design Warning}}</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>The nfs-based statelite has some shortages that some persistent files like the log need to be accessed continually with plenty of communication data which causing the nfs performance issue, and also that the growing of the temporary files in node will eat up the ram space. Then xCAT figures out a function that enable a local hard disk for the statelite node so that the unimportant log files and temporary files can be put on the local disk to reduce the using of nfs network bandwidth and reduce the using of ram space. Also, a swap space could be enabled base on the local disk to facilitate the applications.</p>
+<h2 id="interface"><a href="#TOC">Interface</a></h2>
+<p>Customer needs to manipulate two places to enable the local disk support.</p>
+<h3 id="configure-that-how-to-partition-the-local-disk"><a href="#TOC">Configure that how to partition the local disk</a></h3>
+<p>Since the configuring of the local disk is a little complex, put it in a configuration file is a good choice. The configuration file is configured in the osimage attribute 'partitionfile' (linuximage.partitionfile).</p>
+<p>The format of the configuration file:</p>
+<pre><code>enable=yes
+enablepart=no
+
+[disk]
+dev=/dev/sdb
+clear=yes
+parts=100M-200M,1G-2G
+
+[disk]
+dev=/dev/sdc
+clear=yes
+parts=10,20,30
+
+[disk]
+dev=/dev/sda
+clear=yes
+parts=10,20,30
+
+[localspace]
+dev=/dev/sda1
+fstype=ext3
+
+[swapspace]
+dev=/dev/sda2</code></pre>
+<p>There are two global attributes 'enable' and 'enablepart' to control the enable and disable of the total function.</p>
+<ul>
+<li>enable: This feature only works when 'enable' set to 'yes'. If set to 'no', nothing will be done.</li>
+<li>enablepart: The partition action (refer to [disk] section) will be done only when 'enablepart=yes'.</li>
+</ul>
+<p>[disk] section is used to configure how to part a hard disk.</p>
+<ul>
+<li>dev: The path of the device file.</li>
+<li>clear: To specify that whether to clear all the existed partitions. 'yes' - to clear, otherwise do not clear.</li>
+<li>fstype: The fs type for the new created partition. 'ext3' is the default value if not setting.</li>
+<li>parts: The space range for the partition which will be created on the 'dev'. The valid format could be '&lt;startpoint&gt;-&lt;endpoint&gt;' or 'percentage of the disk'. So you could set it to '100M-10G' or '50'. If you set it to '50', that means 50% of the disk space will be assigned to partition which will be used for local space.</li>
+</ul>
+<p>[localspace] section is used to specify which partition will be used as local storage for the statelite node.</p>
+<ul>
+<li>dev: The path of the partition file.</li>
+<li><p>fstype: The fs type on the partition which specified in 'dev'.</p></li>
+<li><p>dev: The path of the partition file which will be used as the swap space.</p></li>
+</ul>
+<p>To enable this function for the node base on a specific osimage, create the configuration file and set the path to the partitionfile for the osimage like following:</p>
+<pre><code>chdef -t osimage partitionfile=/tmp/cfglocaldisk</code></pre>
+<h3 id="configure-the-files-in-the-litefile-table"><a href="#TOC">Configure the files in the litefile table</a></h3>
+<pre><code>For the files that customer would like to store it in the local disk, add an entry like following in the litefile table: (localdisk is the option to specify that this file or directory should be put in the local disk.)</code></pre>
+<p>&quot;ALL&quot;,&quot;/tmp/&quot;,&quot;localdisk&quot;,,</p>
+<h2 id="implementation-details"><a href="#TOC">Implementation details</a></h2>
+<h3 id="create-the-script-localdisk-to-perform-the-partitioning"><a href="#TOC">Create the script 'localdisk' to perform the partitioning</a></h3>
+<p>The code logic in the script:</p>
+<pre><code>Send a request command &#39;getpartition&#39; to xcatd to get the partition configuration
+Parse the arguments which returned by &#39;getpartition&#39; request
+If &#39;enable != yes&#39;, return directly
+If &#39;enablepart != yes&#39;, skip the partition section in [disk].
+To part a disk which specified in [disk]:
+ Go through the partition information of the target disk which specified in &#39;dev&#39; 
+ if &#39;clear=yes&#39;, remove the current partition
+ else record the existed partitions
+ Calculate the &#39;start&#39; and &#39;end&#39; points for the partition if &#39;xxxxspace=percentage&#39;
+ Create partition on the target disk. And format the partition to the file system type which specified in &#39;fstype&#39; parameter.
+If having [localspace], mount the partition &#39;dev&#39; to /.sllocal
+If having [swapspace], create the swap space against &#39;dev&#39; and enable it.</code></pre>
+<h3 id="add-the-handling-of-getpartition-command-in-xcatd-and-getpartition.pm-plugin"><a href="#TOC">Add the handling of 'getpartition' command in xcatd and 'getpartition.pm' plugin</a></h3>
+<p>Inside the 'getparition.pm' plugin, it will read the configuration file from linuximage.partitionfile and parse it, then generate a parameter list and send it to node.</p>
+<p>And add the entry in policy table to permit the running of this command from node:</p>
+<pre><code>chtab priority=7.1 policy.commands=getpartition policy.rule=allow</code></pre>
+<h3 id="add-the-binaries-which-are-needed-to-perform-the-script-localdisk"><a href="#TOC">Add the binaries which are needed to perform the script 'localdisk'</a></h3>
+<p>There are several binaries need to be injected to the initrd so that the partition script could be run.</p>
+<pre><code>parted mke2fs bc swapon swapoff chmod</code></pre>
+<h3 id="perform-the-script-localdisk"><a href="#TOC">Perform the script 'localdisk'</a></h3>
+<p>The partition script 'localdisk' will be run before the running of 'rc.statelite' which is using to configure the lite files.</p>
+<h3 id="handle-the-litefile-with-option-localdisk"><a href="#TOC">Handle the litefile with option 'localdisk'</a></h3>
+<p>Add changes in the 'rc.statelite' to support the option 'localdisk'. If the 'option=localdisk', mount the original file to the one in the /.sllocal</p>
+<h2 id="limitation"><a href="#TOC">Limitation</a></h2>
+<p>1. The partition configuration setting only can be set in osimage level.</p>
+</body>
+</html>

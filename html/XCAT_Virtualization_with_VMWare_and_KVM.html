@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#the-example-that-used-in-this-document">The example that used in this document</a></li>
+<li><a href="#setup-the-management-server-for-kvm">Setup the Management Server for kvm</a><ul>
+<li><a href="#check-the-ability-of-the-kvm-hypervisor-machine"><strong>Check the ability of the kvm hypervisor machine</strong></a></li>
+<li><a href="#setup-the-kvm-storage-directory-on-the-management-node"><strong>Setup the kvm storage directory on the management node</strong></a></li>
+<li><a href="#export-the-storage-directory"><strong>Export the storage directory</strong></a></li>
+<li><a href="#install-the-kvm-related-packages"><strong>Install the kvm related packages</strong></a></li>
+</ul></li>
+<li><a href="#install-the-kvm-hypervisor"><strong>Install the kvm hypervisor</strong></a><ul>
+<li><a href="#add-the-kvm-related-packages"><strong>Add the kvm related packages</strong></a></li>
+<li><a href="#modify-the-post-install-scripts"><strong>Modify the post install scripts</strong></a></li>
+<li><a href="#export-shared-directory-optional-you-can-work-around-it-if-you-create-the-images-your-self"><strong>Export shared directory (Optional, you can work around it if you create the images your</strong> self)</a></li>
+<li><a href="#install-the-kvm-hypervisor-node">Install the kvm hypervisor node</a></li>
+</ul></li>
+<li><a href="#enable-the-kvm-hypervisor-on-an-existed-node.-e.g.-on-redhat-6-node">Enable the kvm hypervisor on an existed node. (e.g. on redhat 6 node)</a><ul>
+<li><a href="#install-the-perl-sys-virt-on-the-management-node-mn1"><strong>Install the perl-Sys-Virt on the management node mn</strong>1</a></li>
+<li><a href="#install-the-libvirt-and-qemu-kvm-on-the-kvmhost1"><strong>Install the libvirt and qemu-kvm on the kvmhost</strong>1</a></li>
+<li><a href="#rerun-the-postscript-mkhyperv-to-setup-the-kvm-host"><strong>Rerun the postscript mkhyperv to setup the kvm host</strong></a></li>
+</ul></li>
+<li><a href="#create-and-install-virtual-machines">Create and Install Virtual Machines</a><ul>
+<li><a href="#define-virtual-machines"><strong>Define virtual machines</strong></a></li>
+<li><a href="#define-the-attributes-of-virtual-machine"><strong>Define the attributes of virtual machine</strong></a></li>
+<li><a href="#define-the-console-attributes-for-the-virtual-machine"><strong>Define the console attributes for the virtual machine</strong></a></li>
+</ul></li>
+<li><a href="#at-last-the-definition-of-kvm1-should-looks-like-following">At last, the definition of kvm1 should looks like following</a><ul>
+<li><a href="#create-the-virtual-machine"><strong>Create the virtual machine</strong></a></li>
+<li><a href="#try-to-power-on-the-kvm1"><strong>Try to power on the kvm1</strong></a></li>
+<li><a href="#remove-a-virtual-machine-optional"><strong>Remove a virtual machine (Optional)</strong></a></li>
+<li><a href="#you-are-able-to-look-at-the-node-in-rconswcons"><strong>You are able to look at the node in rcons/wcons</strong></a></li>
+</ul></li>
+<li><a href="#installation-the-virtual-machine-kvm1"><strong>Installation the virtual machine kvm1</strong></a></li>
+<li><a href="#clone-a-kvm-node"><strong>Clone a kvm node</strong></a><ul>
+<li><a href="#in-attaching-mode"><strong>In attaching mode</strong></a></li>
+<li><a href="#in-detaching-mode"><strong>In detaching mode</strong></a></li>
+</ul></li>
+<li><a href="#possible-errors">Possible Errors</a><ul>
+<li><a href="#libvirtd-run-into-problem"><strong>libvirtd run into problem</strong></a></li>
+<li><a href="#virtual-disk-has-problem"><strong>Virtual disk has problem</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#the-example-that-used-in-this-document">The example that used in this document</a></li>
+<li><a href="#setup-the-management-server-for-kvm">Setup the Management Server for kvm</a></li>
+<li><a href="#check-the-ability-of-the-kvm-hypervisor-machine"><strong>Check the ability of the kvm hypervisor machine</strong></a></li>
+<li><a href="#setup-the-kvm-storage-directory-on-the-management-node"><strong>Setup the kvm storage directory on the management node</strong></a></li>
+<li><a href="#export-the-storage-directory"><strong>Export the storage directory</strong></a></li>
+<li><a href="#install-the-kvm-related-packages"><strong>Install the kvm related packages</strong></a></li>
+<li><a href="#install-the-kvm-hypervisor"><strong>Install the kvm hypervisor</strong></a></li>
+<li><a href="#add-the-kvm-related-packages"><strong>Add the kvm related packages</strong></a></li>
+<li><a href="#modify-the-post-install-scripts"><strong>Modify the post install scripts</strong></a></li>
+<li><a href="#export-shared-directory-optional-you-can-work-around-it-if-you-create-the-images-your-self"><strong>Export shared directory (Optional, you can work around it if you create the images your</strong> self)</a></li>
+<li><a href="#install-the-kvm-hypervisor-node">Install the kvm hypervisor node</a></li>
+<li><a href="#enable-the-kvm-hypervisor-on-an-existed-node-eg-on-redhat-6-node">Enable the kvm hypervisor on an existed node. (e.g. on redhat 6 node)</a></li>
+<li><a href="#install-the-perl-sys-virt-on-the-management-node-mn1"><strong>Install the perl-Sys-Virt on the management node mn</strong>1</a></li>
+<li><a href="#install-the-libvirt-and-qemu-kvm-on-the-kvmhost1"><strong>Install the libvirt and qemu-kvm on the kvmhost</strong>1</a></li>
+<li><a href="#rerun-the-postscript-mkhyperv-to-setup-the-kvm-host"><strong>Rerun the postscript mkhyperv to setup the kvm host</strong></a></li>
+<li><a href="#create-and-install-virtual-machines">Create and Install Virtual Machines</a></li>
+<li><a href="#define-virtual-machines"><strong>Define virtual machines</strong></a></li>
+<li><a href="#define-the-attributes-of-virtual-machine"><strong>Define the attributes of virtual machine</strong></a></li>
+<li><a href="#define-the-console-attributes-for-the-virtual-machine"><strong>Define the console attributes for the virtual machine</strong></a></li>
+<li><a href="#at-last-the-definition-of-kvm1-should-looks-like-following">At last, the definition of kvm1 should looks like following</a></li>
+<li><a href="#create-the-virtual-machine"><strong>Create the virtual machine</strong></a></li>
+<li><a href="#try-to-power-on-the-kvm1"><strong>Try to power on the kvm1</strong></a></li>
+<li><a href="#remove-a-virtual-machine-optional"><strong>Remove a virtual machine (Optional)</strong></a></li>
+<li><a href="#you-are-able-to-look-at-the-node-in-rconswcons"><strong>You are able to look at the node in rcons/wcons</strong></a></li>
+<li><a href="#installation-the-virtual-machine-kvm1"><strong>Installation the virtual machine kvm1</strong></a></li>
+<li><a href="#clone-a-kvm-node"><strong>Clone a kvm node</strong></a></li>
+<li><a href="#in-attaching-mode"><strong>In attaching mode</strong></a></li>
+<li><a href="#in-detaching-mode"><strong>In detaching mode</strong></a></li>
+<li><a href="#possible-errors">Possible Errors</a></li>
+<li><a href="#libvirtd-run-into-problem"><strong>libvirtd run into problem</strong></a></li>
+<li><a href="#virtual-disk-has-problem"><strong>Virtual disk has problem</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><strong>This page has been replaced by [XCAT_Virtualization_with_VMWare] and [XCAT_Virtualization_with_KVM].</strong></p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>The Kernel-based Virtual Machine (KVM) is the way forward for virtualization technology for Enterprise Linux distributions. For this reason we recommend KVM over other open source technologies like Xen (Although there is support for Xen in xCAT)<br />KVM is included in RedHat 5 as well as SLES 11 and later version. KVM is included in the Linux kernel as of 2.6.20 . The xCAT based KVM solution offers users the ability to:<br />- provision bare metal hypervisors<br />- provision virtual machines<br />- migrate virtual machines to different hosts<br />- install all versions of Linux supported in the standard xCAT provisioning methods (you can install stateless virtual machines, iSCSI, and even regular virtual machines)<br />- copy on write instances of virtual machines<br />- copy virtual machines<br />For best use with xCAT our architecture has the following components:<br />1. A shared file system for hosting virtual machines. This should be the same directory for all nodes. Having this shared file system (which we recommend be on a SAN, NAS or GPFS allows us migrate nodes from ).<br />2. xCAT gPXE boot and KVM that comes packaged in the xCAT-deps distribution. This has updated KVM support that plugs nicely into xCAT<br />3. RedHat or CentOS 5.3 or greater.</p>
+<h2 id="the-example-that-used-in-this-document"><a href="#TOC">The example that used in this document</a></h2>
+<pre><code>One management node: mn1
+
+One kvm hypervisor machine: kvmhost1</code></pre>
+<p>(In this article, the kvm host is equal to kvm hypervisor)</p>
+<pre><code>One virtual machine: kvm1,kvm2 ... 
+
+One virtal machine master: kvmm,kvmmd
+
+Operating System: rh6</code></pre>
+<p>(Redhat 6 has a good support on kvm and xCAT has a good support on rh6 for kvm. So the rh6 is recommended as the kvm hypervisor. This article also has some sections to describe how to set up kvm on an older Linux distribution like rh5 or CentOS5.)</p>
+<h2 id="setup-the-management-server-for-kvm"><a href="#TOC">Setup the Management Server for kvm</a></h2>
+<h3 id="check-the-ability-of-the-kvm-hypervisor-machine"><a href="#TOC"><strong>Check the ability of the kvm hypervisor machine</strong></a></h3>
+<p>To run KVM you need a newer Intel or AMD processor with virtualization technology. (Intel VT or AMD-V).<br />Following command can be run to check whether the kvm is supported by a machine. If it has output, that means it has the ability.</p>
+<pre><code># egrep &quot;flags.*:.*(svm|vmx)&quot; /proc/cpuinfo</code></pre>
+<h3 id="setup-the-kvm-storage-directory-on-the-management-node"><a href="#TOC"><strong>Setup the kvm storage directory on the management node</strong></a></h3>
+<p>The easiest way to get up and running is to use the /install directory and share it out via NFS to the other hypervisors in the node farm. That is what we'll do in the example.<br />Create a directory to store the virtual disk files.</p>
+<pre><code># mkdir -p /install/vms</code></pre>
+<h3 id="export-the-storage-directory"><a href="#TOC"><strong>Export the storage directory</strong></a></h3>
+<p>Note: make sure the root permission should be turn on for the nfs client. Otherwise, the virtual disk file can NOT be used correctly.</p>
+<pre><code># echo &quot;/install/vms *(rw,no_root_squash,sync)&quot; &amp;gt;&amp;gt;/etc/exports
+# exportfs -r</code></pre>
+<h3 id="install-the-kvm-related-packages"><a href="#TOC"><strong>Install the kvm related packages</strong></a></h3>
+<p>Additional packages need to installed on the management node for kvm support:</p>
+<pre><code># yum -y install iscsi-initiator-utils bridge-utils kvm perl-Sys-Virt</code></pre>
+<p>For rh5 and CentOS5, make sure that when you install these packages that the kvm is taken from the xCAT dependencies directory instead of from the operating system directory. Make sure that the kvm RPM is equal or greater than kvm-85-1.</p>
+<h2 id="install-the-kvm-hypervisor"><a href="#TOC"><strong>Install the kvm hypervisor</strong></a></h2>
+<p>xCAT distributes some templates for the kvm hypervisor. For Redhat OS, you can get them here: /opt/xcat/share/xcat/install/rh/kvm.* from the management node.</p>
+<h3 id="add-the-kvm-related-packages"><a href="#TOC"><strong>Add the kvm related packages</strong></a></h3>
+<p>xCAT uses the *.pkglist to specify the packages that need to be installed for a new node. The *.pkglist for the rh6 has already been created at /opt/xcat/share/xcat/install/rh/kvm.rhel6.pkglist. That means if you want to install rh6 as the OS for the kvmhost1, ignore this step.<br />For a specific OS like CentOS, you can create a new .pkglist for it.</p>
+<pre><code># mkdir /install/custom/install/centos/ 
+# cp /opt/xcat/share/xcat/install/rh/kvm.pkglist  \
+/install/custom/install/centos/</code></pre>
+<p>Add the following packages name in it.</p>
+<pre><code>bridge-utils
+dnsmasq
+iscsi-initiator-utils
+kvm
+perl-Sys-Virt
+libvirt.x86_64
+gpxe-kvm</code></pre>
+<p>Note: If some packages need to be installed from the xCAT dependency packages, use the otherpkgs mechanism to install them. Or you can install them manually after the installation.</p>
+<h3 id="modify-the-post-install-scripts"><a href="#TOC"><strong>Modify the post install scripts</strong></a></h3>
+<p>xCAT has a postscript named mkhyperv (MN:/install/postscript/mkhyperv) which can be used to initialize the kvm hypervisor during the installation process. This script will help to create a network bridge on the kvm hypervisor, load the necessary kernel modules, start up the libvirtd daemon.&lt;/br&gt; Add this postscript for your kvm hypervisor node:</p>
+<pre><code># chdef kvmhost1 -p postscripts.postscripts=mkhyperv</code></pre>
+<h3 id="export-shared-directory-optional-you-can-work-around-it-if-you-create-the-images-your-self"><a href="#TOC"><strong>Export shared directory (Optional, you can work around it if you create the images your</strong> self)</a></h3>
+<p>To run the xCAT commands to create virtual machines, the nodes and the management server require a shared file system viewable in the same directory. An easy way to do this is to create another post install script to mount this directory. We made one and called it mountvms:</p>
+<pre><code>#!/bin/sh
+logger -t xcat &quot;Install: setting vms mount in fstab&quot;
+mkdir -p /install/vms
+echo &quot;$MASTER:/install/vms /install/vms nfs rsize=8192,wsize=8192,timeo=14,intr,nfsvers=2 1 2&quot; &amp;gt;&amp;gt;/etc/fstab</code></pre>
+<p>The above script just creates a directory called /install/vms and then mounts this from the management server. If you have a file or another storage device where you want all your virtual machines to go, then you can change the scripts according to your needs.</p>
+<pre><code># chmod 755 mountvms
+# chdef x01 -p postscripts=mountvms</code></pre>
+<h3 id="install-the-kvm-hypervisor-node"><a href="#TOC">Install the kvm hypervisor node</a></h3>
+<p>Just install it as a common node.</p>
+<pre><code># rinstall x01 -o &amp;lt;os&amp;gt; -a x86_64 -p kvm</code></pre>
+<p>When finished with the node you can ssh to it an verify it was setup correctly by running:</p>
+<pre><code># brctl show</code></pre>
+<p>then you can get the bridge information like following:</p>
+<pre><code>bridge name     bridge id               STP enabled     interfaces
+br0             8000.001a646002a4       no              eth0</code></pre>
+<p>When you run the ifconfig command you'll have a br0 interface:</p>
+<pre><code># ifconfig
+br0 Link encap:Ethernet HWaddr 00:14:5E:55:5B:AC
+inet addr:192.168.15.72 Bcast:192.168.15.255 Mask:255.255.255.0
+inet6 addr: fe80::214:5eff:fe55:5bac/64 Scope:Link
+UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+RX packets:1930 errors:0 dropped:0 overruns:0 frame:0
+TX packets:846 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:0
+RX bytes:166778 (162.8 KiB) TX bytes:95512 (93.2 KiB)
+
+eth0 Link encap:Ethernet HWaddr 00:14:5E:55:5B:AC
+inet6 addr: fe80::214:5eff:fe55:5bac/64 Scope:Link
+UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+RX packets:5072 errors:0 dropped:0 overruns:0 frame:0
+TX packets:1160 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:1000
+RX bytes:412342 (402.6 KiB) TX bytes:132939 (129.8 KiB)
+Interrupt:66
+
+lo Link encap:Local Loopback
+inet addr:127.0.0.1 Mask:255.0.0.0
+inet6 addr: ::1/128 Scope:Host
+UP LOOPBACK RUNNING MTU:16436 Metric:1
+RX packets:56 errors:0 dropped:0 overruns:0 frame:0
+TX packets:56 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:0
+RX bytes:6151 (6.0 KiB) TX bytes:6151 (6.0 KiB)</code></pre>
+<p>If you don't have that, it probably that you didn't use the xCAT post install script. You can hack it together quickly by running:</p>
+<pre><code>IPADDR=172.20.1.19/16
+brctl addif vlan1 eth0
+brctl addbr vlan1
+brctl setfd vlan1 0
+ip addr add dev vlan1 $IPADDR
+brctl addif vlan1 eth0
+ip link set vlan1 up
+ip addr del dev eth0 $IPADDR</code></pre>
+<p>You also can try to rerun the postscript mkhyperv by updatenode command to fix the kvm hypervisor setup problem.</p>
+<pre><code># updatenode kvmhost1 -P mkhyperv</code></pre>
+<h2 id="enable-the-kvm-hypervisor-on-an-existed-node.-e.g.-on-redhat-6-node"><a href="#TOC">Enable the kvm hypervisor on an existed node. (e.g. on redhat 6 node)</a></h2>
+<h3 id="install-the-perl-sys-virt-on-the-management-node-mn1"><a href="#TOC"><strong>Install the perl-Sys-Virt on the management node mn</strong>1</a></h3>
+<pre><code># yum install perl-Sys-Virt.x86_64</code></pre>
+<h3 id="install-the-libvirt-and-qemu-kvm-on-the-kvmhost1"><a href="#TOC"><strong>Install the libvirt and qemu-kvm on the kvmhost</strong>1</a></h3>
+<pre><code># yum install libvirt.x86_64 qemu-kvm.x86_64</code></pre>
+<h3 id="rerun-the-postscript-mkhyperv-to-setup-the-kvm-host"><a href="#TOC"><strong>Rerun the postscript mkhyperv to setup the kvm host</strong></a></h3>
+<pre><code># updatenode kvmhost1 -P mkhyperv</code></pre>
+<h2 id="create-and-install-virtual-machines"><a href="#TOC">Create and Install Virtual Machines</a></h2>
+<p>After the installing and configuring of kvm hypervisor, you can start to create the virtual machine and deploy OS on it.</p>
+<h3 id="define-virtual-machines"><a href="#TOC"><strong>Define virtual machines</strong></a></h3>
+<p>The virtual machine kvm1 will be defined. First to add following entry in /etc/hosts:</p>
+<pre><code>192.168.0.10 kvm1</code></pre>
+<p>Then add it to xCAT under the vm group:</p>
+<pre><code># nodeadd kvm1 groups=kvm,vm,all</code></pre>
+<p>Next, update DNS with this new node:</p>
+<pre><code># makedns
+# service named restart</code></pre>
+<h3 id="define-the-attributes-of-virtual-machine"><a href="#TOC"><strong>Define the attributes of virtual machine</strong></a></h3>
+<p>Run the chdef command to change the following attributes for the kvm1:</p>
+<ul>
+<li><p>Define the virtual cpu number</p>
+<h1><a href="#TOC">chdef kvm1 vmcpus=2</a></h1></li>
+<li><p>Define the kvm host of the virtual machine kvm1, it should be set to kvmhost1</p>
+<h1><a href="#TOC">chdef kvm1 vmhost=kvmhost1</a></h1></li>
+<li><p>Define the virtual memory size, the unit is Megabit</p></li>
+</ul>
+<p>Define 1M memory to the kvm1:</p>
+<pre><code># chdef kvm1 vmmemory=1024 </code></pre>
+<ul>
+<li><p>Define the virtual network card, it should be set to the bridge br0 which defined above)</p>
+<h1><a href="#TOC">chdef kvm1 vmnics=br0</a></h1></li>
+<li><p>Define the storage for the kvm1</p></li>
+</ul>
+<p>The default format is 'nfs://&lt;IP&gt;/dir', that means the kvm disk files will be created at 'nfs://&lt;IP&gt;/dir'.</p>
+<pre><code># chdef kvm1 vmstorage=nfs://&amp;lt;IP of MN&amp;gt;/install/vms/ </code></pre>
+<p>Note: The mac address will be created automatically when running the mkvm if you leave it empty. You also can specify it manually before running the mkvm, and then the specified mac address will be used for the kvm1.</p>
+<h3 id="define-the-console-attributes-for-the-virtual-machine"><a href="#TOC"><strong>Define the console attributes for the virtual machine</strong></a></h3>
+<pre><code># chdef kvm1 serialport=0 serialspeed=115200 </code></pre>
+<h2 id="at-last-the-definition-of-kvm1-should-looks-like-following"><a href="#TOC">At last, the definition of kvm1 should looks like following</a></h2>
+<pre><code>Object name: kvm1
+    arch=x86_64
+    groups=kvm,vm,all
+    mgt=kvm
+    netboot=pxe
+    os=rhels6
+    postbootscripts=otherpkgs
+    postscripts=syslog,remoteshell,syncfiles,otherpkgs
+    primarynic=eth0
+    profile=compute
+    serialport=0
+    serialspeed=115200
+    vmcpus=1
+    vmhost=kvmhost1
+    vmmemory=1024
+    vmnics=br0
+    vmstorage=nfs://192.168.5.73/install/vms</code></pre>
+<h3 id="create-the-virtual-machine"><a href="#TOC"><strong>Create the virtual machine</strong></a></h3>
+<p>Create the virtual machine kvm1 with 20G hard disk. &lt;/br&gt;</p>
+<pre><code># mkvm kvm1 -s 20G</code></pre>
+<p>If the kvm1 was created successfully, a hard disk file named kvm1.hda.qcow2 can be found in nfs://192.168.5.73/install/vms. And you can run the lsdef kvm1 to see whether the mac attribute has been set automatically.</p>
+<p>Run the lsvm command to list the virtual machines on the kvm hypervisor.</p>
+<pre><code># lsvm kvmhost1
+    kvmhost1: kvm1 </code></pre>
+<h3 id="try-to-power-on-the-kvm1"><a href="#TOC"><strong>Try to power on the kvm1</strong></a></h3>
+<pre><code># rpower kvm1 on</code></pre>
+<p>If the kvm1 was powered on successfully, you can get following information when running 'virsh list' on the kvm host kvmhost1.</p>
+<pre><code># virsh list
+ Id Name                 State
+
+
+* * *
+
+
+  6 kvm1                 running</code></pre>
+<h3 id="remove-a-virtual-machine-optional"><a href="#TOC"><strong>Remove a virtual machine (Optional)</strong></a></h3>
+<p>Remove the kvm1 even when it is in power on status.</p>
+<pre><code># rmvm kmv1 -f</code></pre>
+<p>Remove the definition of kvm and related storage.</p>
+<pre><code># rmvm kvm1 -p</code></pre>
+<h3 id="you-are-able-to-look-at-the-node-in-rconswcons"><a href="#TOC"><strong>You are able to look at the node in rcons/wcons</strong></a></h3>
+<pre><code># makeconservercf kvm1
+# wcons kvm1</code></pre>
+<p>Now, have a look as it boots up, you'll see it got the xCAT standby kernel!</p>
+<h2 id="installation-the-virtual-machine-kvm1"><a href="#TOC"><strong>Installation the virtual machine kvm1</strong></a></h2>
+<p>Now, you get a node which is ready to be installed. So, from here you can just install the kvm1 as a normal node.</p>
+<pre><code># rinstall kvm1</code></pre>
+<p>Then the node will automatically reboot and install. You'll have a normal node!</p>
+<h2 id="clone-a-kvm-node"><a href="#TOC"><strong>Clone a kvm node</strong></a></h2>
+<p>Clone is a concept that create a new node from the old one by reuse most of data that has been installed on the old node. Before creating a new node, a vm (virtual machine) master must be created first. The new node will be created from the vm master. The new node can attach to the vm master or not.<br />The node can NOT be run without the vm master if choosing to make the node attach to the vm master. The advantage is that the less disk space is needed.</p>
+<h3 id="in-attaching-mode"><a href="#TOC"><strong>In attaching mode</strong></a></h3>
+<p>In this mode, all the nodes will be attached to the vm master. Lesser disk space will be used than the general node.<br />Create the vm master kvmm from a node (kvm2) and make the original node kvm2 attaches to the new created vm master:</p>
+<pre><code># clonevm kvm2 -t kvmm
+kvm2: Cloning kvm2.hda.qcow2 (currently is 1050.6640625 MB and has a capacity of 4096MB)
+kvm2: Cloning of kvm2.hda.qcow2 complete (clone uses 1006.74609375 for a disk size of 4096MB)
+kvm2: Rebasing kvm2.hda.qcow2 from master
+kvm2: Rebased kvm2.hda.qcow2 from master</code></pre>
+<p>After the performing, you can see the following entry has been added into the vmmaster table.</p>
+<pre><code>#name,os,arch,profile,storage,storagemodel,nics,vintage,originator,comments,disable
+&quot;kvmm&quot;,&quot;rhels6&quot;,&quot;x86_64&quot;,&quot;compute&quot;,&quot;nfs://192.168.5.73/vms/kvm&quot;,,&quot;br0&quot;,&quot;Tue Nov 23 04:18:17 2010&quot;,&quot;root&quot;,,</code></pre>
+<p>Clone a new node kvm4 from vm master kvmm:</p>
+<pre><code>clonevm kvm4 -b kvmm</code></pre>
+<h3 id="in-detaching-mode"><a href="#TOC"><strong>In detaching mode</strong></a></h3>
+<p>Create a vm master that the original node detaches with the created vm master.</p>
+<pre><code># clonevm kvm2 -t kvmmd -d
+kvm2: Cloning kvm2.hda.qcow2 (currently is 1049.4765625 MB and has a capacity of 4096MB)
+kvm2: Cloning of kvm2.hda.qcow2 complete (clone uses 1042.21875 for a disk size of 4096MB)</code></pre>
+<p>Clone the kvm3 from the kvmmd with the detaching mode turn on:</p>
+<pre><code>clonevm kvm3 -b kvmmd -d
+kvm3: Cloning kvmmd.hda.qcow2 (currently is 1042.21875 MB and has a capacity of 4096MB)</code></pre>
+<h2 id="possible-errors"><a href="#TOC">Possible Errors</a></h2>
+<h3 id="libvirtd-run-into-problem"><a href="#TOC"><strong>libvirtd run into problem</strong></a></h3>
+<p>One error we saw on occasion was the following message:</p>
+<pre><code># rpower kvm1 on
+kvm1: internal error no supported architecture for os type &#39;hvm&#39;</code></pre>
+<p>This error was fixed by restarting libvirtd on the host machine</p>
+<pre><code># xdsh kvmhost1 service libvirtd restart</code></pre>
+<p>Note: In any case that you find there is libvirtd error message in syslog, you can try to restart the libvirtd.</p>
+<h3 id="virtual-disk-has-problem"><a href="#TOC"><strong>Virtual disk has problem</strong></a></h3>
+<p>When running command 'rpower kvm1 on', get the following error message:</p>
+<pre><code>kvm1: Error: unable to set user and group to &#39;0:0&#39; on &#39;/var/lib/xcat/pools/27f1df4b-e6cb-5ed2-42f2-9ef7bdd5f00f/kvm1.hda.qcow2&#39;: Invalid argument:</code></pre>
+<p>Solution: try to figure out the nfs:// server was exported correctly. The nfs client should have root authority.</p>
+</body>
+</html>

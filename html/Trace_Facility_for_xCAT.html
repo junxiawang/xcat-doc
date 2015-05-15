@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview"><strong>Overview</strong></a><ul>
+<li><a href="#enable-the-subroutine-calling-trace"><strong>Enable the subroutine calling trace</strong></a></li>
+<li><a href="#enable-the-commented-debug-trace-in-debug-mode"><strong>Enable the commented debug trace in debug mode</strong></a></li>
+</ul></li>
+<li><a href="#external-interface"><strong>External Interface</strong></a><ul>
+<li><a href="#the-trace-format"><strong>The trace format</strong></a></li>
+<li><a href="#the-location-of-trace-log"><strong>The location of trace log</strong></a></li>
+</ul></li>
+<li><a href="#internal-implementation"><strong>Internal implementation</strong></a><ul>
+<li><a href="#enable-the-subroutine-calling-trace-1"><strong>Enable the subroutine calling trace</strong></a></li>
+<li><a href="#enable-the-debug-trace-only-in-debug-mode"><strong>Enable the debug trace only in debug mode</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview"><strong>Overview</strong></a></li>
+<li><a href="#enable-the-subroutine-calling-trace"><strong>Enable the subroutine calling trace</strong></a></li>
+<li><a href="#enable-the-commented-debug-trace-in-debug-mode"><strong>Enable the commented debug trace in debug mode</strong></a></li>
+<li><a href="#external-interface"><strong>External Interface</strong></a></li>
+<li><a href="#the-trace-format"><strong>The trace format</strong></a></li>
+<li><a href="#the-location-of-trace-log"><strong>The location of trace log</strong></a></li>
+<li><a href="#internal-implementation"><strong>Internal implementation</strong></a></li>
+<li><a href="#enable-the-subroutine-calling-trace-1"><strong>Enable the subroutine calling trace</strong></a></li>
+<li><a href="#enable-the-debug-trace-only-in-debug-mode"><strong>Enable the debug trace only in debug mode</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<p>Mini-design of Trace Facility for xCAT</p>
+<h2 id="overview"><a href="#TOC"><strong>Overview</strong></a></h2>
+<p>In the present code of xCAT that no common approach for developer to generate the debug trace. Generally, developer adds the 'print/Dumper/MsgUtils' code inside the xcatd/plugins to display some run-time variables/status in the development phase and remove/comment out them for the release version. The operations of adding/removing debug trace have to be done for every debugging, it's especially hard from the perspective of FVT or customer to get the trace log.</p>
+<p>In this design, I'll add two types of trace facilities for xCAT:</p>
+<h3 id="enable-the-subroutine-calling-trace"><a href="#TOC"><strong>Enable the subroutine calling trace</strong></a></h3>
+<p>Display the calling trace for the subroutines. The trace message includes: The called subroutine name; The arguments which passed to the called subroutine; The calling stack of the subroutine. By default, the trace will be enabled to all the subroutines in xcatd and plugin modules. The subroutine list also can be configured by configuration file or through command line.</p>
+<h3 id="enable-the-commented-debug-trace-in-debug-mode"><a href="#TOC"><strong>Enable the commented debug trace in debug mode</strong></a></h3>
+<p>We always concern about the trace code in the source code that it impacts the performance or even causes the possible defects for a release version. In this design I'll introduce an approach that only enable the trace code in the debug mode. At common mode, the trace code existed as comments.</p>
+<h2 id="external-interface"><a href="#TOC"><strong>External Interface</strong></a></h2>
+<p>Offer a command named 'xcatdebug' (It already existed, adding the new functions) to enable/disable and configure the trace facility.</p>
+<p><strong>xcatdebug [-f enable|disable [-c configuration file| subroutine list]</strong></p>
+<p>Enable/Disable subroutine calling trace. If no -c flag is specified, the enable/disable will impact to all the subroutines which defined in the xcatd and plugins.</p>
+<p>'-c' flag can be used to specify a 'configuration file' or 'subroutine list':</p>
+<p>'SUBROUTINE_DEFINITION': To make user easier to define the subroutine list, I defined this object. The format of it can be <a href="sub1,sub2,...">pkgname</a>. If [pkgname] is ignored, that means the subsequence subroutines belongs to the 'xcatd' (main process).</p>
+<p>'configuration file': Multiple entries of SUBROUTINE_DEFINITION;</p>
+<p>e.g. -c /tmp/xcattrace.cfg. The format inside the configuration file:</p>
+<pre><code>(daemonize,do_installm_service,do_udp_service)
+xCAT::Utils(isMN,Version)
+xCAT_plugin::DBobjectdefs(defls,process_request)</code></pre>
+<p>'subroutine list': Multiple SUBROUTINE_DEFINITION split with '|'.</p>
+<pre><code>e.g. -c (daemonize,do_installm_service,do_udp_service)|
+xCAT::Utils(isMN,Version)|
+xCAT_plugin::DBobjectdefs(defls,process_request)</code></pre>
+<p>Note: The xcatd processes will not be restarted when execute the [-f enable|disable].</p>
+<p><strong>xcatdebug [-d enable|disable]</strong></p>
+<p>Enable/Disbale the trace code in the source code of xCAT project.</p>
+<p>Note: Since the enable process will be done before the compiling of source code, the xcatd process have be to restarted when executing the enable/disable operation.</p>
+<h3 id="the-trace-format"><a href="#TOC"><strong>The trace format</strong></a></h3>
+<p>A typical trace log includes three parts: Subroutine name; Arguments; Calling stack. Following is a log example of the calling of xCAT_plugin::DBobjectdefs::process_request subroutine:</p>
+<p>Calling *xCAT_plugin::DBobjectdefs::process_request; Argus[{'<em>xcat_clientfqdn' =&gt; ['localhost'],'</em>xcat_clientport' =&gt; [41891] ...; Calling stack [ at /opt/xcat/sbin/xcatd line 785#012#011main::<strong>ANON</strong>('HASH(0x32c9038)', 'CODE(0x2ed1b38)', 'CODE(0x2ee1820)') called at /opt/xcat/sbin/xcatd line 1539#012#011main::dispatch_request('HASH(0x32c9038)', 'CODE(0x2ed1b38)', 'DBobjectdefs') called at /opt/xcat/sbin/xcatd line 1349#012#011eval {...} called at /opt/xcat/sbin/xcatd line 1348#012#011main::plugin_command('HASH(0x32c9038)', 'IO::Socket::SSL=GLOB(0x30cefc0)', 'CODE(0x2ed1b38)') called at /opt/xcat/sbin/xcatd line 1842#012#011eval {...} called at /opt/xcat/sbin/xcatd line 1803#012#011main::service_connection('IO::Socket::SSL=GLOB(0x30cefc0)', 'root', 'localhost', 'localhost') called at /opt/xcat/sbin/xcatd line 1073#012]</p>
+<p>main::dispatch_request('HASH(0x32c9038)', 'CODE(0x2ed1b38)', 'DBobjectdefs')</p>
+<pre><code>   xCAT_plugin::DBobjectdefs::process_request({&#39;_xcat_clientfqdn&#39; =&amp;gt; [&#39;localhost&#39;],&#39;_xcat_clientport&#39; =&amp;gt; [41891] ...)
+       IO::Socket::SSL=GLOB(0x30cefc0)&#39;, &#39;CODE(0x2ed1b38)&#39;)
+       IO::Socket::SSL=GLOB(0x30cefc0)&#39;, &#39;CODE(0x2ed1b38)&#39;)</code></pre>
+<p>main::service_connection('IO::Socket::SSL=GLOB(0x30cefc0)', 'root', 'localhost', 'localhost')</p>
+<h3 id="the-location-of-trace-log"><a href="#TOC"><strong>The location of trace log</strong></a></h3>
+<p>The trace log (inside ## DEBUG_BEGIN - ## DEBUG_END) which added by the developer in the subroutine can be displayed to any place (output in cli; syslog, log file) base on how the trace code is written.</p>
+<p>The trace log of subroutines calling trace can be put to syslog or log file; The current decision is put the log in the /var/log/xcat/subcallingtrace.</p>
+<h2 id="internal-implementation"><a href="#TOC"><strong>Internal implementation</strong></a></h2>
+<h3 id="enable-the-subroutine-calling-trace-1"><a href="#TOC"><strong>Enable the subroutine calling trace</strong></a></h3>
+<p>Enable/Disable the function - define two signal handle subroutine for signal (NUM50 - Enable; NUM51 - Disable) in the xcatd. From the xcatdebug to send signal NUM50/NUM51 to enable or disable the functions.</p>
+<p>Enable: Get all the symbols from the symbol table (includes xcatd and plugin modules) and figure out the subroutines that really defined and has been specified in the enable list, then replace the subroutine with a new one that added the debug trace. And store the original one in a global hash for the restoring.</p>
+<p>Disable: Restore the original definition of the subroutines.</p>
+<h3 id="enable-the-debug-trace-only-in-debug-mode"><a href="#TOC"><strong>Enable the debug trace only in debug mode</strong></a></h3>
+<p>Add the following part of code in the BEGIN{} section to do the filter thing during the loading of source file that change some code in the source file.</p>
+<pre><code>if (defined $ENV{ENABLE_TRACE_CODE}) {
+ use xCAT::Enabletrace qw(loadtrace filter);
+ loadtrace();
+}</code></pre>
+<p>Added a new xCAT module /opt/xcat/lib/perl/xCAT/Enabletrace.pm to enable the commented trace log.</p>
+<p>Note: This section has to be added to any package or xcatd if you want to use this function.</p>
+<p>And add the trace code as following format in any place (xcat/plugin modules)</p>
+<pre><code>Trace section
+               ## TRACE_BEGIN
+               # print &quot;In the debug\n&quot;;
+               ## TRACE_END
+
+
+Trace in a single line
+               ## TRACE_LINE print &quot;In the trace line\n&quot;;</code></pre>
+<p>In common mode, the code keeps as above. But in debug mode, the first # of all the lines between the ' ## DEBUG_BEGIN' and '## DEBUG_END' (e.g. '# <code>logger -t xcat &quot;debug in plugin_command&quot;</code>;' will be removed.</p>
+</body>
+</html>

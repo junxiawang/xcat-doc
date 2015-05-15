@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#problems">Problems</a></li>
+<li><a href="#enhancements">Enhancements</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#problems">Problems</a></li>
+<li><a href="#enhancements">Enhancements</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="problems"><a href="#TOC">Problems</a></h2>
+<p>The current xcat rest api has several deficiencies that need correcting:</p>
+<ul>
+<li>not all xcat functionality is covered, or even the most commonly used function</li>
+<li>the documentation was poor and incomplete</li>
+<li>the code was disorganized and not commented</li>
+<li>the implementation is slow, it doesn't always use the best xml cmd for the function</li>
+<li>the input and output data structures follow the current xml poor and inconsistent structure</li>
+</ul>
+<h2 id="enhancements"><a href="#TOC">Enhancements</a></h2>
+<p>This is the list of what should be done to correct these problems (in approximate priority order):</p>
+<ul>
+<li><strong>test, fix, &amp; document the api calls for the resources that are currently in the document: images, networks, site, table, vms.</strong>
+<ul>
+<li>i've completed most of the node api calls as a model for how the code should be structured, for how the json input and output should be structured, and what the documentation should be like. The rest of the resources should follow this example.</li>
+<li>the highest priority are the calls that are needed when going thru the [XCAT_iDataPlex_Cluster_Quick_Start]. These are the main calls that a software component above xCAT will need to automate. For example: makehost, makedns, makedhcp, makeconservercf, pasu, copycds, def cmds of osimages, nodeset, rsetboot.</li>
+<li>the <a href="https://sourceforge.net/apps/mediawiki/xcat/index.php?title=WS_API">xcat rest api document</a> needs to include input and output for all calls (bai yuan - 2 days)</li>
+<li>there should be an automated test driver in both curl (xcatws-test.sh) and native perl (xcatws-test.pl) so that improvements to xcatws.cgi can be quickly and easily tested. (I've completed xcatws-test.sh for most of the node api calls.) The test drivers only need to test the json output format. (bai yuan - 3 days)</li>
+<li>change/fix the json input structure of all put and post calls that i haven't fixed yet, and change the json output structure of all get calls that i haven't fixed yet (bai yuan - 1 week)</li>
+<li>most of the put and post calls weren't using json correctly - most of them just had an array of &quot;attr=val&quot; strings. That should be a json object instead (equivalent to a perl hash). I fixed most of the node calls as examples. The rest of the put/post calls should be patterned after those.</li>
+<li>the json output of most of the get calls just follows the same kind of structure as the xml output of xcatd, which has never been good (it is inconsistent and structured strangely). Even though it will make the get api calls a little slower (because of more processing), the wrapJson() function should restructure the output to the correct format for the json option. I've already fixed: the get node list and attributes, power, vitals, inventory, and energy as examples. The others should be patterned after that.</li>
+<li>i'm using the <a href="http://api.openstack.org/api-ref.html">openstack api</a> as a model (mostly)</li>
+<li>i think the json output format should be the primary one that we document and tell people to use. So just leave the formatting of the xml and html output the way it is now (don't bother improving it).</li>
+<li>once the input and output structure is corrected for each call, the corresponding documentation should be corrected</li>
+<li>change the implementation of the table api calls to use lissa's xml interface that she did for pcm (its faster) (bruce or bai yuan - 3 days)</li>
+<li>document them as a faster/better alternative to the get api calls that use lsdef</li>
+<li>here's info from lissa about her api: &quot;the drivers that show how to use it are on 9.114.34.44 in /root/lissa/PCM/api. The driver I use is pcmdriver. All the XML input files are in there. I think they match the lastest code. I think the files that start with PCM* were actually given to me by PCM so I could see exactly how I was called. I don't see them in our release, so maybe they add them later. If you look at pcmdriver, it is pretty simple. Also the interface is commented at the top of each routine in tabutils.pm. The number files like getTablesAllNodeAttribsreq1 are just variations on the call like multiple table vs 1 table. Uncomment # $ENV{'XCATXMLTRACE'}=1; in pcmdriver and you will see the XML&quot;</li>
+<li>instead of checking for each individual keyword in the params and correlating it to an xcat flag, have a hash that maps keyword to flag, and then just process them all in a loop. I did this for xdsh &amp; xdcp as an example. Do this for the other api calls too. Since xcatws.cgi is loaded/processed by apache on every api call, if we let it get super big, it will slow each call down.</li>
+</ul></li>
+<li><strong>eliminate the need to put the pw in the url (bai yuan - 1 week)</strong>
+<ul>
+<li>use an api key or certificate instead. See what openstack does.</li>
+<li>also figure out why we have to use -k in the curl cmd right now</li>
+</ul></li>
+<li><strong>figure out if the data sent back is given the correct Content/Type (bai yuan - 1 day)</strong></li>
+<li><strong>compare the xcatws.cgi code that talks to xcatd (sendRequest()) to the Client.pm code to make sure it isn't missing any bug fixes in the last couple years (bai yuan (ask xiao peng for help) - 1 day)</strong></li>
+<li><strong>test, document, and fix/improve the code for the other resource handlers that are in the code, but not in the document: groups, logs, notifications, policies, accounts, hypervisor(bai yuan - 1 week)</strong></li>
+<li><strong>add api calls for functionality that is missing (bai yuan - 2 days)</strong>
+<ul>
+<li>osimage definition create, change, delete, and also and copycds</li>
+<li>nodeset stat (to query current nodeset setting)</li>
+</ul></li>
+<li><strong>don't have to do it right away, but we might want to eventually break the different resource handlers (and corresponding json wrapper functions) into separate pm files, one for each resource. Each api call only references one resource, so only 1 pm would have to be loaded.</strong></li>
+<li><strong>investigate trying to send output back to the rest api client as it is coming from xcatd (instead of waiting for all of the data from xcatd before sending anything to the rest api client) (bai yuan - 1 week)</strong>
+<ul>
+<li>some api calls can take a long time, especially for a lot of nodes, so to see nothing until the call is complete is not very good usability</li>
+<li>this might be tricky, maybe only do it for xml output where it doesn't really do much processing of the ouput anyway? (altho you would have to change the code to avoid converting the output from xml -&gt; perl -&gt; xml, which is what i think it does now.</li>
+</ul></li>
+<li><strong>do performance/scale tests with lots of nodes and optimize code (bai yuan - 1 week)</strong></li>
+<li><strong>add api calls to return meta-data of resources (list of possible attributes of def objects)(bai yuan - 3 days)</strong></li>
+<li><strong>convert this to use FASTCGI (bai yuan - 1 week)</strong></li>
+</ul>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce Potter</li>
+<li><strong>Required approvers</strong>: Guang Cheng</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

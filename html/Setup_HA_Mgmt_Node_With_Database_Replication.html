@@ -1,0 +1,375 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#configuration-requirements">Configuration Requirements</a></li>
+<li><a href="#setup-database-replication">Setup Database Replication</a><ul>
+<li><a href="#db2-high-availability-disaster-recovery-hadr-setup"><strong>DB2 High Availability Disaster Recovery (HADR) Setup</strong></a><ul>
+<li><a href="#disconnect-all-the-db2-clients"><strong>Disconnect all the DB2 Clients</strong></a></li>
+<li><a href="#setup-configuration-parameters-for-xcatdb"><strong>Setup configuration parameters for xcatdb</strong></a></li>
+<li><a href="#backup-xcatdb-on-primary-management-node"><strong>Backup xcatdb on Primary Management Node</strong></a></li>
+<li><a href="#restore-xcatdb-on-standby-management-node"><strong>Restore xcatdb on Standby Management Node</strong></a></li>
+<li><a href="#configure-hadr-services-ports"><strong>Configure HADR services ports</strong></a></li>
+<li><a href="#configure-the-hadr-parameters"><strong>Configure the HADR Parameters</strong></a></li>
+<li><a href="#start-hadr"><strong>Start HADR</strong></a></li>
+<li><a href="#verify-hadr-status"><strong>Verify HADR Status</strong></a></li>
+<li><a href="#test-database-synchronization"><strong>Test Database Synchronization</strong></a></li>
+<li><a href="#some-useful-hadr-commands"><strong>Some useful HADR commands</strong></a></li>
+</ul></li>
+<li><a href="#database-replication-for-postgresql"><strong>Database Replication for Postgresql</strong></a></li>
+<li><a href="#database-replication-for-other-database-systems"><strong>Database Replication for Other Database Systems</strong></a></li>
+</ul></li>
+<li><a href="#file-synchronization">File Synchronization</a><ul>
+<li><a href="#ssl-credentials-and-ssh-keys"><strong>SSL Credentials and SSH Keys</strong></a></li>
+</ul></li>
+<li><a href="#cluster-maintenance-considerations"><strong>Cluster Maintenance Considerations</strong></a></li>
+<li><a href="#failover">Failover</a><ul>
+<li><a href="#setup-the-network-services-and-conserver">*Setup the network services and conserver:</a></li>
+<li><a href="#setup-os-deployment-environment">Setup os deployment environment</a></li>
+</ul></li>
+<li><a href="#failback">Failback</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#configuration-requirements">Configuration Requirements</a></li>
+<li><a href="#setup-database-replication">Setup Database Replication</a></li>
+<li><a href="#db2-high-availability-disaster-recovery-hadr-setup"><strong>DB2 High Availability Disaster Recovery (HADR) Setup</strong></a>
+<ul>
+<li><a href="#disconnect-all-the-db2-clients"><strong>Disconnect all the DB2 Clients</strong></a></li>
+<li><a href="#setup-configuration-parameters-for-xcatdb"><strong>Setup configuration parameters for xcatdb</strong></a></li>
+<li><a href="#backup-xcatdb-on-primary-management-node"><strong>Backup xcatdb on Primary Management Node</strong></a></li>
+<li><a href="#restore-xcatdb-on-standby-management-node"><strong>Restore xcatdb on Standby Management Node</strong></a></li>
+<li><a href="#configure-hadr-services-ports"><strong>Configure HADR services ports</strong></a></li>
+<li><a href="#configure-the-hadr-parameters"><strong>Configure the HADR Parameters</strong></a></li>
+<li><a href="#start-hadr"><strong>Start HADR</strong></a></li>
+<li><a href="#verify-hadr-status"><strong>Verify HADR Status</strong></a></li>
+<li><a href="#test-database-synchronization"><strong>Test Database Synchronization</strong></a></li>
+<li><a href="#some-useful-hadr-commands"><strong>Some useful HADR commands</strong></a></li>
+</ul></li>
+<li><a href="#database-replication-for-postgresql"><strong>Database Replication for Postgresql</strong></a></li>
+<li><a href="#database-replication-for-other-database-systems"><strong>Database Replication for Other Database Systems</strong></a></li>
+<li><a href="#file-synchronization">File Synchronization</a></li>
+<li><a href="#ssl-credentials-and-ssh-keys"><strong>SSL Credentials and SSH Keys</strong></a></li>
+<li><a href="#cluster-maintenance-considerations"><strong>Cluster Maintenance Considerations</strong></a></li>
+<li><a href="#failover">Failover</a>
+<ul>
+<li><a href="#setup-the-network-services-and-conserver">*Setup the network services and conserver:</a></li>
+<li><a href="#setup-os-deployment-environment">Setup os deployment environment</a></li>
+</ul></li>
+<li><a href="#failback">Failback</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><strong>Note:</strong></p>
+<ul>
+<li><strong>The procedure in this documentation is not thoroughly tested, use this doc at your own risk.</strong></li>
+<li><strong>This documentation does not work for Power 775 configuration. For Power 775 HA management node, please use [Setup_HA_Mgmt_Node_With_Shared_Disks] instead</strong></li>
+</ul>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This documentation illustrates how to setup a second management node, or standby management node, in your cluster to provide high availability management capability when there is no shared disks configured between the two management nodes. If DB2 is used in your cluster, this documentation only applies to xCAT 2.5 or newer releases.</p>
+<p>When the primary xCAT management node fails, the administrator can easily have the standby management node take over role of the management node, and thus avoid long periods of time during which your cluster does not have active cluster management function available.</p>
+<p>The xCAT high availability management node(HAMN) feature is not designed for automatic setup or automatic failover, this documentation will describe how to synchronize various data between the primary management node and standby management node automatically, and describe how to perform some manual steps to have the standby management node takeover the management node role when failures occur on the primary management node. However, high availability applications such as IBM Tivoli System Automation(TSA) can be used to achieve automatic failover, this documentation also describes how to configure HAMN with IBM Tivoli System Automation(TSA) to perform automatic failover.</p>
+<p>The primary management node will be taken down during the failover process, so any NFS mount or other network connections from the compute nodes to the management node should be temporarily disconnected during the failover process. If the network connectivity is required for compute node run-time operations, you should consider some other way to provide high availability for the network services unless the compute nodes can also be taken down during the failover process. This also implies:</p>
+<pre><code>1\. This HAMN approach is primarily intended for clusters in which the management node manages diskful </code></pre>
+<p>nodes or linux stateless nodes. This also includes hierarchical clusters in which the management node only directly manages the diskful or linux stateless service nodes, and the compute nodes managed by the service nodes can be of any type.</p>
+<pre><code>2\. This documentation is **not **primarily intended for clusters in which the nodes directly managed by </code></pre>
+<p>the management node are linux statelite or aix diskless nodes, because the nodes depend on the management node being up to run its operating system over NFS. But if the nodes use only readonly nfs mounts from the MN management node, then you can use this doc as long as you recognize that your nodes will go down while you are failing over to the standby management node.</p>
+<p><strong>Note: If you are using twin-tailed shared disks between the primary management node and standby management node, the steps below are quite different, please see [Setup_HA_Mgmt_Node_With_Shared_Disks].</strong></p>
+<h2 id="configuration-requirements"><a href="#TOC">Configuration Requirements</a></h2>
+<p><a href="HAMN_Configuration_Requirements">HAMN_Configuration_Requirements</a></p>
+<p><a href="HAMN_Setup_MNs">HAMN_Setup_MNs</a></p>
+<h2 id="setup-database-replication"><a href="#TOC">Setup Database Replication</a></h2>
+<p>The most important data that needs to be kept synchronized on the primary management node and standby management node is the xCAT database. Most of the commercial database systems and some free database systems such as Postgresql and MySQL provide a database replication feature. The database replication feature can be used for high availability capability. The configuration for database replication is quite different with various database systems, so this documentation can not cover all of the configuration scenarios. This documentation will focus on database replication configuration for DB2, and will also provide some documentation links for the replication setup for some of the other database systems. You can refer to the &quot;Setup DB2 as the xCAT Database&quot; document link at [Setting_Up_DB2_as_the_xCAT_DB] for more details on how to setup DB2 as the xCAT database.</p>
+<h3 id="db2-high-availability-disaster-recovery-hadr-setup"><a href="#TOC"><strong>DB2 High Availability Disaster Recovery (HADR) Setup</strong></a></h3>
+<p>DB2 High Availability Disaster Recovery (HADR) is a database replication feature that provides a high availability solution. HADR transmits the log records from the primary database server to the standby server. The HADR standby replays all the log records to its copy of the database, keeping it synchronized with the primary database server. Applications can only access the primary database and have no access to the standby database.</p>
+<p>HADR communication between the primary and the standby is through TCP/IP, so the primary database server and standby database server do not need to be in the same subnet.</p>
+<p>This documentation will only describe some basic configuration steps for HADR setup. There may be some configuration deviations in different cluster environments, so please refer to the following links for more details:</p>
+<ol style="list-style-type: decimal">
+<li>Redbook &quot;High Availability and Disaster Recovery Options for DB2 on Linux UNIX and Windows&quot; http://www.redbooks.ibm.com/abstracts/sg247363.html</li>
+<li>DB2 Information Center http://publib.boulder.ibm.com/infocenter/db2luw/v9r5/index.jsp?topic=/com.ibm.db2.luw.admin.ha.doc/doc/c0011748.html</li>
+</ol>
+<p>Please be aware that all the DB2 commands in this section should be run as xcatdb unless otherwise noted.</p>
+<h4 id="disconnect-all-the-db2-clients"><a href="#TOC"><strong>Disconnect all the DB2 Clients</strong></a></h4>
+<p>Before proceeding with the DB2 HADR setup, all the DB2 clients should be disconnected from the DB2 database server. For the xCAT environment, the only DB2 clients should be xcatd, so the xcatd on both management node and service nodes need to be stopped using the command stopsrc -s xcatd. If there is any other DB2 client running on the management node, you need to disconnect all the clients.</p>
+<p>One way to ensure that all are disconnectd is on the management node, run the following:</p>
+<pre><code>      su - xcatdb
+      &gt; db2 force application all</code></pre>
+<h4 id="setup-configuration-parameters-for-xcatdb"><a href="#TOC"><strong>Setup configuration parameters for xcatdb</strong></a></h4>
+<p>Several configuration parameters need to be updated for HADR on both the primary management node and standby management node. Please be aware that all the DB2 commands in this section should be run as user xcatdb unless otherwise noted.</p>
+<pre><code>    su - xcatdb
+    db2 UPDATE DB CFG FOR XCATDB USING LOGRETAIN ON
+    db2 UPDATE DB CFG FOR XCATDB USING TRACKMOD ON
+    db2 UPDATE DB CFG FOR XCATDB USING LOGINDEXBUILD ON
+    db2 UPDATE DB CFG FOR XCATDB USING INDEXREC RESTART</code></pre>
+<h4 id="backup-xcatdb-on-primary-management-node"><a href="#TOC"><strong>Backup xcatdb on Primary Management Node</strong></a></h4>
+<p>The xcatdb on the primary management node and standby management node should be synchronized before setting up the HADR, otherwise, we will run into errors when trying to start HADR.</p>
+<p>Note: as of xCAT 2.6, the xcatdb instance directory for DB2 can be change by setting the site table databaseloc attribute to the filesystem you would like to use. Our example below uses the default of /var/lib/db2. If you have changed that in the site.databaseloc setting, then use your new directory. For example: if databaseloc is set to the following:</p>
+<pre><code>    &quot;databaseloc&quot;,&quot;/databaseloc&quot;,,</code></pre>
+<p>then /var/lib/db2 should be replaced with /databaseloc/db2.</p>
+<p>as root</p>
+<pre><code>    mkdir /var/lib/db2/backup
+    chown xcatdb:xcatdb /var/lib/db2/backup</code></pre>
+<p>as xcatdb</p>
+<pre><code>    db2 BACKUP DB XCATDB TO /var/lib/db2/backup/</code></pre>
+<p>The command output will be something like:</p>
+<pre><code>Backup successful. The timestamp for this backup image is: 20100805161232</code></pre>
+<p>Record the timestamp for later use, this timestamp is also part of the filename saved in /var/lib/db2/backup</p>
+<p>Note: if you get an error, like &quot;SQL1035N The database is currently in use. SQLSTATE=57019'**&quot;, make sure your xcatd daemons on the management node and service nodes are not running. Deactivating the xcatdb using command &quot;db2 DEACTIVATE DB XCATDB&quot; may also be helpful.</p>
+<h4 id="restore-xcatdb-on-standby-management-node"><a href="#TOC"><strong>Restore xcatdb on Standby Management Node</strong></a></h4>
+<p>Copy the xcatdb backup from the primary management node to standby management node:</p>
+<pre><code>    scp -rp /var/lib/db2/backup xcatdb@aixmn2:/var/lib/db2/</code></pre>
+<p>Restore the xcatdb database:</p>
+<pre><code>    su - xcatdb
+    db2 RESTORE DATABASE XCATDB FROM &quot;/var/lib/db2/backup&quot; TAKEN AT 20100805161232 REPLACE HISTORY FILE</code></pre>
+<p>You will be prompted with the following question:</p>
+<pre><code>
+SQL2539W Warning! Restoring to an existing database that is the same as the 
+
+backup image database. The database files will be deleted. 
+
+Do you want to continue? (y/n)  
+    
+    Answer: y</code></pre>
+<h4 id="configure-hadr-services-ports"><a href="#TOC"><strong>Configure HADR services ports</strong></a></h4>
+<p>Add the following lines into /etc/services on both the primary management node and standby management node. You need to run as root to edit /etc/services.</p>
+<pre><code>    DB2_HADR_1 55001/tcp
+    DB2_HADR_2 55002/tcp</code></pre>
+<h4 id="configure-the-hadr-parameters"><a href="#TOC"><strong>Configure the HADR Parameters</strong></a></h4>
+<p>Use the following commands to configure the HADR parameters.</p>
+<p>Substitute the IP addresses in the example with your addresses.</p>
+<p>On primary management node:</p>
+<pre><code>    su - xcatdb
+    db2 UPDATE ALTERNATE SERVER FOR DATABASE XCATDB USING HOSTNAME 9.114.47.104 PORT 60000
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_LOCAL_HOST 9.114.47.103
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_LOCAL_SVC DB2_HADR_1
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_REMOTE_HOST 9.114.47.104
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_REMOTE_SVC DB2_HADR_2
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_REMOTE_INST xcatdb
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_SYNCMODE NEARSYNC
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_TIMEOUT 3
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_PEER_WINDOW 120
+    db2 CONNECT TO XCATDB
+    db2 QUIESCE DATABASE IMMEDIATE FORCE CONNECTIONS
+    db2 UNQUIESCE DATABASE
+    db2 CONNECT RESET</code></pre>
+<p>On Standby management node:</p>
+<pre><code>    su - xcatdb
+    db2 UPDATE ALTERNATE SERVER FOR DATABASE XCATDB USING HOSTNAME 9.114.47.103 PORT 60000
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_LOCAL_HOST 9.114.47.104
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_LOCAL_SVC DB2_HADR_2
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_REMOTE_HOST 9.114.47.103
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_REMOTE_SVC DB2_HADR_1
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_REMOTE_INST xcatdb
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_SYNCMODE NEARSYNC
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_TIMEOUT 3
+    db2 UPDATE DB CFG FOR XCATDB USING HADR_PEER_WINDOW 120</code></pre>
+<h4 id="start-hadr"><a href="#TOC"><strong>Start HADR</strong></a></h4>
+<p>On the standby management node, start HADR as the standby database:</p>
+<pre><code>    db2 DEACTIVATE DATABASE XCATDB
+    db2 START HADR ON DATABASE XCATDB AS STANDBY</code></pre>
+<p>On the primary management node, start HADR as the primary database:</p>
+<pre><code>    db2 DEACTIVATE DATABASE XCATDB
+    db2 START HADR ON DATABASE XCATDB AS PRIMARY</code></pre>
+<p>If you get any message other than &quot;DB20000I The START HADR ON DATABASE command completed successfully&quot;, make sure all the steps described above have been done correctly, or refer to the DB2 information center for troubleshooting.</p>
+<h4 id="verify-hadr-status"><a href="#TOC"><strong>Verify HADR Status</strong></a></h4>
+<p>HADR can be in the wrong state even if the &quot;START HADR&quot; command returns successfully. The commands &quot;db2 GET SNAPSHOT FOR DB ON XCATDB&quot; or &quot;db2pd -d xcatdb -hadr&quot; can be used to verify HADR status. The HADR status output is quite similar between these two commands, here is an example:</p>
+<pre><code>    
+    **db2 GET SNAPSHOT FOR DB ON XCATDB**
+    HADR Status
+    Role = Primary
+    State = Peer
+    Synchronization mode = Nearsync
+    Connection status = Connected, 08/05/2010 20:33:00.412948
+    Peer window end = 08/05/2010 21:03:07.000000 (1281013387)
+    Peer window (seconds) = 120
+    Heartbeats missed = 0
+    Local host = 9.114.47.103
+    Local service = DB2_HADR_1
+    Remote host = 9.114.47.104
+    Remote service = DB2_HADR_2
+    Remote instance = xcatdb
+    timeout(seconds) = 3
+    Primary log position(file, page, LSN) = S0000002.LOG, 18, 000000000FA18D7C
+    Standby log position(file, page, LSN) = S0000002.LOG, 18, 000000000FA18D7C
+    Log gap running average(bytes) = 0</code></pre>
+<pre><code>    
+    **db2pd -d xcatdb -hadr**
+    Database Partition 0 -- Database XCATDB -- Active -- Up 0 days 01:17:11
+    HADR Information:
+     Role State SyncMode HeartBeatsMissed LogGapRunAvg (bytes)
+     Primary Peer Nearsync 0 0
+     ConnectStatus ConnectTime Timeout
+     Connected Thu Aug 5 20:33:00 2010 (1281011580) 3
+     PeerWindowEnd PeerWindow
+     Thu Aug 5 21:52:07 2010 (1281016327) 120
+     LocalHost LocalService
+     9.114.47.103 DB2_HADR_1
+     RemoteHost RemoteService RemoteInstance
+     9.114.47.104 DB2_HADR_2 xcatdb
+     PrimaryFile PrimaryPg PrimaryLSN
+     S0000002.LOG 66 0x000000000FA4869D
+     StandByFile StandByPg StandByLSN
+     S0000002.LOG 66 0x000000000FA4869D</code></pre>
+<p>The attributes &quot;Role&quot;, &quot;State&quot; and &quot;ConnectStatus&quot; need to be checked. For an operating HADR environment, the &quot;Role&quot; should be &quot;Primary&quot; or &quot;Standby&quot;; the &quot;State&quot; should be &quot;Peer&quot; and the &quot;ConnectStatus&quot; should be &quot;Connected&quot;. If any of the attributes are not correct, you need to go back to check the HADR settings and try to restart the HADR, if the problem persists, refer to DB2 documentation or contact the DB2 service team.</p>
+<h4 id="test-database-synchronization"><a href="#TOC"><strong>Test Database Synchronization</strong></a></h4>
+<p>After the HADR setup is done, we should verify the database synchronization between the primary management node and standby management node. Here are the recommended steps:</p>
+<p>On the primary management node:</p>
+<ol style="list-style-type: decimal">
+<li>start xcatd, for example, using startsrc -s xcatd on AIX</li>
+<li>Add a new testnode</li>
+<li>stop xcatd, for example, using stopsrc -s xcatd on AIX</li>
+</ol>
+<p>On the standby management node:</p>
+<ol style="list-style-type: decimal">
+<li>Takeover as the HADR primary using command &quot;db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster&quot;</li>
+<li>startxcatd, for example, using startsrc -s xcatd on AIX</li>
+<li>Verify the testnode is in database and the node attributes are correct</li>
+<li>Delete the testnode from database</li>
+<li>stop xcatd, for example, using stopsrc -s xcatd on AIX</li>
+</ol>
+<p>On the primary management node:</p>
+<ol style="list-style-type: decimal">
+<li>Takeover as the HADR primary using command &quot;db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster&quot;</li>
+<li>start xcatd, for example, using startsrc -s xcatd on AIX</li>
+<li>Verify the testnode is not in the database</li>
+</ol>
+<h4 id="some-useful-hadr-commands"><a href="#TOC"><strong>Some useful HADR commands</strong></a></h4>
+<p>Besides the HADR related commands described above, there are other HADR commands that are useful for administration and debugging. When debugging errors, a good resource is the DB2 Information Center at http://publib.boulder.ibm.com/infocenter/db2luw/v9r7/index.jsp . For example, the message SQL1117N can be found in Database reference &gt; Messages &gt; SQL Messages &gt; SQL1000 - SQL1499</p>
+<p>Stop HADR :</p>
+<pre><code>    db2 STOP HADR ON DATABASE XCATDB</code></pre>
+<p>Note: On the HADR standby database server, after the HADR is stopped, the database is in &quot;ROLL-FORWARD PENDING&quot; state and the xcatdb can not be activated, this error is returned: &quot;SQL1117N A connection to or activation of database &quot;XCATDB&quot; cannot be made because of ROLL-FORWARD PENDING. SQLSTATE=57019&quot;, for the SQLSTATE=57019 , use the command &quot;db2 ROLLFORWARD DATABASE XCATDB TO END OF LOGS AND COMPLETE&quot; to fix this problem.</p>
+<p>Check xcatdb configuration :</p>
+<pre><code>    db2 CONNECT TO XCATDB
+    db2 GET DB CFG</code></pre>
+<p>Takeover HADR role:</p>
+<pre><code>    db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster</code></pre>
+<p>OR</p>
+<pre><code>    db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster BY FORCE</code></pre>
+<p>The &quot;BY FORCE&quot; option should be used only if the primary database server is not functional.</p>
+<h3 id="database-replication-for-postgresql"><a href="#TOC"><strong>Database Replication for Postgresql</strong></a></h3>
+<p>Postgresql does provide the feature &quot;Continuous Archiving and Point-In-Time Recovery (PITR)&quot; that can be used to provide high availability cluster configuration. See http://www.postgresql.org/docs/8.4/interactive/warm-standby.html and http://www.postgresql.org/docs/8.4/interactive/continuous-archiving.html for more details.</p>
+<p>However, this feature actually uses the &quot;backup on the primary database server&quot; and &quot;restore on the standby database server&quot;. Because PITR is not real-time replication, the backup interval is configured manually in the postgresql.conf file, and the recovery interval is configured in recovery.conf. It will save a lot of database logging files and these logging files take large amounts of disk space (each logging file uses about 16MB disk space). Based on these considerations, using the database backup command pg_dump and restore command pg_restore seems to be a better solution for the xCAT postgresql database replication.</p>
+<p>On the primary management node:</p>
+<p>add crontab entries to:</p>
+<ol style="list-style-type: decimal">
+<li>dump the xcatdb into a file</li>
+<li>scp the xcatdb backup file to the standby management node</li>
+</ol>
+<p>Here is an example of the crontab entries for user postgres:</p>
+<pre><code>    0 3 * * * /var/lib/pgsql/bin/pg_dump -f /tmp/xcatdb -F t xcatdb</code></pre>
+<p>Here is an example of the crontab entries for user root:</p>
+<pre><code>    0 4 * * * scp /tmp/xcatdb aixmn2:/tmp/</code></pre>
+<p>On the standby management node:</p>
+<p>stop the xcatd and Postgresql.</p>
+<p>AIX:</p>
+<pre><code>    stopsrc -s xcatd
+    su - postgres
+    /var/lib/pgsql/bin/pg_ctl -D /var/lib/pgsql/data stop</code></pre>
+<p>Linux:</p>
+<pre><code>    service xcatd stop
+    su - postgres
+    service postgresql stop</code></pre>
+<p>Add a crontab entry to restore the database, here is an example of the crontab entries for user postgres:</p>
+<pre><code>    0 5 * * * /var/lib/pgsql/bin/pg_restore -d xcatdb -c /tmp/xcatdb</code></pre>
+<h3 id="database-replication-for-other-database-systems"><a href="#TOC"><strong>Database Replication for Other Database Systems</strong></a></h3>
+<p>This documentation will not cover the details for setting up replication for the database systems other than DB2. Here are some useful links for setting up database replication for various database systems supported by xCAT.</p>
+<pre><code>MySQL: http://dev.mysql.com/doc/refman/5.5/en/replication.html </code></pre>
+<p>sqlite: sqlite does not provide replication feature. However, since sqlite is a file-based database, you can use a file copy or synchronization mechanism on Unix/Linux to achieve the database synchronization. Sqlite does not support a hierarchical xCAT cluster. It does not support database clients that are required on the service nodes in a hierarchical cluster.</p>
+<h2 id="file-synchronization"><a href="#TOC">File Synchronization</a></h2>
+<p>To make the standby management node be ready for an easy take over, there are a lot files that should be kept synchronized between the primary management node and standby management node.</p>
+<p>A straightforward way to keep files synchronized is to use rsync. rsync is shipped with xCAT as part of the xcat-dep on AIX and also shipped with Linux distribution. You can see more details on the official rsync website http://samba.org/rsync/. You can use crontab to automate the synchronization. This documentation will use rsync and crontab as the file synchronization solution. You can use your own file synchronization solution as long as it keeps the corresponding files synchronized between the primary management node and standby management node.</p>
+<h3 id="ssl-credentials-and-ssh-keys"><a href="#TOC"><strong>SSL Credentials and SSH Keys</strong></a></h3>
+<p>The SSL credentials need to be identical on the primary management node and standby management node. The xcatd requests submitted from service nodes and compute nodes depend on the SSL credentials.</p>
+<p>To setup the ssh authentication between the primary management node, standby management node, service nodes and compute nodes, the ssh keys should be kept synchronized between the primary management node and standby management node.</p>
+<p>The SSL credentials reside in the directories /etc/xcat/ca, /etc/xcat/cert and $HOME/.xcat/. The ssh keys are in the directory /etc/xcat/hostkeys.</p>
+<p>Here is an example of the crontab entries for synchronizing the SSL credentials and SSH keys:</p>
+<pre><code>    0 1 * * * /usr/bin/rsync -Lprgotz /etc/xcat/ca /etc/xcat/cert /etc/xcat/hostkeys aixmn2:/etc/xcat
+    0 1 * * * /usr/bin/rsync -Lprgotz $HOME/.xcat aixmn2:$HOME/</code></pre>
+<p>Note: You can backup the $HOME/.ssh directory in case some information from the $HOME/.ssh on the primary management node is needed after failover. This is an optional step:</p>
+<pre><code>    0 1 * * * /usr/bin/rsync -Lprgotz $HOME/.ssh aixmn2:$HOME/sshbackup/</code></pre>
+<p><a href="HAMN_File_Syncronization">HAMN_File_Syncronization</a></p>
+<h2 id="cluster-maintenance-considerations"><a href="#TOC"><strong>Cluster Maintenance Considerations</strong></a></h2>
+<p><a href="HAMN_Cluster_Maintainance">HAMN_Cluster_Maintainance</a></p>
+<h2 id="failover"><a href="#TOC">Failover</a></h2>
+<p>When the primary management node fails for whatever reason, the failover process should be started, there are two methods to perform the failover: manual failover and automatic failover. The administrator can start the manual failover process with some manual steps. The following manual procedure should be followed in the event of a failure on the primary management node. Or, the administrators can configure HAMN with IBM Tivoli System Automation(TSA) to achieve automatic failover, see [Configure_HAMN_with_TSA] for more details.</p>
+<ul>
+<li>Failover the database replication</li>
+</ul>
+<p>Use the description in the section &quot;setup database replication&quot; to failover the database replication to the standby management node if necessary. Using the DB2 HADR configuration as an example, there are two scenarios that require different procedures. If the outage is a known outage where the standby management node takes over before the primary management node goes down, the command &quot;db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster&quot; can be used to failover the HADR; if the outage is a unknown outage where the primary management node remains in control until the primary management goes down, the command &quot;db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster BY FORCE&quot; can be used to failover the HADR. The &quot;BY FORCE&quot; option is required when the DB2 database on the primary management node is not functional.</p>
+<ul>
+<li>Shutdown the primary management node</li>
+</ul>
+<p>If the primary management node is not totally dead, shutdown the primary management node. The standby management node cannot take over the management role if the primary management node is still up, since the standby management node will be configured with the hostname and ip address that the primary management was configured with. When the primary management node is shutdown, the service nodes and compute nodes may no longer function, depending on the type of node installation that was used. If xCAT is still active on the primary management node at this time, rpower and xdsh can be used to shutdown the nodes if needed.</p>
+<ul>
+<li>Stop the database system on the standby management node</li>
+</ul>
+<p>Using DB2 as an example, the following commands can be used to stop DB2:</p>
+<pre><code>    db2 STOP HADR ON DATABASE XCATDB</code></pre>
+<p>Note: If you get error message SQL1769N Stop HADR cannot complete. Reason code = &quot;2&quot;, try to run command</p>
+<pre><code>    db2 DEACTIVATE DATABASE XCATDB USER XCATDB USING cluster</code></pre>
+<p>and then rerun the</p>
+<pre><code>    db2 STOP HADR ON DATABASE XCATDB 
+ 
+    db2 connect reset
+    db2 force applications all
+    db2 terminate
+    db2stop</code></pre>
+<ul>
+<li>On the standby management node, change the ip address and hostname configured on cluster-facing adapters to the ones that were configured on the primary management node. Here is an example:</li>
+</ul>
+<pre><code>    /usr/sbin/mktcpip -h&#39;aixmn1&#39; -a&#39;9.114.47.103&#39; -m&#39;255.255.255.192&#39; -i&#39;en1&#39; -g&#39;9.114.47.126&#39; -t&#39;N/A&#39;</code></pre>
+<p>Note: the mktcpip command will update /etc/hosts also. If this not desired, you can use the chdev command instead.</p>
+<p>It is recommended that you open a console to the standby management node prior to making any ethernet interface changes. Also, keep the console open, to observe any errors while issuing commands in the remainder of this section.</p>
+<ul>
+<li><p>Update the database configuration to use the new ip address and new hostname. For DB2, use the following command:</p>
+<p>re-login as xcatdb</p></li>
+</ul>
+<pre><code>    db2gcf -u -p 0 -i xcatdb</code></pre>
+<p>This command will update the DB2 database configuration file &quot;<em>/var/lib/db2/sqllib/db2nodes.cfg</em>&quot; and start DB2. Note the path /var/lib/db2 is the default and may have been changed by setting the site table databaseloc attribute.</p>
+<p>For Postgres, update the line &quot;host all all x.x.x.x/32 md5&quot; in file /var/lib/pgsql/postgresql.conf and update the line &quot;listen_addresses = 'x.x.x.x'&quot; in file /var/lib/pgsql/pg_hba.conf.</p>
+<ul>
+<li>Start xcatd on the standby management node. If you get error &quot;SQL1117N A connection to or activation of database &quot;XCATDB&quot; cannot be made because of ROLL-FORWARD PENDING. SQLSTATE=57019&quot;, use the following steps to workaround:
+<ul>
+<li>Roll forward DB2 database, using:</li>
+</ul></li>
+</ul>
+<pre><code>    db2 ROLLFORWARD DB XCATDB TO END OF LOG
+    db2 ROLLFORWARD DB XCATDB COMPLETE</code></pre>
+<p>Verify xcatdb is usable, via db2</p>
+<pre><code>    db2 CONNECT TO XCATDB USER XCATDB USING cluster
+    db2 LIST TABLES</code></pre>
+<h4 id="setup-the-network-services-and-conserver"><a href="#TOC">*Setup the network services and conserver:</a></h4>
+<ul>
+<li>DNS: run makedns. Verify dns services working for node resolution.
+<ul>
+<li>DHCP(Linux only): run makedhcp. Verify dhcp operational for hardware management.</li>
+<li>conserver: makeconservercf</li>
+<li>Verify that bootp is operational for booting the nodes.</li>
+</ul></li>
+</ul>
+<h4 id="setup-os-deployment-environment"><a href="#TOC">Setup os deployment environment</a></h4>
+<p><a href="HAMN_OS_Image">HAMN_OS_Image</a></p>
+<h2 id="failback"><a href="#TOC">Failback</a></h2>
+<p>When the previous primary management node is back up and running, you may want to failback to the primary management node. Since the xCAT database and related files were not kept up to date on the previous primary management node while it was down, failing back to the the previous primary management node is not an easy action. You must go through all the steps described in this documentation to setup the previous standby management node as the new primary management node and setup the previous primary management node as the new standby management node, and then do a failover from the new primary management node to the new standby management node.</p>
+<h2 id="references"><a href="#TOC">References</a></h2>
+<ul>
+<li>Redbook &quot;High Availability and Disaster Recovery Options for DB2 on Linux UNIX and Windows&quot; http://www.redbooks.ibm.com/abstracts/sg247363.html</li>
+<li>DB2 Information Center<a href="http://www.redbooks.ibm.com/redbooks/pdfs/sg247352.pdf">http://www.redbooks.ibm.com/redbooks/.../sg247352.pdf</a>http://publib.boulder.ibm.com/infocenter/db2luw/v9r5/index.jsp?topic=/com.ibm.db2.luw.admin.ha.doc/doc/c0011748.html</li>
+<li>[Setting_Up_DB2_as_the_xCAT_DB]</li>
+<li>http://www.postgresql.org/docs/8.4/interactive/warm-standby.html</li>
+<li>http://wiki.postgresql.org/wiki/Replication,<em>Clustering,</em>and_Connection_Pooling</li>
+</ul>
+</body>
+</html>

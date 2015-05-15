@@ -1,0 +1,592 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+</ul></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#use-xcat-to-configure-services-on-the-management-node">Use xCAT to Configure Services on the Management Node</a><ul>
+<li><a href="#setup-etchosts-file">Setup /etc/hosts File</a></li>
+<li><a href="#setup-dns">Setup DNS</a></li>
+<li><a href="#setup-dhcp">Setup DHCP</a></li>
+</ul></li>
+<li><a href="#define-the-cmms-and-switches">Define the CMMs and Switches</a></li>
+<li><a href="#cmm-discovery-and-configuration">CMM Discovery and Configuration</a></li>
+<li><a href="#create-node-object-definitions-of-flex-blade-servers">Create node object definitions of flex blade servers</a><ul>
+<li><a href="#create-predefined-nodes-in-the-database-first-and-run-rscan--u-to-discovery">Create predefined nodes in the Database first and run rscan -u to Discovery</a><ul>
+<li><a href="#run-rscan--u-to-discover-all-the-compute-node-servers.">Run rscan -u to discover all the compute node servers.</a></li>
+</ul></li>
+<li><a href="#create-object-definition-of-flex-blades-by-discovery-using-stanza-files">Create object definition of flex blades by discovery using stanza files</a></li>
+<li><a href="#set-the-network-configuration-for-the-fsp">Set the network configuration for the fsp</a></li>
+<li><a href="#modify-blade-server-device-names">Modify blade server device names</a></li>
+</ul></li>
+<li><a href="#create-the-hardware-server-connection-for-the-ibm-flex-power-7-server">Create the hardware server connection for the IBM Flex power 7 server</a><ul>
+<li><a href="#update-the-fsp-firmware-optional">Update the FSP firmware (optional)</a></li>
+</ul></li>
+<li><a href="#prepare-for-node-deployment">Prepare for Node Deployment</a></li>
+<li><a href="#update-the-ibm-flex-power-7-server-firmware">Update the IBM Flex Power 7 Server firmware</a></li>
+<li><a href="#deploying-an-os-on-the-blades">Deploying an OS on the Blades</a></li>
+<li><a href="#deploying-stateless-nodes">Deploying Stateless Nodes</a></li>
+<li><a href="#installing-stateful-nodes">Installing Stateful Nodes</a></li>
+<li><a href="#appendix-1-ibm-flex-recovery-and-cmm-redundancy">Appendix 1: IBM Flex Recovery and CMM Redundancy</a><ul>
+<li><a href="#replacement-of-cmm">Replacement of CMM</a></li>
+<li><a href="#cmm-redundancy">CMM Redundancy</a><ul>
+<li><a href="#fail-over-software-reset-from-cmm-gui">Fail over software reset from CMM GUI</a></li>
+<li><a href="#fail-over-software-reset-from-cmm-cli">Fail over software reset from CMM CLI</a></li>
+<li><a href="#fail-over-hardware-reset-of-cmm">Fail over hardware reset of CMM</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#appendix-2-cmm-and-flexible-service-processorfsp-password">Appendix 2: CMM and Flexible Service Processor(FSP) password</a><ul>
+<li><a href="#errors-caused-by-an-fsp-authentication-problem">Errors caused by an FSP authentication problem</a></li>
+</ul></li>
+<li><a href="#appendix-3-updating-firmware-on-flex-ethernet-and-ib-switch-modules">Appendix 3: Updating Firmware on Flex Ethernet and IB Switch Modules</a><ul>
+<li><a href="#firmware-update-using-cli">Firmware Update using CLI</a></li>
+</ul></li>
+<li><a href="#appendix-4-perform-deferred-firmware-upgrades-for-flex-blade-cec">**Appendix 4 Perform Deferred Firmware upgrades for Flex blade CEC **</a><ul>
+<li><a href="#deferred-firmware-update-background"><strong>Deferred firmware update Background</strong></a></li>
+<li><a href="#tempperm-side-pending_power_on_side-attributes-in-deferred-firmware-update"><strong>temp/perm side, pending_power_on_side attributes in Deferred firmware update</strong></a></li>
+<li><a href="#the-procedure-of-the-deferred-firmware-update">**The procedure of the deferred firmware update **</a></li>
+</ul></li>
+<li><a href="#appendix-5-lshwconn-line-down-after-power-outage">Appendix 5 lshwconn LINE DOWN after power outage</a></li>
+<li><a href="#appendix-6-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix 6: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-7-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix 7: Install your Management Node to a new Release of Linux</strong></a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#use-xcat-to-configure-services-on-the-management-node">Use xCAT to Configure Services on the Management Node</a></li>
+<li><a href="#setup-etchosts-file">Setup /etc/hosts File</a></li>
+<li><a href="#setup-dns">Setup DNS</a></li>
+<li><a href="#setup-dhcp">Setup DHCP</a></li>
+<li><a href="#define-the-cmms-and-switches">Define the CMMs and Switches</a></li>
+<li><a href="#cmm-discovery-and-configuration">CMM Discovery and Configuration</a></li>
+<li><a href="#create-node-object-definitions-of-flex-blade-servers">Create node object definitions of flex blade servers</a></li>
+<li><a href="#create-predefined-nodes-in-the-database-first-and-run-rscan--u-to-discovery">Create predefined nodes in the Database first and run rscan -u to Discovery</a>
+<ul>
+<li><a href="#run-rscan--u-to-discover-all-the-compute-node-servers">Run rscan -u to discover all the compute node servers.</a></li>
+</ul></li>
+<li><a href="#create-object-definition-of-flex-blades-by-discovery-using-stanza-files">Create object definition of flex blades by discovery using stanza files</a></li>
+<li><a href="#set-the-network-configuration-for-the-fsp">Set the network configuration for the fsp</a></li>
+<li><a href="#modify-blade-server-device-names">Modify blade server device names</a></li>
+<li><a href="#create-the-hardware-server-connection-for-the-ibm-flex-power-7-server">Create the hardware server connection for the IBM Flex power 7 server</a></li>
+<li><a href="#update-the-fsp-firmware-optional">Update the FSP firmware (optional)</a></li>
+<li><a href="#prepare-for-node-deployment">Prepare for Node Deployment</a></li>
+<li><a href="#update-the-ibm-flex-power-7-server-firmware">Update the IBM Flex Power 7 Server firmware</a></li>
+<li><a href="#deploying-an-os-on-the-blades">Deploying an OS on the Blades</a></li>
+<li><a href="#deploying-stateless-nodes">Deploying Stateless Nodes</a></li>
+<li><a href="#installing-stateful-nodes">Installing Stateful Nodes</a></li>
+<li><a href="#appendix-1-ibm-flex-recovery-and-cmm-redundancy">Appendix 1: IBM Flex Recovery and CMM Redundancy</a></li>
+<li><a href="#replacement-of-cmm">Replacement of CMM</a></li>
+<li><a href="#cmm-redundancy">CMM Redundancy</a>
+<ul>
+<li><a href="#fail-over-software-reset-from-cmm-gui">Fail over software reset from CMM GUI</a></li>
+<li><a href="#fail-over-software-reset-from-cmm-cli">Fail over software reset from CMM CLI</a></li>
+<li><a href="#fail-over-hardware-reset-of-cmm">Fail over hardware reset of CMM</a></li>
+</ul></li>
+<li><a href="#appendix-2-cmm-and-flexible-service-processorfsp-password">Appendix 2: CMM and Flexible Service Processor(FSP) password</a></li>
+<li><a href="#errors-caused-by-an-fsp-authentication-problem">Errors caused by an FSP authentication problem</a></li>
+<li><a href="#appendix-3-updating-firmware-on-flex-ethernet-and-ib-switch-modules">Appendix 3: Updating Firmware on Flex Ethernet and IB Switch Modules</a>
+<ul>
+<li><a href="#firmware-update-using-cli">Firmware Update using CLI</a></li>
+</ul></li>
+<li><a href="#appendix-4-perform-deferred-firmware-upgrades-for-flex-blade-cec-">**Appendix 4 Perform Deferred Firmware upgrades for Flex blade CEC **</a>
+<ul>
+<li><a href="#deferred-firmware-update-background"><strong>Deferred firmware update Background</strong></a></li>
+<li><a href="#tempperm-side-pending_power_on_side-attributes-in-deferred-firmware-update"><strong>temp/perm side, pending_power_on_side attributes in Deferred firmware update</strong></a></li>
+<li><a href="#the-procedure-of-the-deferred-firmware-update-">**The procedure of the deferred firmware update **</a></li>
+</ul></li>
+<li><a href="#appendix-5-lshwconn-line-down-after-power-outage">Appendix 5 lshwconn LINE DOWN after power outage</a></li>
+<li><a href="#appendix-6-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix 6: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-7-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix 7: Install your Management Node to a new Release of Linux</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>IBM Flex combines networking, storage and servers in a single offering. It's consist of an IBM Flex Chassis, one or two Chassis Management Modules(CMM) and Power 7 and x86 compute node servers. The type of the management module for IBM Flex is 'cmm', and the Power 7 compute node servers include the IBM Flex System. p260, p460, and 24L Power 7 servers as well as the IBM Flex System. x240 Compute Node which is an x86 Intel-processor based server. <strong>In this document only the management of POWER 7 servers running Linux will be covered.</strong></p>
+<p>IBM Flex System. p260, p460, and 24L Power 7 servers need to be managed by a xCAT Management Node (MN) which is to be created on a standalone System P7 server. There needs to be a proper ethernet network communication between the xCAT MN to the CMMs, and to all the compute node through the Ethernet Switch Module. The xCAT support uses the hardware type 'hwtype=blade' to manage the P7 Flex blade servers working through the CMM management module). IBM Flex xCAT will use a management type of 'mgt=fsp' to control the POWER 7 servers which is done through the xCAT DFM (Direct FSP Management)). For xCAT IBM Flex Power 7 servers, the management approach is mixture of 'blade' and 'fsp'. Most of the discovery work will be done through CMM and the hardware management work with the server's FSP directly.</p>
+<h3 id="terminology"><a href="#TOC">Terminology</a></h3>
+<p>The following terms will be used in this document:</p>
+<p>xCAT DFM: Direct FSP Management is the name that we will use to describe the ability for xCAT software to communicate directly to the IBM FLex Power 7 server's service processor without the use of the HMC for management.</p>
+<p>Chassis Management Module(CMM) - this term is used to reflect the pair of management modules installed in the rear of the chassis which have an Ethernet connection. The CMM is used to discover the servers within the chassis and for some data collection regarding the servers and chassis.</p>
+<p>Compute node: This term is used to refer to the servers in an IBM Flex system. Compute nodes can be either Power 7 servers or x86 Intel based servers.</p>
+<p>blade node: blade node refers to a node with the hwtype set to blade and represents the whole blade server. And the hcp attribute of the blade is set to the FSP's IP.</p>
+<h3 id="command-man-pages-and-database-attribute-descriptions"><a href="#TOC">Command Man Pages and Database Attribute Descriptions</a></h3>
+<ul>
+<li>All of the commands used in this document are described in the <a href="http://xcat.sourceforge.net/man1/xcat.1.html">xCAT man pages</a>.</li>
+<li>All of the database attributes referred to in this document are described in the <a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xCAT database object and table descriptions</a>.</li>
+</ul>
+<h2 id="prepare-the-management-node-for-xcat-installation"><a href="#TOC">Prepare the Management Node for xCAT Installation</a></h2>
+<p><a href="Prepare_the_Management_Node_for_xCAT_Installation">Prepare_the_Management_Node_for_xCAT_Installation</a></p>
+<p><strong>Note:</strong> for Flex hardware, the switch configuration is only needed to discover (really to locate) the CMMs. The location of each blade is determined by the CMMs.</p>
+<h2 id="install-xcat-on-the-management-node"><a href="#TOC">Install xCAT on the Management Node</a></h2>
+<p><a href="Install_xCAT_on_the_Management_Node">Install_xCAT_on_the_Management_Node</a></p>
+<h2 id="downloading-and-installing-dfm"><a href="#TOC">Downloading and Installing DFM</a></h2>
+<p>This requires the new xCAT Direct FSP Management(dfm) plugin and hardware server(hdwr_svr) plugin, which are not part of the core xCAT open source, but are available as a free download from IBM. You must download this and install them on your xCAT management node (and possibly on your service nodes, depending on your configuration) before proceeding with this document.</p>
+<p>Download xCAT-dfm RPM: http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ClusterSoftware&amp;product=ibm/Other+software/IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all</p>
+<p>Download ISNM-hdwr_svr RPM: http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ClusterSoftware&amp;product=ibm/Other+software/IBM+High+Performance+Computing+%28HPC%29+Hardware+Server&amp;release=All&amp;platform=All&amp;function=all</p>
+<p>Download the suitable dfm and hdwr_svr packages for different OSes. Once you have downloaded these packages, install the hardware server package first, and then install DFM.</p>
+<p>If you have been following the xCAT documentation, you should already have the yum repositories set up to pull in whatever xCAT dependencies and distro RPMs are needed (libstdc++.ppc, libgcc.ppc, openssl.ppc, etc.).</p>
+<pre><code>    yum install xCAT-dfm-* ISNM-hdwr_svr-*</code></pre>
+<h2 id="use-xcat-to-configure-services-on-the-management-node"><a href="#TOC">Use xCAT to Configure Services on the Management Node</a></h2>
+<h3 id="setup-etchosts-file"><a href="#TOC">Setup /etc/hosts File</a></h3>
+<p>Since the map between the xCAT node names and IP addresses have been added in the xCAT database, you can run the <a href="http://xcat.sourceforge.net/man8/makehosts.8.html">makehosts</a> xCAT command to create the /etc/hosts file from the xCAT database. (You can skip this step if you are creating /etc/hosts manually.)</p>
+<pre><code>    makehosts switch,blade,cmm</code></pre>
+<p>Verify the entries have been created in the file /etc/hosts.</p>
+<h3 id="setup-dns"><a href="#TOC">Setup DNS</a></h3>
+<p>To get the hostname/IP pairs copied from /etc/hosts to the DNS on the MN:</p>
+<ul>
+<li>Ensure that /etc/sysconfig/named does not have ROOTDIR set</li>
+<li>Set site.forwarders to your site-wide DNS servers that can resolve site or public hostnames. The DNS on the MN will forward any requests it can't answer to these servers.</li>
+</ul>
+<pre><code>    chdef -t site forwarders=1.2.3.4,1.2.5.6</code></pre>
+<ul>
+<li>Edit /etc/resolv.conf to point the MN to its own DNS. (Note: this won't be required in xCAT 2.8 and above, but is an easy way to test that your DNS is configured properly.)</li>
+</ul>
+<pre><code>    search cluster
+    nameserver 10.1.0.1</code></pre>
+<ul>
+<li>Run makedns</li>
+</ul>
+<pre><code>    makedns</code></pre>
+<p>For more information about name resolution in an xCAT Cluster, see [Cluster_Name_Resolution].</p>
+<h3 id="setup-dhcp"><a href="#TOC">Setup DHCP</a></h3>
+<p>You usually don't want your DHCP server listening on your public (site) network, so set site.dhcpinterfaces to your MN's cluster facing NICs. For example:</p>
+<pre><code>    chdef -t site dhcpinterfaces=eth1</code></pre>
+<p>Then this will get the network stanza part of the DHCP configuration (including the dynamic range) set:</p>
+<pre><code>    makedhcp -n</code></pre>
+<p>The IP/MAC mappings for the nodes will be added to DHCP automatically as the nodes are discovered.</p>
+<h2 id="define-the-cmms-and-switches"><a href="#TOC">Define the CMMs and Switches</a></h2>
+<p><a href="Define_the_CMMs_and_Switches">Define_the_CMMs_and_Switches</a></p>
+<h2 id="cmm-discovery-and-configuration"><a href="#TOC">CMM Discovery and Configuration</a></h2>
+<p><a href="CMM_Discovery_and_Configuration">CMM_Discovery_and_Configuration</a></p>
+<h2 id="create-node-object-definitions-of-flex-blade-servers"><a href="#TOC">Create node object definitions of flex blade servers</a></h2>
+<p>There are different methods used to create the flex blade node objects in the xCAT database. One method is to create the predefined node objects, and then update the node objects using &quot;&quot;rscan -u &quot;&quot;. The other method is to create &quot;&quot;rscan -z&quot;&quot;, and then manually update the flex blade stanza file. The admin can then create the node objects using the stanza file.</p>
+<h3 id="create-predefined-nodes-in-the-database-first-and-run-rscan--u-to-discovery"><a href="#TOC">Create predefined nodes in the Database first and run rscan -u to Discovery</a></h3>
+<p>This implementation should only be used when there are uniformed blade configurations working in the chassis. If there are mixtures of single and double wide blades in the chassis, the admin will need to remove unused blade node objects.</p>
+<p>First just create the predefined node based on cmm and blade location, add the list of blades and the groups they belong too:</p>
+<pre><code>    nodeadd cmm[01-02]node[01-14] groups=all,blade</code></pre>
+<p>Change the blade definitions with the common attributes.</p>
+<pre><code>    chdef -t  group blade mgt=fsp cons=fsp</code></pre>
+<p>The attribute 'mpa' should be set to the node name of cmm. The attribute 'slotid' should be set to the physical slot id of the blade. The attribute 'hcp' should be set to the IP that admin try to assign to the fsp of the blade. Use chdef with patterns that will map to the settings you require.</p>
+<pre><code>    chdef -t group blade mpa=&#39;|cmm(\d+)node(\d+)|cmm($1)|&#39;slotid=&#39;|cmm(\d+)node(\d+)|($2+0)|&#39; hcp=&#39;|cmm(\d+)node(\d+)|10.0.($1+0).($2+0)|****&#39;</code></pre>
+<p>List the blade entries to review the blade the definitions created.</p>
+<pre><code>    [root@c870f3ap01 ~]# nodels blade
+    cmm01node01
+    cmm01node03
+    cmm01node05
+    cmm01node07
+    cmm01node09
+    cmm01node10
+    cmm01node11</code></pre>
+<p>Use lsdef to check each entry to validate the hcp, slotid, and hsp attributes:</p>
+<pre><code>    [root@c870f3ap01 ~]# lsdef cmm01node01
+    Object name: cmm01node01
+    cons=fsp
+    groups=blade,all
+    hcp=12.0.0.32
+    hwtype=blade
+    id=1
+    mgt=fsp
+    mpa=cmm01
+    mtm=789542X
+    nodetype=ppc,osi
+    parent=cmm01
+    postbootscripts=otherpkgs
+    postscripts=syslog,remoteshell,syncfiles
+    serial=10F752A
+    slotid=1</code></pre>
+<h4 id="run-rscan--u-to-discover-all-the-compute-node-servers."><a href="#TOC">Run rscan -u to discover all the compute node servers.</a></h4>
+<p>The <strong>rscan -u</strong> will match the xCAT nodes which have been defined in the xCAT database and update them instead of create a new one. It will also provide an error message that specifies if the blade node object is not found in the xCAT database. This type of error should happen when there is a configuration where the chassis contains both single wide and double wide blade configurations. The admin can execute the <strong>rmdef</strong> command for any unused blade node objects.</p>
+<pre><code>    rscan cmm -u</code></pre>
+<p>(For &quot;rscan&quot; details see: http://xcat.sourceforge.net/man1/rscan.1.html )</p>
+<pre><code>If there are a mixture of single and double wide blade in the chassis, the admin should remove the unused blade objects from the xCAT DB.</code></pre>
+<pre><code>    rmdef  &lt;cmmxxnodeyy&gt;</code></pre>
+<h3 id="create-object-definition-of-flex-blades-by-discovery-using-stanza-files"><a href="#TOC">Create object definition of flex blades by discovery using stanza files</a></h3>
+<p>This method is suggested when there are a different mix of flex blades being used in the flex blade cluster.</p>
+<p>The rscan command reads the actual configuration of blade server in the CMM and creates node definitions in the xCAT database to reflect them. This command will create node objects for the target CMM, and the flex blades on the CMM in a stanza file. The admin should manually update the different nodes objects to specify the proper node names they want to use in the xCAT cluster. The admin may also want to change the hcp=&lt;FSP IP&gt; to be a different IP address than what was provided by DHCP server. If the CMM node object is already created, you can remove the CMM entries from the stanza file. You may need to add the &quot;id=0&quot; attribute to cmm objects.</p>
+<p>There are unique differences between System P and System X Flex blade node objects working with rscan command. The big differences are the following attributes.</p>
+<p>For System P Flex blades</p>
+<pre><code>    mgt=fsp
+    cons=fsp
+    id=1
+    slotid=&lt;blade slot&gt;
+    hcp=&lt;FSP IP&gt;</code></pre>
+<p>For System X Flex blades</p>
+<pre><code>    mgt not set,   admin can update  with mgt=ipmi
+    cons not set,  admin can update with cons=ipmi
+    slotid=&lt;blade slot&gt;
+    id attribute is not used
+    there is no hcp</code></pre>
+<p>Run the <strong>rscan</strong> command against all of the CMMs to create a stanza file for the definitions of all the compute node servers.</p>
+<pre><code>    rscan cmm -z &gt;nodes.stanza</code></pre>
+<p>The Power 7 compute node stanza file is like this:</p>
+<pre><code>    SN#YL10JH184084:
+           objtype=node
+           nodetype=ppc,osi
+           slotid=1
+           id=1
+           mtm=789542X
+           serial=10F69BA
+           mpa=flexcmm01
+           parent=flexcmm01
+           hcp=70.0.0.41
+           groups=blade,all
+           mgt=fsp
+           cons=fsp
+           hwtype=blade
+    SN#Y110UF18P003:
+           objtype=node
+           nodetype=ppc,osi
+           slotid=3
+           id=1
+           mtm=789522X
+           serial=10F75AA
+           mpa=flexcmm01
+           parent=flexcmm01
+           hcp=70.0.0.22
+           groups=blade,all
+           mgt=fsp
+           cons=fsp
+           hwtype=blade</code></pre>
+<p>In a stanza file, the user can get the blade server with the attributes hcp (fsp of the blade), mtm, serial and id attributions. For the stanza file above, the node SN#YL10JH184084 is a power blade(nodetype=ppc,hwtype=blade,mpa=cmm01). In order to easily access or operate those compute node servers, the user can edit the stanza file and give the node the name user want them to be for definition of each compute node server.</p>
+<p>For Power 7 compute nodes the administrator will change the object name and hcp attribute for the IP of fsp. For example, the user can modify the definition of SN#YL10JH184084 as followings:</p>
+<pre><code>    cmm01node01:
+       objtype=node
+       cons=fsp
+       groups=blade,all
+       hcp=70.0.0.41
+       hwtype=blade
+       slotid=3
+       id=1
+       mgt=fsp
+       mpa=cmm01
+       mtm=789542X
+       nodetype=ppc,osi
+       parent=flexcmm01
+       serial=10F69BA
+       slotid=1</code></pre>
+<p>Then create the definitions in the database:</p>
+<pre><code>    cat nodes.stanza | mkdef -z</code></pre>
+<p>If CMM node objects are not updated from the target stanza file, make sure that the &quot;&quot;&quot;id=0&quot;&quot;&quot; attribute is updated for the CMMs.</p>
+<pre><code>     chdef cmm  id=0</code></pre>
+<h3 id="set-the-network-configuration-for-the-fsp"><a href="#TOC">Set the network configuration for the fsp</a></h3>
+<p>The FSP for the System P flex blade will initially be setup as a dynamic IP address. The admin can choose to use this IP, or has the option to change it to another static IP address in the service VLAN. This FSP IP is controlled by the &quot;&quot;hcp&quot;&quot; attribute for the node. You can use mkdef/chdef or rscan to update the hcp entries to set the proper FSP IP addresses. The rspconfig command with the network=* option will set the FSP IP address to the value you specified in the hcp attribute.</p>
+<pre><code>    chdef  cmm01node01 hcp=12.0.0.101
+    rspconfig blade network=*</code></pre>
+<h3 id="modify-blade-server-device-names"><a href="#TOC">Modify blade server device names</a></h3>
+<p>In order to conveniently manage the blade servers, the customer may want to have a cleaner name for the blade node. The following command can be used to modify a blade device name.</p>
+<pre><code>    rspconfig singlenode textid=&quot;cmm01node01&quot;</code></pre>
+<p>The following command can be used to change a group of blade device name to the node names that are defined in xCAT DB.</p>
+<pre><code>    rspconfig blade textid=*</code></pre>
+<h2 id="create-the-hardware-server-connection-for-the-ibm-flex-power-7-server"><a href="#TOC">Create the hardware server connection for the IBM Flex power 7 server</a></h2>
+<p>1. Add the server's connections for the DFM management:</p>
+<pre><code>    mkhwconn blade -t</code></pre>
+<p>2. check the connections are LINE_UP:</p>
+<pre><code>    lshwconn blade</code></pre>
+<p>3. make sure the server powered on</p>
+<pre><code>    rpower blade state
+    rpower blade on</code></pre>
+<h3 id="update-the-fsp-firmware-optional"><a href="#TOC">Update the FSP firmware (optional)</a></h3>
+<p>This is accomplished by using the rflash xCAT command from the xCAT Management node. The admin should download the supported GFW from the IBM Fix central website, and place it in a directory that is available to be read by the xCAT Management node. The default firmware option with rflash is working with &quot;disruptive&quot;. Since the Flex blades work with DFM, the admin may use the rflash &quot;deferred&quot; firmware option which is listed in the Appendix.</p>
+<p>1. Use rinv command to get the current firmware levels of the blades' FSPs:</p>
+<pre><code>    rinv bladenoderange firm</code></pre>
+<p>(For &quot;rinv&quot; details see: http://xcat.sourceforge.net/man1/rinv.1.html )</p>
+<p>2.Use the rflash command to update the firmware levels for the blades' FSPs. Then validate that the new firmware is loaded:</p>
+<p>For firmware disruptive update, you should make sure the blade in power off state firstly.</p>
+<pre><code>     rpower bladenoderange off</code></pre>
+<p>And then use rflash to do the update:</p>
+<pre><code>    rflash bladenoderange -p &lt;directory&gt; --activate disruptive</code></pre>
+<p>(For &quot;rflash&quot; details see: http://xcat.sourceforge.net/man1/rflash.1.html )</p>
+<pre><code>    rinv bladenoderange firm</code></pre>
+<p>Note: If there is an error during the rflash update where the firmware is not loaded properly, you ran reference the firmware recovery procedure at the following xCAT document location. <a href="XCAT_Power_775_Hardware_Management/#recover-the-system-from-a-pp-situation-because-of-the-failed-firmware-update">XCAT_Power_775_Hardware_Management/#recover-the-system-from-a-pp-situation-because-of-the-failed-firmware-update</a>.</p>
+<p>3. Verify that the blades are healthy, then power on and boot up the blades:</p>
+<pre><code>    rpower bladenoderange state
+    rvitals bladenoderange lcds
+    rpower bladenoderange on</code></pre>
+<p>(For &quot;rvitals&quot; details see: http://xcat.sourceforge.net/man1/rvitals.1.html )</p>
+<h2 id="prepare-for-node-deployment"><a href="#TOC">Prepare for Node Deployment</a></h2>
+<p><strong>rcons configuration</strong></p>
+<ul>
+<li>It is important that the admin disable the Serial Over Lan (SOL) support on the CMM, so that xCAT DFM can control the remote console for the System P flex blades:</li>
+</ul>
+<pre><code>    rspconfig cmm solcfg=disable</code></pre>
+<ul>
+<li>Update conserver configuration</li>
+</ul>
+<pre><code>    makeconservercf</code></pre>
+<ul>
+<li>Check rcons. Before running rcons to open the console, make sure the Power 7 Servers are on:</li>
+</ul>
+<pre><code>    rpower blade state  # if any of the nodes are off, then run...
+    rpower blade on</code></pre>
+<pre><code>    rcons onebladenode</code></pre>
+<p>**Set the 'getmac' attribute to 'blade' **</p>
+<pre><code>    chdef blade getmac=blade</code></pre>
+<p><strong>Update the mac table with the MAC address of Each Blade</strong></p>
+<p>In order to successfully deploy the OS you need to get the MAC for each blades in-band NIC that is connected to the management network and store it in the blade node object.</p>
+<p>You can display all of the MACs for blades:</p>
+<pre><code>    # getmacs cmm01node11 -d
+    MAC Address 1: 34:40:b5:be:c0:08
+    MAC Address 2: 34:40:b5:be:c0:0c</code></pre>
+<p>To get the <strong>first</strong> MAC for each blade and store it in the database:</p>
+<pre><code>    getmacs blade</code></pre>
+<p>If you want to use the MAC for an adapter <strong>other</strong> than the first one, use the <strong>-i</strong> option of getmacs. For example:</p>
+<pre><code>    getmacs blade -i eth1</code></pre>
+<p>To display the MACs just collected:</p>
+<pre><code>    # lsdef blade -ci mac
+    cmm01node01: mac=34:40:b5:be:c0:08
+    ...</code></pre>
+<p><strong>Set the Boot String for Each Blade</strong></p>
+<p>Ensure the blades are powered to onstandby (already done when collecting the MAC addresses).</p>
+<pre><code>    rpower blade onstandby</code></pre>
+<p>Then run <a href="http://xcat.sourceforge.net/man1/rbootseq.1.html">rbootseq</a> to set the blades to boot from the network first:</p>
+<pre><code>    rbootseq blade net</code></pre>
+<p>After using rbootseq to set the boot string, you should run rpower with reset to make the boot string permanent:</p>
+<pre><code>    rpower blade reset</code></pre>
+<p>Note: you can leave the blades always booting from the network first. Even for stateful nodes that have already been installed with a valid boot image on their hard disk, they will contact DHCP on the xCAT management node and it will instruct the nodes to boot from their hard disk.</p>
+<h2 id="update-the-ibm-flex-power-7-server-firmware"><a href="#TOC">Update the IBM Flex Power 7 Server firmware</a></h2>
+<p>This is accomplished by using the rflash xCAT command from the xCAT Management node. The admin should download the supported GFW from the IBM Fix central website, and place it in a directory that is available to be read by the xCAT Management node.</p>
+<p>1. Use rinv command to get the current firmware levels of the IBM Flex Power 7 Server:</p>
+<pre><code>    rinv bladenoderange firm (output to be added here)</code></pre>
+<p>2.Use the rflash command to update the firmware levels for the IBM Flex Power 7 Server. Then validate that the new firmware is loaded:</p>
+<p>For firmware disruptive update, you should make sure the server in power off state firstly.</p>
+<pre><code>     rpower bladenoderange state
+     rpower bladenoderange off</code></pre>
+<p>And then use rflash to do the update:</p>
+<pre><code>    rflash bladenoderange -p &lt;directory&gt; --activate disruptive
+    (output to be added here)
+    rinv bladenoderange firm</code></pre>
+<p>3. Verify that the blades are healthy and power on the servers:</p>
+<pre><code>    rpower bladenoderange state
+    rpower bladenoderange on</code></pre>
+<h2 id="deploying-an-os-on-the-blades"><a href="#TOC">Deploying an OS on the Blades</a></h2>
+<ul>
+<li>If you want to define one or more stateless (diskless) OS images and boot the nodes with those, see section <a href="XCAT_system_p_support_for_IBM_Flex/#deploying-stateless-nodes">XCAT_system_p_support_for_IBM_Flex/#deploying-stateless-nodes</a>. This method has the advantage of managing the images in a central place, and having only one image per node type.</li>
+<li>In you want to install your nodes as stateful (diskful) nodes, follow section <a href="XCAT_system_p_support_for_IBM_Flex/#installing-stateful-nodes">XCAT_system_p_support_for_IBM_Flex/#installing-stateful-nodes</a>.</li>
+<li>If you want to have nfs-root statelite nodes, see [XCAT_Linux_Statelite]. This has the same advantage of managing the images from a central place. It has the added benefit of using less memory on the node while allowing larger images. But it has the drawback of making the nodes dependent on the management node or service nodes (i.e. if the management/service node goes down, the compute nodes booted from it go down too).</li>
+<li>If you have a very large cluster (more than 500 nodes), at this point you should follow [Setting_Up_a_Linux_Hierarchical_Cluster] to install and configure your service nodes. After that you can return here to install or diskless boot your compute nodes.</li>
+</ul>
+<h2 id="deploying-stateless-nodes"><a href="#TOC">Deploying Stateless Nodes</a></h2>
+<p><strong>Note: this section is included from another document. Some of the examples refer to &quot;x86_64&quot;. Just substitute &quot;ppc64&quot; instead.</strong></p>
+<p><a href="Using_Provmethod=osimagename">Using_Provmethod=osimagename</a></p>
+<pre><code>    rpower blade boot</code></pre>
+<h2 id="installing-stateful-nodes"><a href="#TOC">Installing Stateful Nodes</a></h2>
+<p><strong>Note: this section is included from another document. Some of the examples refer to &quot;x86_64&quot;. Just substitute &quot;ppc64&quot; instead. Also, the rsetboot command is not necessary with Flex Power 7 blades.</strong></p>
+<p><a href="Installing_Stateful_Linux_Nodes">Installing_Stateful_Linux_Nodes</a></p>
+<h2 id="appendix-1-ibm-flex-recovery-and-cmm-redundancy"><a href="#TOC">Appendix 1: IBM Flex Recovery and CMM Redundancy</a></h2>
+<p>The CMM is the gateway for the hardware management and monitoring communication for the Flex chassis and the Flex P7 blades. If you lose the network communication between the xCAT MN and the primary CMM, you can not execute any hardware management commands to the CMM or blades. If the Flex P7 blades and Ethernet SM are running, the blades should be able to keep running for some time.</p>
+<h3 id="replacement-of-cmm"><a href="#TOC">Replacement of CMM</a></h3>
+<p>If you only have one CMM configured in your Flex chassis, you will need to work with IBM service to fix this CMM quickly, since you will not be able to properly manage the Flex blades until you have a working CMM. The CMM replacement activity is to execute CMM HW discovery on new CMM, where you locate the new MAC address and current DHCP dynamic IP address for CMM. You then update the CMM node object's &quot;mac&quot; and &quot;otherinterfaces&quot; attributes with data found from hardware discovery. Once the CMM node object has new data, we execute the configuration CMM steps working with rspconfig. Once the CMM is configured using the static IP, the DHCP and mac address is not referenced.</p>
+<p>The following scenario is to replace the CMM working with node object &quot;cmm01&quot; with a static IP of 10.1.100.1.</p>
+<p>Locate new mac and DHCP IP for replacement CMM ~~~~ lsslp -m -z -s CMM &gt; /tmp/cmm01.stanza<br />~~~~</p>
+<p>Update cmm01 object with new mac and current DHCP IP</p>
+<pre><code>     chdef cmm01 otherinterfaces=&lt;dhcpip&gt; mac=&lt;macaddr&gt;  </code></pre>
+<p>Set password for USERID for new cmm0</p>
+<pre><code>     rspconfig cmm01 USERID=&lt;new_passwd&gt;  1</code></pre>
+<p>Set new cmm01 back to original static IP</p>
+<pre><code>     rspconfig cmm01 initnetwork=*</code></pre>
+<p>Enable ssh and snmp for new cmm01</p>
+<pre><code>     rspconfig cmm01 sshcfg=enable snmpcfg=enable  </code></pre>
+<h3 id="cmm-redundancy"><a href="#TOC">CMM Redundancy</a></h3>
+<p>The recommended support strategy with xCAT is to setup each Flex chassis with 2 CMM's where the primary CMM is located in bay 1 and the standby CMM is in bay 2. Each CMM needs to have their own ethernet connection into the xCAT HW VLAN, and the primary CMM must be configured as a static IP that is listed in the xCAT DB. The xCAT MN only can communicate with the primary CMM when executing hardware management commands. The Standby CMM is only there as a backup, and will take ownership as the primary CMM using the same static IP. The xCAT Flex only supports the default CMM redundancy configuration, and does not support the advanced failover settings. The activity for CMM fail over is that the standby CMM takes over the roll of the primary CMM, and that failed CMM is setup as the standby CMM when registered by the Flex chassis. The xCAT MN will lose it's network connection to the primary CMM during the CMM fail over, but will automatically reconnect back to the new primary CMM when it completes the failover in about 3-4 minutes</p>
+<p>The fail over from the primary CMM to the standby CMM happens in the following scenarios.</p>
+<pre><code> Admin executes software failover from the CMM GUI
+ Admin executed software failover using the CMM CLI
+ Admin physically pulls out primary CMM from the Flex chassis</code></pre>
+<h4 id="fail-over-software-reset-from-cmm-gui"><a href="#TOC">Fail over software reset from CMM GUI</a></h4>
+<p>The admin will have a network connection into the CMM, and has activated the CMM GUI. They will reference the &quot;Mgt Module Management&quot; and select on the &quot;Restart&quot; . The admin selects the &quot;Restart and Switch to Standby Management Module&quot; . This will cause the primary CMM to reset, and will change the setting of primary to the &quot;Standby CMM&quot; which now becomes the new primary CMM when the fail over completes.</p>
+<h4 id="fail-over-software-reset-from-cmm-cli"><a href="#TOC">Fail over software reset from CMM CLI</a></h4>
+<p>The admin will have a network connection into the CMM, and has a ssh connection into primary CMM with USERID from xCAT MN. The admin use CMM CLI command &quot;env -T&quot; to get to the primary CMM then executes command &quot;reset -f&quot; for the CMM failover. This will cause the primary CMM to reset, and will change the setting of primary to the &quot;Standby CMM&quot; which now becomes the new primary CMM when the fail over completes.</p>
+<pre><code>     # ssh USERID@cmm01
+      Hostname:              cmm01
+      Static IP address:     10.0.100.1
+      Burned-in MAC address: 5F:FF:FF:FF:FF:FF
+      DHCP:                  Disabled - Use static IP configuration.
+     system&gt; env -T system:mm[1]
+     OK
+     system:mm[1]&gt; reset -f</code></pre>
+<h4 id="fail-over-hardware-reset-of-cmm"><a href="#TOC">Fail over hardware reset of CMM</a></h4>
+<p>The scenario is when there is a physical activity where the primary CMM is pulled from the chassis. There are different reasons why the admin may want pull out the CMM. This could be when the CMM is no longer working properly or there is an issue with the ethernet interface of the primary CMM. At this time when the primary CMM is pulled, it will do an automatic failover to the standby CMM, and the standby CMM is now the primary. The admin can work IBM or network support to understand the CMM or network failure. When the failed CMM is ready, the admin can just plug it in the Flex chassis, and it will now become the new Standby CMM. The admin can schedule a CMM software fail over if they want to swap back to the original CMM primary.</p>
+<h2 id="appendix-2-cmm-and-flexible-service-processorfsp-password"><a href="#TOC">Appendix 2: CMM and Flexible Service Processor(FSP) password</a></h2>
+<p>In the IBM Flex chassis the architecture is designed to simplify some aspects of the systems management of the chassis. As part of this goal the IBM Flex system has integrated the CMM USERID and password into the IBM Flex system p compute nodes FSP. This is done through an internal LDAP server on the CMM serving the userids and passwords to LDAP on the FSPs. What this means to the system xCAT administrator is that the CMM USERID is tightly coupled with xCAT DFM authentication of the FSP. xCAT hardware control failures to authenticate on the FSP is likely the result of an issue with the chassis CMM USERID password. This section will provide commands which will help you determine that you have an authentication problem, verify that its an issue with the CMM USERID password, as well as how to resolve the problem.</p>
+<h3 id="errors-caused-by-an-fsp-authentication-problem"><a href="#TOC">Errors caused by an FSP authentication problem</a></h3>
+<p>The system administrator may first notice a problem with some of the hardware control commands giving an authentication error.</p>
+<pre><code>   rpower cmm01node01 stat
+    cmm01node01: Error: state=CEC AUTHENTICATION FAILED, 
+       type=02, MTMS=7895-42X*10F752A, sp=primary, slot=A, ipadd=12.0.0.32, 
+           alt_ipadd=unavailable</code></pre>
+<p>Checking the connection to the FSP shows that the authenication for this FSP is failing:</p>
+<pre><code>    lshwconn cmm01node01
+    cmm01node01: sp=primary,ipadd=12.0.0.32,alt_ipadd=unavailable,state=CEC 
+         AUTHENTICATION FAILED</code></pre>
+<p>This could be caused by the USERID password being expired on the CMM. You can check with the following:</p>
+<pre><code>    ssh USERID@cmm01 users -T mm[1]
+    system&gt; users -T mm[1]
+    Users
+    =====
+    USERID
+      Group(s): supervisor
+      Max 0 session(s) allowed
+      1 active session(s)
+      Account is active
+      **Password is expired**
+      Password is compliant
+      Number of SSH public keys installed for this user: 3
+    User Permission Groups
+    ======================
+</code></pre>
+<p>In order to correct this problem you need to activate the CMM USERID and then remove and add the connections to the FSP.</p>
+<pre><code>     ssh USERID@cmm01 accseccfg -pe 0 -T mm[1]</code></pre>
+<p>Checking the USERID password is active:</p>
+<pre><code>     ssh USERID@cmm01 users -T mm[2]
+    system&gt; users -T mm[2]
+    Users
+    =====
+    USERID
+      Group(s): supervisor
+      Max 0 session(s) allowed
+      1 active session(s)
+      **Account is active**
+      Password does not expire
+      Password is compliant
+      Number of SSH public keys installed for this user: 3
+    User Permission Groups
+    ======================</code></pre>
+<p>Second you need to remove and add back each FSP connection for this chassis to create new connections:</p>
+<pre><code>     rmhwconn cmm01node01
+     mkhwconn cmm01node01 -t</code></pre>
+<p>The last step is to check the connection:</p>
+<pre><code>    lshwconn cmm01node01
+    cmm01node01: sp=primary,ipadd=12.0.0.32,alt_ipadd=unavailable,state=LINE UP</code></pre>
+<h2 id="appendix-3-updating-firmware-on-flex-ethernet-and-ib-switch-modules"><a href="#TOC">Appendix 3: Updating Firmware on Flex Ethernet and IB Switch Modules</a></h2>
+<p>This section provides manual procedures to help update the firmware for Ethernet and Infiniband (IB) Switch modules. There is more detail information can be referenced in the IBM Flex System documentation under Network switches: http://publib.boulder.ibm.com/infocenter/flexsys/information/</p>
+<p>The IB6131 Switch module is a Mellanox IB switch, and you down load firmware (image-PPC_M460EX-SX_3.2.xxx.img) from the Mellanox website into your xCAT Management Node or server that can communicate to Flex IB6131 switch module. We provided the firmware update procedure for the Mellanox IB switches including IB6131 Switch module in our xCAT document Managing the Mellanox Infiniband Network: <a href="Managing_the_Mellanox_Infiniband_Network/#mellanox-switch-and-adapter-firmware-update">Managing_the_Mellanox_Infiniband_Network/#mellanox-switch-and-adapter-firmware-update</a>.</p>
+<p>The IBM Flex system supports Ethernet switch modules models (EN2092 (1GB), EN4093 (10GB), and the firmware is available from the IBM Support Portal http://www-947.ibm.com/support/entry/portal/overview?brandind=hardware<sub>puresystems</sub>pureflex_system. The firmware update procedure used with the Flex Ethernet (EN2092) switch module which will reference two firmware images for <strong>OS</strong> (GbScSE-1G-10G-7.5.1.xx_OS.img) and <strong>Boot</strong> (GbScSE-1G-10G-7.5.1.x_Boot.img). These images should be placed on the xCAT MN or FTP server in the <strong>/tftpboot</strong> directory. Make sure that this server has proper ethernet communication to the Ethernet switch module.</p>
+<h4 id="firmware-update-using-cli"><a href="#TOC">Firmware Update using CLI</a></h4>
+<ol style="list-style-type: decimal">
+<li>Login to the Ethernet switch using the &quot;admin&quot; userid and specify the admin password.</li>
+</ol>
+<pre><code>       ssh admin@&lt;switchipaddr&gt;</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Get into boot directory, and list current image settings with cur command. This includes 2 OS images called image1 and image2,and will specify which image is the current boot image.</li>
+</ol>
+<pre><code>       &gt;&gt; boot
+       &gt;&gt; cur</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Get the new Ethernet <strong>OS</strong> image file from the ftp server to replace the older image on the ethernet switch using <strong>gtimg</strong> command. The gtimg command will prompt you for full path OS image file name, ftp/root userid, and password. It will ask to specify &quot;data&quot; port, and a confirmation to complete the download, and flashes the update. An example of EN2092 OS image would be &quot;GbScSE-1G-10G-7.5.1.0_OS.img&quot;, and replaces &quot;image2&quot; on the ethernet switch.</li>
+</ol>
+<pre><code>       &gt;&gt; gtimg image2 &lt;FTP server&gt; GbScSE-1G-10G-7.5.1.0_OS.img
+          Enter name of file on FTP/TFTP server: /tftpboot/GbScSE-1G-10G-7.5.1.0_OS.img
+          Enter username for FTP server or hit return for TFTP server: root
+          Enter password for username on FTP server:  &lt;root password&gt;
+          Enter the port to use for downloading the image [&quot;data&quot;|&quot;mgt&quot;]: &quot;data&quot;
+          Confirm download operation [y/n]: y</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Get the new Ethernet <strong>boot</strong> image file from the ftp server to replace cuurent boot image on the ethernet switch using <strong>gtimg</strong> command. The gtimg command will prompt you for full path OS image file name, ftp/root userid, and password. It will ask to specify &quot;data&quot; port, and a confirmation to complete the download, and flashes the update. An example of EN2092 OS image would be &quot;GbScSE-1G-10G-7.5.1.0_Boot.img&quot;, and will point to new boot image2.</li>
+</ol>
+<pre><code>       &gt;&gt; gtimg image2 &lt;FTP server&gt; GbScSE-1G-10G-7.5.1.0_Boot.img
+          Enter name of file on FTP/TFTP server: /tftpboot/GbScSE-1G-10G-7.5.1.0_Boot.img
+          Enter username for FTP server or hit return for TFTP server: root
+          Enter password for username on FTP server:  &lt;root password&gt;
+          Enter the port to use for downloading the image [&quot;data&quot;|&quot;mgt&quot;]: &quot;data&quot;
+          Confirm download operation [y/n]: y</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>Validate the current image settings with <strong>cur</strong> command, where image2 now has the latest firmware level, and that the current boot image is working with latest image2 file. You can then execute the <strong>reset</strong> command to boot the ethernet switch using the latest firmware level.</li>
+</ol>
+<pre><code>       &gt;&gt; cur
+       &gt;&gt; reset</code></pre>
+<h2 id="appendix-4-perform-deferred-firmware-upgrades-for-flex-blade-cec"><a href="#TOC">**Appendix 4 Perform Deferred Firmware upgrades for Flex blade CEC **</a></h2>
+<h4 id="deferred-firmware-update-background"><a href="#TOC"><strong>Deferred firmware update Background</strong></a></h4>
+<p>It may take some time to execute a disruptive firmware update in a large cluster. To reduce the down time of the cluster, customers may want to flash new firmware levels while the Flex blades are up and running, The deferred firmware update will load the new firmware into the T (temp) side, but will not activate it like the disruptive firmware. The customer can continue to run with the P (perm) side and can wait for a maintenance window where they can activate and boot the blades/cec with new firmware levels.</p>
+<h4 id="tempperm-side-pending_power_on_side-attributes-in-deferred-firmware-update"><a href="#TOC"><strong>temp/perm side, pending_power_on_side attributes in Deferred firmware update</strong></a></h4>
+<p>The deferred firmware update includes 2 parts: The first part (1) is to apply the firmware to the T (temp) sides of Flex blade FSPs when the cluster is up and running. The second part (2) is to activate the new firmware on the blades at a scheduled time.</p>
+<p>The default setting is that the CEC/FSPs are working from the temp side (current_power_on_side). During part(1) of the deferred firmware update implementation, the CEC will continue to run on the perm side while the rflash of the new firmware levels will installed to the temp side. It is very important that the perm side contains the current stable version of firmware. The perm side is usually only used as a recovery environment when working with firmware updates.</p>
+<p>When executing a reboot to the blade (FSPs), it will run on the side which the pending_power_on_side attribute is set. After we finish the part (1), the admin will want to make sure the pending_power_on_side attribute is set to &quot;perm&quot; if the blades want to be rebooted working with the older stable firmware. When you are ready to activate the new firmware and reboot the blades, you will want to make sure the pending_power_on_side attribute is set to &quot;temp&quot;.</p>
+<h4 id="the-procedure-of-the-deferred-firmware-update"><a href="#TOC">**The procedure of the deferred firmware update **</a></h4>
+<p>Before starting the deferred firmware update, the admin should first make sure that the most recent stable firmware level has been applied to the P (perm) side. We should note that T-side firmware will be moved over to the P-side automatically when we execute the rflash of the new firmware into the T (temp) side.</p>
+<p>1.1 Apply the firmware for Flex blades</p>
+<pre><code>      rinv &lt;blade&gt; firm</code></pre>
+<p>1.2 Apply the new GFW code into the blade's FSPs</p>
+<pre><code>      rflash &lt;blade&gt; -p &lt;rpm_directory&gt; --activate deferred</code></pre>
+<p>1.3 Check to make sure the proper Firmware levels have been loaded into the temp side (new) and the perm side (previous) for the Frames or CECs. The rflash working with &quot;deferred&quot; should now specify Current Power on side to now be &quot;perm&quot;:</p>
+<pre><code>      rinv &lt;blade&gt; firm</code></pre>
+<p>2. Setup Cecs/blades pending power to Perm (needed for CEC/blade reboot -- power off/on)</p>
+<p>In part 1, the new firmware is now loaded on the temp side. If you need to keep the Flex blade active for a period of time (such as several days) we need to make sure we are working with previous firmware level, which is running on the P-side. You should change the pending_power_on_side attribute from temp to perm.</p>
+<p>~~~~ rspconfig <blade> pending_power_on_side ~~~~ If not, set CEC's the pending power on side to P-side: ~~~~ rspconfig <blade> pending_power_on_side=perm ~~~~</p>
+<p>3.Activate the new firmware at schedule time</p>
+<p>The new firmware level has been loaded on the temp side, and it is time to activate the blade/CECs with new firmware level. The admin should make sure the pending_power_on_side is now set back from perm to temp.</p>
+<p>3.1 Check if the pending power on side for CEC are on T-side</p>
+<pre><code>      rspconfig &lt;blade&gt; pending_power_on_side
+      If not, set the pending power on side to T-side
+      rspconfig &lt;blade&gt; pending_power_on_side=temp</code></pre>
+<p>3.2 Power off the target Flex blades</p>
+<pre><code>      rpower &lt;blade&gt; off</code></pre>
+<p>3.3 Reboot the service processor for the CECs/blade</p>
+<pre><code>       rpower &lt;blade&gt; resetsp</code></pre>
+<p>Wait for 5-10 minutes for FSPs to restart. When the connections become LINE_UP again, the FSPs have finished the reboot.</p>
+<pre><code>       lshwconn &lt;blade&gt;</code></pre>
+<p>3.4 Verify that the cec/blade updates are the new firmware level and that they are using the temp side for the current_power_on_side .</p>
+<pre><code>       rinv &lt;blade&gt; firm</code></pre>
+<p>3.5 Power on the Flex blades and bring up the Flex blade cluster. The power on of the flex blades will be based on the install environment.</p>
+<p>If this is a diskful environment, the admin should be able to &quot;rpower &lt;blade&gt; on &quot; to bring the blade up on the local disk.</p>
+<pre><code>      rpower  &lt;blade&gt; on</code></pre>
+<p>If this is a diskless environment, the admin should power up the blade to onstandby, set the boot sequence to network, and reset the blade.</p>
+<pre><code>      rpower &lt;blade&gt; onstandby
+      rbootseq &lt;blade&gt; net
+      rpower &lt;blade&gt; reset</code></pre>
+<h2 id="appendix-5-lshwconn-line-down-after-power-outage"><a href="#TOC">Appendix 5 lshwconn LINE DOWN after power outage</a></h2>
+<p>Testing has shown that when a chassis looses power and is started back up it is possible that the connections to the blade FSPs will be LINE DOWN. If this occurs you should reset the CMM for the chassis with this problem.</p>
+<pre><code>     ssh USERID@cmm01 service -T mm[1] -vr</code></pre>
+<h2 id="appendix-6-migrate-your-management-node-to-a-new-service-pack-of-linux"><a href="#TOC"><strong>Appendix 6: Migrate your Management Node to a new Service Pack of Linux</strong></a></h2>
+<p>If you need to migrate your xCAT Management Node with a new SP level of Linux, for example rhels6.1 to rhels6.2 you should as a precautionary measure:</p>
+<ul>
+<li>Backup database and save critical files to be used if needed to reference or restore using xcatsnap. Move the xcatsnap log and *gz file off the Management Node.</li>
+<li>Backup images and custom data in /install and move off the Management Node.</li>
+<li>service xcatd stop</li>
+<li>service xcatd stop on any service nodes</li>
+<li>Migrate to the new SP level of Linux.</li>
+<li>service xcatd start</li>
+</ul>
+<p>If you have any Service Nodes:</p>
+<ul>
+<li>Migrate to the new SP level of linux and reinstall the servicenode with xCAT following normal procedures.</li>
+<li>service xcatd start</li>
+</ul>
+<p>The documentation <a href="Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux">Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux</a> gives a sample procedure on how to update the management node or service nodes to a new service pack of Linux.</p>
+<h2 id="appendix-7-install-your-management-node-to-a-new-release-of-linux"><a href="#TOC"><strong>Appendix 7: Install your Management Node to a new Release of Linux</strong></a></h2>
+<p>First backup critical xCAT data to another server so it will not be loss during OS install.</p>
+<ul>
+<li>Back up the xcat database using xcatsnap, important config files and other system config files for reference and for restore later. Prune some of the larger tables:</li>
+</ul>
+<pre><code>     tabprune eventlog -a
+     tabprune auditlog -a
+     tabprune isnm_perf -a (Power 775 only)
+     tabprune isnm_perf_sum -a (Power 775 only)
+     xcatsnap</code></pre>
+<p>xcatsnap will capture database, config files. You should copy to another host. By default it will create in /tmp/xcatsnap two files, for example: ~~~~ xcatsnap.hpcrhmn.10110922.log xcatsnap.hpcrhmn.10110922.tar.gz ~~~~ Back up from /install directory, all images, custom setup data that you want to save. and move to another server. xcatsnap will not backup the install directory.</p>
+<p>After the OS install:</p>
+<ul>
+<li>Proceed to to setup the xCAT MN as a new xCAT MN using the instructions in this document.</li>
+</ul>
+</body>
+</html>

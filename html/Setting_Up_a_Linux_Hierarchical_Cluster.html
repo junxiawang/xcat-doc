@@ -1,0 +1,794 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#service-nodes">Service Nodes</a></li>
+<li><a href="#where-did-i-come-from-and-where-am-i-going">Where Did I Come From and Where Am I Going?</a></li>
+<li><a href="#service-node-101">Service Node 101</a></li>
+</ul></li>
+<li><a href="#setup-the-mn-hierarchical-database">Setup the MN Hierarchical Database</a></li>
+<li><a href="#define-the-service-nodes-in-the-database"><strong>Define the service nodes in the database</strong></a><ul>
+<li><a href="#add-service-nodes-to-the-nodelist-table"><strong>Add Service Nodes to the nodelist Table</strong></a></li>
+<li><a href="#add-os-and-hardware-attributes-to-service-nodes"><strong>Add OS and Hardware Attributes to Service Nodes</strong></a></li>
+<li><a href="#add-service-nodes-to-the-servicenode-table"><strong>Add Service Nodes to the servicenode Table</strong></a></li>
+<li><a href="#add-service-node-postscripts"><strong>Add Service Node Postscripts</strong></a></li>
+<li><a href="#assigning-nodes-to-their-service-nodes"><strong>Assigning Nodes to their Service Nodes</strong></a><ul>
+<li><a href="#service-node-pools"><strong>Service Node Pools</strong></a><ul>
+<li><a href="#conserver-and-monserver-and-pools"><strong>Conserver and Monserver and Pools</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#setup-site-table"><strong>Setup Site Table</strong></a></li>
+<li><a href="#setup-networks-table"><strong>Setup networks Table</strong></a></li>
+<li><a href="#verify-the-tables"><strong>Verify the Tables</strong></a></li>
+<li><a href="#add-additional-adapters-configuration-script-optional"><strong>Add additional adapters configuration script (optional)</strong></a><ul>
+<li><a href="#configuring-secondary-adapters"><strong>Configuring Secondary Adapters</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#gather-mac-information-for-the-install-adapters"><strong>Gather MAC information for the install adapters</strong></a></li>
+<li><a href="#configure-dhcp"><strong>Configure DHCP</strong></a></li>
+<li><a href="#set-up-the-service-nodes-for-stateful-diskful-installation">Set Up the Service Nodes for Stateful (Diskful) Installation</a><ul>
+<li><a href="#update-the-powerpc-utils-1.2.2-18.el6.ppc64.rpm-in-the-rhels6-rpm-repository-rhels6-only">Update the powerpc-utils-1.2.2-18.el6.ppc64.rpm in the rhels6 RPM repository (rhels6 only)</a></li>
+<li><a href="#additional-configuration-for-power-775-clusters-only">Additional Configuration for Power 775 Clusters Only</a></li>
+<li><a href="#additional-configuration-when-using-db2">Additional Configuration when using DB2</a></li>
+<li><a href="#set-the-node-status-to-ready-for-installation">Set the node status to ready for installation</a></li>
+<li><a href="#initialize-network-boot-to-install-service-nodes">Initialize network boot to install Service Nodes</a></li>
+<li><a href="#initialize-network-boot-to-install-service-nodes-in-power-775">Initialize network boot to install Service Nodes in Power 775</a></li>
+<li><a href="#monitor-the-installation">Monitor the Installation</a></li>
+<li><a href="#update-service-node-diskfull-image">Update Service Node Diskfull Image</a></li>
+</ul></li>
+<li><a href="#setup-the-service-node-for-stateless-deployment">Setup the Service Node for Stateless Deployment</a><ul>
+<li><a href="#build-the-service-node-stateless-image">Build the Service Node Stateless Image</a><ul>
+<li><a href="#update-service-node-stateless-image"><strong>Update Service Node Stateless Image</strong></a></li>
+</ul></li>
+<li><a href="#monitor-install-and-boot">Monitor install and boot</a></li>
+</ul></li>
+<li><a href="#test-service-node-installation"><strong>Test Service Node installation</strong></a></li>
+<li><a href="#additional-configuration-of-the-service-nodes-for-power-775-clusters-only">Additional Configuration of the Service Nodes for Power 775 Clusters Only</a><ul>
+<li><a href="#switch-xcat-yaboot-to-yaboot-released-by-rhel">Switch xcat-yaboot to yaboot released by RHEL</a></li>
+<li><a href="#copy-the-hfi-driver-and-dhcp-packages-to-service-node">Copy the HFI driver and DHCP packages to service node</a></li>
+<li><a href="#install-the-hfi-device-drivers-and-hfi-enabled-dhcp-server-on-the-xcat-sn">Install the HFI device drivers and HFI enabled dhcp server on the xCAT SN</a></li>
+<li><a href="#change-yaboot-to-boot-from-customized-kernel">Change yaboot to boot from customized kernel</a></li>
+<li><a href="#reset-the-service-node-to-boot-from-the-kernel-with-hfi">Reset the service node to boot from the kernel with HFI</a></li>
+<li><a href="#sync-etchosts-to-service-node-and-configure-hfi-interfaces">Sync /etc/hosts to Service Node and configure HFI interfaces</a></li>
+<li><a href="#create-new-network-definition-for-hfi-network">Create new network definition for HFI network</a></li>
+</ul></li>
+<li><a href="#define-and-install-your-compute-nodes">Define and install your Compute Nodes</a><ul>
+<li><a href="#make-install-available-on-the-service-nodes">Make /install available on the Service Nodes</a></li>
+<li><a href="#make-compute-node-syncfiles-available-on-the-servicenodes">Make compute node syncfiles available on the servicenodes</a></li>
+</ul></li>
+<li><a href="#appendix-a-setup-backup-service-nodes">Appendix A: Setup backup Service Nodes</a><ul>
+<li><a href="#initial-deployment"><strong>Initial deployment</strong></a></li>
+<li><a href="#xdcp-behaviour-with-backup-servicenodes"><strong>xdcp Behaviour with backup servicenodes</strong></a></li>
+<li><a href="#synchronizing-statelite-persistent-files"><strong>Synchronizing statelite persistent files</strong></a></li>
+<li><a href="#monitoring-the-service-nodes"><strong>Monitoring the service nodes</strong></a></li>
+<li><a href="#switch-to-the-backup-sn"><strong>Switch to the backup SN</strong></a><ul>
+<li><a href="#move-the-nodes-to-the-new-service-nodes"><strong>Move the nodes to the new service nodes</strong></a></li>
+<li><a href="#statelite-migration"><strong>Statelite migration</strong></a></li>
+<li><a href="#boot-the-statelite-nodes"><strong>Boot the statelite nodes</strong></a></li>
+</ul></li>
+<li><a href="#switching-back"><strong>Switching back</strong></a></li>
+</ul></li>
+<li><a href="#appendix-b-diagnostics">Appendix B: Diagnostics</a></li>
+<li><a href="#appendix-c-migrating-a-management-node-to-a-service-node">Appendix C: Migrating a Management Node to a Service Node</a></li>
+<li><a href="#appendix-d-set-up-hierarchical-conserver">Appendix D: Set up Hierarchical Conserver</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#service-nodes">Service Nodes</a></li>
+<li><a href="#where-did-i-come-from-and-where-am-i-going">Where Did I Come From and Where Am I Going?</a></li>
+<li><a href="#service-node-101">Service Node 101</a></li>
+</ul></li>
+<li><a href="#setup-the-mn-hierarchical-database">Setup the MN Hierarchical Database</a></li>
+<li><a href="#define-the-service-nodes-in-the-database"><strong>Define the service nodes in the database</strong></a>
+<ul>
+<li><a href="#add-service-nodes-to-the-nodelist-table"><strong>Add Service Nodes to the nodelist Table</strong></a></li>
+<li><a href="#add-os-and-hardware-attributes-to-service-nodes"><strong>Add OS and Hardware Attributes to Service Nodes</strong></a></li>
+<li><a href="#add-service-nodes-to-the-servicenode-table"><strong>Add Service Nodes to the servicenode Table</strong></a></li>
+<li><a href="#add-service-node-postscripts"><strong>Add Service Node Postscripts</strong></a></li>
+<li><a href="#assigning-nodes-to-their-service-nodes"><strong>Assigning Nodes to their Service Nodes</strong></a></li>
+<li><a href="#service-node-pools"><strong>Service Node Pools</strong></a>
+<ul>
+<li><a href="#conserver-and-monserver-and-pools"><strong>Conserver and Monserver and Pools</strong></a></li>
+</ul></li>
+<li><a href="#setup-site-table"><strong>Setup Site Table</strong></a></li>
+<li><a href="#setup-networks-table"><strong>Setup networks Table</strong></a></li>
+<li><a href="#verify-the-tables"><strong>Verify the Tables</strong></a></li>
+<li><a href="#add-additional-adapters-configuration-script-optional"><strong>Add additional adapters configuration script (optional)</strong></a></li>
+<li><a href="#configuring-secondary-adapters"><strong>Configuring Secondary Adapters</strong></a></li>
+</ul></li>
+<li><a href="#gather-mac-information-for-the-install-adapters"><strong>Gather MAC information for the install adapters</strong></a></li>
+<li><a href="#configure-dhcp"><strong>Configure DHCP</strong></a></li>
+<li><a href="#set-up-the-service-nodes-for-stateful-diskful-installation">Set Up the Service Nodes for Stateful (Diskful) Installation</a>
+<ul>
+<li><a href="#update-the-powerpc-utils-122-18el6ppc64rpm-in-the-rhels6-rpm-repository-rhels6-only">Update the powerpc-utils-1.2.2-18.el6.ppc64.rpm in the rhels6 RPM repository (rhels6 only)</a></li>
+<li><a href="#additional-configuration-for-power-775-clusters-only">Additional Configuration for Power 775 Clusters Only</a></li>
+<li><a href="#additional-configuration-when-using-db2">Additional Configuration when using DB2</a></li>
+<li><a href="#set-the-node-status-to-ready-for-installation">Set the node status to ready for installation</a></li>
+<li><a href="#initialize-network-boot-to-install-service-nodes">Initialize network boot to install Service Nodes</a></li>
+<li><a href="#initialize-network-boot-to-install-service-nodes-in-power-775">Initialize network boot to install Service Nodes in Power 775</a></li>
+<li><a href="#monitor-the-installation">Monitor the Installation</a></li>
+<li><a href="#update-service-node-diskfull-image">Update Service Node Diskfull Image</a></li>
+</ul></li>
+<li><a href="#setup-the-service-node-for-stateless-deployment">Setup the Service Node for Stateless Deployment</a>
+<ul>
+<li><a href="#build-the-service-node-stateless-image">Build the Service Node Stateless Image</a></li>
+<li><a href="#update-service-node-stateless-image"><strong>Update Service Node Stateless Image</strong></a></li>
+<li><a href="#monitor-install-and-boot">Monitor install and boot</a></li>
+</ul></li>
+<li><a href="#test-service-node-installation"><strong>Test Service Node installation</strong></a></li>
+<li><a href="#additional-configuration-of-the-service-nodes-for-power-775-clusters-only">Additional Configuration of the Service Nodes for Power 775 Clusters Only</a>
+<ul>
+<li><a href="#switch-xcat-yaboot-to-yaboot-released-by-rhel">Switch xcat-yaboot to yaboot released by RHEL</a></li>
+<li><a href="#copy-the-hfi-driver-and-dhcp-packages-to-service-node">Copy the HFI driver and DHCP packages to service node</a></li>
+<li><a href="#install-the-hfi-device-drivers-and-hfi-enabled-dhcp-server-on-the-xcat-sn">Install the HFI device drivers and HFI enabled dhcp server on the xCAT SN</a></li>
+<li><a href="#change-yaboot-to-boot-from-customized-kernel">Change yaboot to boot from customized kernel</a></li>
+<li><a href="#reset-the-service-node-to-boot-from-the-kernel-with-hfi">Reset the service node to boot from the kernel with HFI</a></li>
+<li><a href="#sync-etchosts-to-service-node-and-configure-hfi-interfaces">Sync /etc/hosts to Service Node and configure HFI interfaces</a></li>
+<li><a href="#create-new-network-definition-for-hfi-network">Create new network definition for HFI network</a></li>
+</ul></li>
+<li><a href="#define-and-install-your-compute-nodes">Define and install your Compute Nodes</a>
+<ul>
+<li><a href="#make-install-available-on-the-service-nodes">Make /install available on the Service Nodes</a></li>
+<li><a href="#make-compute-node-syncfiles-available-on-the-servicenodes">Make compute node syncfiles available on the servicenodes</a></li>
+</ul></li>
+<li><a href="#appendix-a-setup-backup-service-nodes">Appendix A: Setup backup Service Nodes</a>
+<ul>
+<li><a href="#initial-deployment"><strong>Initial deployment</strong></a></li>
+<li><a href="#xdcp-behaviour-with-backup-servicenodes"><strong>xdcp Behaviour with backup servicenodes</strong></a></li>
+<li><a href="#synchronizing-statelite-persistent-files"><strong>Synchronizing statelite persistent files</strong></a></li>
+<li><a href="#monitoring-the-service-nodes"><strong>Monitoring the service nodes</strong></a></li>
+<li><a href="#switch-to-the-backup-sn"><strong>Switch to the backup SN</strong></a></li>
+<li><a href="#move-the-nodes-to-the-new-service-nodes"><strong>Move the nodes to the new service nodes</strong></a></li>
+<li><a href="#statelite-migration"><strong>Statelite migration</strong></a></li>
+<li><a href="#boot-the-statelite-nodes"><strong>Boot the statelite nodes</strong></a></li>
+<li><a href="#switching-back"><strong>Switching back</strong></a></li>
+</ul></li>
+<li><a href="#appendix-b-diagnostics">Appendix B: Diagnostics</a></li>
+<li><a href="#tabedit-policy">tabedit policy</a></li>
+<li><a href="#prioritynamehostcommandsnoderangeparameterstimerulecommentsdisable">priority,name,host,commands,noderange,parameters,time,rule,comments,disable</a></li>
+<li><a href="#appendix-c-migrating-a-management-node-to-a-service-node">Appendix C: Migrating a Management Node to a Service Node</a></li>
+<li><a href="#appendix-d-set-up-hierarchical-conserver">Appendix D: Set up Hierarchical Conserver</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<h3 id="service-nodes"><a href="#TOC">Service Nodes</a></h3>
+<p>In large clusters, it is desirable to have more than one node (the Management Node - MN) handle the installation and management of the compute nodes. We call these additional nodes <strong>service nodes (SN)</strong>. The management node can delegate all management operations need for a compute node to the SN that is managing that compute node. You can have one or more service nodes set up to install and manage groups of compute nodes. See <a href="XCAT_Overview,_Architecture,_and_Planning/#xcat-architecture">XCAT_Overview,<em>Architecture,</em>and_Planning/#xcat-architecture</a> for a high-level diagram showing this structure.</p>
+<p>With xCAT, you have the choice of either having each service node install/manage a specific set of compute nodes, or having a <strong>pool</strong> of service nodes, any of which can respond to an installation request from a compute node. (Service node pools must be aligned with the network broadcast domains, because the way a compute node choose its SN for that boot is by whoever responds to the DHPC request broadcast first.) You can also have a hybrid of the 2 approaches, in which for each specific set of compute nodes you have 2 or more SNs in a pool.</p>
+<h3 id="where-did-i-come-from-and-where-am-i-going"><a href="#TOC">Where Did I Come From and Where Am I Going?</a></h3>
+<p>This document explains the basics for setting up a hierarchical Linux cluster using service nodes. The user of this document should be very familiar with setting up an xCAT non-hierarchical cluster. The document will cover only the additional steps needed to make the cluster hierarchical by setting up the SNs. It is assumed that you have already set up your management node according to the instructions in the relevant xCAT &quot;cookbook&quot; on the [XCAT_Documentation] page. For example:</p>
+<ul>
+<li><a href="XCAT_iDataPlex_Cluster_Quick_Start">XCAT_iDataPlex_Cluster_Quick_Start</a></li>
+<li><a href="XCAT_system_x_support_for_IBM_Flex">XCAT_system_x_support_for_IBM_Flex</a></li>
+<li><a href="XCAT_system_p_support_for_IBM_Flex">xCAT system p support for Linux on IBM Flex</a></li>
+<li><a href="XCAT_pLinux_Clusters">XCAT_pLinux_Clusters</a></li>
+<li><a href="XCAT_pLinux_Clusters_775">XCAT_pLinux_Clusters_775</a></li>
+</ul>
+<p>Note: If using P775 hardware, reference the [XCAT_pLinux_Clusters_775] link above.</p>
+<p>Once you have used <strong>this</strong> document to define your service nodes, you should return to the xCAT cookbook you are using to deploy the service nodes and then the compute nodes.</p>
+<h3 id="service-node-101"><a href="#TOC">Service Node 101</a></h3>
+<p>The SNs each run an instance of xcatd, just like the MN does. The xcatd's communicate with each other using the same XML/SSL protocol that the xCAT client uses to communicate with xcatd on the MN.</p>
+<p>The service nodes need to communicate with the xCAT database on the Management Node. They do this by using the remote client capability of the database (i.e. they don't go through xcatd for that). Therefore the Management Node must be running one of the daemon-based databases supported by xCAT (PostgreSQL, MySQL, or DB2). (Currently DB2 is only supported in xCAT clusters of Power 775 nodes.) The default SQLite database does not support remote clients and cannot be used in hierarchical clusters. This document includes instructions for migrating your cluster from SQLite to one of the other databases. Since the initial install of xCAT will always set up SQLite, you must migrate to a database that supports remote clients before installing your service nodes.</p>
+<p>xCAT will help you install your service nodes will install on the SNs xCAT software and other required rpms such as perl, the database client, and other pre-reqs. Service nodes require all the same software as the MN (because it can do all of the same functions), except that there is a special top level xCAT rpm for SNs called <strong>xCATsn</strong> vs. the <strong>xCAT</strong> rpm that is on the Management Node. The xCATsn rpm tells the SN that the xcatd on it should behave as an SN, not the MN.</p>
+<h2 id="setup-the-mn-hierarchical-database"><a href="#TOC">Setup the MN Hierarchical Database</a></h2>
+<p>Before setting up service nodes, you need to set up either MySQL, PostgreSQL, or DB2 as the xCAT Database on the Management Node. The database client on the Service Nodes will be set up later when the SNs are installed. MySQL and PostgreSQL are available with the Linux OS. DB2 is an IBM product and must be purchased and is only supported by xCAT in Power 775 clusters.</p>
+<p>Follow the instructions in one of these documents for setting up the Management node to use the selected database:</p>
+<ul>
+<li>To use MySQL or MariaDB:
+<ul>
+<li>Follow this documentation and be sure to use the xCAT provided mysqlsetup command to setup the database for xCAT: [Setting_Up_MySQL_as_the_xCAT_DB]</li>
+</ul></li>
+<li>To use PostgreSQL:
+<ul>
+<li>Follow this documentation and be sure and use the xCAT provided pgsqlsetup command to setup the database for xCAT: [Setting_Up_PostgreSQL_as_the_xCAT_DB]</li>
+</ul></li>
+<li>To use DB2 (Power775 support only)
+<ul>
+<li>Follow the sections on setting up the Management Node. Be sure to use the xCAT provided db2sqlsetup command to setup the database for xCAT. At this time, do not do anything to setup the DB2 Client on the Service Nodes, so stop after you have run the db2sqlsetup script to setup the Management Node: [Setting_Up_DB2_as_the_xCAT_DB]</li>
+</ul></li>
+</ul>
+<h2 id="define-the-service-nodes-in-the-database"><a href="#TOC"><strong>Define the service nodes in the database</strong></a></h2>
+<p>This document assumes that you have previously <strong>defined</strong> your compute nodes in the database. It is also possible at this point that you have generic entries in your db for the nodes you will use as service nodes as a result of the node discovery process. We are now going to show you how to add all the relevant database data for the service nodes (SN) such that the SN can be installed and managed from the Management Node (MN). In addition, you will be adding the information to the database that will tell xCAT which service nodes (SN) will service which compute nodes (CN).</p>
+<p>For this example, we have two service nodes: <strong>sn1</strong> and <strong>sn2</strong>. We will call our Management Node: <strong>mn1</strong>. Note: service nodes are, by convention, in a group called <strong>service</strong>. Some of the commands in this document will use the group <strong>service</strong> to update all service nodes.</p>
+<p>Note: a Service Node's service node is the Management Node; so a service node must have a direct connection to the management node. The compute nodes do not have to be directly attached to the Management Node, only to their service node. This will all have to be defined in your networks table.</p>
+<h3 id="add-service-nodes-to-the-nodelist-table"><a href="#TOC"><strong>Add Service Nodes to the nodelist Table</strong></a></h3>
+<p>Define your service nodes (if not defined already), and by convention we put them in a <strong>service</strong> group. We usually have a group <strong>compute</strong> for our compute nodes, to distinguish between the two types of nodes. (If you want to use your own group name for service nodes, rather than <strong>service</strong>, you need to change some defaults in the xCAT db that use the group name <strong>service</strong>. For example, in the postscripts table there is by default a group entry for service, with the appropriate postscripts to run when installing a service node. Also, the default kickstart/autoyast template, pkglist, etc that will be used have files names based on the profile name <strong>service</strong>.)</p>
+<pre><code>mkdef sn1,sn2 groups=service,ipmi,all</code></pre>
+<h3 id="add-os-and-hardware-attributes-to-service-nodes"><a href="#TOC"><strong>Add OS and Hardware Attributes to Service Nodes</strong></a></h3>
+<p>When you ran copycds, it created several osimage definitions, including some appropriate for SNs. Display the list of osimages and choose one with &quot;service&quot; in the name:</p>
+<pre><code>    lsdef -t osimage</code></pre>
+<p>For this example, let's assume you chose the stateful osimage definition for rhels 6.3: rhels6.3-x86_64-install-service . If you want to modify any of the <a href="http://xcat.sourceforge.net/man7/osimage.7.html">osimage attributes</a> (e.g. kickstart/autoyast template, pkglist, etc), make a copy of the osimage definition and also copy to /install/custom any files it points to that you are modifying.</p>
+<p>Now set some of the common attributes for the SNs at the group level:</p>
+<pre><code>    chdef -t group service arch=x86_64 os=rhels6.3 nodetype=osi profile=service netboot=xnba installnic=mac \
+      primarynic=mac provmethod=rhels6.3-x86_64-install-service
+</code></pre>
+<h3 id="add-service-nodes-to-the-servicenode-table"><a href="#TOC"><strong>Add Service Nodes to the servicenode Table</strong></a></h3>
+<p>An entry must be created in the servicenode table for each service node or the service group. This table describes all the services you would like xcat to setup on the service nodes. (Even if you don't want xCAT to set up any services - unlikely - you must define the service nodes in the servicenode table with at least one attribute set (you can set it to 0), otherwise it will not be recognized as a service node.)</p>
+<p>When the xcatd daemon is started or restarted on the service node, it will make sure all of the requested services are configured and started. (To temporarily avoid this when restarting xcatd, use &quot;service xcatd <strong>reload</strong>&quot; instead.)</p>
+<p>To set up the minimum recommended services on the service nodes:</p>
+<pre><code>    chdef -t group -o service setupnfs=1 setupdhcp=1 setuptftp=1 setupnameserver=1 setupconserver=1</code></pre>
+<p>See the setup* attributes in the <a href="http://xcat.sourceforge.net/man7/node.7.html">node object definition man page</a> for the services available. (The HTTP server is also started when setupnfs is set.) If you are using the setupntp postscript on the compute nodes, you should also set setupntp=1. For clusters with subnetted management networks (i.e. the network between the SN and its compute nodes is separate from the network between the MN and the SNs) you might want to also set setupipforward=1.</p>
+<h3 id="add-service-node-postscripts"><a href="#TOC"><strong>Add Service Node Postscripts</strong></a></h3>
+<p>By default, xCAT defines the <strong>service</strong> node group to have the &quot;servicenode&quot; postscript run when the SNs are installed or diskless booted. This postscript sets up the xcatd credentials and installs the xCAT software on the service nodes. If you have your own postscript that you want run on the SN during deployment of the SN, put it in /install/postscripts on the MN and add it to the service node postscripts or postbootscripts. For example:</p>
+<pre><code>    chdef -t group -p service postscripts=&lt;mypostscript&gt;</code></pre>
+<p>Notes:</p>
+<ul>
+<li>For Red Hat type distros, the postscripts will be run before the reboot of a kickstart install, and the postbootscripts will be run after the reboot.</li>
+<li>Make sure that the servicenode postscript is set to run before the otherpkgs postscript or you will see errors during the service node deployment.</li>
+<li>The -p flag automatically adds the specified postscript at the end of the comma-separated list of postscripts (or postbootscripts).</li>
+</ul>
+<p>If you are running additional software on the service nodes that need <strong>ODBC</strong> to access the database (e.g. LoadLeveler or TEAL), use this command to add the xCAT supplied postbootscript called &quot;odbcsetup&quot;.</p>
+<pre><code>    chdef -t group -p service postbootscripts=odbcsetup</code></pre>
+<p>If using DB2 follow the instructions in this document for setting up the postscripts table to enable DB2 during servicenode installs. [Setting_Up_DB2_as_the_xCAT_DB]</p>
+<h3 id="assigning-nodes-to-their-service-nodes"><a href="#TOC"><strong>Assigning Nodes to their Service Nodes</strong></a></h3>
+<p>The node attributes <strong>servicenode</strong> and <strong>xcatmaster</strong> define which SN services this particular node. The servicenode attribute for a compute node defines which SN the MN should send a command to (e.g. xdsh), and should be set to the hostname or IP address of the service node that the management node contacts it by. The xcatmaster attribute of the compute node defines which SN the compute node should boot from, and should be set to the hostname or IP address of the service node that the compute node contacts it by. Unless you are using service node pools, you must set the xcatmaster attribute for a node when using service nodes, even if it contains the same value as the node's servicenode attribute.</p>
+<p>Host name resolution must have been setup in advance, with /etc/hosts, DNS or dhcp to ensure that the names put in this table can be resolved on the Management Node, Service nodes, and the compute nodes. It is easiest to have a node group of the compute nodes for each service node. For example, if all the nodes in node group compute1 are serviced by sn1 and all the nodes in node group compute2 are serviced by sn2:</p>
+<pre><code>    chdef -t group compute1 servicenode=sn1 xcatmaster=sn1-c
+    chdef -t group compute2 servicenode=sn2 xcatmaster=sn2-c</code></pre>
+<p>Note: in this example, sn1 and sn2 are the node names of the service nodes (and therefore the hostnames associated with the NICs that the MN talks to). The hostnames sn1-c and sn2-c are associated with the SN NICs that communicate with their compute nodes.</p>
+<p>Note: the attribute tftpserver defaults to the value of xcatmaster if not set, but in some releases of xCAT it has not defaulted correctly, so it is safer just to set it to the same value as xcatmaster.</p>
+<p>These attributes will allow you to specify which service node should run the conserver (console) and monserver (monitoring) daemon for the nodes in the group specified in the command. In this example, we are having each node's primary SN also act as its conserver and monserver (the most typical setup).</p>
+<pre><code>    chdef -t group compute1 conserver=sn1 monserver=sn1,sn1-c
+
+    chdef -t group compute2 conserver=sn2 monserver=sn2,sn2-c</code></pre>
+<h4 id="service-node-pools"><a href="#TOC"><strong>Service Node Pools</strong></a></h4>
+<p>Service Node Pools are multiple service nodes that service the same set of compute nodes. Having multiple service nodes allows backup service node(s) for a compute node when the primary service node is unavailable, or can be used for work-load balancing on the service nodes. But note that the selection of which SN will service which compute node is made at compute node boot time. After that, the selection of the SN for this compute node is fixed until the compute node is rebooted or the compute node is explicitly moved to another SN using the <a href="http://xcat.sourceforge.net/man1/snmove.1.html">snmove</a> command.</p>
+<p>To use Service Node pools, you need to architect your network such that all of the compute nodes and service nodes in a partcular pool are on the same flat network. If you don't want the management node to respond to/manage some of the compute nodes, it shouldn't be on that same flat network. The site.dhcpinterfaces attribute should be set such that the SNs' DHCP daemon only listens on the NIC that faces the compute nodes, not the NIC that faces the MN. This avoids some timing issues when the SNs are being deployed (so that they don't respond to each other before they are completely ready). You also need to make sure the <a href="http://xcat.sourceforge.net/man5/networks.5.html">networks</a> table accurately reflects the physical network structure.</p>
+<p>To define a list of service nodes that support a set of compute nodes, set the servicenode attribute to a comma-delimited list of the service nodes. When running an xCAT command like xdsh or updatenode for compute nodes, the list will be processed left to right, picking the first service node on the list to run the command. If that service node is not available, then the next service node on the list will be chosen until the command is successful. Errors will be logged. If no service node on the list can process the command, then the error will be returned. You can provide some load-balancing by assigning your service nodes as we do below.</p>
+<p>When using service node pools, the intent is to have the service node that responds first to the compute node's DHCP request during boot also be the xcatmaster, the tftpserver, and the NFS/http server for that node. Therefore, the xcatmaster and nfsserver attributes for nodes should not be set. When nodeset is run for the compute nodes, the service node interface on the network to the compute nodes should be defined and active, so that nodeset will default those attribute values to the &quot;node ip facing&quot; interface on that service node.</p>
+<p>For example:</p>
+<pre><code>    chdef -t node compute1 servicenode=sn1,sn2 xcatmaster=&quot;&quot; nfsserver=&quot;&quot;
+    chdef -t node compute2 servicenode=sn2,sn1 xcatmaster=&quot;&quot; nfsserver=&quot;&quot;</code></pre>
+<p>You need to set the sharedtftp site attribute to 0 so that the SNs will not automatically mount the /tftpboot directory from the management node:</p>
+<pre><code>chdef -t site clustersite sharedtftp=0</code></pre>
+<p>For statefull (full-disk) node installs, you will need to use a local /install directory on each service node. The /install/autoinst/node&gt; files generated by nodeset will contain values specific to that service node for correctly installing the nodes.</p>
+<pre><code> chdef -t site clustersite installloc=&quot;&quot;</code></pre>
+<p>With this setting, you will need to remember to rsync your /install directory from the xCAT management node to the service nodes anytime you change your /install/postscripts, custom osimage files, os repositories, or other directories. It is best to exclude the /install/autoinst directory from this rsync.</p>
+<pre><code>      rsync -auv --exclude &#39;autoinst&#39; /install sn1:/</code></pre>
+<p><strong>Note:</strong> If your service nodes are stateless and site.sharedtftp=0, if you reboot any service node when using servicenode pools, any data written to the local /tftpboot directory of that SN is lost. You will need to run nodeset for all of the compute nodes serviced by that SN again.</p>
+<p>For additional information about service node pool related settings in the networks table, see <a href="Setting_Up_a_Linux_Hierarchical_Cluster/#setup-networks-table">Setting_Up_a_Linux_Hierarchical_Cluster/#setup-networks-table</a>.</p>
+<h5 id="conserver-and-monserver-and-pools"><a href="#TOC"><strong>Conserver and Monserver and Pools</strong></a></h5>
+<p>The support of conserver and monserver with Service Node Pools is still not supported. You must explicitly assign these functions to a service node using the nodehm.conserver and noderes.monserver attribute as above.</p>
+<h3 id="setup-site-table"><a href="#TOC"><strong>Setup Site Table</strong></a></h3>
+<p>If you are <strong>not</strong> using the NFS-based statelite method of booting your compute nodes, set the installloc attribute to &quot;/install&quot;. This instructs the service node to mount /install from the management node. (If you don't do this, you have to manually sync /install between the management node and the service nodes.)</p>
+<pre><code>    chdef -t site  clustersite installloc=&quot;/install&quot;</code></pre>
+<p>For IPMI controlled nodes, if you want the out-of-band IPMI operations to be done directly from the management node (instead of being sent to the appropriate service node), set site.ipmidispatch=n.</p>
+<p>If you want to throttle the rate at which nodes are booted up, you can set the following site attributes:</p>
+<ul>
+<li>syspowerinterval</li>
+<li>syspowermaxnodes</li>
+<li>powerinterval (system p only)</li>
+</ul>
+<p>See the <a href="http://xcat.sourceforge.net/man5/site.5.html">site table man page</a> for details.</p>
+<h3 id="setup-networks-table"><a href="#TOC"><strong>Setup networks Table</strong></a></h3>
+<p>All networks in the cluster must be defined in the networks table. When xCAT was installed, it ran makenetworks, which created an entry in this table for each of the networks the management node is on. You need to add entries for each network the service nodes use to communicate to the compute nodes.</p>
+<p>For example:</p>
+<pre><code>    mkdef -t network net1 net=10.5.1.0 mask=255.255.255.224 gateway=10.5.1.1</code></pre>
+<p>If you want to set the nodes' xcatmaster as the default gateway for the nodes, the gateway attribute can be set to keyword &quot;&lt;xcatmaster&gt;&quot;. In this case, xCAT code will automatically substitute the IP address of the node's xcatmaster for the keyword. Here is an example:</p>
+<pre><code>    mkdef -t network net1 net=10.5.1.0 mask=255.255.255.224 gateway=&lt;xcatmaster&gt;</code></pre>
+<p>The ipforward attribute should be enabled on all the xcatmaster nodes that will be acting as default gateways. You can set ipforward to 1 in the servicenode table or add the line &quot;net.ipv4.ip_forward = 1&quot; in file /etc/sysctl.conf and then run &quot;sysctl -p /etc/sysctl.conf&quot; manually to enable the ipforwarding.</p>
+<p><strong>Note:</strong>If using service node pools, the networks table dhcpserver attribute can be set to any single service node in your pool. The networks tftpserver, and nameserver attributes should be left blank.</p>
+<h3 id="verify-the-tables"><a href="#TOC"><strong>Verify the Tables</strong></a></h3>
+<p>To verify that the tables are set correctly, run lsdef on the service nodes, compute1, compute2:</p>
+<pre><code>    lsdef service,compute1,compute2</code></pre>
+<h3 id="add-additional-adapters-configuration-script-optional"><a href="#TOC"><strong>Add additional adapters configuration script (optional)</strong></a></h3>
+<p>It is possible to have additional adapter interfaces automatically configured when the nodes are booted. XCAT provides sample configuration scripts for ethernet, IB, and HFI adapters. These scripts can be used as-is or they can be modified to suit your particular environment. The ethernet sample is /install/postscript/configeth. When you have the configuration script that you want you can add it to the &quot;postscripts&quot; attribute as mentioned above. Make sure your script is in the /install/postscripts directory and that it is executable.</p>
+<p>Note: For system p servers, if you plan to have your service node perform the hardware control functions for its compute nodes, it is necessary that the SN ethernet network adapters connected to the HW service VLAN be configured. For Power 775 clusters specifically, see [Configuring_xCAT_SN_Hierarchy_Ethernet_Adapter_DFM_Only] for more information.</p>
+<h4 id="configuring-secondary-adapters"><a href="#TOC"><strong>Configuring Secondary Adapters</strong></a></h4>
+<p>To configure secondary adapters, see [Configuring_Secondary_Adapters].</p>
+<h2 id="gather-mac-information-for-the-install-adapters"><a href="#TOC"><strong>Gather MAC information for the install adapters</strong></a></h2>
+<p>[NOTE] you should get the MAC information for the service node firstly. After finishing the OS provision for service node, and create the connections between the hdwr_svr on the service node and the non-sn-CEC, you can get the MAC information for the compute node.</p>
+<p><a href="Gather_MAC_information_for_the_node_boot_adapters">Gather_MAC_information_for_the_node_boot_adapters</a></p>
+<h2 id="configure-dhcp"><a href="#TOC"><strong>Configure DHCP</strong></a></h2>
+<p>Add the relevant networks into the DHCP configuration, refer to:</p>
+<p><a href="XCAT_pLinux_Clusters/#setup-dhcp">XCAT_pLinux_Clusters/#setup-dhcp</a></p>
+<p>Add the defined nodes into the DHCP configuration, refer to:</p>
+<p><a href="XCAT_pLinux_Clusters/#configure-dhcp">XCAT_pLinux_Clusters/#configure-dhcp</a></p>
+<h2 id="set-up-the-service-nodes-for-stateful-diskful-installation"><a href="#TOC">Set Up the Service Nodes for Stateful (Diskful) Installation</a></h2>
+<p>Any cluster using statelite compute nodes (include p775 clusters) must use a stateful (diskful) service nodes.</p>
+<p>Note: If you are using diskless service nodes, go to <a href="Setting_Up_a_Linux_Hierarchical_Cluster/#setup-the-service-node-for-stateless-deployment">Setting_Up_a_Linux_Hierarchical_Cluster/#setup-the-service-node-for-stateless-deployment</a></p>
+<p>First, go to the [Download_xCAT] site and download the level of the xCAT tarball you desire. Then go to http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Linux and get the latest xCAT dependency tarball. <strong>Note: All xCAT service nodes must be at the exact same xCAT version as the xCAT Management Node.</strong> Copy the files to the Management Node (MN) and untar them in the appropriate sub-directory of /install/post/otherpkgs: 4 <strong>Note for the appropriate directory below, check the otherpkgdir=/install/post/otherpkgs/rhels6.4/ppc64 attribute of the osimage defined for the servicenode.</strong></p>
+<p>For example for the osimage rhels6.4-ppc64-install-service****</p>
+<pre><code>    mkdir -p /install/post/otherpkgs/**rhels6.4**/ppc64/xcat
+    cd /install/post/otherpkgs/**rhels6.4**/ppc64/xcat
+    tar jxvf core-rpms-snap.tar.bz2
+    tar jxvf xcat-dep-*.tar.bz2
+</code></pre>
+<p>For ubuntu14.04.1-ppc64el-install-service ****</p>
+<pre><code>mkdir -p /install/post/otherpkgs/ubuntu14.04.1/ppc64el/
+cd /install/post/otherpkgs/ubuntu14.04.1/ppc64el/
+tar jxvf core-rpms-snap.tar.bz2
+tar jxvf xcat-dep-ubuntu*.tar.bz2</code></pre>
+<p>Next, add rpm names into your own version of service.&lt;osver&gt;.&lt;arch&gt;.otherpkgs.pkglist file. In most cases, you can find an initial copy of this file under /opt/xcat/share/xcat/install/&lt;platform&gt; . If not, copy one from a similar platform.</p>
+<pre><code>    mkdir -p /install/custom/install/rh
+    cp /opt/xcat/share/xcat/install/rh/service.rhels6.ppc64.otherpkgs.pkglist /install/custom/install/rh
+    vi /install/custom/install/rh/service.rhels6.ppc64.otherpkgs.pkglist</code></pre>
+<p>For ubuntu14.04.1-ppc64el-install-service,</p>
+<pre><code>    mkdir -p /install/custom/install/ubuntu/
+    cp /opt/xcat/share/xcat/install/ubuntu/service.ubuntu.otherpkgs.pkglist   /install/custom/install/ubuntu/service.ubuntu.otherpkgs.pkglist
+    vi /install/custom/install/ubuntu/service.ubuntu.otherpkgs.pkglist</code></pre>
+<p>Add the following, if it is not there. You must include at least one rpm from each directory you want xCAT to use, because xCAT uses the paths to set up the yum/zypper repositories:</p>
+<pre><code>    xcat/xcat-core/xCATsn
+    xcat/xcat-dep/rh6/x86_64/conserver-xcat
+    xcat/xcat-dep/rh6/ppc64/perl-Net-Telnet
+    xcat/xcat-dep/rh6/ppc64/perl-Expect</code></pre>
+<p>For ubuntu14.04.1-ppc64el-install-service, make sure the following entries are included in the /install/custom/install/ubuntu/service.ubuntu.otherpkgs.pkglist:</p>
+<pre><code>    mariadb-client
+    mariadb-common
+    xcatsn
+    conserver-xcat</code></pre>
+<p>For ubuntu14.04.1-ppc64el-install-service, the &quot;pkgdir&quot; should include the online/local ubuntu official mirror with the following command:</p>
+<pre><code>
+chdef -t osimage -o ubuntu14.04.1-ppc64el-install-service -p pkgdir=&quot;http://ports.ubuntu.com/ubuntu-ports trusty main,http://ports.ubuntu.com/ubuntu-ports trusty-updates main,http://ports.ubuntu.com/ubuntu-ports trusty universe,http://ports.ubuntu.com/ubuntu-ports trusty-updates universe&quot;
+</code></pre>
+<p>and the &quot;otherpkgdir&quot; should include the mirror under otherpkgdir on MN, this can be done with:</p>
+<pre><code>chdef -t osimage -o ubuntu14.04.1-ppc64el-install-service -p otherpkgdir=&quot;http:// &lt; Name or ip of Management Node &gt;/install/post/otherpkgs/ubuntu14.04.1/ppc64el/xcat-core/ trusty main,http://&lt; Name or ip of Management Node &gt;/install/post/otherpkgs/ubuntu14.04.1/ppc64el/xcat-dep/ trusty main&quot;</code></pre>
+<p><strong>Note: you will be installing the xCAT Service Node rpm xCATsn meta-package on the Service Node, not the xCAT Management Node meta-package. Do not install both.</strong></p>
+<p>For Power 775 Clusters, you should add the DFM and hdwr_svr into the list of packages to be installed on the SN. Refer to: <a href="https://sourceforge.net/p/xcat/wiki/DFM_Service_Node_Hierarchy_support/#installing-dfm-and-hdwr_svr-on-linux-sn">Installing DFM and hdwr_svr on Linux SN</a></p>
+<p>(TODO) This needs to be a real doc, not point to a mini-design..</p>
+<p>If you want to setup disk mirroring(RAID1) on the service nodes, see [Use_RAID1_In_xCAT_Cluster] for more details.</p>
+<h3 id="update-the-powerpc-utils-1.2.2-18.el6.ppc64.rpm-in-the-rhels6-rpm-repository-rhels6-only"><a href="#TOC">Update the powerpc-utils-1.2.2-18.el6.ppc64.rpm in the rhels6 RPM repository (rhels6 only)</a></h3>
+<ul>
+<li>This section could be removed after the powerpc-utils-1.2.2-18.el6.ppc64.rpm is built in the base rhels6 ISO.</li>
+<li>The direct rpm download link is: ftp://linuxpatch.ncsa.uiuc.edu/PERCS/powerpc-utils-1.2.2-18.el6.ppc64.rpm</li>
+<li>The update steps are as following:
+<ul>
+<li>put the new rpm in the base OS packages</li>
+</ul></li>
+</ul>
+<pre><code>    cd  /install/rhels6/ppc64/Server/Packages
+    mv powerpc-utils-1.2.2-17.el6.ppc64.rpm  /tmp
+    cp /tmp/powerpc-utils-1.2.2-18.el6.ppc64.rpm .
+    chmod +r powerpc-utils-1.2.2-18.el6.ppc64.rpm  # make sure that the rpm is be readable by other users</code></pre>
+<ul>
+<li>create the repodata</li>
+</ul>
+<pre><code>    cd /install/rhels6/ppc64/Server
+    ls -al repodata/
+         total 14316
+         dr-xr-xr-x 2 root root    4096 Jul 20 09:34 .
+         dr-xr-xr-x 3 root root    4096 Jul 20 09:34 ..
+         -r--r--r-- 1 root root 1305862 Sep 22  2010 20dfb74c144014854d3b16313907ebcf30c9ef63346d632369a19a4add8388e7-other.sqlite.bz2
+         -r--r--r-- 1 root root 1521372 Sep 22  2010 57b3c81512224bbb5cebbfcb6c7fd1f7eb99cca746c6c6a76fb64c64f47de102-primary.xml.gz
+         -r--r--r-- 1 root root 2823613 Sep 22  2010 5f664ea798d1714d67f66910a6c92777ecbbe0bf3068d3026e6e90cc646153e4-primary.sqlite.bz2
+         -r--r--r-- 1 root root 1418180 Sep 22  2010 7cec82d8ed95b8b60b3e1254f14ee8e0a479df002f98bb557c6ccad5724ae2c8-other.xml.gz
+         -r--r--r-- 1 root root  194113 Sep 22  2010 90cbb67096e81821a2150d2b0a4f3776ab1a0161b54072a0bd33d5cadd1c234a-comps-rhel6-Server.xml.gz
+         **-r--r--r-- 1 root root 1054944 Sep 22  2010 98462d05248098ef1724eddb2c0a127954aade64d4bb7d4e693cff32ab1e463c-comps-rhel6-Server.xml**
+         -r--r--r-- 1 root root 3341671 Sep 22  2010 bb3456b3482596ec3aa34d517affc42543e2db3f4f2856c0827d88477073aa45-filelists.sqlite.bz2
+         -r--r--r-- 1 root root 2965960 Sep 22  2010 eb991fd2bb9af16a24a066d840ce76365d396b364d3cdc81577e4cf6e03a15ae-filelists.xml.gz
+         -r--r--r-- 1 root root    3829 Sep 22  2010 repomd.xml
+         -r--r--r-- 1 root root    2581 Sep 22  2010 TRANS.TBL
+    createrepo \
+     -g repodata/98462d05248098ef1724eddb2c0a127954aade64d4bb7d4e693cff32ab1e463c-comps-rhel6-Server.xml .</code></pre>
+<p>Note: you should use comps-rhel6-Server.xml with its key as the group file.</p>
+<h3 id="additional-configuration-for-power-775-clusters-only"><a href="#TOC">Additional Configuration for Power 775 Clusters Only</a></h3>
+<ul>
+<li><p>Increase /boot filesystem size for service nodes</p>
+<p>A customized kernel is required on the service nodes to work with the HFI network. Since both the base and customized kernels will exist on the service nodes, the /boot filesystem will need be increased from the standard default when installing a service node.</p>
+<p>Note, increasing /boot is a workaround for using the customized kernel. After this kernel is accepted by the Linux Kernel community, only one kernel will be required on the service node, and this step will no longer be needed.</p>
+<p>Copy the service node Kickstart install template provided by xCAT to a custom location. For example:</p></li>
+</ul>
+<pre><code>     cp /opt/xcat/share/xcat/install/rh/service.rhels6.ppc64.tmpl /install/custom/install/rh
+</code></pre>
+<pre><code>Edit the copied file and change the line:</code></pre>
+<pre><code>     part /boot --size 50 --fstype ext4&lt;/pre&gt;
+
+    to:
+     part /boot --size 200 --fstype ext4&lt;/pre&gt;</code></pre>
+<h3 id="additional-configuration-when-using-db2"><a href="#TOC">Additional Configuration when using DB2</a></h3>
+<p>To have DB2 installed and configured during the install of the Service Node, you need to do the additional setup as documented in <a href="https://sourceforge.net/p/xcat/wiki/Setting_Up_DB2_as_the_xCAT_DB/#automatic-install-of-db2-and-client-setup-on-sn">https://sourceforge.net/p/xcat/wiki/Setting_Up_DB2_as_the_xCAT_DB/#automatic-install-of-db2-and-client-setup-on-sn</a>.</p>
+<h3 id="set-the-node-status-to-ready-for-installation"><a href="#TOC">Set the node status to ready for installation</a></h3>
+<p>Run nodeset to the osimage name defined in the provmethod attribute on your service node.</p>
+<pre><code>    nodeset service osimage=&quot;&lt;osimagename&gt;&quot;</code></pre>
+<p>For example</p>
+<pre><code>    nodeset service osimage=&quot;rhels6.3-x86_64-install-service&quot;
+</code></pre>
+<p>or</p>
+<pre><code>    nodeset service osimage=rhels6.4-ppc64-install-service
+</code></pre>
+<h3 id="initialize-network-boot-to-install-service-nodes"><a href="#TOC">Initialize network boot to install Service Nodes</a></h3>
+<pre><code>    rnetboot service
+</code></pre>
+<h3 id="initialize-network-boot-to-install-service-nodes-in-power-775"><a href="#TOC">Initialize network boot to install Service Nodes in Power 775</a></h3>
+<p>Starting from xCAT 2.6 and working in Power 775 cluster, there are two ways to initialize a network boot: one way is that using rbootseq command to setup the boot device as network adapter for the compute node, and after that, you can issue rpower command to power on or reset the compute node to boot from network, another way is to use rnetboot to the compute node directly. Comparing between these two ways, rbootseq/rpower command doesn't require the console support and operate in the console, so it has a better performance. It is recommended to use rbootseq/rpower to setup the boot device to network adapter and initialize the network boot in Power 775 cluster.</p>
+<p>Example of using rbootseq and rpower:</p>
+<pre><code>    rbootseq service net
+    rpower service boot</code></pre>
+<h3 id="monitor-the-installation"><a href="#TOC">Monitor the Installation</a></h3>
+<p>Watch the installation progress using either wcons or rcons:</p>
+<pre><code>    wcons service     # make sure DISPLAY is set to your X server/VNC or
+
+    rcons &lt;one-node-at-a-time&gt;
+
+    tail -f /var/log/messages</code></pre>
+<p>Note: We have experienced one problem while trying to install RHEL6 diskful service node working with SAS disks. The service node cannot reboots from SAS disk after the RHEL6 operating system has been installed. We are waiting for the build with fixes from RHEL6 team, once meet this problem, you need to manually select the SAS disk to be the first boot device and boots from the SAS disk.</p>
+<h3 id="update-service-node-diskfull-image"><a href="#TOC">Update Service Node Diskfull Image</a></h3>
+<p>If you need to update the service nodes later on with a new version of xCAT and its dependencies, obtain the new xCAT and xCAT dependencies rpms. (Follow the same steps that were followed in <a href="Setting_Up_a_Linux_Hierarchical_Cluster/#set-up-the-service-nodes-for-stateful-diskful-installation">Setting_Up_a_Linux_Hierarchical_Cluster/#set-up-the-service-nodes-for-stateful-diskful-installation</a>.</p>
+<p>Update the service nodes with the new xCAT rpms:</p>
+<pre><code>    updatenode service -S</code></pre>
+<p>If you want to update the service nodes later on with a new release of Linux, you will need to follow the instructions in the Linux documentation, or use the following procedure <strong>at your own risk</strong>, it is not fully tested and not formally supported according to the Linux documentation:</p>
+<p>1. Run copycds on the management node to copy the installation image of the new Linux release, for example:</p>
+<pre><code>    copycds /iso/RHEL6.2-20111117.0-Server-x86_64-DVD1.iso</code></pre>
+<p>2. Modify the os version of the service nodes, for example:</p>
+<pre><code>    chdef &lt;servicenode&gt; os=rhels6.2</code></pre>
+<p>3. Run updatenode <servicenode> -P ospkgs to update the Linux on the service nodes to a new release:</p>
+<pre><code>    updatenode &lt;servicenode&gt; -P ospkgs</code></pre>
+<h2 id="setup-the-service-node-for-stateless-deployment"><a href="#TOC">Setup the Service Node for Stateless Deployment</a></h2>
+<p><strong>Note:</strong> The stateless service node is not supported in ubuntu hierarchy cluster. For ubuntu, please skip this section.</p>
+<p>If you want, your service nodes can be stateless (diskless). The service node must contain not only the OS, but also the xCAT software and its dependencies. In addition, a number of files are added to the service node to support the PostgreSQL, or MySQL database access from the service node to the Management node, and ssh access to the nodes that the service nodes services. (DB2 is not supported on diskless Service Nodes.) The following sections explain how to accomplish this.</p>
+<h3 id="build-the-service-node-stateless-image"><a href="#TOC">Build the Service Node Stateless Image</a></h3>
+<p>This section assumes you can build the stateless image on the management node because the service nodes are the same OS and architecture as the management node. If this is not the case, you need to build the image on a machine that matches the service node's OS/architecture.</p>
+<ul>
+<li>Create an osimage definition. When you run copycds, xCAT will create a service node osimage definitions for that distribution. For a stateless service node, use the *-netboot-service definition.</li>
+</ul>
+<pre><code>      lsdef -t osimage | grep -i service
+        rhels6.4-ppc64-install-service  (osimage)
+        rhels6.4-ppc64-netboot-service  (osimage)
+        rhels6.4-ppc64-statelite-service  (osimage)</code></pre>
+<pre><code>      lsdef -t osimage -l rhels6.3-ppc64-netboot-service
+        Object name: rhels6.3-ppc64-netboot-service
+            exlist=/opt/xcat/share/xcat/netboot/rh/service.exlist
+            imagetype=linux
+            osarch=ppc64
+            osdistroname=rhels6.3-ppc64
+            osname=Linux
+            osvers=rhels6.3
+            otherpkgdir=/install/post/otherpkgs/rhels6.3/ppc64
+            otherpkglist=/opt/xcat/share/xcat/netboot/rh/service.rhels6.ppc64.otherpkgs.pkglist
+            pkgdir=/install/rhels6.3/ppc64
+            pkglist=/opt/xcat/share/xcat/netboot/rh/service.rhels6.ppc64.pkglist
+            postinstall=/opt/xcat/share/xcat/netboot/rh/service.rhels6.ppc64.postinstall
+            profile=service
+            provmethod=netboot
+            rootimgdir=/install/netboot/rhels6.3/ppc64/service</code></pre>
+<ul>
+<li>You can check the service node packaging to see if it has all the rpms you require. We ship a basic requirements lists that will create a fully functional service node. However, you may want to customize your service node by adding additional operating system packages or modifying the files excluded by the exclude list. View the files referenced by the osimage pkglist, otherpkglist and exlist attributes:</li>
+</ul>
+<pre><code>     cd /opt/xcat/share/xcat/netboot/rh/
+     view service.rhels6.ppc64.pkglist
+     view service.rhels6.ppc64.otherpkgs.pkglist
+     view service.exlist
+</code></pre>
+<pre><code> If you would like to change any of these files, copy them to a custom directory. This can be any directory you choose, but we recommend that you keep it /install somewhere. A good location is something like /install/custom/netboot/&amp;lt;os&amp;gt;/service. Make sure that your otherpkgs.pkglist file as an entry for</code></pre>
+<pre><code>     xcat/xcat-core/xCATsn</code></pre>
+<pre><code> This is required to install the xCAT service node function into your image.
+
+ You may also choose to create an appropriate /etc/fstab file in your service node image. Copy the script referenced by the postinstall attribute to your directory and modify it as you would like:</code></pre>
+<pre><code>     cp /opt/xcat/share/xcat/netboot/rh/service.rhels6.ppc64.postinstall /install/custom/netboot/rh
+     vi /install/custom/netboot/rh
+        # uncomment the sample fstab lines and change as needed:
+        proc /proc proc rw 0 0
+        sysfs /sys sysfs rw 0 0
+        devpts /dev/pts devpts rw,gid=5,mode=620 0 0
+        service_x86_64 / tmpfs rw 0 1
+        none /tmp tmpfs defaults,size=10m 0 2
+        none /var/tmp tmpfs defaults,size=10m 0 2</code></pre>
+<pre><code>After modifying the files, you will need to update the osimage definition to reference these files. We recommend creating a new osimage definition for your custom image:</code></pre>
+<p>~~~~ lsdef -t osimage -l rhels6.3-ppc64-netboot-service -z &gt; /tmp/myservice.def vi /tmp/myservice.def ~~~~ # change the name of the osimage definition # change any attributes that now need to reference your custom files # change the rootimgdir attribute replacing 'service' with a name to match your new osimage definition ~~~~ cat /tmp/msyservice.def | mkdef -z ~~~~</p>
+<pre><code> While you are here, if you&#39;d like, you can do the same for your compute node images, creating custom files and new custom osimage definitions as you need to.
+
+ For more information on the use and syntax of otherpkgs and pkglist files, see [Using_Updatenode].</code></pre>
+<ul>
+<li><p>Make your xCAT software available for otherpkgs processing:</p></li>
+<li><p>If you downloaded xCAT to your management node for installation, place a copy of your xcat-core and xcat-dep in your otherpkgdir directory:</p></li>
+</ul>
+<pre><code>     lsdef -t osimage -o rhels6.3-ppc64-netboot-service -i otherpkgdir
+        Object name: rhels6.3-ppc64-netboot-service
+            otherpkgdir=/install/post/otherpkgs/rhels6.3/ppc64
+     cd /install/post/otherpkgs/rhels6.3/ppc64
+     mkdir xcat
+     cd xcat
+     cp -Rp &lt;current location of xcat-core&gt;/xcat-core .
+     cp -Rp &lt;current location of xcat-dep&gt;/xcat-dep .
+</code></pre>
+<ul>
+<li><p>If you installed your management node directly from the Linux online repository, you will need to download the xcat-core and xcat-dep tarballs:</p>
+<p>First, go to the <a href="http://sourceforge.net/apps/wiki/xcat/index.php?title=Download_xCAT">Download xCAT</a> page and download the level of xCAT tarball you desire. Then go to the <a href="https://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Linux/">Download xCAT Dependencies</a> page and download the latest xCAT dependency tarball. Place these into your otherpkdir directory:</p></li>
+</ul>
+<pre><code>     lsdef -t osimage -o rhels6.3-ppc64-netboot-service -i otherpkgdir
+        Object name: rhels6.3-ppc64-netboot-service
+            otherpkgdir=/install/post/otherpkgs/rhels6.3/ppc64
+     cd /install/post/otherpkgs/rhels6.3/ppc64
+     mkdir xcat
+     cd xcat
+     mv &lt;xcat-core tarball&gt;  .
+     tar -jxvf &lt;xcat-core tarball&gt;
+     mv &lt;xcat-dep tarball&gt;   .
+     tar -jxvf &lt;xcat-dep tarball&gt;
+</code></pre>
+<ul>
+<li>Run image generation for your osimage definition:</li>
+</ul>
+<pre><code>     genimage rhels6.3-ppc64-netboot-service</code></pre>
+<ul>
+<li>Prevent DHCP from starting up until xcatd has had a chance to configure it:</li>
+</ul>
+<pre><code>    chroot /install/netboot/rhels6.3/ppc64/service/rootimg chkconfig dhcpd off
+    chroot /install/netboot/rhels6.3/ppc64/service/rootimg chkconfig dhcrelay off</code></pre>
+<ul>
+<li>IF using NFS hybrid mode, export /install read-only in service node image:</li>
+</ul>
+<pre><code>    cd /install/netboot/rhels6.3/ppc64/service/rootimg/etc
+    echo &#39;/install *(ro,no_root_squash,sync,fsid=13)&#39; &gt;exports</code></pre>
+<ul>
+<li>Pack the image for your osimage definition:</li>
+</ul>
+<pre><code>    packimage rhels6.3-ppc64-netboot-service
+</code></pre>
+<ul>
+<li>Set the node status to ready for netboot using your osimage definition and your 'service' nodegroup:</li>
+</ul>
+<pre><code>    nodeset service osimage=rhels6.3-ppc64-netboot-service</code></pre>
+<ul>
+<li>To diskless boot the service nodes</li>
+</ul>
+<pre><code>    rnetboot service
+</code></pre>
+<ul>
+<li>To diskless boot the service nodes in Power 775</li>
+</ul>
+<p>Starting from xCAT 2.6 and working in Power 775 cluster, there are two ways to initialize a network boot: one way is that using rbootseq command to setup the boot device as network adapter for the compute node, and after that, you can issue rpower command to power on or reset the compute node to boot from network, another way is to use rnetboot to the compute node directly. Comparing between these two ways, rbootseq/rpower command doesn't require the console support and operate in the console, so it has a better performance. It is recommended to use rbootseq/rpower to setup the boot device to network adapter and initialize the network boot in Power 775 cluster.</p>
+<pre><code>    rbootseq service net
+    rpower service boot</code></pre>
+<h4 id="update-service-node-stateless-image"><a href="#TOC"><strong>Update Service Node Stateless Image</strong></a></h4>
+<p>To update the xCAT software in the image at a later time:</p>
+<ul>
+<li>Download the updated xcat-core and xcat-dep tarballs and place them in your osimage's otherpkgdir xcat directory as you did above.</li>
+<li>Generate and repack the image and reboot your service node:</li>
+<li>Run image generation for your osimage definition:</li>
+</ul>
+<pre><code>     genimage rhels6.3-ppc64-netboot-service
+     packimage rhels6.3-ppc64-netboot-service
+     nodeset service osimage=rhels6.3-ppc64-netboot-service
+     rnetboot service
+</code></pre>
+<p>To diskless boot the service nodes in Power 775</p>
+<p>Starting from xCAT 2.6 and working in Power 775 cluster, there are two ways to initialize a network boot: one way is that using rbootseq command to setup the boot device as network adapter for the compute node, and after that, you can issue rpower command to power on or reset the compute node to boot from network, another way is to use rnetboot to the compute node directly. Comparing between these two ways, rbootseq/rpower command doesn't require the console support and operate in the console, so it has a better performance. It is recommended to use rbootseq/rpower to setup the boot device to network adapter and initialize the network boot in Power 775 cluster.</p>
+<pre><code>    rbootseq service net
+    rpower service boot
+</code></pre>
+<p>**Note: **The service nodes are set up as NFS-root servers for the compute nodes. Any time changes are made to any compute image on the mgmt node it will be necessary to sync all changes to all service nodes. In our case the /install directory is mounted on the servicenodes, so the update to the compute node image is automatically available.</p>
+<h3 id="monitor-install-and-boot"><a href="#TOC">Monitor install and boot</a></h3>
+<pre><code>    wcons service # make sure DISPLAY is set to your X server/VNC or</code></pre>
+<pre><code>    rcons &lt;one-node-at-a-time&gt; # or do rcons for each node</code></pre>
+<pre><code>tail -f /var/log/messages</code></pre>
+<h2 id="test-service-node-installation"><a href="#TOC"><strong>Test Service Node installation</strong></a></h2>
+<ul>
+<li>ssh to the service nodes. You should not be prompted for a password.</li>
+<li>Check to see that the xcat daemon xcatd is running.</li>
+<li>Run some database command on the service node, e.g tabdump site, or nodels, and see that the database can be accessed from the service node.</li>
+<li>Check that /install and /tftpboot are mounted on the service node from the Management Node, if appropriate.</li>
+<li>Make sure that the Service Node has Name resolution for all nodes, it will service.</li>
+</ul>
+<h2 id="additional-configuration-of-the-service-nodes-for-power-775-clusters-only"><a href="#TOC">Additional Configuration of the Service Nodes for Power 775 Clusters Only</a></h2>
+<h3 id="switch-xcat-yaboot-to-yaboot-released-by-rhel"><a href="#TOC">Switch xcat-yaboot to yaboot released by RHEL</a></h3>
+<p>Note: This is a workaround for the issue that xcat-yaboot is not working properly with netboot over HFI. After xcat-yaboot is rebuilt on top of yaboot version 1.3.17, this step is not required:</p>
+<pre><code>    yum install yaboot
+    mv /tftpboot/yaboot /tftpboot/yaboot.back
+    cp /usr/lib/yaboot/yaboot /tftpboot/yaboot
+</code></pre>
+<h3 id="copy-the-hfi-driver-and-dhcp-packages-to-service-node"><a href="#TOC">Copy the HFI driver and DHCP packages to service node</a></h3>
+<pre><code>    xdcp c250f07c04ap01 -R /hfi /hfi
+</code></pre>
+<h3 id="install-the-hfi-device-drivers-and-hfi-enabled-dhcp-server-on-the-xcat-sn"><a href="#TOC">Install the HFI device drivers and HFI enabled dhcp server on the xCAT SN</a></h3>
+<pre><code>    xdsh c250f07c04ap01 rpm -ivh /hfi/dd/kernel-2.6.32-*.ppc64.rpm
+    xdsh c250f07c04ap01 rpm -ivh /hfi/dd/kernel-headers-2.6.32-*.ppc64.rpm --force
+    xdsh c250f07c04ap01 rpm -ivh /hfi/dd/hfi_util-*.el6.ppc64.rpm
+    xdsh c250f07c04ap01 rpm -ivh /hfi/dd/hfi_ndai-*.el6.ppc64.rpm
+    xdsh c250f07c04ap01 rpm -ivh /hfi/dhcp/net-tools-*.el6.ppc64.rpm --force
+    xdsh c250f07c04ap01 rpm -ivh /hfi/dhcp/dhcp-*.el6.ppc64.rpm --force
+    xdsh c250f07c04ap01 rpm -ivh /hfi/dhcp/dhclient-*.el6.ppc64.rpm
+    xdsh c250f07c04ap01 /sbin/new-kernel-pkg --mkinitrd --depmod --install 2.6.32-71.el6.20110617.ppc64
+    xdsh c250f07c04ap01 /sbin/new-kernel-pkg --rpmposttrans 2.6.32-71.el6.20110617.ppc64</code></pre>
+<h3 id="change-yaboot-to-boot-from-customized-kernel"><a href="#TOC">Change yaboot to boot from customized kernel</a></h3>
+<p>Create soft links and change yaboot.conf to boot from the customized kernel with HFI support</p>
+<pre><code>    xdsh c250f07c04ap01 ln -sf /boot/vmlinuz-2.6.32-71.el6.20110617.ppc64 /boot/vmlinuz
+    xdsh c250f07c04ap01 ln -sf /boot/System.map-2.6.32-71.el6.20110617.ppc64 /boot/System.map
+</code></pre>
+<p>Login to the service node and change the &quot;default=&quot; setting in /boot/etc/yaboot.conf to the new label with HFI support. For example, change it from:</p>
+<pre><code>    boot=/dev/sda1
+    init-message=&quot;Welcome to Red Hat Enterprise Linux!\nHit &lt;TAB&gt; for boot options&quot;
+    partition=3
+    timeout=5
+    install=/usr/lib/yaboot/yaboot
+    delay=5
+    enablecdboot
+    enableofboot
+    enablenetboot
+    nonvram
+    fstype=raw
+    default=linux
+
+    image=/vmlinuz-2.6.32hfi
+    label=2.6.32hfi
+    read-only
+    initrd=/initrd-2.6.32hfi.img
+    append=&quot;rd_NO_LUKS rd_NO_LVM rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrhebsun16 KEYTABLE=us console=hvc0 crashkernel=auto rhgb quiet root=UUID=e2123609-7080-45f0-b583-23d5ef27dbba&quot;
+    image=/vmlinuz-2.6.32-71.el6.ppc64
+    label=linux
+    read-only
+    initrd=/initramfs-2.6.32-71.el6.ppc64.img
+    append=&quot;rd_NO_LUKS rd_NO_LVM rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrhebsun16 KEYTABLE=us \
+       console=hvc0 crashkernel=auto rhgb quiet root=UUID=e2123609-7080-45f0-b583-23d5ef27dbba&quot;
+</code></pre>
+<p>TO:</p>
+<pre><code>    boot=/dev/sda1
+    init-message=&quot;Welcome to Red Hat Enterprise Linux!\nHit &lt;TAB&gt; for boot options&quot;
+    partition=3
+    timeout=5
+    install=/usr/lib/yaboot/yaboot
+    delay=5
+    enablecdboot
+    enableofboot
+    enablenetboot
+    nonvram
+    fstype=raw
+    default=2.6.32-71.el6.20110617.ppc64
+
+    image=/vmlinuz-2.6.32-71.el6.20110617.ppc64
+    label=2.6.32-71.el6.20110617.ppc64
+    read-only
+    initrd=/initrd-2.6.32-71.el6.20110617.ppc64.img
+    append=&quot;rd_NO_LUKS rd_NO_LVM rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrhebsun16 KEYTABLE=us console=hvc0 crashkernel=auto rhgb quiet root=UUID=e2123609-7080-45f0-b583-23d5ef27dbba&quot;
+    image=/vmlinuz-2.6.32-71.el6.ppc64
+    label=linux
+    read-only
+    initrd=/initramfs-2.6.32-71.el6.ppc64.img
+    append=&quot;rd_NO_LUKS rd_NO_LVM rd_NO_MD rd_NO_DM LANG=en_US.UTF-8 SYSFONT=latarcyrhebsun16 KEYTABLE=us \
+        console=hvc0 crashkernel=auto rhgb quiet root=UUID=e2123609-7080-45f0-b583-23d5ef27dbba&quot;</code></pre>
+<h3 id="reset-the-service-node-to-boot-from-the-kernel-with-hfi"><a href="#TOC">Reset the service node to boot from the kernel with HFI</a></h3>
+<pre><code>    xdsh c250f07c04ap01 reboot
+</code></pre>
+<h3 id="sync-etchosts-to-service-node-and-configure-hfi-interfaces"><a href="#TOC">Sync /etc/hosts to Service Node and configure HFI interfaces</a></h3>
+<p>Now the HFI interfaces should be available on the service node. Sync the /etc/hosts from MN to SN and run the confighfi postscript to configure the HFI interfaces with IP addresses.</p>
+<pre><code>    xdcp c250f07c04ap01 /etc/hosts /etc/hosts
+    chdef c250f07c04ap01 postscripts=confighfi
+    updatenode c250f07c04ap01
+</code></pre>
+<h3 id="create-new-network-definition-for-hfi-network"><a href="#TOC">Create new network definition for HFI network</a></h3>
+<p>Create new networks definitions in the xCAT database for the HFI interfaces. Generally there will be four HFI interfaces on the service nodes, so for each network, create an network entry.</p>
+<pre><code>mkdef -t network -o hfinet0 net=20.0.0.0 mask=255.0.0.0 gateway=20.7.4.1 mgtifname=hf0 dhcpserver=20.7.4.1 \ 
+      tftpserver=20.7.4.1 nameservers=20.7.4.1
+mkdef -t network -o hfinet1 net=21.0.0.0 mask=255.0.0.0 gateway=21.7.4.1 mgtifname=hf1 dhcpserver=21.7.4.1 \
+      tftpserver=21.7.4.1 nameservers=21.7.4.1
+mkdef -t network -o hfinet2 net=22.0.0.0 mask=255.0.0.0 gateway=22.7.4.1 mgtifname=hf2 dhcpserver=22.7.4.1 \
+      tftpserver=22.7.4.1 nameservers=22.7.4.1
+mkdef -t network -o hfinet3 net=23.0.0.0 mask=255.0.0.0 gateway=23.7.4.1 mgtifname=hf3 dhcpserver=23.7.4.1 \
+      tftpserver=23.7.4.1 nameservers=23.7.4.1</code></pre>
+<p>where the above net, mask, and gateway are appropriate for your hf0,hf1,hf2 and hf3 network</p>
+<h2 id="define-and-install-your-compute-nodes"><a href="#TOC">Define and install your Compute Nodes</a></h2>
+<h3 id="make-install-available-on-the-service-nodes"><a href="#TOC">Make /install available on the Service Nodes</a></h3>
+<p><strong>Note that all of the files and directories pointed to by your osimages should be placed under the directory referred to in site.installdir (usually /install), so they will be available to the service nodes.</strong> The installdir directory is mounted or copied to the service nodes during the hierarchical install of compute nodes from the service nodes.</p>
+<p>If you are <strong>not</strong> using the NFS-based statelite method of booting your compute nodes and you are <strong>not</strong> using service node pools, set the installloc attribute to &quot;/install&quot;. This instructs the service node to mount /install from the management node. (If you don't do this, you have to manually sync /install between the management node and the service nodes.)</p>
+<pre><code>    chdef -t site  clustersite installloc=&quot;/install&quot;</code></pre>
+<h3 id="make-compute-node-syncfiles-available-on-the-servicenodes"><a href="#TOC">Make compute node syncfiles available on the servicenodes</a></h3>
+<p>If you are <strong>not</strong> using the NFS-based statelite method of booting your compute nodes, and you plan to use the syncfiles postscript to update files on the nodes during install, you must ensure that those files are sync'd to the servicenodes before the install of the compute nodes. To do this after your nodes are defined, you will need to run the following whenever the files in your synclist change on the Management Node:</p>
+<pre><code>     updatenode &lt;computenoderange&gt; -f</code></pre>
+<p>At this point you can return to the documentation for your cluster environment to define and deploy your compute nodes. For Power 775 Cluster, after the service node has been installed, you should create the connections between the hdwr_svr and non-sn_CEC, and then do other hardware control commands.</p>
+<h2 id="appendix-a-setup-backup-service-nodes"><a href="#TOC">Appendix A: Setup backup Service Nodes</a></h2>
+<p>For reliability, availability, and serviceability purposes you may wish to designate backup service nodes in your hierarchical cluster. The backup service node will be another active service node that is set up to easily take over from the original service node if a problem occurs. This is <strong>not</strong> an automatic fail over feature. You will have to initiate the switch from the primary service node to the backup manually. The xCAT support will handle most of the setup and transfer of the nodes to the new service node. This procedure can also be used to simply switch some compute nodes to a new service node, for example, for planned maintenance.</p>
+<p>Abbreviations used below:</p>
+<ul>
+<li>MN - management node.</li>
+<li>SN - service node.</li>
+<li>CN - compute node.</li>
+</ul>
+<h3 id="initial-deployment"><a href="#TOC"><strong>Initial deployment</strong></a></h3>
+<p>Integrate the following steps into the hierarchical deployment process described above.</p>
+<ol style="list-style-type: decimal">
+<li>Make sure both the primary and backup service nodes are installed, configured, and can access the MN database.</li>
+<li>When defining the CNs add the necessary service node values to the &quot;<em>servicenode</em>&quot; and &quot;<em>xcatmaster</em>&quot; attributes of the <a href="http://xcat.sourceforge.net/man7/node.7.html">node definitions</a>.</li>
+<li>(Optional) Create an xCAT group for the nodes that are assigned to each SN. This will be useful when setting node attributes as well as providing an easy way to switch a set of nodes back to their original server.</li>
+</ol>
+<p>To specify a backup service node you must specify a comma-separated list of two service nodes for the <strong>servicenode</strong> value of the compute node. The first one will be the primary and the second will be the backup (or new SN) for that node. Use the hostnames of the SNs as known by the MN.</p>
+<p>For the <strong>xcatmaster</strong> value you should only include the primary SN, as known by the compute node.</p>
+<p>In most hierarchical clusters, the networking is such that the name of the SN as known by the MN is different than the name as known by the CN. (If they are on different networks.)</p>
+<p>In the following example assume the SN interface to the MN is on the &quot;a&quot; network and the interface to the CN is on the &quot;b&quot; network. To set the attributes you would run a command similar to the following.</p>
+<pre><code>    chdef &lt;noderange&gt;  servicenode=&quot;xcatsn1a,xcatsn2a&quot; xcatmaster=&quot;xcatsn1b&quot;
+</code></pre>
+<p>The process can be simplified by creating xCAT node groups to use as the &lt;noderange&gt; in the <a href="http://xcat.sourceforge.net/man1/chdef.1.html">chdef</a> command. To create an xCAT node group containing all the nodes that have the service node &quot;SN27&quot; you could run a command similar to the following.</p>
+<pre><code>    mkdef -t group sn1group members=node[01-20]</code></pre>
+<p><strong>Note:</strong> Normally backup service nodes are the primary SNs for other compute nodes. So, for example, if you have 2 SNs, configure half of the CNs to use the 1st SN as their primary SN, and the other half of CNs to use the 2nd SN as their primary SN. Then each SN would be configured to be the backup SN for the other half of CNs.</p>
+<p>When you run <a href="http://xcat.sourceforge.net/man8/makedhcp.8.html">makedhcp</a>, it will configure dhcp and tftp on both the primary and backup SNs, assuming they both have network access to the CNs. This will make it possible to do a quick SN takeover without having to wait for replication when you need to switch.</p>
+<h3 id="xdcp-behaviour-with-backup-servicenodes"><a href="#TOC"><strong>xdcp Behaviour with backup servicenodes</strong></a></h3>
+<p>The xdcp command in a hierarchical environment must first copy (scp) the files to the service nodes for them to be available to scp to the node from the service node that is it's master. The files are placed in /var/xcat/syncfiles directory by default, or what is set in site table SNsyncfiledir attribute. If the node has multiple service nodes assigned, then xdcp will copy the file to each of the service nodes assigned to the node. For example, here the files will be copied (scp) to both service1 and rhsn. lsdef cn4 | grep servicenode</p>
+<pre><code>       servicenode=service1,rhsn</code></pre>
+<p>If a service node is offline ( e.g. service1), then you will see errors on your xdcp command, and yet if rhsn is online then the xdcp will actually work. This may be a little confusing. For example, here service1 is offline, but we are able to use rhsn to complete the xdcp.</p>
+<pre><code>    xdcp cn4  /tmp/lissa/file1 /tmp/file1
+
+    service1: Permission denied (publickey,password,keyboard-interactive).
+    service1: Permission denied (publickey,password,keyboard-interactive).
+    service1: lost connection
+    The following servicenodes: service1, have errors and cannot be updated
+    Until the error is fixed, xdcp will not work to nodes serviced by these service nodes.
+
+
+    xdsh cn4 ls /tmp/file1
+    cn4: /tmp/file1
+</code></pre>
+<h3 id="synchronizing-statelite-persistent-files"><a href="#TOC"><strong>Synchronizing statelite persistent files</strong></a></h3>
+<p>If you are using xCAT's &quot;statelite&quot; support, you may want to replicate your statelite files to the backup (or new) service node. This would be the case if you are using the service node as the server for the statelite persistent directory. In this case you need to copy your statelite files and directories to the backup service node and keep them synchronized over time. An easy and efficient way to do this would be to use the rsync command from the primary SN to the backup SN.</p>
+<p>For example, to copy and/or update the /nodedata directory on the backup service node &quot;sn2&quot; you could run the following command on sn1:</p>
+<pre><code>    rsync -auv /nodedata sn2:/</code></pre>
+<p><strong>Note:</strong> The xCAT <a href="http://xcat.sourceforge.net/man1/snmove.1.html">snmove</a> command has a new option -l to synchronize statelite files from the primary service node to the backup service node, but it is currently only implemented on AIX.</p>
+<p>See [XCAT_Linux_Statelite] for details on using the xCAT statelite support.</p>
+<h3 id="monitoring-the-service-nodes"><a href="#TOC"><strong>Monitoring the service nodes</strong></a></h3>
+<p>In most cluster environments it is very important to monitor the state of the service nodes. If a SN fails for some reason you should switch nodes to the backup service node as soon as possible.</p>
+<p>See [Monitor_and_Recover_Service_Nodes] for details on monitoring your service nodes.</p>
+<h3 id="switch-to-the-backup-sn"><a href="#TOC"><strong>Switch to the backup SN</strong></a></h3>
+<p>When an SN fails, or you want to bring it down for maintenance, use this procedure to move its CNs over to the backup SN.</p>
+<h4 id="move-the-nodes-to-the-new-service-nodes"><a href="#TOC"><strong>Move the nodes to the new service nodes</strong></a></h4>
+<p>Use the xCAT <a href="http://xcat.sourceforge.net/man1/snmove.1.html">snmove</a> to make the database updates necessary to move a set of nodes from one service node to another, and to make configuration modifications to the nodes.</p>
+<p>For example, if you want to switch all the compute nodes that use service node &quot;sn1&quot; to the backup SN (sn2), run:</p>
+<pre><code>    snmove -s sn1</code></pre>
+<p><strong>Modified database attributes</strong></p>
+<p>The <strong>snmove</strong> command will check and set several node attribute values.</p>
+<p><strong>servicenode:</strong> : This will be set to either the second server name in the servicenode attribute list or the value provided on the command line. <strong>xcatmaster:</strong> : Set with either the value provided on the command line or it will be automatically determined from the servicenode attribute. <strong>nfsserver:</strong> : If the value is set with the source service node then it will be set to the destination service node. <strong>tftpserver:</strong> : If the value is set with the source service node then it will be reset to the destination service node. <strong>monserver:</strong> : If set to the source service node then reset it to the destination servicenode and xcatmaster values. <strong>conserver:</strong> : If set to the source service node then reset it to the destination servicenode and run <strong>makeconservercf</strong></p>
+<p><strong>Run postscripts on the nodes</strong></p>
+<p>If the CNs are up at the time the <strong>snmove</strong> command is run then snmove will run postscripts on the CNs to reconfigure them for the new SN. The &quot;syslog&quot; postscript is always run. The &quot;mkresolvconf&quot; and &quot;setupntp&quot; scripts will be run IF they were included in the nodes postscript list.</p>
+<p>You can also specify an additional list of postscripts to run.</p>
+<p><strong>Modify system configuration on the nodes</strong></p>
+<p>If the CNs are up the <strong>snmove</strong> command will also perform some configuration on the nodes such as setting the default gateway and modifying some configuration files used by xCAT.</p>
+<h4 id="statelite-migration"><a href="#TOC"><strong>Statelite migration</strong></a></h4>
+<p>If you are using the xCAT statelite support you may need to modify the <a href="http://xcat.sourceforge.net/man5/statelite.5.html">statelite</a> and <a href="http://xcat.sourceforge.net/man5/litetree.5.html">litetree</a> tables. This would be necessary if any of the entries in the tables include the name of the primary service node as the server for the file or directory. In this case you would have to change those entries to the name of the backup service node. But a better solution is to use the variable <strong>$noderes.xcatmaster</strong> in the statelite and litetree tables. See [XCAT_Linux_Statelite] for details.</p>
+<h4 id="boot-the-statelite-nodes"><a href="#TOC"><strong>Boot the statelite nodes</strong></a></h4>
+<p>For statelite nodes that do not use an external NFS server, if the original service node is down, the CNs it manages will be down too. You must run the <a href="http://xcat.sourceforge.net/man8/nodeset.8.html">nodeset</a> command for those nodes and then boot the nodes after running snmove. For stateless nodes (and in some cases RAMDisk statelite nodes), the nodes will be up even if the original service node is down. However, make sure to run the nodeset command in case you need to reboot the nodes later.</p>
+<p><strong>Note:</strong> when moving p775 nodes, use the <strong>rbootseq</strong> and <strong>rpower</strong> commands to boot the nodes. If you do not use the rbootseq command, the nodes will still try to boot from the old SN.</p>
+<h3 id="switching-back"><a href="#TOC"><strong>Switching back</strong></a></h3>
+<p>The process for switching nodes back will depend on what must be done to recover the original service node. If the SN needed to be reinstalled, you need to set it up as an SN again and make sure the CN images are replicated to it. Once you've done this, or if the SN's configuration was not lost, then follow these steps to move the CNs back to their original SN:</p>
+<ul>
+<li>Use snmove:</li>
+</ul>
+<pre><code>    snmove sn1group -d sn1</code></pre>
+<ul>
+<li>If these are statelite CNs:
+<ul>
+<li>rsync persistent files back to the original SN</li>
+<li>run nodeset for these CNs</li>
+<li>boot the CNs</li>
+</ul></li>
+</ul>
+<h2 id="appendix-b-diagnostics"><a href="#TOC">Appendix B: Diagnostics</a></h2>
+<ul>
+<li><strong>root ssh keys not setup</strong> -- If you are prompted for a password when ssh to the service node, then check to see if /root/.ssh has authorized_keys. If the directory does not exist or no keys, on the MN, run xdsh service -K, to exchange the ssh keys for root. You will be prompted for the root password, which should be the password you set for the key=system in the passwd table.</li>
+<li><strong>XCAT rpms not on SN</strong> --On the SN, run rpm -qa | grep xCAT and make sure the appropriate xCAT rpms are installed on the servicenode. See the list of xCAT rpms in Set Up the Service Nodes for diskfull Installation. If rpms missing check your install setup as outlined in Build the Service Node Stateless Image for diskless or Set Up the Service Nodes for diskfull Installation for diskfull installs.</li>
+<li><strong>otherpkgs(including xCAT rpms) installation failed on the SN</strong> --The OS repository is not created on the SN. When the &quot;yum&quot; command is processing the dependency, the rpm packages (including expect, nmap, and httpd, etc) required by xCATsn can't be found. In this case, please check whether the /install/postscripts/repos/&lt;osver&gt;/&lt;arch&gt;/ directory exists on the MN. If it is not on the MN, you need to re-run the &quot;copycds&quot; command, and there will be some file created under the /install/postscripts/repos/&lt;osver&gt;/&lt;arch&gt; directory on the MN. Then, you need to re-install the SN, and this issue should be gone.</li>
+<li>**Error finding the database/starting xcatd **-- If on the Service node when you run tabdump site, you get &quot;Connection failure: IO::Socket::SSL: connect: Connection refused at /opt/xcat/lib/perl/xCAT/Client.pm&quot;. Then restart the xcatd daemon and see if it passes by running the command: service xcatd restart. If it fails with the same error, then check to see if /etc/xcat/cfgloc file exists. It should exist and be the same as /etc/xcat/cfgloc on the MN. If it is not there, copy it from the MN to the SN. The run service xcatd restart. This indicates the servicenode postscripts did not complete successfully. Check to see your postscripts table was setup correctly in Add Service Nodes postscripts to the postscripts table.</li>
+<li><strong>Error accessing database/starting xcatd credential failure</strong>-- If you run tabdump site on the servicenode and you get &quot;Connection failure: IO::Socket::SSL: SSL connect attempt failed because of handshake problemserror:14094418:SSL routines:SSL3_READ_BYTES:tlsv1 alert unknown ca at /opt/xcat/lib/perl/xCAT/Client.pm&quot;, check /etc/xcat/cert. The directory should contain the files ca.pem and server-cred.pem. These were suppose to transfer from the MN /etc/xcat/cert directory during the install. Also check the /etc/xcat/ca directory. This directory should contain most files from the /etc/xcat/ca directory on the MN. You can manually copy them from the MN to the SN, recursively. This indicates the the servicenode postscripts did not complete successfully. Check to see your postscripts table was setup correctly in Add Service Nodes postscripts to the postscripts table. Again service xcatd restart and try the tabdump site again.</li>
+<li><strong>Missing ssh hostkeys --</strong> Check to see if /etc/xcat/hostkeys on the SN, has the same files as /etc/xcat/hostkeys on the MN. These are the ssh keys that will be installed on the compute nodes, so root can ssh between compute nodes without password prompting. If they are not there copy them from the MN to the SN. Again, these should have been setup by the servicenode postscripts.</li>
+<li><strong>Errors running hierarchical commands such as xdsh</strong> -- xCAT has a number of commands that run hierarchically. That is, the commands are sent from xcatd on the management node to the correct service node xcatd, which in turn processes the command and sends the results back to xcatd on the management node. If a hierarchical command such as xcatd fails with something like &quot;Error: Permission denied for request&quot;, check /var/log/messages on the management node for errors. One error might be &quot;Request matched no policy rule&quot;. This may mean you will need to add policy table entries for your xCAT management node and service node:</li>
+</ul>
+<pre><code>
+# tabedit policy
+#priority,name,host,commands,noderange,parameters,time,rule,comments,disable
+&quot;1&quot;,&quot;root&quot;,,,,,,&quot;allow&quot;,,
+&quot;1.2&quot;,&quot;mn1.cluster.com&quot;,,,,,,&quot;allow&quot;,,
+&quot;1.3&quot;,&quot;mn1&quot;,,,,,,&quot;allow&quot;,,
+&quot;1.4&quot;,&quot;sn1.cluster.com&quot;,,,,,,&quot;allow&quot;,,
+&quot;1.5&quot;,&quot;sn1&quot;,,,,,,&quot;allow&quot;,,
+:
+</code></pre>
+<h2 id="appendix-c-migrating-a-management-node-to-a-service-node"><a href="#TOC">Appendix C: Migrating a Management Node to a Service Node</a></h2>
+<p>If you find you want to convert an existing Management Node to a Service Node, you need to work with the xCAT team. It is recommended for now, to backup your database, setup your new Management Server, and restore your database into it. Take the old Management Node and remove xCAT and all xCAT directories, and your database. See [Uninstalling_xCAT] and then follow the process for setting up a SN as if it is a new node.</p>
+<h2 id="appendix-d-set-up-hierarchical-conserver"><a href="#TOC">Appendix D: Set up Hierarchical Conserver</a></h2>
+<p>To allow you to open the rcons from the Management Node running the conserver daemon on the Service Nodes, do the following:</p>
+<ul>
+<li>Set nodehm.conserver to be the service node (using the ip that faces the management node)</li>
+</ul>
+~~~~ chdef -t <noderange> conserver=<servicenodeasknownbytheMN> makeconservercf service conserver stop service conserver start ~~~~
+</body>
+</html>

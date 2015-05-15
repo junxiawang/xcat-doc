@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#tested-oss">Tested OS's</a></li>
+<li><a href="#key-bug-fixes">Key Bug fixes</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#tested-oss">Tested OS's</a></li>
+<li><a href="#key-bug-fixes">Key Bug fixes</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="new-function-and-changes-in-behavior"><a href="#TOC">New Function and Changes in Behavior</a></h2>
+<ul>
+<li>Add support for devices ( switches) in sinv. See man sinv: <a href="http://xcat.sourceforge.net/man1/sinv.1.html">sinv</a></li>
+<li>rbeacon is supported for Flex system</li>
+<li>Energy management support for Flex System (renergy command)</li>
+<li>RHEL 6.4 support on system x and system p</li>
+</ul>
+<h2 id="tested-oss"><a href="#TOC">Tested OS's</a></h2>
+<p>RH6.3, RH6.4 and AIX71H</p>
+<h2 id="key-bug-fixes"><a href="#TOC">Key Bug fixes</a></h2>
+<ul>
+<li>When upgrading the xcatd did not restart properly: <a href="https://sourceforge.net/p/xcat/bugs/2359/">2359</a></li>
+<li>updatenode with ospkgs failure: <a href="https://sourceforge.net/p/xcat/bugs/3229/">3229</a></li>
+<li>LCDs were not displayed properly by the rvitals command for Flex Power 7 blades: <a href="http://sourceforge.net/p/xcat/bugs/3382/">3382</a></li>
+<li>In the ospkgs postscript (used by updatenode -S), the baseurl was set incorrectly in the zypper repo on SLES: <a href="https://sourceforge.net/p/xcat/bugs/3381/">3381</a></li>
+<li>Incorrect postscript/postbootscript list generated for a node. <a href="https://sourceforge.net/p/xcat/bugs/3412/">3412</a></li>
+<li>mlnxofed_ib_install need to support hierarchical environment.<a href="https://sourceforge.net/p/xcat/bugs/3513/">3513</a></li>
+<li>Certain NodeRanges do not expand correctly, see [<a href="https://sourceforge.net/p/xcat/bugs/3429/">bug 3429</a>].</li>
+</ul>
+<h2 id="restrictions-and-known-problems"><a href="#TOC">Restrictions and Known Problems</a></h2>
+<ul>
+<li><p>rmdsklsnode can not remove the NIM machine definition with AIX 7.1.2.0 Update image on xCAT management node or service node. This is actually caused by AIX APAR IV32670. You can get more info from bug <a href="https://sourceforge.net/p/xcat/bugs/3527/">3527</a></p>
+<p>the workaround is to force reinstall the bos.sysmgt.nim.master 7.1.2.0 fileset using AIX 7.1 TL02 media.</p></li>
+<li>updatenode -k does not work to compute nodes in a hierarchical environment; that is when the compute node is accessed via a service code. Running this command to the compute node results in an infinite loop which consumes memory. For a work around to exchange ssh keys use xdsh -K to the compute node. <a href="https://sourceforge.net/p/xcat/bugs/3652/">3652</a></li>
+<li><p>In HAMN environments, credential validation can fail. <a href="https://sourceforge.net/p/xcat/bugs/3704/">3704</a></p></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#back-up-the-nim-and-xcat-databases">Back up the NIM and xCAT databases</a><ul>
+<li><a href="#nim"><strong>NIM</strong></a></li>
+<li><a href="#xcat"><strong>XCAT</strong></a></li>
+</ul></li>
+<li><a href="#shut-down-any-diskless-nodes-that-are-being-served-by-the-management-node">Shut down any diskless nodes that are being served by the management node</a></li>
+<li><a href="#upgrade-xcat">Upgrade xCAT</a><ul>
+<li><a href="#upgrade-xcat-on-the-management-node"><strong>Upgrade xCAT on the management node</strong></a><ul>
+<li><a href="#shut-down-xcat"><strong>Shut down xCAT</strong></a></li>
+<li><a href="#download-and-install-the-latest-xcat-dependency-software"><strong>Download and install the latest xCAT dependency software</strong></a></li>
+<li><a href="#download-and-install-the-latest-xcat-database-software"><strong>Download and install the latest xCAT database software</strong></a></li>
+<li><a href="#install-the-latest-xcat-packages"><strong>Install the latest xCAT packages</strong></a></li>
+<li><a href="#restart-and-verify-xcat"><strong>Restart and verify xCAT</strong></a></li>
+</ul></li>
+<li><a href="#upgrade-xcat-on-service-nodes"><strong>Upgrade xCAT on service nodes</strong></a><ul>
+<li><a href="#copy-the-new-rpms-to-the-nim-lpp_source-directories"><strong>Copy the new rpms to the NIM lpp_source directories</strong></a></li>
+<li><a href="#update-the-nim-installp_bundle-resources"><strong>Update the NIM installp_bundle resources</strong></a></li>
+<li><a href="#check-the-osimage-optional"><strong>Check the osimage (optional)</strong></a></li>
+<li><a href="#run-the-updatenode-command-to-install-the-software"><strong>Run the updatenode command to install the softwar</strong>e</a></li>
+<li><a href="#verify-xcat-on-the-service-nodes"><strong>Verify xCAT on the service nodes</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#migrate-the-management-node-to-a-new-version-of-aix">Migrate the management node to a new version of AIX</a><ul>
+<li><a href="#verify-xcat-and-nim-on-the-management-node"><strong>Verify xCAT and NIM on the management node</strong></a></li>
+</ul></li>
+<li><a href="#upgrade-the-xcat-service-nodes-to-the-new-os-version">Upgrade the xCAT service nodes to the new OS version</a><ul>
+<li><a href="#create-a-new-xcat-osimage-for-the-service-nodes"><strong>Create a new xCAT osimage for the service nodes</strong></a></li>
+<li><a href="#modify-the-bosinst_data-resource-to-do-a-migration-install"><strong>Modify the bosinst_data resource to do a migration instal</strong>l</a></li>
+<li><a href="#copy-new-rpms-to-the-nim-lpp_source"><strong>Copy new rpms to the NIM lpp_source</strong></a></li>
+<li><a href="#update-the-service-node-bundles"><strong>Update the service node bundles</strong></a></li>
+<li><a href="#verify-the-osimage"><strong>Verify the osimage</strong></a></li>
+<li><a href="#shut-down-the-diskless-clients-of-the-service-nodes"><strong>Shut down the diskless clients of the service nodes</strong></a></li>
+<li><a href="#initialize-the-service-nodes"><strong>Initialize the service nodes</strong></a></li>
+<li><a href="#initiate-a-network-install"><strong>Initiate a network install</strong></a></li>
+<li><a href="#verify-the-service-node"><strong>Verify the service node</strong></a></li>
+</ul></li>
+<li><a href="#phase-two-of-xcat-upgrade">Phase two of xCAT upgrade</a></li>
+<li><a href="#upgrade-the-xcat-compute-nodes">Upgrade the xCAT compute nodes</a><ul>
+<li><a href="#installing-aix-standalone-nodes-using-nim-rte-method"><strong>Installing AIX standalone nodes (using NIM rte method)</strong></a></li>
+<li><a href="#booting-aix-diskless-nodes-using-stateless-method"><strong>Booting AIX diskless nodes (using stateless method)</strong></a></li>
+<li><a href="#cloning-aix-nodes-using-aix-mksysb-images"><strong>Cloning AIX nodes ( using AIX mksysb images</strong>)</a></li>
+<li><a href="#using-xcat-service-nodes-with-aix"><strong>Using xCAT Service Nodes with AIX</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#back-up-the-nim-and-xcat-databases">Back up the NIM and xCAT databases</a></li>
+<li><a href="#nim"><strong>NIM</strong></a></li>
+<li><a href="#xcat"><strong>XCAT</strong></a></li>
+<li><a href="#shut-down-any-diskless-nodes-that-are-being-served-by-the-management-node">Shut down any diskless nodes that are being served by the management node</a></li>
+<li><a href="#upgrade-xcat">Upgrade xCAT</a></li>
+<li><a href="#upgrade-xcat-on-the-management-node"><strong>Upgrade xCAT on the management node</strong></a>
+<ul>
+<li><a href="#shut-down-xcat"><strong>Shut down xCAT</strong></a></li>
+<li><a href="#download-and-install-the-latest-xcat-dependency-software"><strong>Download and install the latest xCAT dependency software</strong></a></li>
+<li><a href="#download-and-install-the-latest-xcat-database-software"><strong>Download and install the latest xCAT database software</strong></a></li>
+<li><a href="#install-the-latest-xcat-packages"><strong>Install the latest xCAT packages</strong></a></li>
+<li><a href="#restart-and-verify-xcat"><strong>Restart and verify xCAT</strong></a></li>
+</ul></li>
+<li><a href="#upgrade-xcat-on-service-nodes"><strong>Upgrade xCAT on service nodes</strong></a>
+<ul>
+<li><a href="#copy-the-new-rpms-to-the-nim-lpp_source-directories"><strong>Copy the new rpms to the NIM lpp_source directories</strong></a></li>
+<li><a href="#update-the-nim-installp_bundle-resources"><strong>Update the NIM installp_bundle resources</strong></a></li>
+<li><a href="#check-the-osimage-optional"><strong>Check the osimage (optional)</strong></a></li>
+<li><a href="#run-the-updatenode-command-to-install-the-software"><strong>Run the updatenode command to install the softwar</strong>e</a></li>
+<li><a href="#verify-xcat-on-the-service-nodes"><strong>Verify xCAT on the service nodes</strong></a></li>
+</ul></li>
+<li><a href="#migrate-the-management-node-to-a-new-version-of-aix">Migrate the management node to a new version of AIX</a></li>
+<li><a href="#verify-xcat-and-nim-on-the-management-node"><strong>Verify xCAT and NIM on the management node</strong></a></li>
+<li><a href="#upgrade-the-xcat-service-nodes-to-the-new-os-version">Upgrade the xCAT service nodes to the new OS version</a></li>
+<li><a href="#create-a-new-xcat-osimage-for-the-service-nodes"><strong>Create a new xCAT osimage for the service nodes</strong></a></li>
+<li><a href="#modify-the-bosinst_data-resource-to-do-a-migration-install"><strong>Modify the bosinst_data resource to do a migration instal</strong>l</a></li>
+<li><a href="#copy-new-rpms-to-the-nim-lpp_source"><strong>Copy new rpms to the NIM lpp_source</strong></a></li>
+<li><a href="#update-the-service-node-bundles"><strong>Update the service node bundles</strong></a></li>
+<li><a href="#verify-the-osimage"><strong>Verify the osimage</strong></a></li>
+<li><a href="#shut-down-the-diskless-clients-of-the-service-nodes"><strong>Shut down the diskless clients of the service nodes</strong></a></li>
+<li><a href="#initialize-the-service-nodes"><strong>Initialize the service nodes</strong></a></li>
+<li><a href="#initiate-a-network-install"><strong>Initiate a network install</strong></a></li>
+<li><a href="#verify-the-service-node"><strong>Verify the service node</strong></a></li>
+<li><a href="#phase-two-of-xcat-upgrade">Phase two of xCAT upgrade</a></li>
+<li><a href="#upgrade-the-xcat-compute-nodes">Upgrade the xCAT compute nodes</a></li>
+<li><a href="#installing-aix-standalone-nodes-using-nim-rte-method"><strong>Installing AIX standalone nodes (using NIM rte method)</strong></a></li>
+<li><a href="#booting-aix-diskless-nodes-using-stateless-method"><strong>Booting AIX diskless nodes (using stateless method)</strong></a></li>
+<li><a href="#cloning-aix-nodes--using-aix-mksysb-images"><strong>Cloning AIX nodes ( using AIX mksysb images</strong>)</a></li>
+<li><a href="#using-xcat-service-nodes-with-aix"><strong>Using xCAT Service Nodes with AIX</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This document describes a recommended process to follow when you wish to upgrade the versions of AIX and xCAT that you are using in your xCAT cluster.</p>
+<p><strong>Note:</strong> The AIX OS level is indicated by a &quot;Version.Release.Modification.Fix&quot; number. (ex. VRMF). For example, an AIX operating system version upgrade would be moving from AIX 5.3.0.0 to AIX 6.1.0.0.</p>
+<p>If you only want to update your OS release, modification, or fix level you can simple apply the software updates to the management node using the standard AIX tools. (Ex. AIX 6.1.0.0 to 6.1.5.0 etc.) A re-install or a migration install would not be needed.</p>
+<p>To upgrade the management node you have the option of doing a complete new overwrite install or doing a migration installation.</p>
+<p>The advantage of an operating system migration installation compared to a new and complete overwrite is that most filesets are preserved. This includes almost all directories, such as /home, /var, /usr, the root volume group, logical volumes, system configurations and previously installed software. The only file system that will be new after the migration is /tmp. You can easily avoid loosing information you have stored in this directory by copying the important information to another directory before the migration and move it back afterwards. Additionally, after the migration, you can import your user volume groups. It is probably the easiest way to upgrade your system while maintaining all customized information and configuration. Another advantage, especially if you need to minimize the downtime of your system, is that there are fewer reconfigurations tasks to do after the migration.</p>
+<p>During a migration, the installation process determines which optional software products are installed on the existing version of the operating system. Any software that was previously installed that has new versions available will be updated.</p>
+<p>Before you perform a migration installation, ensure you have reliable backups of your data and any customized applications or volume groups. In particular, on an xCAT management node you should back up your xCAT and NIM databases.</p>
+<p>The process described below assumes you are familiar with AIX systems administration and NIM.</p>
+<h2 id="back-up-the-nim-and-xcat-databases"><a href="#TOC">Back up the NIM and xCAT databases</a></h2>
+<p>When doing a migration of the operating system the NIM and xCAT databases would normally be preserved. HOWEVER, as a precaution it would be good to back them up and save them on some other system - just in case.</p>
+<h3 id="nim"><a href="#TOC"><strong>NIM</strong></a></h3>
+<p>Using the SMIT interface:</p>
+<pre><code>    smit nim_backup_db</code></pre>
+<p>Using the command line interface:</p>
+<p>(Assuming the data is saved in /tmp/mynim.backup.)</p>
+<pre><code>    /usr/lpp/bos.sysmgt/nim/methods/m_backup_db /tmp/mynim.backup</code></pre>
+<p>The files that are backed up include:</p>
+<pre><code>    ./etc/objrepos/nim_attr
+    ./etc/objrepos/nim_attr.vc
+    ./etc/objrepos/nim_object
+    ./etc/objrepos/nim_object.vc
+    ./etc/NIM.level
+    ./etc/niminfo</code></pre>
+<p>To restore the database you can use:</p>
+<pre><code>    smit nim_restore_db</code></pre>
+<p>or</p>
+<pre><code>    /usr/lpp/bos.sysmgt/nim/methods/m_restore_db /tmp/mynim.backup</code></pre>
+<h3 id="xcat"><a href="#TOC"><strong>XCAT</strong></a></h3>
+<p>The <strong>dumpxCATdb</strong> command creates .csv (comma separated value) files for all xCAT database tables and puts them in the directory given by the -p flag. These files can be used by the <strong>restorexCATdb</strong> command to restore the database.</p>
+<pre><code>    dumpxCATdb -p /tmp/db</code></pre>
+<h2 id="shut-down-any-diskless-nodes-that-are-being-served-by-the-management-node"><a href="#TOC">Shut down any diskless nodes that are being served by the management node</a></h2>
+<p>Any diskless nodes that are clients of the management node will not be able to continue running when the management node is not available.</p>
+<p>It is better to shut down the diskless nodes while the management node is being updated.</p>
+<p>For example, asuming all your diskless nodes are in the xCAT group called &quot;dsklsnodes&quot; then you could shut them all down by running the following command.</p>
+<pre><code>    xdsh dsklsnodes &quot;shutdown -F &amp;&quot;</code></pre>
+<p>Any standalone nodes that are clients of the management node can be left running.</p>
+<h2 id="upgrade-xcat"><a href="#TOC">Upgrade xCAT</a></h2>
+<p>You may or may not need to upgrade xCAT as part of an OS migration.</p>
+<p>The one requirement is that the version of xCAT you use must support BOTH the current OS version and the version you wish to migrate to.</p>
+<p>In some cases you may need to upgrade xCAT in two phases. The first upgrade may be needed to migrate to a newer OS version using an xCAT version that supports both. The second phase would be to upgrade xCAT to the latest version.</p>
+<p>Whether you need to upgrade xCAT or not, you must upgrade the versions of the xCAT dependency and database rpms to the versions that were built for the new AIX level.</p>
+<p>The xCAT dependency and database tarballs contain versions of the rpm packages built for the different levels of AIX. So, for example, if you migrate your OS to AIX 7.1 then you must also update your dependency rpms to the versions built for AIX 7.1. The xCAT dependency and database packages contain subdirectories corresponding to the different AIX versions.</p>
+<p>**Note: **If you upgrade the xCAT version on the xCAT management node you must also upgrade the xCAT version on any service nodes that are being used!</p>
+<h3 id="upgrade-xcat-on-the-management-node"><a href="#TOC"><strong>Upgrade xCAT on the management node</strong></a></h3>
+<h4 id="shut-down-xcat"><a href="#TOC"><strong>Shut down xCAT</strong></a></h4>
+<p>xCAT should be shut down before trying to do any upgrades.</p>
+<pre><code>     stopsrc -s xcatd</code></pre>
+<h4 id="download-and-install-the-latest-xcat-dependency-software"><a href="#TOC"><strong>Download and install the latest xCAT dependency software</strong></a></h4>
+<p>Download the latest dep-aix-*.tar.gz tar file from http://xcat.sourceforge.net/#download and copy it to a convenient location on your xCAT management node.</p>
+<p>Unwrap the tar file. For example:</p>
+<pre><code>    gunzip dep-aix-2.5.tar.gz
+    tar -xvf dep-aix-2.5.tar</code></pre>
+<p>Run the **instoss **script (contained in the tar file) to install the OSS</p>
+<p>packages. Please make sure the /opt and the other file systems have</p>
+<p>enough disk space to install these OSS packages before running the instoss script.</p>
+<h4 id="download-and-install-the-latest-xcat-database-software"><a href="#TOC"><strong>Download and install the latest xCAT database software</strong></a></h4>
+<p>Some of the optional databases that you may be using with xCAT will require upgrades to the dependency software.</p>
+<p>XCAT currently supports SQLite, MySQL, PostgreSQL, and DB2. As a convenience, the xCAT site provides downloads for MySQL and PostreSQL software.</p>
+<p>( <a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX/xcat-postgresql-snap201007150920.tar.gz/download">xcat-postgresql-snap201007150920.tar.gz</a> and <a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX/xcat-mysql-201005260807.tar.gz/download">xcat-mysql-201005260807.tar.gz</a> )</p>
+<p>See the following xCAT documents for instructions on how to upgrade these databases.</p>
+<p>[Setting_Up_MySQL_as_the_xCAT_DB]</p>
+<p>[Setting_Up_PostgreSQL_as_the_xCAT_DB]</p>
+<p>[Setting_Up_DB2_as_the_xCAT_DB]</p>
+<p>The database tar files that are available on the xCAT web site may contain multiple versions of RPMs - one for each AIX operating system level. You must install the versions of the rpms that correspond to your OS version.</p>
+<h4 id="install-the-latest-xcat-packages"><a href="#TOC"><strong>Install the latest xCAT packages</strong></a></h4>
+<p>Download the latest xCAT for AIX tar file from</p>
+<p>http://xcat.sourceforge.net/#download and copy it to a convenient location on your xCAT management node.</p>
+<p>Unwrap the xCAT tar file. For example,</p>
+<pre><code>    gunzip core-aix-2.5.tar.gz
+    tar -xvf core-aix-2.5.tar</code></pre>
+<p>Run the **instxcat **script (contained in the tar file) to install the xCAT</p>
+<p>software. (The **instxcat **script and all the RPMs are located in the xcatcore</p>
+<p>subdirectory.) The instxcat script should only be used on the Management Server, not on Service Nodes.</p>
+<h4 id="restart-and-verify-xcat"><a href="#TOC"><strong>Restart and verify xCAT</strong></a></h4>
+<p>To restart xCAT run the following command.</p>
+<pre><code>    restartxcatd</code></pre>
+<p>To verify xCAT function try running some basic xCAT commands.</p>
+<ul>
+<li>Run &quot;rpm -qa&quot; to see if the latest xCAT and dependency software is upgraded.</li>
+<li>Run the &quot;lsdef -h&quot; to check if the xCAT daemon is working. (If you get a correct response then you should be Ok. )</li>
+<li>Check the xCAT database.</li>
+<li>Try running some commands such as: &quot;<strong>lsdef -t site -l</strong>&quot;</li>
+<li>If necessary you can restore the database you saved earlier by running the <strong>restorexCATdb</strong> command.</li>
+</ul>
+<h3 id="upgrade-xcat-on-service-nodes"><a href="#TOC"><strong>Upgrade xCAT on service nodes</strong></a></h3>
+<h4 id="copy-the-new-rpms-to-the-nim-lpp_source-directories"><a href="#TOC"><strong>Copy the new rpms to the NIM lpp_source directories</strong></a></h4>
+<p>To update the versions of xCAT and the dependency packages on the service nodes you must first copy all the new rpms to the lpp__source resource that is being used for the service nodes. This includes the new xCAT, dependency, and database rpms. These are all available in the xCAT tarballs that you download from the xCAT web site.</p>
+<p>A simple way to copy software to the lpp_source locations is to use the &quot;nim -o update&quot; command. With this NIM command you simply need to provide the name of the NIM lpp_source resource and it will automatically copy your files to the correct locations.</p>
+<p>For example, assume all your dependency software has been downloaded and unwrapped in the temporary location /tmp/images. (The rpms you need are in subdirectories corresponding to the OS version you are running.)</p>
+<p>To add all the deps packages to the lpp_source resource named &quot;61image_lpp_source&quot; you could run the following command:</p>
+<pre><code>     nim -o update -a packages=all -a source=/tmp/images/xcat-dep/6.1
+     610imagelpp_source_**</code></pre>
+<p>The NIM command will find the correct directories and update the lpp_source resource.</p>
+<h4 id="update-the-nim-installp_bundle-resources"><a href="#TOC"><strong>Update the NIM installp_bundle resources</strong></a></h4>
+<p>Make sure that any NIM _installp_bundle resources you are using are updated to contain the new xCAT, dependency and database packages.</p>
+<p>If you have an xCAT osimage defined for the service nodes it will include an installp_bundle file that contains a list of all the additional software that is needed on the service nodes. You must check this file to make sure it includes the new rpms that you just copied to your lpp_source.</p>
+<p>The new sample xCAT bundle files are located either in the new tarball or installed in /opt/xcat/share/xcat/installp_bundles.</p>
+<h4 id="check-the-osimage-optional"><a href="#TOC"><strong>Check the osimage (optional)</strong></a></h4>
+<p>To avoid potential problems when installing additional software it is adviseable to verify that all the software that you wish to install has been copied to the appropriate NIM lpp_source directory and that there are no duplicate packages.</p>
+<p>Any software that is specified in the &quot;otherpkgs&quot; or the &quot;installp_bundle&quot; attributes of the osimage definition must be available in the corresponding lpp_source directories.</p>
+<p>Also, since the sample bundle files now include wildcards (*) instead of specific versions you must make sure there are not multiple version of the same rpm in the lpp_source directories. If there are mutliple version of the same rpm in the lpp_source directory then NIM will produce an error when trying to install them.</p>
+<p>The older versions of the rpms must be removed from the lpp_source directory.</p>
+<p>This can be done manually by going to the lpp_source location and then to the &quot;RPMS/ppc&quot; subdirectory and then removing the rpms.</p>
+<p>However, starting in xCAT 2.4.3 you can use the <strong>chkosimage</strong> command to check the lpp_source directories and remove the older versions.</p>
+<p>To check an osimage called 610image:</p>
+<pre><code>    chkosimage -V 610image</code></pre>
+<p>To check an osimage and remove duplicate rpms:</p>
+<pre><code>    chkosimage -V -c 610image</code></pre>
+<p>See the <strong>chkosimage</strong> man page for details.</p>
+<h4 id="run-the-updatenode-command-to-install-the-software"><a href="#TOC"><strong>Run the updatenode command to install the softwar</strong>e</a></h4>
+<p>You can update the versions of the xCAT, dependency, and database software on the service nodes by using the <strong>updatenode</strong> command.</p>
+<p>By default the command will use the &quot;installp_bundle&quot; and &quot;otherpkgs&quot; attributes of the osimage definition for the node.</p>
+<p>In the following example assume that all the service nodes have been added to the xCAT group called &quot;service&quot; and that the specified flags should be used when installing the packages.</p>
+<pre><code>    updatenode service -V -S rpm_flags=&quot;-Uvh --replacepkgs -nodeps&quot; installp_flags=&quot;-agQXY&quot;</code></pre>
+<h4 id="verify-xcat-on-the-service-nodes"><a href="#TOC"><strong>Verify xCAT on the service nodes</strong></a></h4>
+<ol style="list-style-type: decimal">
+<li>Run &quot;rpm -qa&quot; on service node to see if the xCAT and dependency software is upgraded.</li>
+<li>Try running some xCAT commands such as &quot;lsdef -a&quot; to see if the xcatd daemon is running and if data from xCAT database is set properly.</li>
+<li>Check the NIM configuration on the service nodes</li>
+<li>Run xdsh to the service nodes (ex. &quot;xdsh service date&quot;)</li>
+</ol>
+<h2 id="migrate-the-management-node-to-a-new-version-of-aix"><a href="#TOC">Migrate the management node to a new version of AIX</a></h2>
+<p>There are several techniques provided by AIX that can be used to migrate a standalone system. They are described in the AIX documentation listsed below and will not be repeated here.</p>
+<p>Listing of AIX documents.</p>
+<pre><code> http://publib.boulder.ibm.com/infocenter/aix/v7r1/index.jsp</code></pre>
+<p>AIX &quot;Installation and Migration Guide&quot;:</p>
+<pre><code> http://publib.boulder.ibm.com/infocenter/aix/v7r1/topic/com.ibm.aix.install/doc/insgdrf/insgdrf_pdf.pdf</code></pre>
+<h3 id="verify-xcat-and-nim-on-the-management-node"><a href="#TOC"><strong>Verify xCAT and NIM on the management node</strong></a></h3>
+<p>Check that xCAT is still functioning properly on the management node. (ex. run some xCAT commands, check the database etc.)</p>
+<p>If xCAT isn't running or some dependency packages may not be functioning.</p>
+<p>Run the **instoss **script (contained in the tar file) to re-install the OSS</p>
+<p>packages corresponding to the OS version you are running, or run &quot;rpm -Uvh&quot; or &quot;rpm -Uvh --force&quot; to upgrade the single package.</p>
+<p>Run 'restartxcatd' to restart xCAT</p>
+<p>Depending on the method you used to do the AIX migration, the NIM master on the xCAT management node may or may not be functioning.</p>
+<p>If it is not:</p>
+<ul>
+<li><p>Check that the master fileset is installed and that it has been updated to the latest level. ( bos.sysmgt.nim.master ). This should have been in your lpp_source directory and also in the service node bundle file.</p></li>
+<li><p>Save the current /etc/niminfo file</p></li>
+</ul>
+<pre><code>    mv /etc/niminfo /etc/niminfo.orig</code></pre>
+<ul>
+<li>Reconfigure NIM.You could use the SMIT interface or the <strong>nimconfig</strong> command to re-configure NIM. (Note: Make sure you specify the appropriate interface to use as the NIM primary interface. Typically the interface that will be used to install the nodes is used as the primary interface.) The <strong>nimconfig</strong> command would be similar to the following:</li>
+</ul>
+<pre><code>    nimconfig -a pif_name=en1 -a netname=clstr_net -r</code></pre>
+<ul>
+<li>It should not be required, but you can restore the previously saved NIM database backup by using SMIT:</li>
+</ul>
+<pre><code>    smit nim_restore_db</code></pre>
+<p>or by using the following NIM method.</p>
+<pre><code>    /usr/lpp/bos.sysmgt/nim/methods/m_restore_db /tmp/mynim.backup</code></pre>
+<ul>
+<li>Validate existing NIM resources.</li>
+<li>Make sure the NIM definitions are correct, that the files and directories all exist etc.</li>
+<li>Run the &quot;nim -o check ...&quot; operation on NIM SPOT and lpp_source resources.</li>
+</ul>
+<h2 id="upgrade-the-xcat-service-nodes-to-the-new-os-version"><a href="#TOC">Upgrade the xCAT service nodes to the new OS version</a></h2>
+<p>If you migrate your xCAT management node to a new OS version then any service nodes you are using should also be upgraded.</p>
+<p>Since the AIX service nodes are standalone systems they can remain running while you update the management node. However if you leave the service nodes at back levels it could cause problems with the xCAT support.</p>
+<p>For more details on installing a service node refer to the following xCAT document.</p>
+<p>[Setting_Up_an_AIX_Hierarchical_Cluster]</p>
+<h3 id="create-a-new-xcat-osimage-for-the-service-nodes"><a href="#TOC"><strong>Create a new xCAT osimage for the service nodes</strong></a></h3>
+<p>Use the xCAT <strong>mknimimage</strong> command to create a new osimage definition using the new AIX OS version.</p>
+<p>For example, assuming all the AIX software has been copied to <strong>/</strong>aix61source you could run:</p>
+<pre><code>    mknimimage -s /aix61source AIX61image</code></pre>
+<p>This will create the required NIM resources as well as the new xCAT osimage definition.</p>
+<p>Make sure you update your osimage definition with any other resources or attributes you wish to include. (Such as the service node installp_bundle resource etc.) Refer to the &quot;xCAT2onAIXServiceNodes&quot; document mentioned above for further details.</p>
+<h3 id="modify-the-bosinst_data-resource-to-do-a-migration-install"><a href="#TOC"><strong>Modify the bosinst_data resource to do a migration instal</strong>l</a></h3>
+<p>By doing a migration install, among other things, you will preserve the NIM database and NIM resources that were created on the service nodes.</p>
+<p>A default NIM bosinst_data resource was created automatically when you created the new osimage.</p>
+<p>A <strong>bosinst_data</strong> resource represents a file that contains information for the BOS installation program. The resource is typically created by starting with the template that is shipped with AIX. See the /usr/lpp/bosinst/bosinst.template.README file for more information on bosinst_data file contents.</p>
+<p>To perform a migration install you must make one change to the file.</p>
+<p>You must change the &quot;INSTALL_METHOD&quot; value to &quot;migrate&quot;.</p>
+<p>This can be changed in the file either before or after you define the resource but it must be done before initiating a network boot of the system.</p>
+<h3 id="copy-new-rpms-to-the-nim-lpp_source"><a href="#TOC"><strong>Copy new rpms to the NIM lpp_source</strong></a></h3>
+<p>There are new versions of the xCAT, dependency , and database rpms that must be copied to the new lpp_source resource created in the previous step.</p>
+<p>These rpms were all contained in the xCAT tarballs you downloaded when you upgraded the management node.</p>
+<p>A simple way to copy software to the lpp_source locations is to use the &quot;nim -o update&quot; command. With this NIM command you simply need to provide the name of the NIM lpp_source resource and it will automatically copy your files to the correct locations.</p>
+<p>For example, assume all your dependency software has been downloaded and unwrapped in the temporary location /tmp/images. (The rpms you need are in subdirectories corresponding to the OS version you are running.)</p>
+<p>To add all the deps packages to the lpp_source resource named &quot;610new_lpp_source&quot; you could run the following command:</p>
+<p>To copy the rpms to the correct location in the lpp_source you can use the &quot; **nim -o update ..&quot; **command.</p>
+<p>For example:</p>
+<pre><code>    nim -o update -a packages=all -a source=/tmp/images/xcat-dep/6.1 610new_lpp_source</code></pre>
+<p>The NIM command will find the correct directories and update the lpp_source resource.</p>
+<h3 id="update-the-service-node-bundles"><a href="#TOC"><strong>Update the service node bundles</strong></a></h3>
+<p>XCAT ships sample NIM installp_bundle files. (See /opt/xcat/share/xcat/installp_bundles) There are bundle files to use for the service nodes and bundle files to use for the compute nodes. When you switch to a new OS version you must use the corresponding version of the bundle files.</p>
+<p>For example, if you are now using AIX 6.1 then you need to use the xCATaixSN61.bnd file when installing the service node.</p>
+<p>Copy the bundle file to an exportable location (ex. /install/nim/installp_bundle) and define the NIM installp_bundle resource using SMIT or the &quot;nim -o define ...&quot; command.</p>
+<p>Once the resource is defined you must add it to the osimage definition.</p>
+<pre><code>    chdef -t osimage -o AIX61image installp_bundle=xCATaixSN61</code></pre>
+<p>Check the contents of the bundle file to make sure it includes all the software you will need. There are some commented-out entries that are optional that you may need. For example, the additional rpms needed for the different databases that you may be using.</p>
+<h3 id="verify-the-osimage"><a href="#TOC"><strong>Verify the osimage</strong></a></h3>
+<p>You can use the xCAT <strong>chkosimage</strong> command to check that all the software called out in the bundles files are included in the lpp_source resource.</p>
+<pre><code>    chkosimage AIX61image</code></pre>
+<h3 id="shut-down-the-diskless-clients-of-the-service-nodes"><a href="#TOC"><strong>Shut down the diskless clients of the service nodes</strong></a></h3>
+<p>It is recommended that you shut down all diskless clients of the service nodes before upgrading them. Any standalone clients may be left running.</p>
+<p>For example, to shut down the diskless compute node named &quot;compute02&quot; you could run the following command.</p>
+<pre><code>    xdsh compute02 &quot;shutdown -F &amp;&quot;</code></pre>
+<h3 id="initialize-the-service-nodes"><a href="#TOC"><strong>Initialize the service nodes</strong></a></h3>
+<p>You can use the xCAT <strong>nimnodeset</strong> command to initialize the AIX standalone service nodes. This command uses information from the xCAT osimage definition and default values to run the appropriate NIM commands.</p>
+<p>For example, to set up all the nodes in the group &quot;service&quot; to install using the osimage named &quot;610SNimage&quot; you could issue the following command.</p>
+<pre><code>    nimnodeset -i 610SNimage service</code></pre>
+<h3 id="initiate-a-network-install"><a href="#TOC"><strong>Initiate a network install</strong></a></h3>
+<p>Initiate a remote network boot request using the xCAT <strong>rnetboot</strong> command. For example, to initiate a network boot of all nodes in the group &quot;service&quot; you could issue the following command.</p>
+<pre><code>rnetboot service</code></pre>
+<p><strong>Result:</strong></p>
+<p>The service node will be installed with the new OS and new rpms specified in the bundle files. The xCAT posts scripts will do the xCAT setup and configure the system as a service node.</p>
+<h3 id="verify-the-service-node"><a href="#TOC"><strong>Verify the service node</strong></a></h3>
+<ol style="list-style-type: decimal">
+<li>Run &quot;rpm -qa&quot; on service node to see if the dependency software is upgraded.</li>
+<li>Try running some xCAT commands to see if xcatd daemon is running.</li>
+<li>Run xdsh to the service nodes (ex. &quot;xdsh service date&quot;)</li>
+<li>Check the NIM configuration on the service nodes</li>
+</ol>
+<h2 id="phase-two-of-xcat-upgrade"><a href="#TOC">Phase two of xCAT upgrade</a></h2>
+<p>If you had to use a back-level version of xCAT to do your OS migration you can now upgrade xCAT to the most recent level. (For example, if you had to use xCAT 2.4 to handle the OS migration but now you wish to upgrade to xCAT 2.5.)</p>
+<p>Use the same proceedure mentioned in the &quot;Update xCAT&quot; section above.</p>
+<h2 id="upgrade-the-xcat-compute-nodes"><a href="#TOC">Upgrade the xCAT compute nodes</a></h2>
+<p>The details for upgrading compute nodes is covered in several other xCAT documents.</p>
+<p>If you have a large number of compute node to upgrade you may wish to use the xCAT rolling update support. See the <strong>rollupdate</strong> man page for usage details. Also available is the rollupdate doc: [Rolling_Update_Support].</p>
+<h3 id="installing-aix-standalone-nodes-using-nim-rte-method"><a href="#TOC"><strong>Installing AIX standalone nodes (using NIM rte method)</strong></a></h3>
+<p>[XCAT_AIX_RTE_Diskfull_Nodes]</p>
+<h3 id="booting-aix-diskless-nodes-using-stateless-method"><a href="#TOC"><strong>Booting AIX diskless nodes (using stateless method)</strong></a></h3>
+<p>[XCAT_AIX_Diskless_Nodes]</p>
+<h3 id="cloning-aix-nodes-using-aix-mksysb-images"><a href="#TOC"><strong>Cloning AIX nodes ( using AIX mksysb images</strong>)</a></h3>
+<p>[XCAT_AIX_mksysb_Diskfull_Nodes]</p>
+<h3 id="using-xcat-service-nodes-with-aix"><a href="#TOC"><strong>Using xCAT Service Nodes with AIX</strong></a></h3>
+<p>[Setting_Up_an_AIX_Hierarchical_Cluster]</p>
+</body>
+</html>

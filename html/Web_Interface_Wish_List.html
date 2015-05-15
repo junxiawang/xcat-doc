@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#near-term-work-items">Near Term Work Items</a></li>
+<li><a href="#longer-termsomeday...">Longer Term/Someday...</a></li>
+<li><a href="#completed-just-here-for-reference">Completed (Just Here for Reference)</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#near-term-work-items">Near Term Work Items</a></li>
+<li><a href="#longer-termsomeday">Longer Term/Someday...</a></li>
+<li><a href="#completed-just-here-for-reference">Completed (Just Here for Reference)</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>Add information here about enhancements to the web interface you are planning on adding, or would like someone else to add.</p>
+<h2 id="near-term-work-items"><a href="#TOC">Near Term Work Items</a></h2>
+<ul>
+<li><strong>Monitor page</strong>
+<ul>
+<li>Add Ganglia RPMs into otherpkg list to be installed on the node during provisioning(install method done)</li>
+</ul></li>
+<li><strong>Nodes page</strong>
+<ul>
+<li>Node tab with 100's/1000's of nodes: further performance analysis and tuning(Working on this)</li>
+<li>Graphical layout for system X(includes the mixed cluster).</li>
+<li>support rscan to add new blade node.</li>
+</ul></li>
+<li><strong>Provision page</strong>
+<ul>
+<li>On provision page, provide way to view/manage pkglists, view nodes' boot progress, show MN's log message, show nodes' status in the node list area and refreshing nodes' status, etc.</li>
+<li>Image mgmt tab under the Provision page: provide a way to associate images with nodes</li>
+</ul></li>
+<li><strong>Configure page</strong>
+<ul>
+<li>Preferences - settings for this web interface itself - is this done?</li>
+<li>Mgmt Node - help in configuring the xCAT management node (e.g. when the xCAT install on the MN, and log on xCAT GUI first time. run all the mk* or make* commands, start/check necessary daemons, etc.)</li>
+<li>Sync Files - set things up on the MN for CFM-like capability.</li>
+<li>Cluster initialization &amp; xcatsetup command support for system X(need a mini design)</li>
+</ul></li>
+<li>Improve color scheme(the color scheme as a user preference)</li>
+<li>Web services REST API</li>
+<li>Web interface requirement from LRZ bid (4Q2011): Graphical high level system overwiew with the ability to zoom into a detailed display of interesting componets (I/O behavior, disk access behavior, CPU load, memory load, paging rate, etc.) are desired.</li>
+</ul>
+<h2 id="longer-termsomeday..."><a href="#TOC">Longer Term/Someday...</a></h2>
+<ul>
+<li>Restructure the presentation portion of the code to handle different devices so that we can support the web interface on iphone and android.</li>
+<li><strong>Add cluster summary to main page (done)</strong>
+<ul>
+<li>which needs one wonderful UI design</li>
+<li>I have completed the summary page, which looks simple...</li>
+</ul></li>
+<li>Support dynamic node groups so cluster summaries are available, like # of nodes down, etc.</li>
+<li>From Jarrod: in the rvitals tab, xcoll-type formatting (and collation) would be good, with gui header elements with collapse capability (i.e. the header has a twisty next to it to toggle the view underneath). This might be a generic widget someone might want to do.</li>
+<li>Make the browser back button work</li>
+<li>Lab Floor/Racks - show the nodes in 1 of 2 views (these is some code in xCAT-web for this):
+<ul>
+<li>Lab Floor – will show the racks as they are arranged on the lab floor. Each frame will be a single icon that shows some aggregate info: frame #, overall status of nodes in that frame, maybe some aggregated performance data. One or more frames can be selected and operations run against the nodes in those frames (using groups that are set up for each frame).</li>
+<li>Frames – show an icon for each node arranged in frames like they are in real life. Each node can show status, and when you hover over it, it will show hostname and possibly more attributes/info. You can also select nodes and run operations against them.</li>
+</ul></li>
+<li>Jobs - show jobs currently running on nodes, etc. Vallard has some ideas here.</li>
+<li>Diagnose - help the admin check/verify the MN or nodes to assist in finding problems.</li>
+<li>Global - Show the Chinese label on the web page.</li>
+</ul>
+<h2 id="completed-just-here-for-reference"><a href="#TOC">Completed (Just Here for Reference)</a></h2>
+<ul>
+<li>Packaging changes:
+<ul>
+<li>Add Javascript minify to build (Done)</li>
+<li>Package open src prereq's (e.g. jquery) in a separate rpm and put in xcat-dep (Done)</li>
+</ul></li>
+<li><strong>Node table</strong>
+<ul>
+<li>first list nodes using nodels and show 1st 50 nodes (w/o attrs) as the node names they come back from xcatd (Done)</li>
+<li>then get the attributes via lsdef for just the 50 nodes, and show that output as it comes back from xcatd (Done)</li>
+<li>Support clicking in cell to modify value</li>
+</ul></li>
+<li>Change submit_request() in functions.php to replace new lines &quot;&quot; with &quot;:|:&quot; (Done)</li>
+<li>Get rid of close button on tabs that are there permanently (Done)</li>
+<li><strong>Add support for xcat rpms update (could be one button)</strong> (Done)
+<ul>
+<li>some code already in support/updateui.php, needed to change</li>
+<li>completed on Linux</li>
+<li>Working on Redhat</li>
+<li>support the choice of both devel and stable branch (radio button and input)</li>
+<li>the &quot;webrun&quot; command can be used</li>
+<li>remember the user's last choice</li>
+</ul></li>
+<li><strong>Add a page to show lsdef attributes</strong> (Done)
+<ul>
+<li>Make the table in the Attributes tab editable</li>
+<li>Provide a button to add new attributes</li>
+</ul></li>
+<li>**Get https work ** (Done)</li>
+<li><strong>Code Structure</strong> (Done)
+<ul>
+<li>modify the code to formal code structure</li>
+</ul></li>
+<li><strong>Fix the menu at top of page so navigation is easier (done)</strong></li>
+<li><strong>Rcons page</strong>(Done)
+<ul>
+<li>add one page that users can connect one node's console and show the output</li>
+</ul></li>
+<li><strong>Graphical display</strong>
+<ul>
+<li>show CECs on top of frame images (Done)</li>
+<li>new way to show that lpars are selected when looking at the CEC image (Done)</li>
+<li>Try running xcatsetup and display results in the graphical tab (Done)</li>
+</ul></li>
+<li><strong>Discover wizard</strong>
+<ul>
+<li>move to Configure page as a Discover tab (Done)</li>
+<li>Cluster Setup Wizard for System P (Done)</li>
+</ul></li>
+<li><strong>Nodes tab</strong>
+<ul>
+<li>remove Power column for non-Z (Done)</li>
+<li>change pping to nodestat (Done)</li>
+<li>add easy way to set up xcatmon and then use nodelist.status attribute instead of running nodestat/pping (Done)</li>
+<li>Add a summary by pie chat on the nodes page. Users can click the pie chat to view nodes details(like click the group node on the left side).(Done)</li>
+<li>add support for x &amp; p provisioning（Done）</li>
+<li>Add new system x node(Done).</li>
+<li>Add new system p node by rscan(Done).</li>
+</ul></li>
+<li><strong>Image mgmt tab under the Provision page</strong>
+<ul>
+<li>implement server-side file chooser (Done)</li>
+<li>give assistance on how to set attributes (Done)</li>
+<li>use file browser for path-related attributes (Done)</li>
+</ul></li>
+<li><strong>Modify monitor page</strong>
+<ul>
+<li>change the monitor page to show all nodes' status (Done)</li>
+<li>Change condition/response association dialog to be columns side by side and start/stop in one dialogure (Done)</li>
+<li>Monitor config page: complete the description tab (Done)</li>
+<li>Show/modify the monsettings for xcatmon (Done)</li>
+<li>Increasing RMC Monitor result showing speed.(Done)</li>
+<li>Choose 1 monitoring plugin to set up by default and show results--ganglia (Done)</li>
+<li>Allow user to turn on/off monitoring plugin (Done)</li>
+<li>On monitor page only RMC plugin finished, Ganglia plugin should be completed (Done)</li>
+</ul></li>
+<li>Add a summary about each page's function into xCAT web gui install document.（Done）
+<ul>
+<li>redesign the login dialogue, it should be simple and professional.(Done)</li>
+</ul></li>
+</ul>
+</body>
+</html>

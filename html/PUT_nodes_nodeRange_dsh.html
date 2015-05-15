@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Runs commands in parallel on nodes</p>
+<p>Parameters:</p>
+<ul>
+<li>devicetype = device type value : Specify a user-defined device type that references the location of relevant device configuration file.</li>
+<li>execute = filename : Indicates that command_list specifies a local script filename and arguments to be executed on the remote targets.</li>
+<li>environment = filename : Specifies that the environment file contains environment variable definitions to export to the target before executing the command list.</li>
+<li>fanout = value : Specifies a fanout value for the maximum number of concurrently executing remote shell processes.</li>
+<li>userid = id value : Specifies a remote user name to use for remote command execution.</li>
+<li>options = node options : Specifies options to pass to the remote shell command for node targets.</li>
+<li>remoteshell = node remote shell path : Specifies the path of the remote shell command used for remote command execution on node targets.</li>
+<li>syntax = csh|ksh : Specifies the shell syntax to be used on the remote target.</li>
+<li>timeout = timeout value : Specifies the time, in seconds, to wait for output from any currently executing remote targets.</li>
+<li>envlist = env list :Ignore xdsh environment variables. This option can take an argument which is a comma separated list of environment variable names that should NOT be ignored.</li>
+<li>sshsetup : Set up the SSH keys for the user running the command to the specified node list.</li>
+<li>rootimg = install img : For Linux, Specifies the path to the install image on the local node. For AIX, specifies the name of the osimage on the local node.</li>
+<li>command = cmd_list : command[; command]... where command is the command to run on the remote target. Quotation marks are required to ensure that all commands in the list are executed remotely, and that any special characters are interpreted correctly on the remote target.</li>
+</ul>
+<p>Flags:</p>
+<ul>
+<li>nolocale : Specifies to not export the locale definitions of the local host to the remote targets.</li>
+<li>monitor : Monitors remote shell execution by displaying status messages during execution on each target.</li>
+<li>showconfig : Displays the current environment settings for all DSH Utilities commands.</li>
+<li>silent : Specifies silent mode.</li>
+</ul>
+<p>For more parameter and flag introduction, refer <a href="http://xcat.sourceforge.net/man1/xdsh.1.html">the man page of xdsh</a>.</p>
+<p>Example:</p>
+<pre><code>PUT https://127.0.0.1/xcatws/nodes/b1-b3/dsh?userName=root&amp;password=cluster</code></pre>
+<p>with data:</p>
+<pre><code>[&quot;command=date&quot;]</code></pre>
+<p>run command &quot;date&quot; on nodes b1-b4.</p>
+</body>
+</html>

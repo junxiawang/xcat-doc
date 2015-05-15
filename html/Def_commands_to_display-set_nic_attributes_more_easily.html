@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#current-nics-attribute-syntax">Current nics attribute syntax</a></li>
+</ul></li>
+<li><a href="#external-interface">External Interface</a><ul>
+<li><a href="#new-support-overview">New support Overview</a></li>
+<li><a href="#new-extended-format-for-the-nics-attributes">New extended format for the nics attributes</a></li>
+<li><a href="#new-xcat-stanza-file-format">New xCAT stanza file format</a></li>
+<li><a href="#add-new---nics-flag-to-the-lsdef-command">Add new &quot;--nics&quot; flag to the lsdef command</a></li>
+</ul></li>
+<li><a href="#implementation-details">Implementation Details</a><ul>
+<li><a href="#lsdef">lsdef</a></li>
+<li><a href="#mkdef">mkdef</a></li>
+<li><a href="#chdef">chdef</a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#current-nics-attribute-syntax">Current nics attribute syntax</a></li>
+<li><a href="#external-interface">External Interface</a></li>
+<li><a href="#new-support-overview">New support Overview</a></li>
+<li><a href="#new-extended-format-for-the-nics-attributes">New extended format for the nics attributes</a></li>
+<li><a href="#new-xcat-stanza-file-format">New xCAT stanza file format</a></li>
+<li><a href="#add-new---nics-flag-to-the-lsdef-command">Add new &quot;--nics&quot; flag to the lsdef command</a></li>
+<li><a href="#implementation-details">Implementation Details</a></li>
+<li><a href="#lsdef">lsdef</a></li>
+<li><a href="#mkdef">mkdef</a></li>
+<li><a href="#chdef">chdef</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>The &quot;nics&quot; table was recently added to satisfy a requirement from PCM development. The nics attributes are included as part of the xCAT &quot;node&quot; object definition, the nic attributes store the nics configuration information for the nodes.</p>
+<p>This support was primarily intended to be used with the PCM product which has tools to automatically fill in these values.</p>
+<p>For non-PCM customers entering these values can be tedious and error prone.</p>
+<h3 id="current-nics-attribute-syntax"><a href="#TOC">Current nics attribute syntax</a></h3>
+<p><strong>nics node attribute descriptions:</strong></p>
+<p>nicips - Comma-separated list of IP addresses per additional interface (NIC).</p>
+<p>nichostnamesuffixes - Comma-separated list of hostname suffixes per NIC.</p>
+<p>nictypes - Comma-separated list of NIC types per NIC.</p>
+<p>niccustomscripts - Comma-separated list of custom configuration scripts per NIC.</p>
+<p>nicnetworks - Comma-separated list of xCAT network definition names corresponding to each NIC.</p>
+<p>nicaliases - Additional aliases to set for each additional NIC.</p>
+<p><strong>Attribute syntax:</strong></p>
+<p>nicips='eth0!11.10.1.2,eth2!80.0.0.2|fd55::214:5eff:fe15:849b'</p>
+<p>nichostnamesuffixes='eth0!-eth0,eth2!-eth2|-eth2-ipv6'</p>
+<p>nictypes='eth0!ethernet,eth2!ethernet|ethernet'</p>
+<p>niccustomscripts='eth0!cfgeth,eth2!cfgeth|cfgeth'</p>
+<p>nicnetworks='eth0!clstrnet11,eth2!clstrnet80|clstrnet-ipv6'</p>
+<p>nicaliases='eth0!alias1 alias2 alias3,eth2!alias3 alias4|alias5 alias6'</p>
+<p><strong>Sample table contents:</strong></p>
+<pre><code> [root@ls21n01 ~]# tabdump nics
+ #node,nicips,nichostnamesuffixes,nictypes,niccustomscripts,nicnetworks,nicaliases,comments,disable
+ &quot;cn1&quot;,&quot;eth0!10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b,eth1!11.1.89.7|fd57::214:5eff:fe15:849b
+ |2001::214:5eff:fe15:849b,eth2!12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b&quot;,&quot;eth0!|-eth0-ipv6-1
+ |-eth0-ipv6-2,eth1!-eth1|-eth1-ipv6-1|-eth1-ipv6-2,eth2!-eth2|-eth2-ipv6-1|-eth2-ipv6-2&quot;,
+ &quot;eth0!Ethernet,eth1!Ethernet,eth2!Ethernet&quot;,,&quot;eth0!10_1_0_0-255_255_0_0|fd56::/64|2000::/64,
+ eth1!11_1_0_0-255_255_0_0|fd57::/64|2001::/64,eth2!12_1_0_0-255_255_0_0|fd58::/64|2002::/64&quot;,,,
+ [root@ls21n01 ~]#</code></pre>
+<p>The requirement covered by this design is to povide a more user-friendly way to manage the node attributes stored in the nics table. Enhancements will be made to def commands and some other commands to make it easy to display/set nic attributes.</p>
+<h2 id="external-interface"><a href="#TOC">External Interface</a></h2>
+<h3 id="new-support-overview"><a href="#TOC">New support Overview</a></h3>
+<ul>
+<li>Do not expose the nics table syntax when customers use the *def commands. (The user may still modify the nics table directly if so desired.)</li>
+<li>Use a new extended format for setting and displaying the nics attributes. ( &lt;nic attr name&gt;.&lt;nic name&gt; )</li>
+<li>When using the lsdef command always display the nics attributes in expanded format.</li>
+<li>Enhance the xCAT stanza file support to include managing the new extended nics format. (Write the expanded format to the stanza file and read the expanded format from the stanza file.)</li>
+<li>Enhance chdef/mkdef to handle nics attributes in the extended format.</li>
+</ul>
+<h3 id="new-extended-format-for-the-nics-attributes"><a href="#TOC">New extended format for the nics attributes</a></h3>
+<p>When using the lsdef, chdef, and mkdef commands the expanded nics format will always be used.</p>
+<p>The expanded format will be the nics attribute name and the nic name, separated by a &quot;.&quot; (dot). (ie. &lt;nic attr name&gt;.&lt;nic name&gt; )</p>
+<p>For example, the expanded format for the &quot;nicips&quot; attribute might be:</p>
+<pre><code> nicips.eth0=10.1.1.6</code></pre>
+<h3 id="new-xcat-stanza-file-format"><a href="#TOC">New xCAT stanza file format</a></h3>
+<pre><code> compute01:
+       objtype=node
+       arch=x86_64
+       mgt=ipmi
+       cons=ipmi
+       bmc=10.1.0.12
+       nictypes.etn0=ethernet
+       nicips.eth0=11.10.1.3
+       nichostnamesuffixe.eth0=-eth0
+       nicnetworks.eth0=clstrnet1
+       nictypes.eth1=ethernet
+       nicips.eth1=60.0.0.7|70.0.0.7
+       nichostnamesuffixe.eth1=-eth1|-eth1-lab
+       nicnetworks.eth1=clstrnet2|clstrnet3
+       nicaliases.eth0=&quot;alias1 alias2&quot;
+       nicaliases.eth1=&quot;alias3|alias4&quot;</code></pre>
+<h3 id="add-new---nics-flag-to-the-lsdef-command"><a href="#TOC">Add new &quot;--nics&quot; flag to the lsdef command</a></h3>
+<p>When the --nics command is specified with lsdef command, it will only show the nic related attributes</p>
+<h2 id="implementation-details"><a href="#TOC">Implementation Details</a></h2>
+<h3 id="lsdef"><a href="#TOC">lsdef</a></h3>
+<p>1. lsdef will list the nic attributes in expanded format.</p>
+<pre><code> [root@ls21n01 ~]# lsdef cn1
+ Object name: cn1
+   arch=x86_64
+   ...
+   netboot=xnba
+   nichostnamesuffixes.eth0=|-eth0-ipv6-1|-eth0-ipv6-2
+   nichostnamesuffixes.eth1=-eth1|-eth1-ipv6-1|-eth1-ipv6-2
+   nichostnamesuffixes.eth2=-eth2|-eth2-ipv6-1|-eth2-ipv6-2
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+   nictypes.eth0=Ethernet
+   nictypes.eth1=Ethernet
+   nictypes.eth2=Ethernet
+   os=rhels6.3
+   ...
+  [root@ls21n01 ~]# </code></pre>
+<p>2. A new flag --nics will be added to lsdef command to only show the nics attributes</p>
+<pre><code> [root@ls21n01 ~]# lsdef cn1 --nics
+ Object name: cn1
+   nichostnamesuffixes.eth0=|-eth0-ipv6-1|-eth0-ipv6-2
+   nichostnamesuffixes.eth1=-eth1|-eth1-ipv6-1|-eth1-ipv6-2
+   nichostnamesuffixes.eth2=-eth2|-eth2-ipv6-1|-eth2-ipv6-2
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+   nictypes.eth0=Ethernet
+   nictypes.eth1=Ethernet
+   nictypes.eth2=Ethernet
+ [root@ls21n01 ~]# </code></pre>
+<p>3. The lsdef -i flag can specify nics attribute like nicips or the sub attributes like nicips.&lt;nicname&gt;</p>
+<pre><code> [root@ls21n01 ~]# lsdef cn1 -i nicips,nicnetworks
+ Object name: cn1
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+ [root@ls21n01 ~]# 
+
+
+ [root@ls21n01 ~]# lsdef cn1 -i nicips.eth0,nicnetworks.eth1
+ Object name: cn1
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+ [root@ls21n01 ~]# </code></pre>
+<p>4. The lsdef -t node -h -i can specify nic attribute like nicips or the sub attributes like nicips.&lt;nicname&gt;.</p>
+<pre><code> [root@ls21n01 ~]# lsdef -t node -h -i nicips,nicnetworks
+
+ Attribute          Description
+
+ nicips:         Comma-separated list of IP addresses per NIC. To specify one ip address per NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;ip1&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;ip2&amp;gt;,..., for example, eth0!10.0.0.100,ib0!11.0.0.100
+               To specify multiple ip addresses per NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;ip1&amp;gt;|&amp;lt;ip2&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;ip1&amp;gt;|&amp;lt;ip2&amp;gt;,..., for example, eth0!10.0.0.100|fd55::214:5eff:fe15:849b,ib0!11.0.0.100|2001::214:5eff:fe15:849a. The xCAT object definition commands support to use nicips.&amp;lt;nicname&amp;gt; as the sub attributes.
+               Note: The primary IP address must also be stored in the hosts.ip attribute. The nichostnamesuffixes should specify one hostname suffix for each ip address.
+
+ nicnetworks:    Comma-separated list of networks connected to each NIC.
+               If only one ip address is associated with each NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;network1&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;network2&amp;gt;, for example, eth0!10_0_0_0-255_255_0_0, ib0!11_0_0_0-255_255_0_0
+               If multiple ip addresses are associated with each NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;network1&amp;gt;|&amp;lt;network2&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;network1&amp;gt;|&amp;lt;network2&amp;gt;, for example, eth0!10_0_0_0-255_255_0_0|fd55:faaf:e1ab:336::/64,ib0!11_0_0_0-255_255_0_0|2001:db8:1:0::/64. The xCAT object definition commands support to use nicnetworks.&amp;lt;nicname&amp;gt; as the sub attributes.
+ [root@ls21n01 ~]# 
+
+
+ [root@ls21n01 ~]# lsdef -t node -h -i nicips.eth0,nicnetworks.eth1
+
+ Attribute          Description
+
+ nicips:         Comma-separated list of IP addresses per NIC. To specify one ip address per NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;ip1&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;ip2&amp;gt;,..., for example, eth0!10.0.0.100,ib0!11.0.0.100
+               To specify multiple ip addresses per NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;ip1&amp;gt;|&amp;lt;ip2&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;ip1&amp;gt;|&amp;lt;ip2&amp;gt;,..., for example, eth0!10.0.0.100|fd55::214:5eff:fe15:849b,ib0!11.0.0.100|2001::214:5eff:fe15:849a. The xCAT object definition commands support to use nicips.&amp;lt;nicname&amp;gt; as the sub attributes.
+               Note: The primary IP address must also be stored in the hosts.ip attribute. The nichostnamesuffixes should specify one hostname suffix for each ip address.
+
+ nicnetworks:    Comma-separated list of networks connected to each NIC.
+               If only one ip address is associated with each NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;network1&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;network2&amp;gt;, for example, eth0!10_0_0_0-255_255_0_0, ib0!11_0_0_0-255_255_0_0
+               If multiple ip addresses are associated with each NIC:
+                   &amp;lt;nic1&amp;gt;!&amp;lt;network1&amp;gt;|&amp;lt;network2&amp;gt;,&amp;lt;nic2&amp;gt;!&amp;lt;network1&amp;gt;|&amp;lt;network2&amp;gt;, for example, eth0!10_0_0_0-255_255_0_0|fd55:faaf:e1ab:336::/64,ib0!11_0_0_0-255_255_0_0|2001:db8:1:0::/64. The xCAT object definition commands support to use nicnetworks.&amp;lt;nicname&amp;gt; as the sub attributes.
+ [root@ls21n01 ~]#</code></pre>
+<h3 id="mkdef"><a href="#TOC">mkdef</a></h3>
+<p>1. mkdef could recoginize the stanza file with expanded nic attributes.</p>
+<pre><code> [root@ls21n01 ~]# cat testnode
+ # &amp;lt;xCAT data object stanza file&amp;gt;
+
+ testnode:
+   objtype=node
+   arch=x86_64
+   groups=kvm,vm,all
+   nichostnamesuffixes.eth0=|-eth0-ipv6-1|-eth0-ipv6-2
+   nichostnamesuffixes.eth1=-eth1|-eth1-ipv6-1|-eth1-ipv6-2
+   nichostnamesuffixes.eth2=-eth2|-eth2-ipv6-1|-eth2-ipv6-2
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+   nictypes.eth0=Ethernet
+   nictypes.eth1=Ethernet
+   nictypes.eth2=Ethernet
+ [root@ls21n01 ~]# cat testnode | mkdef -z
+ 1 object definitions have been created or modified.
+ [root@ls21n01 ~]# lsdef testnode
+ Object name: testnode
+   arch=x86_64
+   groups=kvm,vm,all
+   nichostnamesuffixes.eth2=-eth2|-eth2-ipv6-1|-eth2-ipv6-2
+   nichostnamesuffixes.eth1=-eth1|-eth1-ipv6-1|-eth1-ipv6-2
+   nichostnamesuffixes.eth0=|-eth0-ipv6-1|-eth0-ipv6-2
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nictypes.eth2=Ethernet
+   nictypes.eth1=Ethernet
+   nictypes.eth0=Ethernet
+   postbootscripts=otherpkgs
+   postscripts=syslog,remoteshell,syncfiles
+ [root@ls21n01 ~]# </code></pre>
+<p>2. mkdef could accept &lt;nic attr name&gt;.&lt;nic name&gt;=&lt;value&gt; parameters</p>
+<pre><code> [root@ls21n01 ~]# mkdef testnode1 groups=all nicips.eth0=&quot;1.1.1.1|1.2.1.1&quot; nicnetworks.eth0=&quot;net1|net2&quot; nictypes.eth0=&quot;Ethernet&quot;
+ 1 object definitions have been created or modified.
+ [root@ls21n01 ~]# lsdef testnode1
+ Object name: testnode1
+   groups=all
+   nicips.eth0=1.1.1.1|1.2.1.1
+   nicnetworks.eth0=net1|net2
+   nictypes.eth0=Ethernet
+   postbootscripts=otherpkgs
+   postscripts=syslog,remoteshell,syncfiles
+ [root@ls21n01 ~]# </code></pre>
+<h3 id="chdef"><a href="#TOC">chdef</a></h3>
+<p>1. chdef could recognize the stanza file with expanded nic attributes ==</p>
+<pre><code> [root@ls21n01 ~]# cat testnode
+ # &amp;lt;xCAT data object stanza file&amp;gt;
+
+ testnode:
+   objtype=node
+   arch=x86_64
+   groups=kvm,vm,all
+   nichostnamesuffixes.eth0=|-eth0-ipv6-1|-eth0-ipv6-2
+   nichostnamesuffixes.eth1=-eth1|-eth1-ipv6-1|-eth1-ipv6-2
+   nichostnamesuffixes.eth2=-eth2|-eth2-ipv6-1|-eth2-ipv6-2
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+   nictypes.eth0=Ethernet
+   nictypes.eth1=Ethernet
+   nictypes.eth2=Ethernet
+ [root@ls21n01 ~]# cat testnode | chdef -z
+ 1 object definitions have been created or modified.
+ New object definitions &#39;testnode&#39; have been created.
+ [root@ls21n01 ~]# lsdef testnode
+ Object name: testnode
+   arch=x86_64
+   groups=kvm,vm,all
+   nichostnamesuffixes.eth2=-eth2|-eth2-ipv6-1|-eth2-ipv6-2
+   nichostnamesuffixes.eth1=-eth1|-eth1-ipv6-1|-eth1-ipv6-2
+   nichostnamesuffixes.eth0=|-eth0-ipv6-1|-eth0-ipv6-2
+   nicips.eth2=12.1.89.7|fd58::214:5eff:fe15:849b|2002::214:5eff:fe15:849b
+   nicips.eth1=11.1.89.7|fd57::214:5eff:fe15:849b|2001::214:5eff:fe15:849b
+   nicips.eth0=10.1.89.7|fd56::214:5eff:fe15:849b|2000::214:5eff:fe15:849b
+   nicnetworks.eth2=12_1_0_0-255_255_0_0|fd58::/64|2002::/64
+   nicnetworks.eth1=11_1_0_0-255_255_0_0|fd57::/64|2001::/64
+   nicnetworks.eth0=10_1_0_0-255_255_0_0|fd56::/64|2000::/64
+   nictypes.eth2=Ethernet
+   nictypes.eth1=Ethernet
+   nictypes.eth0=Ethernet
+   postbootscripts=otherpkgs
+   postscripts=syslog,remoteshell,syncfiles
+ [root@ls21n01 ~]# </code></pre>
+<p>2. chdef could change the &lt;nic attr name&gt;.&lt;nic name&gt;</p>
+<pre><code> [root@ls21n01 ~]# chdef testnode nicips.eth0=&quot;1.1.1.1|2.1.1.1|3.1.1.1&quot;
+ 1 object definitions have been created or modified.
+ [root@ls21n01 ~]# lsdef testnode -i nicips.eth0
+ Object name: testnode
+     nicips.eth0=1.1.1.1|2.1.1.1|3.1.1.1
+ [root@ls21n01 ~]# </code></pre>
+<p>3. chdef does not support to update the nic attributes with -m and -p</p>
+<p>It is very difficult to support this without significant changes with the basic logic of the *def commands, the current code structure only supports to minus or plus values separated by comma &quot;,&quot;, however, the values like nicips.eth0 is only part of the nicips attribute. Some code changes were added to check the -m/-p flag work with nic attributes.</p>
+<pre><code> [root@ls21n01 ~]# chdef testnode -m nicips.eth0=&quot;1.1.1.1&quot;
+ Error: chdef does not support to change the nic related attributes with -m or -p flag.
+ [root@ls21n01 ~]# </code></pre>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li>Required approvers: Bruce Potter</li>
+<li>Affect on other components: *def commands, makehosts</li>
+<li>External interface changes, documentation, and usability issues:
+<ul>
+<li>xcatstanzafile man page</li>
+<li>chdef, mkdef, and lsdef man pages</li>
+<li>Add new support to xCAT name res doc</li>
+<li>add new support to 2nd adapter doc?</li>
+</ul></li>
+<li>Packaging, installation, dependencies: N/A</li>
+<li>Portability and platforms (HW/SW) supported: N/A</li>
+<li>Performance and scaling considerations: N/A</li>
+<li>Migration and coexistence: N/A</li>
+<li>Serviceability: N/A</li>
+<li>Security: N/A</li>
+<li>NLS and accessibility: N/A</li>
+<li>Invention protection: N/A</li>
+</ul>
+</body>
+</html>

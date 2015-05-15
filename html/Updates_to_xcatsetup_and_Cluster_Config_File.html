@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>{{:Design Warning}}</p>
+<p>Several enhancements are being made to the xcatsetup command and the cluster config for xCAT 2.6. See the <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup man page</a> for the current documentation of the command and the cluster config file.</p>
+<p>The enhancements being worked on are:</p>
+<ul>
+<li>Allow all ranges to start at something other than 1. E.g. your frame range could be frame[05-20]. Unit test all cases. (Yin Le)</li>
+<li>Allow chars after the number range. Combine the attach and non-attach code. Now the range formats supported are: (Yin Le)
+<ul>
+<li>f[1-2]c[01-10]p[1-8]a</li>
+<li>f[1-2]c[01-10]p[1-8]</li>
+<li>f[1-2]c[01-10]a</li>
+<li>f[1-2]c[01-10]</li>
+<li>n[01-20]a</li>
+<li>n[01-20]</li>
+<li>n01a-n20a</li>
+<li>n01-n20</li>
+</ul></li>
+<li>Support the new attribute for which hmc monitors a frame (ppc.sfp) using the xcat-frames:num-frames-per-hmc setting (Yin Le) - done</li>
+<li>Support sevice node pools and the routes table to automatically set up routes between MN and CNs thru the SNs: (Bruce)
+<ul>
+<li>set noderes.servicenode for all nodes to a comma separated list of the 2 service nodes in the BB - done</li>
+<li>set the servicenode.ipforwarding attribute to 1 for all servicenodes - done</li>
+<li>populate the routes table with routes through the 2 SNs in each BB, both ways (from MN to CN and from CN to MN)</li>
+<li>set the new node attribute noderes.routenames (being added by Ling) to the routes being put in the routes table for this node - done</li>
+<li>set the new attribute site.mnroutenames to all of the routes for the MN - done</li>
+<li>(Ling will be updating makeroutes and adding a postcript to support routes from the nodes back to the MN.)</li>
+</ul></li>
+<li>Support redundant fsps/bpas. (Yin Le)
+<ul>
+<li>Change the bpa/fsa objects into frame/cec objects (done)</li>
+<li>Create bpa and fsp objects (with IP addresses as their nodenames) that are children of the frames and cecs</li>
+<li>Don't assign IP addresses to the frames/cecs</li>
+<li>Add additional variables in the config file for the ranges of all 4 bpas and fsps</li>
+</ul></li>
+<li>Make it easy to use xcatsetup to create a single range of objects (Bruce)
+<ul>
+<li>Includes supporting a new setting xcat-cecs:num-cecs-per-frame which avoids having to specify the supernode-list.</li>
+</ul></li>
+<li>Support a new setting xcat-service-lan:dhcp-dynamic-range and use it to fill in the networks.dynamicrange attribute, which will cause makedhcp to populate the DHCP config with it. It will also fill in site.dhcpinterfaces. (Yin Le)</li>
+<li>Support a new range format d001c01, where d is a sequential numbering of the drawers (cecs) for the whole cluster, and c is a simple numbering (1-8) of the compute nodes within the drawer. (Yin Le)
+<ul>
+<li>For now, only support this for the xcat-compute-nodes stanza. For the SNs and storage nodes, support a format like bb01sn1.</li>
+</ul></li>
+<li>Add an option for xcatsetup to not change/overwrite objects that are already defined in the db. This allows the user to slightly expand the ranges in the cluster config file (e.g. if they got new hw) and rerun xcatsetup w/o losing modifications they have already made to existing objects in the db. (Yin Le)
+<ul>
+<li>For the regular expressions that are used, nothing has to be done, because they won't override specific node entries</li>
+<li>For all the code that generates hashes of specific node entries, the code should first query the list of existing nodes and put it in a hash so it can quickly look up if a node exists and if so not write the values into the new hash.</li>
+</ul></li>
+<li>Write a new command called nodepos which will give all possible position info for a command: (bruce)
+<ul>
+<li>if nodepos table is filled out, show that</li>
+<li>if system p, follow parent for lpar and display name/location of cec and frame</li>
+<li>show hfi location info (supernode #, lpar id, octant #, cec mtms, etc.)</li>
+<li>support going backwards, e.g. if they specify a cage # and lpar id, show the cec hostname and lpar hostname</li>
+</ul></li>
+<li>Support reading the cluster config file from stdin (Yin Le)
+<ul>
+<li>the xcatclientnnr already reads stdin, so in setup.pm if they don't pass in a filename in the arg list, try reading from $request-&gt;{stdin} before returning an error.</li>
+<li>BTW, while you are testing this, could you change the code in both xcatclient and xcatclientnnr that reads stdin to a more efficient method. Change it from:</li>
+</ul>
+if (-p STDIN) { my $data; while ( &lt;STDIN&gt; ) { <span class="math"><em>d</em><em>a</em><em>t</em><em>a</em>.  = </span>_; } <span class="math">$cmdref-&amp;gt;{stdin}-&amp;gt;[0]=$</span>data; }</li>
+</ul>
+<p>to:</p>
+<pre><code>if (-p STDIN) {
+  my @data = &amp;lt;STDIN&amp;gt;;
+  $cmdref-&amp;gt;{stdin}-&amp;gt;[0]=join(_,@data);_
+}</code></pre>
+</body>
+</html>

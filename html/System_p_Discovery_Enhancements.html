@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#discovery-overview">Discovery Overview</a></li>
+<li><a href="#define-the-service-lans-in-the-database-and-dhcp">Define the Service LAN(s) in the Database and DHCP</a></li>
+<li><a href="#power-on-and-configure-the-hmcs">Power On and Configure the HMCs</a></li>
+<li><a href="#define-the-frame-namemtms-mapping">Define the Frame Name/MTMS Mapping</a></li>
+<li><a href="#use-xcatsetup-to-create-initial-definitions-in-the-database">Use xcatsetup to Create Initial Definitions in the Database</a></li>
+<li><a href="#discover-the-bpas-modify-their-network-information-and-connect-to-them">Discover the BPAs, Modify Their Network Information, and Connect To Them</a></li>
+<li><a href="#power-on-the-fsps-discover-them-modify-network-information-and-connect">Power On the FSPs, Discover Them, Modify Network Information, and Connect</a></li>
+<li><a href="#appendix-a-creating-initial-node-definitions-manually">Appendix A: Creating Initial Node Definitions Manually</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#discovery-overview">Discovery Overview</a></li>
+<li><a href="#define-the-service-lans-in-the-database-and-dhcp">Define the Service LAN(s) in the Database and DHCP</a></li>
+<li><a href="#power-on-and-configure-the-hmcs">Power On and Configure the HMCs</a></li>
+<li><a href="#define-the-frame-namemtms-mapping">Define the Frame Name/MTMS Mapping</a></li>
+<li><a href="#use-xcatsetup-to-create-initial-definitions-in-the-database">Use xcatsetup to Create Initial Definitions in the Database</a></li>
+<li><a href="#discover-the-bpas-modify-their-network-information-and-connect-to-them">Discover the BPAs, Modify Their Network Information, and Connect To Them</a></li>
+<li><a href="#power-on-the-fsps-discover-them-modify-network-information-and-connect">Power On the FSPs, Discover Them, Modify Network Information, and Connect</a></li>
+<li><a href="#appendix-a-creating-initial-node-definitions-manually">Appendix A: Creating Initial Node Definitions Manually</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<p><em>This documents the new system p discovery flow as a result of focussing on the Power 775, using permanent IP addresses, direct fsp/bpa mgmt, and redundant fsps/bpas. This is a draft of what should replace the current discovery section of the [XCAT_System_p_Hardware_Management] doc.</em></p>
+<p>When setting up a new cluster, you can use the xCAT commands <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup</a> and <a href="http://xcat.sourceforge.net/man1/lsslp.1.html">lsslp</a> to speed the proper definition of all of the cluster hardware in the xCAT database, by automatically discovering and defining them. This is optional - you can define all of the hardware in the database by hand, but that can be confusing and error prone.</p>
+<p><strong>Note:</strong> this version of the document focusses on the following environment:</p>
+<ul>
+<li>the Power 775</li>
+<li>using permanent IP addresses (instead of random/dynamic addresses)</li>
+<li>direct fsp/bpa mgmt (DFM)</li>
+<li>supporting (optionally) and redundant fsps and bpas</li>
+</ul>
+<p>If you want to discover and define older system p hardware, see the <a href="XCAT_System_p_Hardware_Management">previous version of this document</a>.</p>
+<p>To use the DFM features of xCAT you need to download from IBM's Fix Central site and install: xCAT-dfm-<em>.rpm and ISNM-hdwr_svr-</em>.rpm (linux) or isnm.hdwr_svr (AIX).</p>
+<p>This discovery section should be performed in the following place within the high level cluster setup flow:</p>
+<ol style="list-style-type: decimal">
+<li>Install the OS on the management node</li>
+<li>Install and configure the xCAT prereqs and xCAT software on the management node</li>
+<li><strong>Discover and define the cluster hardware components</strong></li>
+<li>Continue with the rest of the management node configuration</li>
+<li>Create the images that should be installed or booted on the nodes</li>
+<li>Run nodeset or nimnodeset and rpower/rnetboot to boot up the nodes.</li>
+</ol>
+<h3 id="discovery-overview"><a href="#TOC">Discovery Overview</a></h3>
+<p>A <strong>summary</strong> of the steps you should follow to discover the hardware and get it defined properly in the database are:</p>
+<ul>
+<li>Define the service LAN(s) in the database</li>
+<li>Run &quot;makedhcp -n&quot; to configure dhpcd and define the service network stanza, and then start dhcpd</li>
+<li>Power on and configure the HMCs</li>
+<li>Manually power on the frames</li>
+<li>Run &quot;lsslp -s BPA -m --vpdtable&quot; to generate a stanza file of frame definitions</li>
+<li>Edit the stanza file to give the proper node name to each frame object, identifying the frames by MTMS.</li>
+<li>Create a cluster config file that will direct xcatsetup to create skeleton definitions for the hw components in the db.</li>
+<li>Run &quot;xcatsetup &lt;config-file-name&gt;&quot; to create the skeleton objects</li>
+<li>Run &quot;lsslp -s BPA -m -w&quot; to discover the BPAs, match them with the corresponding frameand BPA objects in the db (using the mtms), and write additional attributes for the frames and BPAs in the db.</li>
+<li>Run &quot;makedhcp bpa&quot; to write the permanent ip/mac pairs for all the bpas into the dhcp config</li>
+<li>Add the current passwords for the frame objects in the ppcdirect table</li>
+<li>Run &quot;rspconfig frame --resetnet&quot; to have all the bpas acquire their permanent ip address</li>
+<li>Establish connections to all of the frames: mkhwconn -t frame</li>
+<li>If the frame passwords are still the factory defaults, you must change them now: rspconfig frame '*_passwd=&lt;oldpwd&gt;,&lt;newpd&gt;'</li>
+<li>Verify the hw ctrl setup is correct for the frames:</li>
+<li>Get the frames out of rack standby and power up the FSPs: rpower frame exit_rackstandby</li>
+<li>Run &quot;lsslp -s FSP -m -w&quot; to discover the FSPs, match them with the corresponding CEC and FSP object in the db (using the cage # and frame mtms), and write additional attributes for the CECs and FSPs in the db.</li>
+<li>Run &quot;makedhcp fsp&quot; to write the permanent ip/mac pairs for all the bpas and fsps into the dhcp config</li>
+<li>Add the current passwords for the cec objects in the ppcdirect table</li>
+<li>Run &quot;rspconfig cec --resetnet&quot; to have all the fsps acquire their permanent ip address</li>
+<li>Establish connections to all of the cecs: mkhwconn -t cec</li>
+<li>If the cec passwords are still the factory defaults, you must change them now: rspconfig cec '*_passwd=&lt;oldpwd&gt;,&lt;newpd&gt;'</li>
+<li>Associate the hmcs with the appropriate frames: mkhwconn -s -t -p hmc (how do you do this for multiple hmcs??)</li>
+<li>Verify the hw ctrl setup is correct for the cecs:</li>
+</ul>
+<p>Easy, right? Each step is explained in more detail below.</p>
+<p>In the examples given below, it is assumed that you have redundant service LANs and that the xCAT management node has 2 NICs, each connected to one of the service LANs. The subnet of the first example service LAN is 10.230.0.0/255.255.0.0 and the subnet of the 2nd example service LAN is 10.231.0.0/255.255.0.0 .</p>
+<h3 id="define-the-service-lans-in-the-database-and-dhcp"><a href="#TOC">Define the Service LAN(s) in the Database and DHCP</a></h3>
+<p>xCAT uses <a href="http://en.wikipedia.org/wiki/Service_Location_Protocol">SLP</a> to discover the hardware components on the service networks. Before doing this, you must configure the management node to give dynamic DHCP IP addresses to the hardware components so that they can respond to SLP broadcasts.</p>
+<p>If you haven't already, configure with static IP addresses the management node's NICs that are connected to the service LAN and cluster management LAN.</p>
+<p>If you already had the management node's service LAN NICs configured when you installed xcat, it automatically ran &quot;makenetworks&quot; and created the necessary entries in the networks table. If not, run:</p>
+<pre><code>makenetworks</code></pre>
+<p>Now set the networks.dynamicrange attribute for each service LAN. For example:</p>
+<pre><code>chdef -t network 10_230_0_0-255_255_0_0 dynamicrange=10.230.200.1-10.230.200.200
+chdef -t network 10_231_0_0-255_255_0_0 dynamicrange=10.231.200.1-10.231.200.200</code></pre>
+<p>Set <a href="http://xcat.sourceforge.net/man5/site.5.html">site</a>.dhcpinterfaces to the list of NICs (on the management node and service nodes) that DHCP should listen on. For the management node, this is normally the NICs that are connected to the service LAN and the NICs connected to the cluster management LAN. For the service node it should only be the NIC connected to the compute node LAN:</p>
+<pre><code> chdef -t site clustersite dhcpinterfaces=&#39;mgmtnode|eth1,eth2,eth3,eth4;service|hf0&#39;</code></pre>
+<p>On AIX, you have to stop the bootp daemon before starting dhcp, because they listen on the same port number:</p>
+<pre><code># Stop bootp from rebooting by commenting out the bootps line in /etc/inetd.conf file:
+#bootps dgram udp wait root /usr/sbin/bootpd bootpd /etc/bootptab
+
+refresh -s inetd                     # stop and restart the inetd subsystem
+kill `ps -ef | grep bootp | grep -v grep | awk &#39;{print $2}&#39; `    # stop the bootp daemon
+start /usr/sbin/dhcpsd &quot;$src_running&quot;             # start up the DHCP Server
+stopsrc -g tcpip                       # restart the tcpip group
+startsrc -g tcpip</code></pre>
+<p>Have xCAT configure the service network stanza for dhcpd and then start the daemon:</p>
+<pre><code>makedhcp -n
+service dhcpd restart   # linux
+startsrc -s dhcpd       # AIX</code></pre>
+<p>Look at the DHCP configuration file on the xCAT management node to ensure that it contains only the networks you want:</p>
+<pre><code>cat /etc/dhcpd.conf   # Linux
+cat /etc/dhcpsd.cnf   # AIX</code></pre>
+<h3 id="power-on-and-configure-the-hmcs"><a href="#TOC">Power On and Configure the HMCs</a></h3>
+<p>This section is TBD, but must cover:</p>
+<ul>
+<li>Manually collect MACs of HMCs and create database definitions manually (including the ipmi table)</li>
+<li>makedhcp hmc</li>
+<li>Enable: SLP, SSH, SOL (if not enabled from the factory)</li>
+<li>Disable DHCP</li>
+<li>Configure the IMM</li>
+</ul>
+<h3 id="define-the-frame-namemtms-mapping"><a href="#TOC">Define the Frame Name/MTMS Mapping</a></h3>
+<p>SLP gives xCAT a list of hardware components on the network, without telling it the physical location of each. This means that xCAT does not have a way to give each component a sensible name without getting a little bit of information from you: the mapping between the name you want each frame to have and its MTMS (machine type, model, and serial #).</p>
+<p>To provide this information, first manually power on the frames. (If the frames are being powered on (EPO'ed), the BPAs will come up in rack standy mode. At this point there will not be any power to the CEC FSPs so they will not yet be able to be discovered. So we must first discover the frames, get them defined in the database, and make connections to them, so we can get them out of rack standby mode. This process will be accomplished in the next several sections.)</p>
+<p>Have xCAT generate a stanza file of frame definitions (with MTMS) so you can easily give each one a name:</p>
+<pre><code>lsslp -s BPA -m -i 10.230.0.0,10.231.0.0 --vpdtable &amp;gt; vpd-frame.stanza</code></pre>
+<ul>
+<li>Note: the implementation of this lsslp option should be changed to produce frame objects, instead of bpa objects</li>
+</ul>
+<p>Edit the stanza file to give the desired node name to each frame object, identifying the frames by MTMS. (The node name is the identifier before the colon. Set the <a href="http://xcat.sourceforge.net/man5/xcatstanzafile.5.html">xcatstanzafile man page</a> for details.) The node names should indicate order (e.g. frame01, frame02, etc.) because xCAT will use that to understand the physical order of the hardware.</p>
+<h3 id="use-xcatsetup-to-create-initial-definitions-in-the-database"><a href="#TOC">Use xcatsetup to Create Initial Definitions in the Database</a></h3>
+<p>The <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup</a> command creates initial node definitions in the xCAT database, based on naming conventions and IP address ranges that you provide via a cluster configuration file. In a later step, xCAT will combine this information with the SLP information discovered on the service network to create a complete picture of your cluster hardware components.</p>
+<p>Create a cluster config file with information about the hardware components that should be defined. Note that you are not only specifying the naming pattern for the HMCs, frames, and CECS, but also the permanent IP addresses you want the BPAs and FSPs to have. (When the BPAs and FSPs initially power on, they will get dynamic IP addresses from DHCP. Once you are done with this whole discovery chapter, DHCP will always give them the IP addresses you define in the cluster config file. We call these the &quot;permanent&quot; IP addresses.) For a detailed description of the cluster config file, see the <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup man page</a>. Here's a sample config file:</p>
+<pre><code># A small cluster config file for a single 2 frame bldg block.
+# Just the hmcs, frames, bpas, cecs, and fsps are created.
+xcat-site:
+ use-direct-fsp-control = 1
+
+xcat-hmcs:
+ hostname-range = hmc[1-2]
+
+xcat-frames:
+ hostname-range = frame[1-2]
+ num-frames-per-hmc = 1
+ vpd-file = vpd-frame.stanza
+ # This assumes you have 2 service LANs:  a primary service LAN 10.230.0.0/255.255.0.0 that all of the port 0&#39;s
+ # are connected to, and a backup service LAN 10.231.0.0/255.255.0.0 that all of the port 1&#39;s are connected to.
+ bpa-a-0-starting-ip = 10.230.1.1
+ bpa-b-0-starting-ip = 10.230.2.1
+ bpa-a-1-starting-ip = 10.231.1.1
+ bpa-b-1-starting-ip = 10.231.2.1
+
+xcat-cecs:
+ hostname-range = cec[01-24]
+ num-cecs-per-frame = 12
+ fsp-a-0-starting-ip = 10.230.3.1
+ fsp-b-0-starting-ip = 10.230.4.1
+ fsp-a-1-starting-ip = 10.231.3.1
+ fsp-b-1-starting-ip = 10.231.4.1</code></pre>
+<ul>
+<li>Note: the exact names of the bpa and fsp starting ip attributes haven't been determined yet.</li>
+</ul>
+<p>Run xcatsetup to create the initial node definitions:</p>
+<pre><code>xcatsetup &amp;lt;config-file-name&amp;gt;</code></pre>
+<p>This writes the following essential attributes to the database (more attributes are written, but these are the attributes that are necessary for running lsslp later on):</p>
+<ul>
+<li>frames: nodelist.node, nodelist.groups, ppc.nodetype, vpd.serial, vpd.mtm</li>
+<li>bpas: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent</li>
+<li>cecs: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent, ppc.cageid</li>
+<li>fsps: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent</li>
+<li>creates groups: hmc, frame, bpa, cec, fsp</li>
+</ul>
+<p>Note: unlike most nodes in the xCAT database, the BPAs and FSPs will use their IP address (the permanent one) as their node name.</p>
+<p>Note: as an alternative to using xcatsetup and the cluster config file, you can create the database definitions manually. This is documented in Appendix A.</p>
+<h3 id="discover-the-bpas-modify-their-network-information-and-connect-to-them"><a href="#TOC">Discover the BPAs, Modify Their Network Information, and Connect To Them</a></h3>
+<p>Now we are ready to discover the BPAs on the network, match them with the corresponding frames and BPAs in the database (using the mtms), and write additional attributes in the database:</p>
+<pre><code>lsslp -s BPA -m -i 10.230.0.0,10.231.0.0 -w</code></pre>
+<p>This will put the MAC for each BPA into the mac.mac attribute and temporarily store the dynamic IP address of each BPA object in the hosts.otherinterfaces attribute. You can confirm that by running:</p>
+<pre><code>lsdef -i mac,otherinterfaces bpa</code></pre>
+<p>Configure DHCP with the permanent ip/mac pairs so that it will always give the BPAs their permanent IP address from now on:</p>
+<pre><code>makedhcp bpa</code></pre>
+<p>To enable xCAT to connect to the BPAs, you must add the current passwords for the frame objects in the ppcdirect table. If the password for all of the frames is the same, you can set the username/password in the ppcdirect table using group entries:</p>
+<pre><code>chdef -t group frame passwd.HMC=xxx
+chdef -t group frame passwd.admin=yyy
+chdef -t group frame passwd.general=zzz</code></pre>
+<p>Tell all of the BPAs to re-acquire their IP address from DHCP, so that they will receive the new permanent IP address that DHCP has been configured with:</p>
+<pre><code>rspconfig frame --resetnet</code></pre>
+<ul>
+<li>Note: the --resetnet flag will eventually be moved to the rspconfig command.</li>
+</ul>
+<p>Have xCAT's DFM daemon (called hw server) establish connections to all of the frames:</p>
+<pre><code>mkhwconn -t frame</code></pre>
+<p>If the BPA passwords are still the factory defaults, you must change them before running any other commands to them:</p>
+<pre><code>rspconfig frame &#39;*_passwd=&amp;lt;oldpwd&amp;gt;,&amp;lt;newpd&amp;gt;&#39;</code></pre>
+<p>Verify the hardware control setup is correct for the frames:</p>
+<pre><code># lshwconn frame
+(output to be added here)
+
+# rpower frame state
+(output to be added here)</code></pre>
+<h3 id="power-on-the-fsps-discover-them-modify-network-information-and-connect"><a href="#TOC">Power On the FSPs, Discover Them, Modify Network Information, and Connect</a></h3>
+<p>Taking the frames out of rack standby will cause the FSPs to be powered on and they will get a dynamic DHCP IP address so that they can communicate on the network:</p>
+<pre><code>rpower frame exit_rackstandby</code></pre>
+<p>Run lsslp to discover the CECs/FSPs, and match the discovered hardware with the corresponding objects in the database, and write additional attributes in the database:</p>
+<pre><code>lsslp -s FSP -m -i 10.230.0.0,10.231.0.0 -w</code></pre>
+<p>For each FSP discovered on the network, the lsslp command uses the cage # and its parent (frame) MTMS to match the correct CEC entry in the database. The attributes that will be written to the database are:</p>
+<ul>
+<li>the mtms of each CEC object</li>
+<li>the MAC for each FSP will be stored in the mac.mac attribute and the dynamic IP address of each FSP object will be temporarily stored in the hosts.otherinterfaces attribute.</li>
+<li>Should we also discover the hmcs in this step?? We had to manually collect the MACs and define the hmcs very early on in the process, so the only thing lsslp would add to the definition at this point is the mtms. Not sure it is worth it.</li>
+</ul>
+<p>You can confirm these settings by running:</p>
+<pre><code>lsdef -i mtm,serial cec
+lsdef -i mac,otherinterfaces fsp</code></pre>
+<p>Configure DHCP with the permanent ip/mac pairs so that it will always give the FSPs their permanent IP address from now on:</p>
+<pre><code>makedhcp fsp</code></pre>
+<p>To enable xCAT to connect to the FSPs, you must add the current passwords for the CEC objects in the ppcdirect table. If the password for all of the CECs is the same, you can set the username/password in the ppcdirect table using group entries:</p>
+<pre><code>chdef -t group cec passwd.HMC=xxx
+chdef -t group cec passwd.admin=yyy
+chdef -t group cec passwd.general=zzz</code></pre>
+<p>Tell all of the FSPs to re-acquire their IP address from DHCP, so that they will receive the new permanent IP address that DHCP has been configured with:</p>
+<pre><code>rspconfig cec --resetnet</code></pre>
+<ul>
+<li>Note: the --resetnet flag will eventually be moved to the rspconfig command.</li>
+</ul>
+<p>Have xCAT's DFM daemon (called hw server) establish connections to all of the CECs:</p>
+<pre><code>mkhwconn -t cec</code></pre>
+<p>If the FSP passwords are still the factory defaults, you must change them before running any other commands to them:</p>
+<pre><code>rspconfig cec &#39;*_passwd=&amp;lt;oldpwd&amp;gt;,&amp;lt;newpd&amp;gt;&#39;</code></pre>
+<p>Associate the HMCs with the appropriate frames:</p>
+<pre><code>mkhwconn -s -t -p hmc  (how do you do this for multiple hmcs??)</code></pre>
+<p>Verify the hardware control setup is correct for the CECs:</p>
+<pre><code># lshwconn cec
+(output to be added here)
+
+# rpower cec state
+(output to be added here)</code></pre>
+<p>Verify that the CECs are healthy:</p>
+<pre><code>rvitals cec lcds
+rinv cec deconfig</code></pre>
+<h2 id="appendix-a-creating-initial-node-definitions-manually"><a href="#TOC">Appendix A: Creating Initial Node Definitions Manually</a></h2>
+<p>If the xcatsetup command is not appropriate for your cluster because your naming patterns have too many exceptions, you can create node definitions manually to prepare for running lsslp.</p>
+<p>After editing the vpd-frame.stanza file that was created using the --vpdtable option of lsslp, define the frame objects:</p>
+<pre><code>cat vpd-frame.stanza | mkdef -z</code></pre>
+<p>(the rest of this section is still under construction...)</p>
+<ul>
+<li>bpas: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent</li>
+<li>cecs: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent, ppc.cageid</li>
+<li>fsps: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent</li>
+<li>creates groups: hmc, frame, bpa, cec, fsp</li>
+</ul>
+</body>
+</html>

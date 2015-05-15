@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#initial-deployment">Initial deployment</a></li>
+<li><a href="#service-node-takeover">Service node takeover</a></li>
+<li><a href="#switching-back">Switching back</a></li>
+<li><a href="#changed-commands">Changed Commands</a></li>
+<li><a href="#documentation">Documentation</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#initial-deployment">Initial deployment</a></li>
+<li><a href="#service-node-takeover">Service node takeover</a></li>
+<li><a href="#switching-back">Switching back</a></li>
+<li><a href="#changed-commands">Changed Commands</a></li>
+<li><a href="#documentation">Documentation</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>For reliability, availability, and serviceability purposes users may wish to configure backup service nodes in hierarchical cluster environments.</p>
+<p>The backup service node will be configured to be able to quickly take over from the original service node if a problem occurs.</p>
+<p>This is not an automatic failover feature. You will have to initiate the switch from the primary service node to the backup manually. The xCAT support will handle most of the setup and transfer of the nodes to the new service node.</p>
+<p><strong>TODO</strong> - What is the easiest way for the admin to get notified of SN failure?????</p>
+<p>Abbreviations used below:</p>
+<p>MN : - management node. SN : - service node. CN : - compute node.</p>
+<h2 id="initial-deployment"><a href="#TOC">Initial deployment</a></h2>
+<p>Integrate the following steps into the hierarchical deployment process.</p>
+<ol style="list-style-type: decimal">
+<li>Make sure both the primary and backup service nodes are installed, configured, and can access the MN database.</li>
+<li>When defining the CNs add the necessary service node values to the &quot;<em>servicenode</em>&quot; and &quot;<em>xcatmaster</em>&quot; attributes of the node definitions.</li>
+<li>(Optional) Create an xCAT group for the nodes that are assigned to each SN. This will be useful when setting node attributes as well as providing an easy way to switch a set of nodes back to their original server.</li>
+</ol>
+<p>ISSUE: what about DNS or network routes etc.???</p>
+<p><strong>Note-</strong></p>
+<p><strong>xcatmaster:</strong> : The hostname of the xCAT service node <em>as known by the node</em>. <strong>servicenode:</strong> : The hostname of the xCAT service node <em>as known by the management node</em>.</p>
+<p>To specify a backup service node you must specify a comma-separated list of two service nodes for the &quot;servicenode&quot; value. The first one will be the primary and the second will be the backup for that node.</p>
+<p>For the &quot;<em>xcatmaster</em>&quot; value you should only include the primary name of the service node <em>as known by the node</em>.</p>
+<p>In the simplest case the management node, service nodes, and compute nodes are all on the same network and the interface name of the service nodes will be same for either the management node or the compute node.</p>
+<p>For this case you could set the attributes as follows:</p>
+<pre><code>       chdef &amp;lt;noderange&amp;gt;  servicenode=&quot;xcatsn1,xcatsn2&quot; xcatmaster=&quot;xcatsn1&quot;</code></pre>
+<p>However, in some network environments the name of the SN as known by the MN may be different than the name as known by the CN. (If they are on different networks.)</p>
+<p>In the following example assume the SN interface to the MN is on the &quot;a&quot; network and the interface to the CN is on the &quot;b&quot; network. To set the attributes you would run a command similar to the following.</p>
+<pre><code>       chdef &amp;lt;noderange&amp;gt;  servicenode=&quot;xcatsn1a,xcatsn2a&quot; xcatmaster=&quot;xcatsn1b&quot;</code></pre>
+<p>The process can be simplified by creating xCAT node groups to use as the &lt;noderange&gt; in the <strong>chdef</strong> command.</p>
+<p>To create an xCAT node group containing all the nodes that have the service node &quot;SN27&quot; you could run a command similar to the following.</p>
+<pre><code>        mkdef -t group -o SN27group -w  servicenode=SN27</code></pre>
+<p><strong>Note:</strong> When using backup service nodes you should consider splitting the CNs between the two service nodes. This way if one fails you only need to move half your nodes to the other service node.</p>
+<p>When you run the <strong>nimnodeset</strong> or <strong>mkdsklsnode</strong> commands to initialize the CNs these commands will automatically replicate the required NIM resources on the SN used by the CN. If you have a backup SN specified then the replications and NIM definition will also be done on the backup SN. This will make it possible to do a quick takeover without having to wait for replication when you need to switch. You can use the &quot;-b&quot; option with these commands to avoid the replication on the backup service node, but in this case you will have to re-run <strong>nimnodest</strong> or <strong>mkdsklsnode</strong> before you can use the backup SN.</p>
+<h2 id="service-node-takeover"><a href="#TOC">Service node takeover</a></h2>
+<ol style="list-style-type: decimal">
+<li><strong>Initialize the nodes on the new SN (if needed)</strong></li>
+</ol>
+<p>If the NIM replication hasn't been run on the new SN then you must run either <strong>nimnodeset</strong> (diskful) or <strong>mkdsklsnode</strong> (diskless) to get the new SN configured properly.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><p><strong>Use the xCAT &quot;snmove&quot; command to reset the node attributes to point to the backup SN.</strong></p>
+<p>Syntax: snmove noderange [-d|--dest sn2] [-D|--destn sn2n] [-i|--ignorenodes] snmove -s|--source sn1 [-S|--sourcen sn1n] [-d|--dest sn2] [-D|--destn sn2n] [-i|--ignorenodes] snmove [-h|--help|-v|--version]</p></li>
+</ol>
+<p>For example, if the SN named &quot;SN27&quot; goes down you could switch all it's node to the backup SN by running a command similar to the following.</p>
+<pre><code>     snmove -s SN27</code></pre>
+<p>The <strong>snmove</strong> command will check and set several node attribute values.</p>
+<p><strong>servicenode:</strong> : This will be set to either the second server name in the <em>servicenode</em> attribute list or the value provided on the command line. <strong>xcatmaster:</strong> : Set with either the value provided on the command line or it will be automatically determined from the <em>servicenode</em> attribute. <strong>nfsserver:</strong> : If the value is set with the source service node then it will be set to the destination service node. <strong>tftpserver:</strong> : If the value is set with the source service node then it will be reset to the destination service node. <strong>monserver:</strong> : If set to the source service node then reset it to the destination <em>servicenode</em> and <em>xcatmaster</em> values. <strong>conserver:</strong> : If set to the source service node then reset it to the destination <em>servicenode</em> and run <strong>makeconservercf</strong>.</p>
+<p>For diskful nodes it will also run the NIM <strong>niminit</strong> command on the nodes and rerun several xCAT customization scripts to reset whatever services need to be re-targeted.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>Reboot the diskless nodes</strong></li>
+</ol>
+<p>The diskless CNs will have to be re-booted to have them switch to the new SN. Shut down the diskless nodes and run the &quot;<strong>rnetboot</strong>&quot; command to reboot nodes. This command will get the new SN information from the xCAT database and perform a directed boot request from the node to the new SN. When the node boots up it will be configured as a client of the NIM master on the new SN. For example, to reboot all the nodes that are in the xCAT group &quot;SN27group&quot; you could run the following command.</p>
+<pre><code>    rnetboot SN27group</code></pre>
+<p>To shut down the nodes you can use the <strong>xdsh</strong> command to run the <strong>shutdown</strong> command on the nodes. If that doesn't work you can use the <strong>rpower</strong> command to shut the nodes down.</p>
+<p>DO NOT try to use the <strong>rpower</strong> command to reboot the nodes. This would cause the node to try to reboot from the old SN.</p>
+<h2 id="switching-back"><a href="#TOC">Switching back</a></h2>
+<p>The process for switching nodes back will depend on what must be done to recover the original service node. Essentially the SN must have all the NIM resources and definitions etc. restored before you can use it.</p>
+<p>If all the configuration is still intact you can simply use the <strong>snmove</strong> command to switch the nodes back.</p>
+<p>If the configuration must be restored then you will have to run either the <strong>mkdsklsnode</strong> (diskless) or <strong>nimnodeset</strong> (diskful) command. These commands will re-configure the SN using the common osimages defined on the xCAT management node.</p>
+<p>For example:</p>
+<pre><code>    mkdsklsnode SN27group</code></pre>
+<p>This command will check each node definition to get the osimage it is using. It will then check for the primary and backup service nodes and do the required configuration for the one that needs to be configured.</p>
+<p>Once the SN is ready you can run the <strong>snmove</strong> command to switch the node definitions to point to it. For example, if you assume the nodes are currently managed by the &quot;SN28&quot; service node then could could switch them back to the &quot;SN27&quot; SN with the following command.</p>
+<pre><code>    svmove SN27group -d SN27</code></pre>
+<p>If your compute nodes are diskless then they must be rebooted using the <strong>rnetboot</strong> command in order to switch to the other service node.</p>
+<h2 id="changed-commands"><a href="#TOC">Changed Commands</a></h2>
+<pre><code> 1) **snmove**</code></pre>
+<ul>
+<li>Change the usage to support just the new SN name or just a list of nodes to switch.</li>
+<li>Update the Linux code to handle the new usage</li>
+<li>Reset database values(already done for Linux)</li>
+<li>warning message if more than two servicenode attribute values</li>
+<li>Run the nimclient command on diskful AIX nodes</li>
+<li><p>Check if the required node resources, definitions, and initializations are done on backup SN. Provide a warning message if not.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>rmnimimage</strong></li>
+</ol></li>
+<li><p>Remove osimage resources from primary AND backup SNs.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>mkdsklsnode</strong> and <strong>nimnodeset</strong></li>
+</ol></li>
+<li><p>Do the replication, defines, initializations on both the primary and secondary service nodes.</p>
+<ol start="4" style="list-style-type: decimal">
+<li><strong>xcat2nim</strong></li>
+</ol></li>
+<li><p>Define the nodes on both SNs</p>
+<ol start="5" style="list-style-type: decimal">
+<li><strong>rmdsklsnodes</strong></li>
+</ol></li>
+<li><p>Remove the diskless nodes on both the primary and backup service nodes.</p></li>
+</ul>
+<h2 id="documentation"><a href="#TOC">Documentation</a></h2>
+<pre><code> 1) **snmove man page**
+
+    **NAME**
+         **snmove** - Move xCAT compute nodes from one xCAT service node to a backup service node.
+
+   **SYNOPSIS**
+          snmove noderange [-d|--dest sn2] [-D|--destn sn2n]
+                [-i|--ignorenodes]
+
+          snmove -s|--source sn1 [-S|--sourcen sn1n] [-d|--dest sn2]
+               [-D|--destn sn2n] [-i|--ignorenodes]
+
+          snmove [-h|--help|-v|--version]
+
+   **DESCRIPTION**
+         The snmove command moves a node or nodes from one service node to
+         another.
+
+         The use of backup service nodes in an xCAT hierarchical cluster can
+         help improve the overall reliability, availability, and serviceability
+         of the cluster.
+
+         Before you run the snmove command it is assumed that the backup
+         service node has been configured properly to manage the new node
+         or nodes. (See the xCAT document named
+         &quot;Using xCAT Service Nodes with AIX&quot; for information on how to set
+         up backup AIX service nodes.).
+
+         The snmove command can use the information stored in the xCAT
+         database or information passed in on the command line to determine
+         the current service node and the backup service node.
+
+         To specify the primary and backup service nodes you can set the
+         &quot;servicenode&quot; and &quot;xcatmaster&quot; attributes of the node definitions.
+
+
+         The servicenode attribute is the hostname of the xCAT service node
+         as it is known by the management node. The xcatmaster attribute
+          is the hostname of the xCAT service node as known by the node.
+         The servicenode attribute should be set to a comma-separated list
+         so that the primary service node is first and the backup service
+         node is second.  The xcatmaster attribute must be set to the
+         hostname of the pimary service node as it is known by the node.
+
+         When the snmove command is run it modifies the xCAT database to
+         switch the the primary server to the backup server.
+
+         It will also check the other services that are being used for the
+         node, such as NFS, TFTP etc.  and if they were set to the original
+         service node they will be changed to point to the backup service node. 
+
+         If the -i option is specified, the nodes themselves will not be modified.
+         Otherwise, syslog and NTP will be changed to use the new service node
+         The user can run other postscripts using the updatenode command, after
+         this command is done, to setup other applications such as monitoring.
+         For AIX diskful (standalone) systems the snmove command will run the
+         **nimclient -p** command on the node so that it will recognize the new
+         service node as it&#39;s NIM master.
+
+         When the snmove command is executed the new service node must be running but
+         the original service node may be down.
+
+    **OPTIONS**
+         -s|--source
+                   Specifies the hostname of the source service node
+                   adapter facing the management node. It can be
+                   found in the servicenode table.
+         -S|--sourcen
+                   Specifies the hostname of the source service node
+                   adapter facing the nodes.
+          -d|--dest Specifies the hostname of the destination service
+                   node adapter facing the management node. It can be
+                   found in the servicenode table.
+         -D|--destn
+                   Specifies the hostname of the destination service
+                   node adapter facing the nodes.
+         -i|--ignorenodes
+                   No action will be done on the nodes. If not
+                   specified, the syslog and setup ntp postscritps
+                   will be rerun on the nodes to switch the syslog
+                   and NTP server.
+         -h|--help
+                   Display usage message.
+         -v|--version
+                   Command Version.
+    **EXAMPLES**
+
+         1. To move a groups of nodes from one server nodes to
+            another:
+
+
+              **snmove group1 -d xcatsn02 -D xcatsn02-eth1**
+
+
+         2. To move all the nodes from one service nodes to another:
+
+
+              **snmove -s xcatsn01 -S xcatsn01-eth1 -d xcatsn02 -D xcatsn02-eth1**
+
+
+         3. Move any nodes that have sn1 as their primary server to the backup SN set in the xCAT node definition.
+
+               **snmove -s sn1**
+
+         4. Move all the nodes in the xCAT group named &quot;nodegroup1&quot; to their backup SNs.
+
+               **snmove nodegroup1** 
+
+         5. Move all the nodes in xCAT group  &quot;sngroup1&quot; to the SN named &quot;xcatsn2&quot;
+
+               **snmove sngroup1 -d xcatsn2** 
+
+    **FILES**
+         /opt/xcat/sbin/snmove
+
+    **SEE ALSO**
+         noderange(3)
+
+
+
+
+ 4) &#39;_**Using xCAT Service Nodes with AIX&#39;**_ \- xCAT How-To </code></pre>
+<p>A new section called <strong>Using an AIX service node backup</strong> will be added to the AIX service node documentation to explain how to use the service node backup feature. The content of this new section will be very similar to the &quot;Overview&quot;, &quot;Initial Deployment&quot;, &quot;Service node takeover&quot;, and &quot;Switching back&quot; sections above.</p>
+</body>
+</html>

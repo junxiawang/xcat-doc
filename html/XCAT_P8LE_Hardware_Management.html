@@ -1,0 +1,532 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#install-xcat-on-management-node">Install xCAT on Management Node</a></li>
+<li><a href="#hardware-discovery-for-p8-le-machines">Hardware discovery for P8 LE machines</a><ul>
+<li><a href="#setup-dhcp">setup DHCP</a></li>
+<li><a href="#setup-dns">setup DNS</a></li>
+<li><a href="#config-passwd-table">config passwd table</a></li>
+<li><a href="#predefine-node">Predefine node</a><ul>
+<li><a href="#declare-a-dynamic-range-of-addresses-for-discovery">Declare a dynamic range of addresses for discovery</a></li>
+<li><a href="#predefine-node-for-discovering">Predefine node for discovering</a></li>
+<li><a href="#setup-etchosts-and-dns">Setup /etc/hosts and DNS</a></li>
+<li><a href="#configure-conserver">Configure conserver</a></li>
+</ul></li>
+<li><a href="#discover-node">Discover node</a><ul>
+<li><a href="#discovery-fspbmcs">discovery FSP/BMCs</a></li>
+<li><a href="#power-on-the-hosts">power on the hosts</a></li>
+<li><a href="#discover-the-nodes">discover the nodes</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#firmware-updating-for-p8-le-machine">Firmware updating for P8 LE machine</a></li>
+<li><a href="#provisioning-os-for-powerkvm-and-vms">Provisioning OS for powerKVM and VMs</a><ul>
+<li><a href="#provisioning-powerkvm-for-p8-le-machine">Provisioning PowerKVM for p8 LE machine</a><ul>
+<li><a href="#create-the-osimage-object">create the osimage object</a></li>
+<li><a href="#define-the-node-object">Define the node object</a><ul>
+<li><a href="#option-1-use-node-object-updated-by-hardware-discovery-process">Option 1: use node object updated by hardware discovery process</a></li>
+<li><a href="#option-2-define-the-node-object-and-its-attribute-by-yourself">Option 2: define the node object and its attribute by yourself</a><ul>
+<li><a href="#setup-dns-1">Setup dns</a></li>
+<li><a href="#check-the-dns-setup">Check the DNS setup</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#prepare-the-petitboot-console-and-dhcpd-configurations">Prepare the petitboot, console and dhcpd configurations</a></li>
+<li><a href="#reboot-the-node-to-start-the-provisioning-process">Reboot the node to start the provisioning process</a></li>
+<li><a href="#check-bridge-setting-after-installation-finished">Check bridge setting after installation finished</a></li>
+<li><a href="#make-sure-the-powerkvm-is-able-to-connection-internet">Make sure the powerKVM is able to connection Internet</a></li>
+</ul></li>
+<li><a href="#steps-to-install-ubuntu-14.x-le-or-sles-12-le-for-powerkvm-vm-through-network">Steps to install ubuntu 14.x LE or SLES 12 LE for powerkvm VM through network</a><ul>
+<li><a href="#define-node-vm1-as-a-normal-vm-node">Define node &quot;vm1&quot; as a normal vm node:</a></li>
+<li><a href="#create-vm">create VM</a></li>
+<li><a href="#define-the-console-attributes-for-vm">Define the console attributes for VM</a></li>
+<li><a href="#create-le-osimage-object">Create LE osimage object</a></li>
+<li><a href="#prepare-grub2-and-dhcpd-configurations">Prepare grub2 and dhcpd configurations</a></li>
+<li><a href="#use-console-to-monitor-the-installing-process">Use console to monitor the installing process</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#provisioning-ubuntu-14.x-for-powernv">Provisioning Ubuntu 14.x for powerNV</a><ul>
+<li><a href="#create-ubuntu-le-osimage-object">Create ubuntu LE osimage object</a></li>
+<li><a href="#define-the-powernv-object">Define the powerNV object</a><ul>
+<li><a href="#option-1-use-node-object-updated-by-hardware-discovery-process-1">Option 1: use node object updated by hardware discovery process</a></li>
+<li><a href="#option-2-define-the-node-object-and-its-attribute-by-yourself-1">Option 2: define the node object and its attribute by yourself</a><ul>
+<li><a href="#setup-dns-2">Setup dns</a></li>
+<li><a href="#check-the-dns-setup-1">Check the DNS setup</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#prepare-the-petitboot-console-and-dhcpd-configurations-1">Prepare the petitboot, console and dhcpd configurations</a></li>
+<li><a href="#configure-node-boot-from-network">Configure node boot from network</a></li>
+<li><a href="#reboot-the-node-to-start-the-provisioning-process-1">Reboot the node to start the provisioning process</a></li>
+</ul></li>
+<li><a href="#energy-management">Energy Management</a></li>
+<li><a href="#appendix-a-installing-other-packages-with-ubuntu-official-mirror">Appendix A: Installing other packages with Ubuntu official mirror</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#install-xcat-on-management-node">Install xCAT on Management Node</a></li>
+<li><a href="#hardware-discovery-for-p8-le-machines">Hardware discovery for P8 LE machines</a>
+<ul>
+<li><a href="#configure-xcat">Configure xCAT</a></li>
+<li><a href="#configure-network-table">configure network table</a></li>
+</ul></li>
+<li><a href="#makenetworks">makenetworks</a></li>
+<li><a href="#tabdump-networks">tabdump networks</a></li>
+<li><a href="#netnamenetmaskmgtifnamegatewaydhcpservertftpservernameserversntpserverslogserversdynamicrangestaticrangestaticrangeincrementnodehostnameddnsdomainvlaniddomaincommentsdisable">netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,staticrange,staticrangeincrement,nodehostname,ddnsdomain,vlanid,domain,comments,disable</a>
+<ul>
+<li><a href="#setup-dhcp">setup DHCP</a></li>
+</ul></li>
+<li><a href="#chdef--t-site-dhcpinterfaceseth1eth2">chdef -t site dhcpinterfaces=eth1,eth2</a></li>
+<li><a href="#makedhcp--n">makedhcp -n</a></li>
+<li><a href="#makedhcp--a">makedhcp -a</a>
+<ul>
+<li><a href="#setup-dns">setup DNS</a></li>
+</ul></li>
+<li><a href="#chdef-%E2%80%93t-site-forwarders12341256">chdef –t site forwarders=1.2.3.4,1.2.5.6</a></li>
+<li><a href="#makedns--n">makedns -n</a>
+<ul>
+<li><a href="#config-passwd-table">config passwd table</a></li>
+<li><a href="#check-the-genesis-pkg">Check the genesis pkg:</a></li>
+</ul></li>
+<li><a href="#rpm--aq-%7C-grep-genesis">rpm -aq | grep genesis</a></li>
+<li><a href="#dpkg--l-%7C-grep-genesis">dpkg -l | grep genesis</a></li>
+<li><a href="#mknb-ppc64">mknb ppc64</a>
+<ul>
+<li><a href="#predefine-node">Predefine node</a></li>
+<li><a href="#declare-a-dynamic-range-of-addresses-for-discovery">Declare a dynamic range of addresses for discovery</a></li>
+</ul></li>
+<li><a href="#chdef--t-network-10_1_0_0-255_255_0_0-dynamicrange1011001-101100100">chdef -t network 10_1_0_0-255_255_0_0 dynamicrange=&quot;10.1.100.1-10.1.100.100&quot;</a></li>
+<li><a href="#chdef--t-network-10_2_0_0-255_255_0_0-dynamicrange1021001-102100100">chdef -t network 10_2_0_0-255_255_0_0 dynamicrange=&quot;10.2.100.1-10.2.100.100&quot;</a></li>
+<li><a href="#makedhcp--n-1">makedhcp -n</a></li>
+<li><a href="#makedhcp--a-1">makedhcp -a</a>
+<ul>
+<li><a href="#predefine-node-for-discovering">Predefine node for discovering</a></li>
+</ul></li>
+<li><a href="#nodeadd-node001-100-groupspkvmall">nodeadd node[001-100] groups=pkvm,all</a></li>
+<li><a href="#chdef-node001-mgtipmi-consipmi-ip1011011-bmc1021011-netbootpetitboot-bmcpasswordabc123-installnicmac-primarynicmac">chdef node001 mgt=ipmi cons=ipmi ip=10.1.101.1 bmc=10.2.101.1 netboot=petitboot bmcpassword=abc123 installnic=mac primarynic=mac</a></li>
+<li><a href="#chdef-node001-mtm8247-22l-serial10112ca">chdef node001 mtm=8247-22L serial=10112CA</a>
+<ul>
+<li><a href="#setup-etchosts-and-dns">Setup /etc/hosts and DNS</a></li>
+</ul></li>
+<li><a href="#makehosts-pkvm">makehosts pkvm</a></li>
+<li><a href="#makedns--n-1">makedns -n</a></li>
+<li><a href="#makedns--a">makedns -a</a>
+<ul>
+<li><a href="#configure-conserver">Configure conserver</a></li>
+</ul></li>
+<li><a href="#makeconservercf">makeconservercf</a></li>
+<li><a href="#service-conserver-stop">service conserver stop</a></li>
+<li><a href="#service-conserver-start">service conserver start</a>
+<ul>
+<li><a href="#discover-node">Discover node</a></li>
+<li><a href="#discovery-fspbmcs">discovery FSP/BMCs</a></li>
+</ul></li>
+<li><a href="#lsslp-%E2%80%93s-pbmc--w">lsslp –s PBMC -w</a></li>
+<li><a href="#lsdef-server-8247-22l-sn01112ca">lsdef Server-8247-22L-SN01112CA</a></li>
+<li><a href="#chdef-server-8247-22l-sn01112ca-bmcpasswordyour_password">chdef Server-8247-22L-SN01112CA bmcpassword=<your_password></a>
+<ul>
+<li><a href="#power-on-the-hosts">power on the hosts</a></li>
+</ul></li>
+<li><a href="#rpower-pbmc-on">rpower pbmc on</a>
+<ul>
+<li><a href="#discover-the-nodes">discover the nodes</a></li>
+</ul></li>
+<li><a href="#chdef-pbmc-consipmi">chdef pbmc cons=ipmi</a></li>
+<li><a href="#makeconsercf">makeconsercf</a></li>
+<li><a href="#rcons-server-8247-22l-sn01112ca">rcons Server-8247-22L-SN01112CA</a></li>
+<li><a href="#lsdef-node001">lsdef node001</a></li>
+<li><a href="#firmware-updating-for-p8-le-machine">Firmware updating for P8 LE machine</a></li>
+<li><a href="#provisioning-os-for-powerkvm-and-vms">Provisioning OS for powerKVM and VMs</a>
+<ul>
+<li><a href="#provisioning-powerkvm-for-p8-le-machine">Provisioning PowerKVM for p8 LE machine</a></li>
+<li><a href="#create-the-osimage-object">create the osimage object</a></li>
+<li><a href="#define-the-node-object">Define the node object</a>
+<ul>
+<li><a href="#option-1-use-node-object-updated-by-hardware-discovery-process">Option 1: use node object updated by hardware discovery process</a></li>
+<li><a href="#option-2-define-the-node-object-and-its-attribute-by-yourself">Option 2: define the node object and its attribute by yourself</a></li>
+<li><a href="#define-node">Define node</a></li>
+<li><a href="#setup-dns">Setup dns</a></li>
+<li><a href="#check-the-dns-setup">Check the DNS setup</a></li>
+</ul></li>
+<li><a href="#prepare-the-petitboot-console-and-dhcpd-configurations">Prepare the petitboot, console and dhcpd configurations</a></li>
+<li><a href="#reboot-the-node-to-start-the-provisioning-process">Reboot the node to start the provisioning process</a></li>
+<li><a href="#check-bridge-setting-after-installation-finished">Check bridge setting after installation finished</a></li>
+</ul></li>
+<li><a href="#brctl-show">brctl show</a>
+<ul>
+<li><a href="#make-sure-the-powerkvm-is-able-to-connection-internet">Make sure the powerKVM is able to connection Internet</a></li>
+<li><a href="#steps-to-install-ubuntu-14x-le-or-sles-12-le-for-powerkvm-vm-through-network">Steps to install ubuntu 14.x LE or SLES 12 LE for powerkvm VM through network</a></li>
+<li><a href="#define-node-vm1-as-a-normal-vm-node">Define node &quot;vm1&quot; as a normal vm node:</a></li>
+<li><a href="#create-vm">create VM</a></li>
+<li><a href="#define-the-console-attributes-for-vm">Define the console attributes for VM</a></li>
+<li><a href="#create-le-osimage-object">Create LE osimage object</a></li>
+<li><a href="#prepare-grub2-and-dhcpd-configurations">Prepare grub2 and dhcpd configurations</a></li>
+<li><a href="#use-console-to-monitor-the-installing-process">Use console to monitor the installing process</a></li>
+</ul></li>
+<li><a href="#provisioning-ubuntu-14x-for-powernv">Provisioning Ubuntu 14.x for powerNV</a>
+<ul>
+<li><a href="#create-ubuntu-le-osimage-object">Create ubuntu LE osimage object</a></li>
+<li><a href="#define-the-powernv-object">Define the powerNV object</a></li>
+<li><a href="#option-1-use-node-object-updated-by-hardware-discovery-process-1">Option 1: use node object updated by hardware discovery process</a></li>
+<li><a href="#option-2-define-the-node-object-and-its-attribute-by-yourself-1">Option 2: define the node object and its attribute by yourself</a>
+<ul>
+<li><a href="#define-node-1">Define node</a></li>
+<li><a href="#setup-dns-1">Setup dns</a></li>
+<li><a href="#check-the-dns-setup-1">Check the DNS setup</a></li>
+</ul></li>
+<li><a href="#prepare-the-petitboot-console-and-dhcpd-configurations-1">Prepare the petitboot, console and dhcpd configurations</a></li>
+<li><a href="#configure-node-boot-from-network">Configure node boot from network</a></li>
+<li><a href="#reboot-the-node-to-start-the-provisioning-process-1">Reboot the node to start the provisioning process</a></li>
+</ul></li>
+<li><a href="#energy-management">Energy Management</a></li>
+<li><a href="#appendix-a-installing-other-packages-with-ubuntu-official-mirror">Appendix A: Installing other packages with Ubuntu official mirror</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="install-xcat-on-management-node"><a href="#TOC">Install xCAT on Management Node</a></h2>
+<p>For xCAT installing on Rh or sles, pls reference https://sourceforge.net/p/xcat/wiki/XCAT_iDataPlex_Cluster_Quick_Start/#prepare-the-management-node-for-xcat-installation For xCAT installing on ubuntu, pls reference https://sourceforge.net/p/xcat/wiki/Ubuntu_Quick_Start/#install-xcat</p>
+<h2 id="hardware-discovery-for-p8-le-machines"><a href="#TOC">Hardware discovery for P8 LE machines</a></h2>
+<p>Hardware discovery is used to configure the FSP/BMC and get the hardware configuration information for the physical machine. In this document, we use the following configuration as the example:</p>
+<p>machine type/model: 8247-22L serial: 10112CA ip address for host: 10.1.101.1 ip address for FSP/BMC:10.2.101.1 password for FSP/BMC: abc123 the dynamic range for service network(used for hosts): 10.1.100.1-10.1.100.100 the dynamic range for management network(used for FSP/BMCs): 10.2.100.1-10.2.100.100 the nic information on MN for service network: eth1, 10.1.1.1/16 the nic information on MN for management network: eth2, 10.2.1.1/16</p>
+<p>Note: the management Node need NICs both for management network and service network.</p>
+<p>The hardware discovery process will be: ### Configure xCAT #### configure network table Normally, there will be at least two entries for the two subnet on MN in &quot;networks&quot; table after xCAT is installed. If not, pls run the following command to add networks in &quot;networks&quot; table.</p>
+<pre><code>#makenetworks</code></pre>
+<p>To check the networks, use:</p>
+<pre><code># tabdump networks
+#netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,staticrange,staticrangeincrement,nodehostname,ddnsdomain,vlanid,domain,comments,disable
+&quot;10_1_0_0-255_255_0_0&quot;,&quot;10.1.0.0&quot;,&quot;255.255.0.0&quot;,&quot;eth1&quot;,&quot;&lt;xcatmaster&gt;&quot;,,&quot;10.1.1.1&quot;,,,,,,,,,,,,
+&quot;10_2_0_0-255_255_0_0&quot;,&quot;10.2.0.0&quot;,&quot;255.255.0.0&quot;,&quot;eth2&quot;,&quot;&lt;xcatmaster&gt;&quot;,,&quot;10.2.1.1&quot;,,,,,,,,,,,,</code></pre>
+<h4 id="setup-dhcp"><a href="#TOC">setup DHCP</a></h4>
+<p>Set the correct NIC from which DHCP server provide service:</p>
+<pre><code>#chdef -t site dhcpinterfaces=eth1,eth2</code></pre>
+<p>Update DHCP configuration file:</p>
+<pre><code>#makedhcp -n
+#makedhcp -a</code></pre>
+<h4 id="setup-dns"><a href="#TOC">setup DNS</a></h4>
+<p>To get the hostname/IP pairs copied from /etc/hosts to the DNS on the MN: * Ensure that /etc/sysconfig/named does not have ROOTDIR set * Set site.forwarders to your site-wide DNS servers that can resolve site or public hostnames. The DNS on the MN will forward any requests it can’t answer to these servers. ~~~~ #chdef –t site forwarders=1.2.3.4,1.2.5.6 ~~~~ * Edit /etc/resolv.conf to point the MN to its own DNS. (Note: this won't be required in xCAT 2.8 and above.) ~~~~ search cluster nameserver 10.1.1.1 ~~~~ * Run makedns ~~~~ #makedns -n ~~~~</p>
+<h4 id="config-passwd-table"><a href="#TOC">config passwd table</a></h4>
+<p>To configure default password for FSP/BMCs</p>
+<pre><code>*#tabedit passwd
+*#key,username,password,cryptmethod,authdomain,comments,disable
+&quot;system&quot;,&quot;root&quot;,&quot;cluster&quot;,,,,
+&quot;ipmi&quot;,,&quot;PASSW0RD&quot;,,,,</code></pre>
+<p>Note: At present, no username is supported for FSP through IPMI #### Check the genesis pkg: Genesis pkg can be used to creates a network boot root image, it must be installed before do hardware discovery: *[RH] ~~~~ #rpm -aq | grep genesis xCAT-genesis-scripts-ppc64-xxxx.noarch xCAT-genesis-base-ppc64-xxxx.noarch ~~~~ *[ubuntu] ~~~~ # dpkg -l | grep genesis ii xcat-genesis-base-ppc64 2.9-xxxx all xCAT Genesis netboot image ii xcat-genesis-scripts 2.9-xxxx ppc64el xCAT genesis ~~~~</p>
+<p>If the two pkgs haven’t installed yet, pls installed them first and then run the following command to create the network boot root image.</p>
+<pre><code>#mknb ppc64</code></pre>
+<h3 id="predefine-node"><a href="#TOC">Predefine node</a></h3>
+<h4 id="declare-a-dynamic-range-of-addresses-for-discovery"><a href="#TOC">Declare a dynamic range of addresses for discovery</a></h4>
+<p>The dynamic range are used for assigning temporary IP adddress for FSP/BMCs and hosts:</p>
+<pre><code>#chdef -t network 10_1_0_0-255_255_0_0 dynamicrange=&quot;10.1.100.1-10.1.100.100&quot;
+#chdef -t network 10_2_0_0-255_255_0_0 dynamicrange=&quot;10.2.100.1-10.2.100.100&quot;
+#makedhcp -n
+#makedhcp -a</code></pre>
+<h4 id="predefine-node-for-discovering"><a href="#TOC">Predefine node for discovering</a></h4>
+<p>The attributes for predefined node are scheduled by system admin. He shall make a plan that what ip address, bmc address, bmc password... can be used for the specified hosts with specified MTMS.</p>
+<pre><code>#nodeadd node[001-100] groups=pkvm,all
+#chdef node001 mgt=ipmi cons=ipmi ip=10.1.101.1 bmc=10.2.101.1 netboot=petitboot bmcpassword=abc123 installnic=mac primarynic=mac
+#chdef node001 mtm=8247-22L serial=10112CA</code></pre>
+<h4 id="setup-etchosts-and-dns"><a href="#TOC">Setup /etc/hosts and DNS</a></h4>
+<p>After the node and its IP address are defined, the admin need to create /etc/hosts file from node definition:</p>
+<pre><code>#makehosts pkvm</code></pre>
+<p>Add the node/ip mapping into DNS:</p>
+<pre><code>#makedns -n
+#makedns -a</code></pre>
+<h4 id="configure-conserver"><a href="#TOC">Configure conserver</a></h4>
+<p>The xCAT rcons command uses the conserver package to provide support for multiple read-only consoles on a single node and the console logging. To add or remove new nodes for conserver support:</p>
+<pre><code>#makeconservercf
+#service conserver stop
+#service conserver start</code></pre>
+<h3 id="discover-node"><a href="#TOC">Discover node</a></h3>
+<h4 id="discovery-fspbmcs"><a href="#TOC">discovery FSP/BMCs</a></h4>
+<p>The FSP/BMCs will automatically powered on once the physical machine is powered on. Currently, we can use SLP to find all the FSPs for the p8 LE host:</p>
+<pre><code>#lsslp –s PBMC -w</code></pre>
+<p>The PBMC node will be like this:</p>
+<pre><code># lsdef Server-8247-22L-SN01112CA
+Object name: Server-8247-22L-SN01112CA
+ bmc=&lt;fsp_ip1&gt;,&lt;fsp_ip2&gt;
+ groups=pbmc,all
+ hidden=0
+ hwtype=pbmc
+ mgt=ipmi
+ mtm=8247-22L
+ nodetype=mp
+ postbootscripts=otherpkgs
+ postscripts=syslog,remoteshell,syncfiles
+ serial=10112CA</code></pre>
+<p>If you know the special FSP/BMCs doesn't use the default password configured in 'passwd' table, pls use the following command to add special password for the specified PBMC node.</p>
+<pre><code>#chdef Server-8247-22L-SN01112CA bmcpassword=&lt;your_password&gt;</code></pre>
+<h4 id="power-on-the-hosts"><a href="#TOC">power on the hosts</a></h4>
+<pre><code>#rpower pbmc on</code></pre>
+<h4 id="discover-the-nodes"><a href="#TOC">discover the nodes</a></h4>
+<p>After hosts is powered on, the discover process will start automatically. If you'd like to monitor the discovery process, you can use:</p>
+<pre><code>#chdef pbmc cons=ipmi
+#makeconsercf
+#rcons Server-8247-22L-SN01112CA</code></pre>
+<p>After the discovery finished, the hardware information will be updated to the predefined node</p>
+<pre><code>#lsdef node001
+Object name: node001
+arch=ppc64
+bmc=10.2.101.1
+bmcpassword=abc123
+cons=ipmi
+cpucount=192
+cputype=POWER8E (raw), altivec supported
+groups=pkvm,all
+installnic=mac
+ip=10.1.101.1
+mac=6c:ae:8b:02:12:50
+memory=65118MB
+mgt=ipmi
+mtm=8247-22L
+netboot=petitboot
+postbootscripts=otherpkgs
+postscripts=syslog,remoteshell,syncfiles
+primarynic=mac
+serial=10112CA
+statustime=10-15-2014 01:54:22
+supportedarchs=ppc64</code></pre>
+<h2 id="firmware-updating-for-p8-le-machine"><a href="#TOC">Firmware updating for P8 LE machine</a></h2>
+<p>The firmware updating process can be done during discovery or at a later time. The steps are:</p>
+<ol style="list-style-type: decimal">
+<li>Download firmware file from Support Portal in IBM webpage(www.ibm.com). The firmware name is like this: 01SVXXX_XXX_XXX.rpm</li>
+<li><p>Extract the firmware img file from the rpm file. *[RH or SLES] ~~~~ # rpm -i 01SV810_061_054.rpm --ignoreos Then, you will find the image file 01SV810_xxx_xxx.img under /tmp/fwupdate/ ~~~~ <em>[Ubuntu] ~~~~ # apt-get install alien # alien 0SVXXX_XXX_XXX.rpm #It will generate a deb pkg like 01sv810xxx.deb # dpkg -i 01svXXX_XXX_XXX</em>.deb Then, you will find the image file 01SV810_xxx_xxx.img under /tmp/fwupdate/ ~~~~</p></li>
+<li>Put it into a tarball:
+<ul>
+<li>The firmware img file extracted from rpm pkg.</li>
+<li>a runme.sh script that you create that runs the executable with appropriate flags</li>
+<li>For example: *#cd /install/firmware/ *#ls -lh ~~~~ total 197M -rw-r--r-- 1 root root 197M Oct 10 08:10 01SV810_061_054.img -rwxr-xr-x 1 root root 149 Oct 13 07:36 runme.sh ~~~~<br /> *#cat runme.sh ~~~~ echo &quot;================Start update&quot; /bin/update_flash -f ./01SV810_061_054.img ~~~~ *# chmod +x runme.sh # tar -zcvf firmware-update.tgz . ~~~~ ./ ./runme.sh ./01SV810_061_054.img tar: .: file changed as we read it ~~~~</li>
+</ul></li>
+<li>start firmware update:
+<ul>
+<li>Option 1 - update during discovery: If you want to update the firmware during the node discovery process, ensure you have already added a dynamic range to the networks table and run &quot;makedhcp -n&quot;. Then update the chain table to do both bmcsetup and the firmware update: ~~~~ *#chdef node001 chain=&quot;runcmd=bmcsetup,runimage=http://mgmtnode/install/firmware/firmware-update.tgz,shell&quot; ~~~~</li>
+<li>Option 2 - update after node deployment: If you are updating the firmware at a later time (i.e. not during the node discovery process), tell nodeset that you want to do the firmware update, and then set currchain to drop the nodes into a shell when they are done: ~~~~ *#nodeset node001 runimage=http://mgmtnode/install/firmware/firmware-update.tgz,boot ~~~~</li>
+<li>Option 3 - update with xcat xdsh: If the machine is up and running, and have OS installed. You can use the following commands to update firmware ~~~~ <em>#xdcp node001 /tmp/fwupdate/01SV810_061_054.img /tmp/ | xdsh node001 &quot;/usr/sbin/update_flash -f /tmp/01SV810_061_054.img&quot; ~~~~</em>#rpower node001 reset</li>
+</ul></li>
+<li><p>commit or reject the updated image after the machine is up and running.</p>
+<ul>
+<li><p>To commit ~~~~ *#xdsh node001 &quot;/usr/sbin/update_flash -c&quot; ~~~~</p></li>
+<li><p>To reject ~~~~ *#xdsh node001 &quot;/usr/sbin/update_flash -r&quot; ~~~~</p></li>
+</ul></li>
+</ol>
+<h2 id="provisioning-os-for-powerkvm-and-vms"><a href="#TOC">Provisioning OS for powerKVM and VMs</a></h2>
+<h3 id="provisioning-powerkvm-for-p8-le-machine"><a href="#TOC">Provisioning PowerKVM for p8 LE machine</a></h3>
+<p>This is the process for setting up PowerKVM with xCAT</p>
+<h4 id="create-the-osimage-object"><a href="#TOC">create the osimage object</a></h4>
+<pre><code> copycds /iso/ibm-powerkvm-2.1.1.0-22.0-ppc64-gold-201410191558.iso</code></pre>
+<p>Currently, copycds only support PowerKVM Release 2.1.1 Build 22 Gold, for other build, you need to use &lt;-n&gt; option to specify the distroname.</p>
+<pre><code> copycds /iso/ibm-powerkvm-2.1.1.0-18.1-ppc64-gold-201410141637.iso -n pkvm2.1.1</code></pre>
+<p>To check the osimage object created by copycds, run the following:</p>
+<pre><code>   lsdef -t osimage
+   pkvm2.1.1-ppc64-install-compute (osimage)</code></pre>
+<h4 id="define-the-node-object"><a href="#TOC">Define the node object</a></h4>
+<h5 id="option-1-use-node-object-updated-by-hardware-discovery-process"><a href="#TOC">Option 1: use node object updated by hardware discovery process</a></h5>
+<p>The hardware discovery process have updated most of attributes for the specified node, you just need modify the following attributes:</p>
+<pre><code>   chdef node001 tftpserver=10.1.1.1 conserver=10.1.1.1 nfsserver=10.1.1.1</code></pre>
+<h5 id="option-2-define-the-node-object-and-its-attribute-by-yourself"><a href="#TOC">Option 2: define the node object and its attribute by yourself</a></h5>
+<p>The following steps are needed if you don't have done hardware discovery. ###### Define node</p>
+<pre><code>   mkdef node001 groups=all,kvm cons=ipmi mgt=ipmi
+   chdef node001 bmc=10.2.101.1 bmcpassword=abc123
+   chdef node001 mac=6c:ae:8b:02:12:50 installnic=mac primarynic=mac
+   chdef node001 tftpserver=10.1.1.1 conserver=10.1.1.1 nfsserver=10.1.1.1</code></pre>
+<p>Note: The discovery is not supported. So the mac address must be obtained by user.</p>
+<h6 id="setup-dns-1"><a href="#TOC">Setup dns</a></h6>
+<p>define the name domain for this cluster</p>
+<pre><code>  chdef -t site domain=cluster.com</code></pre>
+<p>Define IP address for the node</p>
+<pre><code>  chdef node001 ip=10.1.101.1
+  makedns –n</code></pre>
+<p>Config DNS server, the resolv.conf file will be similar to:</p>
+<pre><code>cat /etc/resolv.conf
+domain cluster.com
+search cluster.com
+nameserver 10.1.1.1</code></pre>
+<h6 id="check-the-dns-setup"><a href="#TOC">Check the DNS setup</a></h6>
+<pre><code>nslookup node001
+Server: 10.1.1.1
+Address: 10.1.1.1
+ 
+Name: node001.cluster.com
+Address: 10.1.101.1</code></pre>
+<h4 id="prepare-the-petitboot-console-and-dhcpd-configurations"><a href="#TOC">Prepare the petitboot, console and dhcpd configurations</a></h4>
+<pre><code>  chdef node001 netboot=petitboot
+  chdef node001 serialport=0 serialspeed=115200
+  makedhcp -n
+  makedhcp -a
+  nodeset node001 osimage=pkvm2.1.1-ppc64-install-compute
+  node001: install pkvm2.1.1-ppc64-compute
+  rsetboot node001 net</code></pre>
+<h4 id="reboot-the-node-to-start-the-provisioning-process"><a href="#TOC">Reboot the node to start the provisioning process</a></h4>
+<pre><code>rpower node001 on/reset</code></pre>
+<h4 id="check-bridge-setting-after-installation-finished"><a href="#TOC">Check bridge setting after installation finished</a></h4>
+<p>You can get the bridge information like following after pkvm host installation is done:</p>
+<pre><code># brctl show
+bridge name     bridge id               STP enabled     interfaces
+br0             8000.000000000000       no              eth0</code></pre>
+<p>If you don't have that, it probably that you didn't use the xCAT post install script. You can hack it together quickly by running:</p>
+<pre><code>    IPADDR=10.1.101.1/16
+    brctl addbr br0
+    brctl addif br0 eth0
+    brctl setfd br0 0
+    ip addr add dev br0 $IPADDR
+    ip link set br0 up
+    ip addr del dev eth0 $IPADDR</code></pre>
+<h4 id="make-sure-the-powerkvm-is-able-to-connection-internet"><a href="#TOC">Make sure the powerKVM is able to connection Internet</a></h4>
+<p>For installing ubuntu LE through network, the VM need to access Internet when doing installing. So pls make sure the host is able to connection Internet.</p>
+<h3 id="steps-to-install-ubuntu-14.x-le-or-sles-12-le-for-powerkvm-vm-through-network"><a href="#TOC">Steps to install ubuntu 14.x LE or SLES 12 LE for powerkvm VM through network</a></h3>
+<h4 id="define-node-vm1-as-a-normal-vm-node"><a href="#TOC">Define node &quot;vm1&quot; as a normal vm node:</a></h4>
+<pre><code>
+  mkdef vm1 groups=vm,all
+  chdef vm1 vmhost=node001
+  chdef vm1 tftpserver=10.1.1.1 conserver=10.1.1.1 nfsserver=10.1.1.1
+  chdef vm1 ip=x.x.x.x
+  makehosts vm1
+  makedns -n
+  makedns -a</code></pre>
+<h4 id="create-vm"><a href="#TOC">create VM</a></h4>
+<pre><code>   chdef vm1 mgt=kvm cons=kvm
+   chdef vm1 vmcpus=2 vmmemory=4096 vmnics=br0 vmnicnicmodel=virtio vmstorage=dir:///var/lib/libvirt/images/
+   optional:
+
+   chtab node=vm1 vm.vidpassword=abc123  (for monitor the installing process from kimchi)
+
+   mkvm vm1 -s 20G</code></pre>
+<h4 id="define-the-console-attributes-for-vm"><a href="#TOC">Define the console attributes for VM</a></h4>
+<pre><code>   chdef vm1 serialport=0 serialspeed=115200</code></pre>
+<p>For more information about modifying VM attributes, pls refer to <a href="https://sourceforge.net/p/xcat/wiki/XCAT_Virtualization_with_KVM/#define-the-attributes-of-virtual-machine">Define Virtual Machines attributes</a></p>
+<h4 id="create-le-osimage-object"><a href="#TOC">Create LE osimage object</a></h4>
+<p>After you download the latest LE ISO, pls run the following command to create osimage objects.</p>
+<pre><code>  Ubuntu:
+  copycds trusty-server-ppc64el.iso</code></pre>
+<pre><code>  SLES:
+  copycds SLE-12-Server-DVD-ppc64le-GM-DVD1.is</code></pre>
+<p>You can check the /install/<os>/ppc64el directory have been created. And you can find the osimage objects with:</p>
+<pre><code>   Ubuntu:
+   lsdef -t osimage
+   ubuntu14.04-ppc64el-install-compute  (osimage)
+   ubuntu14.04-ppc64el-install-kvm  (osimage)
+   ubuntu14.04-ppc64el-netboot-compute  (osimage)
+   ubuntu14.04-ppc64el-statelite-compute  (osimage)</code></pre>
+<pre><code>   SLES:
+   lsdef -t osimage
+   sles12-ppc64le-install-compute  (osimage)
+   sles12-ppc64le-install-iscsi  (osimage)
+   sles12-ppc64le-install-xen  (osimage)
+   sles12-ppc64le-netboot-compute  (osimage)
+   sles12-ppc64le-netboot-service  (osimage)
+   sles12-ppc64le-stateful-mgmtnode  (osimage)
+   sles12-ppc64le-statelite-compute  (osimage)
+   sles12-ppc64le-statelite-service  (osimage)</code></pre>
+<p>For Ubuntu, in order to boot from network, you need to download the mini.iso from &quot;http://ports.ubuntu.com/ubuntu-ports/dists/$(lsb_release -sc)/main/installer-ppc64el/current/images/netboot/&quot;, then mount the mini.iso to a tmp directory. For <strong>ubuntu 14.04.2</strong>, pls download the mini.iso from &quot;http://ports.ubuntu.com/ubuntu-ports/dists/trusty-updates/main/installer-ppc64el/current/images/utopic-netboot/&quot;.</p>
+<pre><code>  mkdir /tmp/iso
+  mount -o loop mini.iso /tmp/iso
+  ls /tmp/iso/install
+  initrd.gz  vmlinux</code></pre>
+<p>Then, copy the file /tmp/iso/install/initrd.gz to /install/<ubuntu-version>/ppc64el/install/netboot.</p>
+<pre><code>  mkdir -p  /install/&lt;ubuntu-version&gt;/ppc64el/install/netboot
+  cp  /tmp/iso/install/initrd.gz  /install/&lt;ubuntu-version&gt;/ppc64el/install/netboot</code></pre>
+<h4 id="prepare-grub2-and-dhcpd-configurations"><a href="#TOC">Prepare grub2 and dhcpd configurations</a></h4>
+<p>Make sure the grub2 had been installed on your Management Node:</p>
+<pre><code>  rpm -aq | grep grub2
+  grub2-xcat-1.0-1.noarch</code></pre>
+<p>Note: If you are working with xCAT-dep oldder than 20141012, the modules for xCAT shipped grub2 can not support ubuntu LE smoothly. So the following steps needed to complete the grub2 setting.</p>
+<pre><code>  rm /tftpboot/boot/grub2/grub2.ppc
+  cp /tftpboot/boot/grub2/powerpc-ieee1275/core.elf /tftpboot/boot/grub2/grub2.ppc
+  /bin/cp -rf /tmp/iso/boot/grub/powerpc-ieee1275/elf.mod /tftpboot/boot/grub2/powerpc-ieee1275/</code></pre>
+<p>Set 'netboot' attribute to 'grub2'</p>
+<pre><code>  chdef vm1 netboot=grub2</code></pre>
+<p>Config password for root:</p>
+<pre><code>chtab key=system passwd.username=root passwd.password=xxxxxx</code></pre>
+<p>Create grub2 boot configuration file by running nodeset:</p>
+<pre><code>Ubuntu:
+nodeset vm1 osimage=ubuntu14.04-ppc64el-install-compute</code></pre>
+<pre><code>SLES:
+nodeset vm1 osimage=sles12-ppc64le-install-compute</code></pre>
+<p>Send a hard reset to cycle the VM to start OS installation</p>
+<pre><code>rpower vm1 boot</code></pre>
+<h4 id="use-console-to-monitor-the-installing-process"><a href="#TOC">Use console to monitor the installing process</a></h4>
+<p>On the pkvm host, pls make sure firewalld service had been stopped.</p>
+<pre><code>chkconfig firewalld off</code></pre>
+<p>Note: Forwarding request to systemctl will disable firewalld.service.</p>
+<pre><code>  rm /etc/systemd/system/basic.target.wants/firewalld.service 
+  rm /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service</code></pre>
+<p>Then, run wvid vm1 on MN</p>
+<pre><code>wvid vm1</code></pre>
+<p>Besides we could use kimchi to monitor the installing process</p>
+<pre><code> Open &quot;https://&lt;pkvm_ip&gt;:8001&quot; to open kimchi
+ There will be a “connect” button you can use below &quot;Actions&quot; button and input Password required:abc123 your have just set before mkvm
+ Then you could get the console</code></pre>
+<p>To use the text console ~~~~ makeconservercf rcons vm1 ~~~~</p>
+<h2 id="provisioning-ubuntu-14.x-for-powernv"><a href="#TOC">Provisioning Ubuntu 14.x for powerNV</a></h2>
+<p>The steps below are used to provisioning ubuntu LE for powerNV.</p>
+<h3 id="create-ubuntu-le-osimage-object"><a href="#TOC">Create ubuntu LE osimage object</a></h3>
+<pre><code>copycds trusty-server-ppc64el.iso</code></pre>
+<pre><code>lsdef -t osimage
+ubuntu14.04-ppc64el-install-compute (osimage)
+ubuntu14.04-ppc64el-install-kvm (osimage)
+ubuntu14.04-ppc64el-netboot-compute (osimage)
+ubuntu14.04-ppc64el-statelite-compute (osimage)</code></pre>
+<p>And in order to boot from network, you need to download the mini.iso from &quot;http://ports.ubuntu.com/ubuntu-ports/dists/$(lsb_release -sc)/main/installer-ppc64el/current/images/netboot/&quot;, then mount the mini.iso to a tmp directory. For <strong>ubuntu 14.04.2</strong>, pls download the mini.iso from &quot;http://ports.ubuntu.com/ubuntu-ports/dists/trusty-updates/main/installer-ppc64el/current/images/utopic-netboot/&quot;.</p>
+<p>~~~~ mkdir /tmp/iso mount -o loop mini.iso /tmp/iso ls /tmp/iso/install initrd.gz vmlinux ~~~~ Then, copy the file /tmp/iso/install/initrd.gz to /install/<ubuntu-version>/ppc64el/install/netboot. ~~~~ mkdir -p /install/<ubuntu-version>/ppc64el/install/netboot cp /tmp/iso/install/initrd.gz /install/<ubuntu-version>/ppc64/installel/netboot ~~~~</p>
+<h3 id="define-the-powernv-object"><a href="#TOC">Define the powerNV object</a></h3>
+<h4 id="option-1-use-node-object-updated-by-hardware-discovery-process-1"><a href="#TOC">Option 1: use node object updated by hardware discovery process</a></h4>
+<p>The hardware discovery process have updated most of attributes for the specified node, you just need modify the following attributes: ~~~~ chdef node001 tftpserver=10.1.1.1 conserver=10.1.1.1 nfsserver=10.1.1.1 ~~~~</p>
+<h4 id="option-2-define-the-node-object-and-its-attribute-by-yourself-1"><a href="#TOC">Option 2: define the node object and its attribute by yourself</a></h4>
+<p>The following steps are needed if you don't have done hardware discovery. ##### Define node ~~~~ mkdef node001 groups=all,kvm cons=ipmi mgt=ipmi chdef node001 bmc=10.2.101.1 bmcpassword=abc123 chdef node001 mac=6c:ae:8b:02:12:50 installnic=mac primarynic=mac chdef node001 tftpserver=10.1.1.1 conserver=10.1.1.1 nfsserver=10.1.1.1 ~~~~</p>
+<p>Note: The discovery is not supported. So the mac address must be obtained by user.</p>
+<h5 id="setup-dns-2"><a href="#TOC">Setup dns</a></h5>
+<p>define the name domain for this cluster</p>
+<pre><code>  chdef -t site domain=cluster.com</code></pre>
+<p>Define IP address for the node</p>
+<pre><code>  chdef node001 ip=10.1.101.1
+  makedns –n</code></pre>
+<p>Config DNS server, the resolv.conf file will be similar to:</p>
+<pre><code>cat /etc/resolv.conf
+domain cluster.com
+search cluster.com
+nameserver 10.1.1.1</code></pre>
+<h5 id="check-the-dns-setup-1"><a href="#TOC">Check the DNS setup</a></h5>
+<pre><code>nslookup node001
+Server: 10.1.1.1
+Address: 10.1.1.1
+ 
+Name: node001.cluster.com
+Address: 10.1.101.1</code></pre>
+<h3 id="prepare-the-petitboot-console-and-dhcpd-configurations-1"><a href="#TOC">Prepare the petitboot, console and dhcpd configurations</a></h3>
+<pre><code>chdef node001 serialport=0 serialspeed=115200
+nodeset node001 osimage=ubuntu14.04-ppc64el-install-compute
+node001: install ubuntu14.04-ppc64el-compute</code></pre>
+<h3 id="configure-node-boot-from-network"><a href="#TOC">Configure node boot from network</a></h3>
+<pre><code>rsetboot node001 net</code></pre>
+<h3 id="reboot-the-node-to-start-the-provisioning-process-1"><a href="#TOC">Reboot the node to start the provisioning process</a></h3>
+<pre><code>rpower node001 on/reset</code></pre>
+<h2 id="energy-management"><a href="#TOC">Energy Management</a></h2>
+<p>IBM Power Servers support the Energy management capabilities like to query and monitor the</p>
+<ul>
+<li>Power Saving Status</li>
+<li>Power Capping Status</li>
+<li>Power Consumption</li>
+<li>CPU Frequency</li>
+<li>Ambient temperature</li>
+<li>Fan Speed</li>
+<li>...</li>
+</ul>
+<p>and to set the</p>
+<ul>
+<li>Power Saving</li>
+<li>Power Capping</li>
+<li>CPU frequency</li>
+</ul>
+<p>xCAT offers the command 'renergy' to manipulate the Energy related features for Power Server. Refer to the man page of <a href="http://xcat.sourceforge.net/man1/renergy.1.html">renergy</a> to get the detail of usage.</p>
+<h2 id="appendix-a-installing-other-packages-with-ubuntu-official-mirror"><a href="#TOC">Appendix A: Installing other packages with Ubuntu official mirror</a></h2>
+<p><a href="Installing_other_packages_with_Ubuntu_official_mirror">Installing_other_packages_with_Ubuntu_official_mirror</a></p>
+</body>
+</html>

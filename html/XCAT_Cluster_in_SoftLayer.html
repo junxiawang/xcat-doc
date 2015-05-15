@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-in-softlayer">xCAT in SoftLayer</a><ul>
+<li><a href="#use-softlayers-bare-metal-os-provisioning">Use SoftLayer's Bare Metal OS Provisioning</a></li>
+<li><a href="#have-xcat-provision-the-os">Have xCAT Provision the OS</a></li>
+<li><a href="#use-xcat-to-provision-the-os-via-the-out-of-band-network">Use xCAT to Provision the OS via the Out-of-Band Network</a></li>
+</ul></li>
+<li><a href="#hybrid-xcat-softlayer-cluster">Hybrid xCAT SoftLayer Cluster</a></li>
+<li><a href="#staging">Staging</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-in-softlayer">xCAT in SoftLayer</a></li>
+<li><a href="#use-softlayers-bare-metal-os-provisioning">Use SoftLayer's Bare Metal OS Provisioning</a></li>
+<li><a href="#have-xcat-provision-the-os">Have xCAT Provision the OS</a></li>
+<li><a href="#use-xcat-to-provision-the-os-via-the-out-of-band-network">Use xCAT to Provision the OS via the Out-of-Band Network</a></li>
+<li><a href="#hybrid-xcat-softlayer-cluster">Hybrid xCAT SoftLayer Cluster</a></li>
+<li><a href="#staging">Staging</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>The purpose of this feature is to support xCAT clusters with a SoftLayer cloud. This request is from GTS to provide opensource HPC Cloud offerings to their customers.</p>
+<p>Here are the aspects of the propsal:</p>
+<ul>
+<li>Support an xCAT cluster totally resident in a SoftLayer Cloud</li>
+<li>Cluster system management will be predominantly driven from the xCAT management node. There may be certain functions that will require direct interaction with the SoftLayer portal. These should be limited as much as possible.</li>
+<li>customer uses SoftLayer portal to request nodes, and then xcat discovers/manages those nodes as part of the cluster</li>
+<li>consider baremetal nodes</li>
+<li>consider virtual machines</li>
+<li>xcat uses the SoftLayer APIs to request nodes and automatically adds them to the xCAT cluster</li>
+<li>Support a hybrid cluster comprised of an existing customer's on-premise xCAT cluster being extended with nodes from a SoftLayer Cloud</li>
+</ul>
+<h2 id="xcat-in-softlayer"><a href="#TOC">xCAT in SoftLayer</a></h2>
+<p>The customer uses the SoftLayer portal to request the nodes and other elements of the cloud.</p>
+<p>The customer installs the xCAT management node software on one of those nodes</p>
+<p>A <a href="https://sourceforge.net/p/xcat/xcat-core/ci/master/tree/xCAT-SoftLayer/bin/getslnodes">new xCAT script</a> calls the SL API to query the information for all the bare metal nodes in that softlayer account, and produces a stanza file that can be piped into mkdef -z.</p>
+<pre><code> The key attributes this script gets are: ipmi.bmc, ipmi.password, ipmi.username, mac.mac,hosts.ip, and the hostname and root pw (which it puts in nodelist.comment) </code></pre>
+<p>An OS image is deployed to those nodes with the required HPC software stack. Additional software can be installed as needed. This assumes full-disk install on the nodes. We do not see a requirement for diskless node support at this time.</p>
+<p>The end user documentation for using xCAT on SoftLayer is: [Using_xCAT_in_SoftLayer]</p>
+<p>How do we do OS deployment? There are several options discussed in the following sections.</p>
+<h3 id="use-softlayers-bare-metal-os-provisioning"><a href="#TOC">Use SoftLayer's Bare Metal OS Provisioning</a></h3>
+<p>Through the softlayer portal, you can request that it put one of the following OSes on the nodes: centos/rhel, debian/ubuntu, freebsd, windows. If one of these is that OS you want, you can have SL do that and then just have xCAT manage OS upgrades, additional rpms, and HPC software through updatenode (ospkgs, otherpkgs). The drawback is that this can take SL 2 to 4 hours to complete provision the OS.</p>
+<h3 id="have-xcat-provision-the-os"><a href="#TOC">Have xCAT Provision the OS</a></h3>
+<p>If the OS you need is not in the list above (e.g. SLES), then you need xCAT to do the bare metal provisioning of the OS. Using pxe and dhcp is problematic, because the nodes can often be on different vlans, and the delay when bringing nics up will cause it to time out even on the same vlan (see next point).</p>
+<p>SoftLayer has a pretty sophisticated private network that allows them to on-demand configure private vlans that only a single tenant can communicate on. But one of the side effects of this is that when a bare metal svr's nics is brought up on one of the private vlans, it takes about 60 seconds before that nic can successfully send an ip packet. This is much longer than any of the default timeouts used in the network installation process, so we have to insert waits in key points during the process in order for it to succeed. Several things are needed:</p>
+<ul>
+<li>instead of pxe booting the node, we take advantage of the fact that SL always puts on OS image on the node (even if it isn't the version we want). So we use a new command called <a href="https://sourceforge.net/p/xcat/xcat-core/ci/master/tree/xCAT-SoftLayer/bin/pushinitrd">pushinitrd</a> to copy the initrd, kernel, and kernel params to grub on all of the nodes. (This script uses <a href="https://sourceforge.net/p/xcat/xcat-core/ci/master/tree/xCAT-SoftLayer/bin/modifygrub">modifygrub</a> under the covers.)</li>
+<li>to avoid additional dhcp requests, we also use a static ip for the node:
+<ul>
+<li>the pushinitrd script above sets the ip/submask/gateway/hostname/dns info as kernel parameters</li>
+<li>for scripted install, we provide a new <a href="https://sourceforge.net/p/xcat/xcat-core/ci/master/tree/xCAT-SoftLayer/share/xcat/install/sles/compute.sles11.softlayer.tmpl">compute.sles11.softlayer.tmpl</a> file that sets the dns info and static nic ip info</li>
+<li>for sysclone, genesis is changed to use static ip if appropriate kernel parms are set, and we make sure systemimage (SI) doesn't try to use dhcp or restart the network in the genesis initrd by setting kernel parms like IPADDR, NETMASK, etc.</li>
+</ul></li>
+<li>to deal with delay when the nic is brought up:
+<ul>
+<li>for scripted install:</li>
+<li>in place of post.sles and post.sles.common, we provide <a href="https://sourceforge.net/p/xcat/xcat-core/ci/master/tree/xCAT-SoftLayer/share/xcat/install/scripts/post.sles.softlayer.common">post.sles.softlayer.common</a> which avoids (what i think is) an unnecessary reboot and skips some dhcp config</li>
+<li>pushinitrd hacks the autoinst file (after nodeset has built it) to insert code that will hack the /etc/init.d/network script on the node so that it will not return until it is able to ping successfully on the install nic to the mn. (There are files/dirs specifically for doing things when the nics are brought up (in sles /etc/sysconfig/network/if-up.d/, in rhel /sbin/ifup-local), but these aren't run by autoyast right after the reboot when it is doing its configuration.)</li>
+<li>in the real OS, the nics are always configured in a bond (one for the private network and one for the public network) so that when the system is booted for real (after the autoyast config stage), the nics come up quickly. (This is what SL does when they install an os.)</li>
+<li>for sysclone install:</li>
+<li>after configuring the install nic with a static ip, genesis pings the mn until it can reach it.</li>
+<li>in the real OS, the nics are always configured in a bond (one for the private network and one for the public network) so that when the system is booted for real (after the autoyast config stage), the nics come up quickly. (This is what SL does when they install an os.)</li>
+</ul></li>
+</ul>
+<p>The main changes/additions needed to support centos/rhel (in addition to the current sles support) are:</p>
+<ul>
+<li>for scripted install:
+<ul>
+<li>tmpl file: use static ip info instead of dhcp, and set route for private network. See my compute.sles11.softlayer.tmp as an example.</li>
+<li>pushinitrd: insert /etc/init.d/network wait hack in different place in autoinst file</li>
+<li>modifygrub: change the kernel parameter names to be what kickstart needs to use static ip in its initrd</li>
+</ul></li>
+<li>for sysclone:
+<ul>
+<li>15all.configefi: add code to modify grub the redhat way</li>
+<li>16all.updatenetwork: this has the code for redhat, but needs to be tested</li>
+<li>20all.mkinitrd_for_suse: change the name to more generic and add support for dracut</li>
+</ul></li>
+</ul>
+<h3 id="use-xcat-to-provision-the-os-via-the-out-of-band-network"><a href="#TOC">Use xCAT to Provision the OS via the Out-of-Band Network</a></h3>
+<p>Investigate whether SuperMicro hardware has support to load the initrd over the out-of-band hdwctrl network, similar to what flexcat does for fsm. SuperMicro's BMC web interface does have an option for remote usb or cd, so this looks promising. (You get to it through the bmc web interface, Remote Contronl, Console Redirection, when the console window comes up, choose the Virtural Media-&gt;Virtual Storage menu.)</p>
+<h2 id="hybrid-xcat-softlayer-cluster"><a href="#TOC">Hybrid xCAT SoftLayer Cluster</a></h2>
+<p>There are many issues with trying to directly extend a customer's local cluster with additional nodes from a SoftLayer cloud. The largest issue is networking. The SL nodes will be on external networks not directly connected to the xCAT management node.</p>
+<p>One thought was to investigate installing a service node in the SL cloud extension to manage those nodes, but the SN would need remote data base access to the xCAT management node, and that most likely will not have adequate performance across a remote network.</p>
+<p>Another consideration is to introduce a new concept of xCAT &quot;remote nodes&quot;:</p>
+<pre><code> \- the customer has an existing xCAT cluster running in their local on-premise environment 
+ \- the customer sets up another xCAT cluster in SoftLayer with its own management node as described above 
+ \- the customer also adds those SL nodes to the local xCAT management node as &quot;remote nodes&quot;, whose service node is defined as the remote SL management node (with a new &quot;remote server&quot; attr set) 
+ \- when commands are run on the local MN, they can be run for a mix of local and remote nodes. The &quot;pre-process&quot; function will need to check the new &quot;remote server&quot; attr and not set the &quot;pre-processed&quot; flag in the request. The request will then be sent to the xcatd on the remote server, and processed there, returning data back to the local xcatd. 
+
+ NOTE: This will take more internal design to work through. Concerns of SSL keys, credentials, etc., properly handling the requests in the xcatd daemons, making sure data gets sent back correctly, timeouts on the remote requests, etc. </code></pre>
+<h2 id="staging"><a href="#TOC">Staging</a></h2>
+<p>We should address this work in several stages (each stage building on the previous):</p>
+<p>1. minimal proof-of concept</p>
+<pre><code> \- understand SoftLayer, learn how to use SL portal, request machines, experiment with SL API 
+ \- manually step through the process of &quot;first implementation&quot; below </code></pre>
+<p>2. first implementation with limitations and restrictions</p>
+<pre><code> some possible restrictions may include: 
+
+ \- customer requests all cluster nodes through SoftLayer portal, and uses SL to provision the initial OS. 
+ \- xCAT will use SL API to query hardware assigned to customer, add nodes to xCAT database, and apply required HPC software through updatenode 
+ \- Customer/GTS provides all opensource HPC software rpms, customization scripts and other setup for applications. 
+ \- assumes that xCAT will require minimal additional development work to configure the application networks (if not already done as part of SL OS provisioning) 
+ \- since SL is provisioning the base OS, both baremetal and VM nodes should look the same to xCAT for updatenode 
+ \- no xCAT service nodes for hierarchy </code></pre>
+<p>3. second implementation</p>
+<pre><code> same restrictions as above, except that now: 
+
+ \- xCAT interacts with SL APIs to request the machines 
+ \- SL will provision a specific base OS as requested by xCAT 
+ \- xCAT will scp a kernel initrd into that SL OS to boot the customer requested OS managed by xCAT (this allows provisioning OS&#39;s not available through SL) </code></pre>
+<p>4. third implementation (not sure if this will be possible)</p>
+<pre><code> performance enhancements: 
+
+ \- xCAT does not rely on SL OS provisioning, will require investigation into possible ways to do this as out-of-band </code></pre>
+<p>5. hybrid solution for remote node support</p>
+<pre><code> \- requires architectural changes to xCAT cluster support </code></pre>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>:</li>
+<li><strong>Required approvers</strong>: Guang Cheng Li</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

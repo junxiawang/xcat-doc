@@ -1,0 +1,1524 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+</ul></li>
+<li><a href="#discovering-and-defining-new-power-775-hardware">Discovering and Defining New Power 775 Hardware</a><ul>
+<li><a href="#initiate-a-network-boot-over-hfi">Initiate a network boot over HFI</a></li>
+<li><a href="#discovery-overview"><strong>Discovery Overview</strong></a></li>
+<li><a href="#define-the-service-lans-in-the-database-and-dhcp">Define the Service LAN(s) in the Database and DHCP</a><ul>
+<li><a href="#enable-slp-on-juniper-switches">**Enable SLP on Juniper Switches **</a></li>
+<li><a href="#configure-xcat-service-vlans">**Configure xCAT Service VLANs **</a></li>
+</ul></li>
+<li><a href="#set-consoleondemand-in-the-site-table-to-yes">Set consoleondemand in the site table to yes</a></li>
+<li><a href="#power-on-and-configure-the-hmcs">Power On and Configure the HMCs</a><ul>
+<li><a href="#discover-hmcs-and-define-them-in-xcat-db"><strong>Discover HMCs and define them in xCAT DB</strong></a></li>
+<li><a href="#define-the-hmc-hscroot-password-in-the-database"><strong>Define the HMC hscroot password in the database</strong></a></li>
+<li><a href="#enable-ssh-interface-to-the-hmc"><strong>Enable ssh interface to the HMC</strong></a></li>
+<li><a href="#change-hmc-hscroot-password"><strong>Change HMC hscroot password</strong></a></li>
+</ul></li>
+<li><a href="#define-the-frame-namemtms-mapping">Define the Frame Name/MTMS Mapping</a></li>
+<li><a href="#use-xcatsetup-to-create-initial-definitions-in-the-database">Use xcatsetup to Create Initial Definitions in the Database</a></li>
+<li><a href="#creating-initial-node-definitions-manually">Creating Initial Node Definitions Manually</a></li>
+<li><a href="#discover-the-bpas-modify-their-network-information-and-connect-to-them">Discover the BPAs, Modify Their Network Information, and Connect To Them</a></li>
+<li><a href="#power-on-the-fsps-discover-them-modify-network-information-and-connect">Power On the FSPs, Discover Them, Modify Network Information, and Connect</a></li>
+<li><a href="#update-the-cec-firmware-and-validate-cecs-can-power-up">Update the CEC firmware, and Validate CECs Can Power Up</a></li>
+<li><a href="#define-the-lpar-nodes-and-create-the-serviceutility-lpars">Define the LPAR Nodes and Create the Service/Utility LPARs</a><ul>
+<li><a href="#define-lpar-nodes-with-xcatsetup"><strong>Define LPAR Nodes with xcatsetup</strong></a></li>
+<li><a href="#define-lpar-nodes-with-rscan"><strong>Define LPAR Nodes with rscan</strong></a></li>
+<li><a href="#splitting-the-service-node-octant-into-multiple-lpars"><strong>Splitting the Service Node Octant into Multiple LPARS</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#xcat-direct-fsp-and-bpa-management-capabilities">xCAT Direct FSP and BPA Management Capabilities</a><ul>
+<li><a href="#xcat-commands-which-were-modified-to-add-dfm-support">xCAT commands which were modified to add DFM support</a></li>
+<li><a href="#overview-of-using-dfm-hierarchically">Overview of Using DFM Hierarchically</a></li>
+<li><a href="#defining-xcat-dfm-and-hmc-hardware-connections-to-frames-and-cecs">Defining xCAT DFM and HMC hardware connections to Frames and CECs</a></li>
+<li><a href="#make-hmc-hardware-connections-to-frames-for-service-focal-point">Make HMC hardware connections to Frames for Service Focal point</a></li>
+<li><a href="#using-rspconfig"><strong>Using rspconfig</strong></a><ul>
+<li><a href="#rspconfig-to-update-password-optional"><strong>rspconfig to update password (optional)</strong></a></li>
+<li><a href="#rspconfig-to-update-frame-number-optional"><strong>rspconfig to update frame number (optional)</strong></a></li>
+<li><a href="#rspconfig-to-query-or-request-huge-page-memory-optional"><strong>rspconfig to query or request huge page memory (optional)</strong></a></li>
+</ul></li>
+<li><a href="#using-the-vm-commands-to-define-partitions-in-xcat-dfm">Using the *vm commands to define partitions in xCAT DFM</a><ul>
+<li><a href="#the-power-775-partitioning-overview"><strong>The Power 775 Partitioning Overview</strong></a></li>
+<li><a href="#power-775-manufacturing-defaults">Power 775 Manufacturing Defaults</a></li>
+<li><a href="#chvm"><strong>chvm</strong></a></li>
+<li><a href="#lsvm"><strong>lsvm</strong></a></li>
+<li><a href="#some-examples-for-the-partitioning-commands"><strong>Some examples for the partitioning commands</strong></a><ul>
+<li><a href="#for-chvm">For chvm</a></li>
+<li><a href="#for-lsvm">For lsvm</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#using-xcat-dfm-rpower-support-to-control-the-frame-cec-and-lpar-power">Using xCAT DFM rpower support to control the Frame, CEC, and LPAR power</a><ul>
+<li><a href="#rpower-actions-on-a-frame">rpower actions on a Frame</a></li>
+<li><a href="#rpower-actions-on-an-cec">rpower actions on an CEC</a></li>
+<li><a href="#rpower-actions-on-an-lpar">rpower actions on an LPAR</a></li>
+</ul></li>
+<li><a href="#updating-the-bpa-and-fsp-firmware-using-xcat-dfm">Updating the BPA and FSP firmware using xCAT DFM</a><ul>
+<li><a href="#overview"><strong>Overview</strong></a></li>
+<li><a href="#preparing-for-a-firmware-upgrade"><strong>Preparing for a firmware upgrade</strong></a></li>
+<li><a href="#perform-disruptive-firmware-update-for-framecec-on-power-775"><strong>Perform disruptive Firmware update for Frame/CEC on Power 775</strong></a></li>
+<li><a href="#perform-deferred-firmware-upgrades-for-framecec-on-power-775"><strong>Perform Deferred Firmware upgrades for frame/CEC on Power 775</strong></a><ul>
+<li><a href="#deferred-firmware-update-background"><strong>Deferred firmware update Background</strong></a></li>
+<li><a href="#tempperm-side-pending_power_on_side-attributes-in-deferred-firmware-update"><strong>temp/perm side, pending_power_on_side attributes in Deferred firmware update</strong></a></li>
+<li><a href="#the-procedure-of-the-deferred-firmware-update">**The procedure of the deferred firmware update **</a></li>
+<li><a href="#recover-the-system-if-the-power-codefirmware-failed-to-be-loaded-available-for-both-cecs-and-frames"><strong>Recover the system if the power code/firmware failed to be loaded (Available for both CECs and Frames)</strong></a></li>
+</ul></li>
+<li><a href="#recovery-procedure-if-the-new-firmware-does-not-perform-well-available-for-cecs-and-frames"><strong>Recovery procedure if the new firmware does not perform well (Available for CECs and Frames)</strong></a></li>
+<li><a href="#commit-currently-activated-lic-updatecopy-t-to-p-for-a-cecframe-on-power-775"><strong>Commit currently activated LIC update(copy T to P) for a CEC/Frame on Power 775</strong></a></li>
+<li><a href="#recover-the-system-from-a-pp-situation-because-of-the-failed-firmware-update"><strong>Recover the system from a P/P situation because of the failed firmware update</strong></a></li>
+</ul></li>
+<li><a href="#opening-a-remote-console-to-the-cec-lpar-using-xcat-dfm">Opening a remote console to the CEC LPAR using xCAT DFM</a></li>
+<li><a href="#enable-dev-and-celogin1-login-for-cecframe-optional">Enable 'dev' and 'celogin1' login for CEC/Frame (optional)</a></li>
+</ul></li>
+<li><a href="#hardware-discovery-directly-from-the-xcat-management-node">Hardware Discovery Directly from the xCAT Management Node</a></li>
+<li><a href="#energy-management">Energy Management</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#discovering-and-defining-new-power-775-hardware">Discovering and Defining New Power 775 Hardware</a></li>
+<li><a href="#initiate-a-network-boot-over-hfi">Initiate a network boot over HFI</a></li>
+<li><a href="#discovery-overview"><strong>Discovery Overview</strong></a></li>
+<li><a href="#define-the-service-lans-in-the-database-and-dhcp">Define the Service LAN(s) in the Database and DHCP</a>
+<ul>
+<li><a href="#enable-slp-on-juniper-switches-">**Enable SLP on Juniper Switches **</a></li>
+<li><a href="#configure-xcat-service-vlans-">**Configure xCAT Service VLANs **</a></li>
+</ul></li>
+<li><a href="#set-consoleondemand-in-the-site-table-to-yes">Set consoleondemand in the site table to yes</a></li>
+<li><a href="#power-on-and-configure-the-hmcs">Power On and Configure the HMCs</a>
+<ul>
+<li><a href="#discover-hmcs-and-define-them-in-xcat-db"><strong>Discover HMCs and define them in xCAT DB</strong></a></li>
+<li><a href="#define-the-hmc-hscroot-password-in-the-database"><strong>Define the HMC hscroot password in the database</strong></a></li>
+<li><a href="#enable-ssh-interface-to-the-hmc"><strong>Enable ssh interface to the HMC</strong></a></li>
+<li><a href="#change-hmc-hscroot-password"><strong>Change HMC hscroot password</strong></a></li>
+</ul></li>
+<li><a href="#define-the-frame-namemtms-mapping">Define the Frame Name/MTMS Mapping</a></li>
+<li><a href="#use-xcatsetup-to-create-initial-definitions-in-the-database">Use xcatsetup to Create Initial Definitions in the Database</a></li>
+<li><a href="#creating-initial-node-definitions-manually">Creating Initial Node Definitions Manually</a></li>
+<li><a href="#discover-the-bpas-modify-their-network-information-and-connect-to-them">Discover the BPAs, Modify Their Network Information, and Connect To Them</a></li>
+<li><a href="#power-on-the-fsps-discover-them-modify-network-information-and-connect">Power On the FSPs, Discover Them, Modify Network Information, and Connect</a></li>
+<li><a href="#update-the-cec-firmware-and-validate-cecs-can-power-up">Update the CEC firmware, and Validate CECs Can Power Up</a></li>
+<li><a href="#define-the-lpar-nodes-and-create-the-serviceutility-lpars">Define the LPAR Nodes and Create the Service/Utility LPARs</a>
+<ul>
+<li><a href="#define-lpar-nodes-with-xcatsetup"><strong>Define LPAR Nodes with xcatsetup</strong></a></li>
+<li><a href="#define-lpar-nodes-with-rscan"><strong>Define LPAR Nodes with rscan</strong></a></li>
+<li><a href="#splitting-the-service-node-octant-into-multiple-lpars"><strong>Splitting the Service Node Octant into Multiple LPARS</strong></a></li>
+</ul></li>
+<li><a href="#xcat-direct-fsp-and-bpa-management-capabilities">xCAT Direct FSP and BPA Management Capabilities</a></li>
+<li><a href="#xcat-commands-which-were-modified-to-add-dfm-support">xCAT commands which were modified to add DFM support</a></li>
+<li><a href="#overview-of-using-dfm-hierarchically">Overview of Using DFM Hierarchically</a></li>
+<li><a href="#defining-xcat-dfm-and-hmc-hardware-connections-to-frames-and-cecs">Defining xCAT DFM and HMC hardware connections to Frames and CECs</a></li>
+<li><a href="#make-hmc-hardware-connections-to-frames-for-service-focal-point">Make HMC hardware connections to Frames for Service Focal point</a></li>
+<li><a href="#using-rspconfig"><strong>Using rspconfig</strong></a>
+<ul>
+<li><a href="#rspconfig-to-update-password-optional"><strong>rspconfig to update password (optional)</strong></a></li>
+<li><a href="#rspconfig-to-update-frame-number-optional"><strong>rspconfig to update frame number (optional)</strong></a></li>
+<li><a href="#rspconfig-to-query-or-request-huge-page-memory-optional"><strong>rspconfig to query or request huge page memory (optional)</strong></a></li>
+</ul></li>
+<li><a href="#using-the-vm-commands-to-define-partitions-in-xcat-dfm">Using the *vm commands to define partitions in xCAT DFM</a>
+<ul>
+<li><a href="#the-power-775-partitioning-overview"><strong>The Power 775 Partitioning Overview</strong></a></li>
+<li><a href="#power-775-manufacturing-defaults">Power 775 Manufacturing Defaults</a></li>
+<li><a href="#chvm"><strong>chvm</strong></a></li>
+<li><a href="#lsvm"><strong>lsvm</strong></a></li>
+<li><a href="#some-examples-for-the-partitioning-commands"><strong>Some examples for the partitioning commands</strong></a>
+<ul>
+<li><a href="#for-chvm">For chvm</a></li>
+<li><a href="#for-lsvm">For lsvm</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#using-xcat-dfm-rpower-support-to-control-the-frame-cec-and-lpar-power">Using xCAT DFM rpower support to control the Frame, CEC, and LPAR power</a>
+<ul>
+<li><a href="#rpower-actions-on-a-frame">rpower actions on a Frame</a></li>
+<li><a href="#rpower-actions-on-an-cec">rpower actions on an CEC</a></li>
+<li><a href="#rpower-actions-on-an-lpar">rpower actions on an LPAR</a></li>
+</ul></li>
+<li><a href="#updating-the-bpa-and-fsp-firmware-using-xcat-dfm">Updating the BPA and FSP firmware using xCAT DFM</a>
+<ul>
+<li><a href="#overview"><strong>Overview</strong></a></li>
+<li><a href="#preparing-for-a-firmware-upgrade"><strong>Preparing for a firmware upgrade</strong></a></li>
+<li><a href="#perform-disruptive-firmware-update-for-framecec-on-power-775"><strong>Perform disruptive Firmware update for Frame/CEC on Power 775</strong></a></li>
+<li><a href="#perform-deferred-firmware-upgrades-for-framecec-on-power-775"><strong>Perform Deferred Firmware upgrades for frame/CEC on Power 775</strong></a></li>
+<li><a href="#deferred-firmware-update-background"><strong>Deferred firmware update Background</strong></a></li>
+<li><a href="#tempperm-side-pending_power_on_side-attributes-in-deferred-firmware-update"><strong>temp/perm side, pending_power_on_side attributes in Deferred firmware update</strong></a></li>
+<li><a href="#the-procedure-of-the-deferred-firmware-update-">**The procedure of the deferred firmware update **</a></li>
+<li><a href="#recover-the-system-if-the-power-codefirmware-failed-to-be-loaded-available-for-both-cecs-and-frames"><strong>Recover the system if the power code/firmware failed to be loaded (Available for both CECs and Frames)</strong></a></li>
+<li><a href="#recovery-procedure-if-the-new-firmware-does-not-perform-well-available-for-cecs-and-frames"><strong>Recovery procedure if the new firmware does not perform well (Available for CECs and Frames)</strong></a></li>
+<li><a href="#commit-currently-activated-lic-updatecopy-t-to-p-for-a-cecframe-on-power-775"><strong>Commit currently activated LIC update(copy T to P) for a CEC/Frame on Power 775</strong></a></li>
+<li><a href="#recover-the-system-from-a-pp-situation-because-of-the-failed-firmware-update"><strong>Recover the system from a P/P situation because of the failed firmware update</strong></a></li>
+</ul></li>
+<li><a href="#opening-a-remote-console-to-the-cec-lpar-using-xcat-dfm">Opening a remote console to the CEC LPAR using xCAT DFM</a></li>
+<li><a href="#enable-dev-and-celogin1-login-for-cecframe-optional">Enable 'dev' and 'celogin1' login for CEC/Frame (optional)</a></li>
+<li><a href="#hardware-discovery-directly-from-the-xcat-management-node">Hardware Discovery Directly from the xCAT Management Node</a></li>
+<li><a href="#energy-management">Energy Management</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>This cookbook provide information about initializing, discovering, defining, and managing the system <strong>Power 775</strong> hardware. <strong>Everything described in this document is only supported in xCAT 2.6.6 and above.</strong> If you have other system p hardware, see [XCAT_System_p_Hardware_Management] .</p>
+<p>If you are setting up a Power 775 cluster hierarchical cluster, it's better to get an overview about the hardware and software management of the SN and CN from the doc:</p>
+<ul>
+<li>[DFM_Service_Node_Hierarchy_support].</li>
+</ul>
+<p>For the whole flow of setting up a Hierarchical Cluster, we can refer to the following two docs:</p>
+<ul>
+<li>[Setting_Up_an_AIX_Hierarchical_Cluster]</li>
+<li>[Setting_Up_a_Linux_Hierarchical_Cluster]</li>
+</ul>
+<p>More information about the Power 775 related software can be found at:</p>
+<ul>
+<li>https://www.ibm.com/developerworks/wikis/display/hpccentral/IBM+HPC+Clustering+with+Power+775+Overview</li>
+<li>https://www.ibm.com/developerworks/wikis/display/hpccentral/IBM+HPC+Clustering+with+Power+775+-+Cluster+Guide</li>
+</ul>
+<h3 id="terminology"><a href="#TOC">Terminology</a></h3>
+<p>The following terms will be used in this document:</p>
+<p><strong>xCAT DFM</strong>: Direct FSP Management is the name that we will use to describe the ability for xCAT software to communicate directly to the System p server's service processor without the use of the HMC for management.</p>
+<p><strong>Frame node</strong>: A node with hwtype set to frame represents a high end System P server 24 inch frame.</p>
+<p><strong>BPA node</strong>: is node with a hwtype set to bpa and it represents one port on one bpa (each BPA has two ports). For xCAT's purposes, the BPA is the service processor that controls the frame. The relationship between Frame node and BPA node from system admin's perspective is that the admin should always use the Frame node definition for the xCAT hardware control commands and xCAT will figure out which BPA nodes and their ip addresses to use for hardware service processor connections.</p>
+<p><strong>CEC node</strong>: A node with attribute hwtype set to cec which represents a System P CEC (i.e. one physical server).</p>
+<p><strong>FSP node</strong>: FSP node is a node with the hwtype set to fsp and represents one port on the FSP. In one CEC with redundant FSPs, there will be two FSPs and each FSP has two ports. There will be four FSP nodes defined by xCAT per server with redundant FSPs. Similar to the relationship between Frame node and BPA node, system admins will always use the CEC node for the hardware control commands. xCAT will automatically use the four FSP node definitions and their attributes for hardware connections.</p>
+<h3 id="downloading-and-installing-dfm"><a href="#TOC">Downloading and Installing DFM</a></h3>
+<p>For most operations, the Power 775 is managed directly by xCAT, not using the HMC. This requires the <strong>new xCAT Direct FSP Management plugin</strong> (xCAT-dfm-*.ppc64.rpm), which is not part of the core xCAT open source, but is available as a free download from IBM. You must download this and install it on your xCAT management node (and possibly on your service nodes, depending on your configuration) before proceeding with this document.</p>
+<p>Download <a href="http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ClusterSoftware&amp;product=ibm/Other+software/IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all">DFM</a> and the prerequisite <a href="http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ClusterSoftware&amp;product=ibm/Other+software/IBM+High+Performance+Computing+%28HPC%29+Hardware+Server&amp;release=All&amp;platform=All&amp;function=all">hardware server</a> package from <a href="http://www-933.ibm.com/support/fixcentral/">Fix Central</a> :</p>
+<pre><code>Product Group:      Power
+Product:            Cluster Software
+Cluster Software:   direct FSP management plug-in for xCAT</code></pre>
+<p>And</p>
+<pre><code>Product Group:      Power
+Product:            Cluster Software
+Cluster Software:   HPC Hardware Server</code></pre>
+<ul>
+<li>xCAT-dfm RPM</li>
+<li>ISNM-hdwr_svr RPM (linux)</li>
+<li>isnm.hdwr_svr installp package (AIX)</li>
+</ul>
+<p>The downloaded packages contains the installable rpm which has been tar-ed and zipped(compressed). After downloading these packages, uncompress, untar and install the hardware server package first and then do the same for the DFM package:</p>
+<p><strong>[RH]:</strong></p>
+<p>If you have been following the xCAT documentation, you should already have the yum repositories set up to pull in whatever xCAT dependencies and distro RPMs are needed (libstdc++.ppc, libgcc.ppc, openssl.ppc, etc.).</p>
+<pre><code>    yum install xCAT-dfm-*.ppc64.rpm ISNM-hdwr_svr-*.ppc64.rpm</code></pre>
+<p><strong>[AIX]:</strong></p>
+<pre><code>    installp -d . -agQXY isnm.hdwr_svr
+    rpm -Uvh xCAT-dfm-*.ppc.rpm</code></pre>
+<h2 id="discovering-and-defining-new-power-775-hardware"><a href="#TOC">Discovering and Defining New Power 775 Hardware</a></h2>
+<p>When setting up a new cluster, you can use the xCAT commands <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup</a> and <a href="http://xcat.sourceforge.net/man1/lsslp.1.html">lsslp</a> to specify the proper definition of all of the cluster hardware in the xCAT database, by automatically discovering and defining them. This is optional - you can define all of the hardware in the database by hand, but that can be confusing and error prone.</p>
+<p><strong>Note:</strong> this document focuses on the following environment:</p>
+<ul>
+<li>Power 775 clusters</li>
+<li>using permanent IP addresses for BPA and FSPs (instead of random/dynamic addresses)</li>
+<li>direct fsp/bpa management (DFM)</li>
+<li>supporting (optionally) redundant FSPs and BPAs</li>
+<li>firewall should be disable on the EMS otherwise the command lsslp will return no response and can't discover nodes.</li>
+</ul>
+<p>If you want to discover and define older system p hardware, read [XCAT_System_p_Hardware_Management].</p>
+<p>The hardware discovery should be performed after the Management Node is installed and configured with xCAT as indicated by this flow:</p>
+<ol style="list-style-type: decimal">
+<li>Install the OS on the management node</li>
+<li>Install the xCAT prereqs and xCAT software on the management node</li>
+<li>Configure xCAT and other services on the management node</li>
+<li><strong>Discover and define the cluster hardware components</strong></li>
+<li>Set up and install service nodes</li>
+<li>Create the images that should be installed or booted on the node</li>
+</ol>
+<h3 id="initiate-a-network-boot-over-hfi"><a href="#TOC">Initiate a network boot over HFI</a></h3>
+<p><a href="Initiate_a_network_boot_over_HFI_on_Power_775">Initiate_a_network_boot_over_HFI_on_Power_775</a></p>
+<h3 id="discovery-overview"><a href="#TOC"><strong>Discovery Overview</strong></a></h3>
+<p>Here is the <strong>summary</strong> of the steps needed to discover the hardware and defined it properly in the database. Each step of the summary is explained in more detail in the subsequent sections.</p>
+<ul>
+<li>Define the service LAN(s) in the database</li>
+<li>Configure the networks in dhpcd</li>
+<li>Power on and configure the HMCs</li>
+<li>Manually power on the Power 775 frames</li>
+<li>Collect the VPD information (MTM and serial number) for each frame and define the name you want each frame to have</li>
+<li>Define initial definitions in the xCAT database for the hardware components either manually or using xcatsetup</li>
+<li>Use lsslp to discover the BPAs, match them with the corresponding frame and BPA objects in the database (using the mtms), and write additional attributes for the frames and BPAs in the database.</li>
+<li>Configure dhcpd with the permanent ip/mac pairs for all the BPAs</li>
+<li>Use xCAT to connect to and configure the BPAs</li>
+<li>Associate the frames with the appropriate HMC</li>
+<li>Verify the hw ctrl setup is correct for the frames and the BPAs</li>
+<li>Get the frames out of rack standby so you can fill the frames and power up the FSPs</li>
+<li>Use lsslp to discover the FSPs, match them with the corresponding CEC and FSP objects in the database (using the cage # and frame mtms), and write additional attributes for the CECs and FSPs in the database.</li>
+<li>Configure dhcpd with the permanent ip/mac pairs for all the FSPs</li>
+<li>Use xCAT to connect to and configure the FSPs</li>
+<li>Verify the hw ctrl setup is correct for the CECs and the FSPs</li>
+<li>Associate the CECs with the appropriate HMC</li>
+<li>Define the LPARs as nodes in the xCAT database using either xcatsetup or rscan</li>
+<li>Split some octants into multiple LPARs (optional)</li>
+</ul>
+<p>Easy, right? Each step is explained in more detail below.</p>
+<p>In the examples given below, it is assumed that you have redundant service LANs and that the xCAT management node has 2 NICs, each connected to one of the service LANs. The subnet of the first example service LAN is 10.230.0.0/255.255.0.0 and the subnet of the 2nd example service LAN is 10.231.0.0/255.255.0.0 .</p>
+<h3 id="define-the-service-lans-in-the-database-and-dhcp"><a href="#TOC">Define the Service LAN(s) in the Database and DHCP</a></h3>
+<p>xCAT uses <a href="http://en.wikipedia.org/wiki/Service_Location_Protocol">SLP</a> to discover the hardware components on the service networks. Before doing this, you must validate the following:</p>
+<ul>
+<li>Make sure that xCAT MN, Frame BPAs, and HMC ethernet connections are physically attached to service LAN ethernet switches.</li>
+<li>The Frame BPAs ports are 1G. Ensure they are connected to 1G ports on the service LAN ethernet switches.</li>
+<li>Make sure SLP protocol is supported on the service LAN switches, where IGMP-Snooping is enabled, and Internet Protocol address (239.0.0.0) was set working with Cisco switches. Please reference information below if using Juniper switches.</li>
+<li>Configure the xCAT MN to give dynamic DHCP IP addresses to the hardware components so that they can respond to SLP broadcasts.</li>
+</ul>
+<h4 id="enable-slp-on-juniper-switches"><a href="#TOC">**Enable SLP on Juniper Switches **</a></h4>
+<p>The P775 cluster may be using the Juniper ethernet switch to support the BPA/FSP HW service VLANS. The information below was provided by P775 network administrator on how to enable Juniper switch working with igmp-snooping for SLP support. We recommend to remove the HW service vlans from igmp-snooping protocol settings. The default configuration for igmp-snooping on the IBM J48E switch is to enable igmp-snooping for all VLANs:</p>
+<pre><code>    protocols {
+           igmp-snooping {
+           vlan all;</code></pre>
+<p>Assuming there are multiple ethernet vlans being supported(HW service and management)on Juniper switch, the igmp-snooping configuration should enable igmp-snooping for only the cluster management VLAN and not the HW service VLANs.</p>
+<pre><code>    protocols {
+           igmp-snooping {
+           vlan management;</code></pre>
+<p>The Juniper administrator commands to make this change are the following after entering into edit mode:</p>
+<pre><code>    {master:0}[edit]
+     admin@j48052# edit protocols igmp-snooping
+    {master:0}[edit protocols igmp-snooping]
+     admin@j48052# show vlan all;
+    {master:0}[edit protocols igmp-snooping]
+     admin@j48052# set vlan management
+    {master:0}[edit protocols igmp-snooping]
+     admin@j48052# delete vlan all
+    {master:0}[edit protocols igmp-snooping]
+     admin@j48052# show vlan management;
+    {master:0}[edit protocols igmp-snooping]
+     admin@j48052# commit check
+    if clean, then
+    {master:0}[edit protocols igmp-snooping]
+     admin@j48052# commit synchronize  (use the &#39;synchronize&#39; if more than one switch configured in virtual chassis)
+</code></pre>
+<h4 id="configure-xcat-service-vlans"><a href="#TOC">**Configure xCAT Service VLANs **</a></h4>
+<p>This section provide the commands used to setup the xCAT HW service VLANs into the the xCAT database and dhcp server environment.</p>
+<p><strong>Note</strong>: if you are adding new additional hardware to an existing cluster (not initially creating the cluster) then you can skip this section. If you are adding new networks to the cluster, then you will need to execute some steps in this section.</p>
+<p>If you haven't already, configure with static IP addresses the management node's NICs that are connected to the service vlan and cluster management .</p>
+<p>If you already had the management node's service LAN NICs configured when you installed xcat, it automatically ran &quot;makenetworks&quot; and created the necessary entries in the networks table. If not, run:</p>
+<pre><code>    makenetworks</code></pre>
+<p>Now set the networks.dynamicrange attribute for each service LAN. For example the following represents 2 HW service VLANS :</p>
+<pre><code>    chdef -t network 10_230_0_0-255_255_0_0 dynamicrange=10.230.200.1-10.230.200.200
+    chdef -t network 10_231_0_0-255_255_0_0 dynamicrange=10.231.200.1-10.231.200.200</code></pre>
+<p><strong>Note:</strong> on AIX, the permanent IP addresses that the BPAs and FSPs will eventually be given must also be in the dynamic range. DHCP will give out dynamic addresses starting from the bottom of the dynamic range, so plan to have the permanent addresses be higher in the range such that there will be no collisions. For example, make the dynamic range 10.230.1.1-10.230.3.200, then plan to have the BPA permanent IP addresses in the 10.230.2.* range and the FSPs in the 10.230.3.<em>. Assuming you have less than 254 BPAs and FSPs, DHCP will initially give them dynamic addresses in the 10.230.1.</em> range. On linux, the dynamic range should <strong>not</strong> include the permanent IP addresses, and should therefore be big enough to just contain the dynamic addresses.</p>
+<p>If you want the network definitions to have more user friendly names in the database, you can set them to anything you want. For example:</p>
+<pre><code>    chdef -t network 10_230_0_0-255_255_0_0 -n servicelan1
+    chdef -t network 10_231_0_0-255_255_0_0 -n servicelan2</code></pre>
+<p>Set <a href="http://xcat.sourceforge.net/man5/site.5.html">site</a>.dhcpinterfaces to the list of NICs (on the management node and service nodes) that DHCP should listen on. For the management node, this is normally the NICs that are connected to the service LAN and the NICs connected to the cluster management LAN. For the service node it should only be the NIC connected to the compute node LAN:</p>
+<pre><code>     chdef -t site clustersite dhcpinterfaces=&#39;mgmtnode|eth1,eth2,eth3,eth4;service|hf0&#39;</code></pre>
+<p>Set the powerinterval in the site table to 30. This is needed to meet the demand of the large number LPARs in the Power 775 system. For more information see By default it is 0. See [Hints_and_Tips_for_Large_Scale_Clusters].</p>
+<pre><code>     chdef -t site clustersite powerinterval=30</code></pre>
+<p>On AIX, you have to stop the bootp daemon before starting dhcp, because they listen on the same port number:</p>
+<pre><code>Stop bootp from starting on reboot or restart of inetd by commenting out the bootps line in /etc/inetd.conf file:
+
+
+
+#bootps dgram udp wait root /usr/sbin/bootpd bootpd /etc/bootptab
+
+Restart inetd and kill bootp just to make sure:</code></pre>
+<pre><code>    refresh -s inetd                            # restart the inetd subsystem
+
+
+    kill `ps -ef | grep bootp | grep -v grep | awk &#39;{print $2}&#39; ` # stop the bootp daemon</code></pre>
+<pre><code>Uncomment this line in /etc/rc.tcpip so that dhcpsd will start after a reboot.</code></pre>
+<pre><code>    start /usr/sbin/dhcpsd &quot;$src_running&quot;             # start up the DHCP Server</code></pre>
+<p>Have xCAT configure the service network stanza for dhcpd and then start the daemon:</p>
+<pre><code>    makedhcp -n
+    service dhcpd restart   # linux
+    startsrc -s dhcpsd      # AIX
+</code></pre>
+<p>Look at the DHCP configuration file on the xCAT management node to ensure that it contains only the networks you want:</p>
+<pre><code>    cat /etc/dhcpd.conf        # Linux, except for RHEL6
+    cat /etc/dhcp/dhcpd.conf   # RHEL6
+    cat /etc/dhcpsd.cnf        # AIX</code></pre>
+<p>If you need to make updates to the DHCP configuration file, you should stop the DHCP daemon, edit the DHCP configuration file, and then restart the DHCP daemon on your xCAT MN.</p>
+<h3 id="set-consoleondemand-in-the-site-table-to-yes"><a href="#TOC">Set consoleondemand in the site table to yes</a></h3>
+<p>Before run any DFM hardware control commands in the large cluster, you should make sure the consoleondemand in the site table is set to yes. This is needed to meet the demand of the large number LPARs and CECs. In the Power 775 system, console is opened by fsp-api which sends command to the HWS. When set to 'no', all the consoles will be opened, and it will affect the performance of the DFM hardware control commands. When set to 'yes', conserver connects and creates the console output only when the user opens the console. Default is no on Linux, yes on AIX.</p>
+<pre><code>     chdef -t site clustersite consoleondemand=yes</code></pre>
+<p>After you change the change the consoleondemand=yes, you should run makeconservercf to take effects.</p>
+<pre><code>     makeconservercf</code></pre>
+<h3 id="power-on-and-configure-the-hmcs"><a href="#TOC">Power On and Configure the HMCs</a></h3>
+<p>There is a new work item to support remote discovery and connectivity to the HMC from xCAT MN. This section is currently TBD, but will cover some of the following:</p>
+<ul>
+<li>Manually collect MACs of HMCs and create database definitions manually (including the ipmi table)</li>
+<li>makedhcp hmc</li>
+<li>Enable: SLP, SSH, SOL (if not enabled from the factory)</li>
+<li>Disable DHCP</li>
+<li>Configure the IMM</li>
+</ul>
+<p>The xCAT admin will manually need to connect the HMC at this time.</p>
+<p><strong>Setting up the HMC network for use by xCAT</strong></p>
+<p>Reference the HMC website and documentation for more knowledge. The following are minimal steps required to Setup the HMC network for Static IP,and enable SLP and SSH ports working with HMC GUI.</p>
+<ul>
+<li>Open the HMC GUI, Select <strong>HMC Management</strong>, then <strong>Change Network Settings</strong>.</li>
+<li>Select <strong>Customize Network Configuration</strong>, and then** LAN Adapters **.</li>
+<li>Select **Ethernet interface **configured on the service network.</li>
+<li>Click on the **Details **button.</li>
+<li>Select <strong>Basic Settings</strong>, Click on <strong>Open</strong>, and <strong>Specify IP address.</strong></li>
+<li>Fill in <strong>IP address</strong>, <strong>Netmask</strong>for HMC static IP on the xCAT service network.</li>
+<li>Make sure that DHCP Server box is not selected and is blank.</li>
+<li>Select on <strong>Firewall Settings</strong>, Click on **SLP, Secure Shell, **in the upper window.(You may also want to enable other HMC Firewall settings)</li>
+<li>Click on the **Allow incoming **button for each required setting.</li>
+<li>Make sure you Select OK at the bottom of the window to save your updates.</li>
+<li>Reboot the HMC, and then make sure Network changes are properly working.</li>
+</ul>
+<h4 id="discover-hmcs-and-define-them-in-xcat-db"><a href="#TOC"><strong>Discover HMCs and define them in xCAT DB</strong></a></h4>
+<p>This section will describe the hardware discovery of the HMCs and their requirement to support Service Focal Point (SFP) working with Power 775 clusters. You will execute xCAT commands &quot;lsslp&quot; and &quot;mkdef&quot; to define the HMC nodes in xCAT DB. See man page of lsslp for details.</p>
+<p>Note: Even if you use xCAT Direct FSP Management, you still need to discover the HMC, and make the connections between HMC and the xCAT MN. The HMC will always be used for Service Focal Point, Service Repair and Verify procedures.</p>
+<p>Run lsslp to locate the HMC information and write into a HMC stanza file. The IP address is the address assigned to the hardware service network on the EMS.</p>
+<pre><code>     lsslp -s HMC -i 10.230.0.0,10.231.0.0 -z &gt; /hmc/stanza/file</code></pre>
+<p>Review the HMC stanza file and make necessary modifications. You will want to include the username and password attributes, and update HMC ip attribute to the proper ip address of the service network for the target HMC node. Make sure that the ip address and host name is resolvable in the xCAT cluster name resolution (/etc/hosts, DNS).</p>
+<p>Write the HMC stanza information into xCAT DB with xCAT command mkdef.</p>
+<pre><code>    cat /hmc/stanza/file | mkdef -z</code></pre>
+<h4 id="define-the-hmc-hscroot-password-in-the-database"><a href="#TOC"><strong>Define the HMC hscroot password in the database</strong></a></h4>
+<p>You will need to supply the current hscroot password to xCAT by defining it in the passwd table in the database.</p>
+<pre><code>    chtab key=hmc passwd.username=hscroot passwd.password=&lt;current password&gt;</code></pre>
+<h4 id="enable-ssh-interface-to-the-hmc"><a href="#TOC"><strong>Enable ssh interface to the HMC</strong></a></h4>
+<p>You will want to enable the SSH interface between the xCAT MN and HMC, so the xCAT commands will run without being prompted for passwords. Run the &quot;rspconfig&quot; command to do this:</p>
+<pre><code>     rspconfig  &lt;HMC node&gt;  sshcfg=enable</code></pre>
+<p>After you setup the ssh keys to the HMC with the rspconfig command, xCAT will no longer need the hscroot password in the database and it can be removed. It will be needed in the future, if root's ssh keys are ever regenerated on the EMS. If ssh keys are regenerated, then the <strong>rspconfig &lt;HMC node&gt; sshcfg=enable command</strong> will have to be rerun, and the new password will need to be available in the database on the EMS.</p>
+<h4 id="change-hmc-hscroot-password"><a href="#TOC"><strong>Change HMC hscroot password</strong></a></h4>
+<p>If you change hscroot password on the HMC, you should update the xCAT database password file with the new password. See &quot;Define the HMC hscroot password&quot;. You do not need to rerun rspconfig &lt;HMC node&gt; sshcfg=enable because changing the password does not affect ssh keys.</p>
+<h3 id="define-the-frame-namemtms-mapping"><a href="#TOC">Define the Frame Name/MTMS Mapping</a></h3>
+<p>SLP gives xCAT a list of hardware components on the network, without telling it the physical location of each. This means that xCAT does not have a way to give each component a sensible name without getting a little bit of information from you: the mapping between the name you want each frame to have and its MTMS (machine type, model, and serial #).</p>
+<p>To provide this information, first manually power on the frames. (If the frames are being powered on (EPO'ed), the BPAs will come up in rack standy mode. At this point there will not be any power to the CEC FSPs so they will not yet be able to be discovered. So we must first discover the frames, get them defined in the database, and make connections to them, so we can get them out of rack standby mode. This process will be accomplished in the next several sections.)</p>
+<p><strong>At this point, you should do one of the next 2 sections, but not both. If you want to use xcatsetup to define nodes, follow the steps in the green section entitled &quot;Use xcatsetup to Create Initial Definitions in the Database&quot;. If you want to create the nodes manually, follow the steps in the blue section entitled &quot;Creating Initial Node Definitions Manually&quot;. After following either the green or blue section, continue with the section &quot;Discover the BPAs, Modify Their Network Information, and Connect To Them&quot;.</strong></p>
+<h3 id="use-xcatsetup-to-create-initial-definitions-in-the-database"><a href="#TOC">Use xcatsetup to Create Initial Definitions in the Database</a></h3>
+<p>The <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup</a> command creates initial node definitions in the xCAT database, based on naming conventions and IP address ranges that you provide via a cluster configuration file. In a later step, xCAT will combine this information with the SLP information discovered on the service network to create a complete picture of your cluster hardware components. <strong>Note:</strong> If the xcatsetup command does not apply well to your cluster because your naming patterns have too many exceptions, you can instead create node definitions manually. See the section <a href="XCAT_Power_775_Hardware_Management/#creating-initial-node-definitions-manually">XCAT_Power_775_Hardware_Management/#creating-initial-node-definitions-manually</a> for instructions on how to do that.</p>
+<p>Create a cluster config file with information about the hardware components that should be defined. Note that you are not only specifying the naming pattern for the HMCs, frames, and CECs, but also the permanent IP addresses you want the BPAs and FSPs to have. (When the BPAs and FSPs initially power on, they will get dynamic IP addresses from DHCP. Once you are done with this whole discovery chapter, DHCP will always provide the IP addresses you define in the cluster config file. We call these the &quot;permanent&quot; IP addresses.) For a detailed description of the cluster config file, see the <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup man page</a>. Here's a sample config file:</p>
+<p>Have xCAT generate a stanza file of frame definitions (with MTMS) so you can easily give each one a name:</p>
+<pre><code>    lsslp -s FRAME -i 10.230.0.0,10.231.0.0 --vpdtable &gt; vpd-frame.stanza</code></pre>
+<p>Note: -m won't be used and multicast will be the one of the default way of lsslp from xCAT 2.7.3.</p>
+<p>Edit the stanza file to give the desired node name to each frame object, identifying the frames by MTMS. (The node name is the identifier before the colon. See the <a href="http://xcat.sourceforge.net/man5/xcatstanzafile.5.html">xcatstanzafile man page</a> for details.) The node names should help indicate frame position (e.g. frame01, frame02, etc.) because xCAT will use that information to understand the physical order of the hardware.</p>
+<p>Create a file called supernodelist.txt that specifies the supernode numbers for all of the CECs. For example,</p>
+<pre><code>     frame61: 0,1,16
+     frame62: 17,32
+     frame63: 33,48,49</code></pre>
+<p>Now create the cluster config file. Here is a simple configuration file example.</p>
+<pre><code>    # A small cluster config file for a single 2 frame bldg block.
+    # Just the hmcs, frames, bpas, cecs, and fsps are created.
+    xcat-site:
+     use-direct-fsp-control = 1
+
+    xcat-hmcs:
+     hostname-range = hmc[1-3]
+     starting-ip = 40.0.0.110
+
+    xcat-frames:
+     hostname-range = frame[1-3]
+     num-frames-per-hmc = 1
+     vpd-file = vpd-frame.stanza
+       # This assumes you have 2 service LANs:  a primary service LAN 40.x.y.z/255.0.0.0 that all of the port 0&#39;s
+       # are connected to, and a backup service LAN 41.x.y.z/255.0.0.0 that all of the port 1&#39;s are connected to.
+       # &quot;x&quot; is the frame number and &quot;z&quot; is the bpa/fsp id (1 for the first BPA/FSP in the Frame/CEC, 2 for the
+       # second BPA/FSP in the Frame/CEC). For BPAs &quot;y&quot; is always be 0 and for FSPs &quot;y&quot; is the cec id.
+     vlan-1 = 40
+     vlan-2 = 41
+
+    xcat-cecs:
+     hostname-range = f[1-3]c[01-12]
+     num-cecs-per-frame = 12
+     supernode-list = supernodelist.txt
+</code></pre>
+<p>Run xcatsetup to create the initial node definitions:</p>
+<pre><code>    xcatsetup &lt;config-file-name&gt;</code></pre>
+<p>This writes the following essential attributes to the database (more attributes are written, but these are the attributes that are necessary for running lsslp later on):</p>
+<ul>
+<li>frames: nodelist.node, nodelist.groups, ppc.nodetype, vpd.serial, vpd.mtm nodetype.nodetype</li>
+<li>bpas: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent, nodetype.nodetype</li>
+<li>cecs: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent, ppc.cageid, nodetype.nodetype</li>
+<li>fsps: nodelist.node, nodelist.groups, ppc.nodetype, ppc.parent, nodetype.nodetype</li>
+<li>creates groups: hmc, frame, bpa, cec, fsp</li>
+</ul>
+<p>Note: unlike most nodes in the xCAT database, the BPAs and FSPs will use their IP address (the permanent one) as their node name. The BPA and FSP nodes are also hidden by default and will normally not be displayed by the <a href="http://xcat.sourceforge.net/man1/lsdef.1.html">lsdef</a> command. Use the -S option of <a href="http://xcat.sourceforge.net/man1/lsdef.1.html">lsdef</a> to display the hidden nodes.</p>
+<h3 id="creating-initial-node-definitions-manually"><a href="#TOC">Creating Initial Node Definitions Manually</a></h3>
+<p>If the xcatsetup command does not apply well to your cluster because your naming patterns have too many exceptions, you can create node definitions manually to prepare for running lsslp. (If you used xcatsetup, skip this section.)</p>
+<p>Before running lsslp ensure the BPAs picked up a temporary ip address from DHCP. Otherwise lsslp will return with no reponses.</p>
+<pre><code>For AIX DHCP environment, you can execute the &quot;dadmin&quot; command  .</code></pre>
+<pre><code>    dadmin -s | grep -v Free  # AIX only</code></pre>
+<pre><code>For RH6 DHCP environment, you can check the &quot;dhcpd.leases&quot;
+files located under /var/lib/dhcpd directory</code></pre>
+<pre><code>    cat /var/lib/dhcpd/dhcpd.leases</code></pre>
+<p>Run lsslp to produce a stanza file of the frames and BPAs:</p>
+<pre><code>    lsslp -s FRAME -i 10.230.0.0,10.231.0.0 -z &gt;frames.stanza</code></pre>
+<p>Edit the stanza file to give the frames the symbolic node names you want, and the BPAs the IP addresses you want. Adjust the parent and hcp attributes accordingly. Leave the otherinterfaces attribute set to the dynamic DHCP addresses. See the <a href="http://xcat.sourceforge.net/man5/xcatstanzafile.5.html">xcatstanzafile man page</a>] for the syntax.</p>
+<p>Note: the IP addresses you choose for BPAs should not be in the DHCP dynamic range.</p>
+<ul>
+<li>Note: It is assumed the serial numbers are provided via documentation that came with the machine. The mac addresses cannot be added until the devices acquire a temporary ip address.</li>
+</ul>
+<p><strong>Frame node</strong>: Here is an example of the attributes that should be set for the frame nodes:</p>
+<pre><code>    frame14:
+     objtype=node
+     groups=frame,all
+     hcp=frame14
+     id=14
+     mgt=bpa
+     mtm=78AC-100
+     nodetype=ppc
+     hwtype=frame
+     parent=1
+     serial=BB50026
+     sfp=hmc1</code></pre>
+<p>In the above example, the attribute meanings are:</p>
+<ul>
+<li>hcp - the hardware control point for this frame. For DFM, it is always set to itself.</li>
+<li>id - the frame number.</li>
+<li>mgt - the type of the hardware control point (hcp). bpa means xCAT will manage it directly without the HMC.</li>
+<li>mtm - the machine type and model</li>
+<li>parent - the parent for this frame. It will be set to blank, or contain the building block number.</li>
+<li>serial - serial number of the frame</li>
+<li>sfp - the HMC that is connected to this frame for the purpose of collecting hardware serviceable events.</li>
+</ul>
+<p><strong>BPA node</strong>: Here is an example of the attributes that should be set for the BPA nodes:</p>
+<pre><code>    10.230.2.14:
+     objtype=node
+     groups=bpa,all
+     side=A-0
+     nodetype=ppc
+     hwtype=bpa
+     parent=frame14
+     mac=00:09:6b:ad:07:b5
+     hidden=1</code></pre>
+<ul>
+<li>side - &lt;BPA&gt;-&lt;port&gt; The side attribute refers to which BPA, A or B, which is determined by the slot value returned from lsslp command. It also lists the physical port within each BPA which is determined by the IP address order from the lsslp response. This information is used internally when communicating with the BPAs.</li>
+<li>parent - always set to the frame node that this BPA is part of.</li>
+<li>mac - the mac address of the BPA, which is got from lsslp.</li>
+<li>hidden - set to 1 means that xCAT will hide the node by default in nodels and lsdef output. Normally BPA nodes are hidden because you usually only have to use the frame nodes for management. To see the BPA nodes in the nodels or lsdef output, use the -S flag.</li>
+</ul>
+<p>Create the frame and BPA objects in the xCAT database:</p>
+<pre><code>    cat frames.stanza | mkdef -z</code></pre>
+<p>** Frame in Rack Standby **: If you are working with brand new frames, they may still be in &quot;rackstandby&quot; mode, which means there is no power to the CECs, which means the FSPs can not respond to the lsslp commands below at this time. If this is your situation, complete the next section <a href="XCAT_Power_775_Hardware_Management/#discover-the-bpas-modify-their-network-information-and-connect-to-them">XCAT_Power_775_Hardware_Management/#discover-the-bpas-modify-their-network-information-and-connect-to-them</a> now to get the frames out of rackstandby mode. Then return to this section and complete the lsslp and mkdef commands for the CECs and FSPs.</p>
+<p>Run lsslp to produce a stanza file of the CECs and FSPs:</p>
+<pre><code>    lsslp -s CEC -i 10.230.0.0,10.231.0.0 -z &gt;cecs.stanza
+</code></pre>
+<p>Edit the stanza file to give the CECs the symbolic node names you want, and the FSPs the IP addresses you want. Adjust the parent and hcp attributes accordingly. Leave the otherinterfaces attribute set to the dynamic DHCP addresses.</p>
+<p>Note: the IP addresses you choose for FSPs should not be in the DHCP dynamic range.</p>
+<p><strong>CEC node</strong>: Here is an example of the attributes that should be set for the CEC nodes:</p>
+<pre><code>    cec06:
+     objtype=node
+     groups=cec,all
+     hcp=cec06
+     id=6
+     mgt=fsp
+     mtm=9125-F2C
+     nodetype=ppc
+     hwtype=cec
+     parent=frame14
+     serial=02D8B25
+     sfp=hmc1
+     supernode=7,0</code></pre>
+<p>In above example, the attributes:</p>
+<ul>
+<li>hcp - the hardware control point for this CEC. For DFM, it is always set to itself.</li>
+<li>id - the cage number of this CEC in a 24 inch frame</li>
+<li>mgt - is set to fsp</li>
+<li>mtm - the machine type and model</li>
+<li>parent - the frame node that this CEC is in</li>
+<li>serial - serial number of the cec</li>
+<li>sfp - the HMC that is connected to this CEC for the purpose of collecting hardware serviceable events.</li>
+<li>supernode - the HFI network supernode number that this CEC is part of. See the ISNM documentation for what to set this to.</li>
+</ul>
+<p>To go along with the CEC supernode numbers, set the HFI switch topology value in the xCAT site table. See the ISNM documentation for the correct value.</p>
+<pre><code>    chdef -t site topology=32D</code></pre>
+<p><strong>FSP node</strong>: Here is an example of the attributes that should be set for the FSP nodes:</p>
+<pre><code>    10.230.4.6:
+     objtype=node
+     groups=all,fsp
+     nodetype=ppc
+     hwtype=fsp
+     parent=cec06
+     side=A-0
+     mac=00:09:6b:ad:07:b3
+     hidden=1</code></pre>
+<ul>
+<li>side - &lt;FSP&gt;-&lt;port&gt; The side attribute refers to which FSP, A or B, which is determined by the slot value returned from lsslp command. It also lists the physical port within each FSP which is determined by the IP address order from the lsslp response. This information is used internally when communicating with the FSPs.</li>
+<li>parent - set to the CEC that this FSP is in.</li>
+<li>mac - the mac address of the FSP, which is got from lsslp.</li>
+<li>hidden - set to 1 means that xCAT will hide the node by default in nodels and lsdef output. Normally FSP nodes are hidden because you usually only have to use the CEC nodes for management. To see the FSP nodes in the nodels or lsdef output, use the -S flag.</li>
+</ul>
+<p>Create the CEC and FSP objects in the xCAT database:</p>
+<pre><code>    cat cecs.stanza | mkdef -z</code></pre>
+</div> </div>
+
+
+<h3 id="discover-the-bpas-modify-their-network-information-and-connect-to-them"><a href="#TOC">Discover the BPAs, Modify Their Network Information, and Connect To Them</a></h3>
+<p>Discover the BPAs on the network, match them with the corresponding frames and BPAs in the database (using the mtms), and write additional attributes in the database (like mac addresses). The -i flag uses the ip addresses that is configured for dhcp.</p>
+<pre><code>    lsslp -s FRAME -i 10.230.0.0,10.231.0.0 -w</code></pre>
+<p>Verify that the frame and BPA definitions in the database are correct.</p>
+<pre><code>    lsdef frame
+    lsdef bpa -S      # normally BPAs are hidden from output, so need the -S flag</code></pre>
+<p>Verify that:</p>
+<ul>
+<li>The parent of the BPA's is set to the frame object it is in</li>
+<li>The frame id attribute is set to the frame number you would like it to have</li>
+<li>The frame parent is set to the building block number it is in (optional)</li>
+</ul>
+<p>Configure DHCP with the permanent ip/mac pairs so that it will always give the BPAs their permanent IP address from now on:</p>
+<pre><code>    makedhcp bpa</code></pre>
+<p>Create nodename/ip mapping for BPAs:</p>
+<pre><code>    makehosts bpa</code></pre>
+<p>Verify that the proper IP/MAC pairs were configured in dhcp:</p>
+<pre><code>    cat /var/lib/dhcpd/dhcpd.leases      # RHEL 6
+    cat /var/lib/dhcp/db/dhcpd.leases    # SLES 11
+    cat /etc/dhcpsd.cnf                 # AIX
+</code></pre>
+<p>To enable xCAT to connect to the BPAs, you must add the current passwords for the frames/BPAs in the xCAT database. If the password for all of the frames is the same, you can set the username/password in the passwd table:</p>
+<pre><code>    chtab key=bpa,username=HMC passwd.password=xxx
+    chtab key=bpa,username=admin passwd.password=yyy
+    chtab key=bpa,username=general passwd.password=zzz
+</code></pre>
+<p>If the passwords for some of the frames/BPAs are different, you can set the passwords for individual frames/BPAs in the ppcdirect table:</p>
+<pre><code>    chdef frame1 passwd.HMC=xxx passwd.admin=yyy passwd.general=zzz</code></pre>
+<p>The BPAs will send their DHCP request to the DHCP server about every five minutes. So after the DHCP configured, the BPAs will get their permanent IP addresses about five minutes later. The <a href="http://xcat.sourceforge.net/man1/pping.1.html">pping</a> can be a help to see if the BPAs has got new IP addresses. If the BPA has got its permanent IP address, the pping result will be: &quot;bpa1:ping&quot;.</p>
+<pre><code>    pping bpa</code></pre>
+<p>For the BPAs who can't refresh their IP addresses, the --resetnet option, the <a href="http://xcat.sourceforge.net/man1/rspconfig.1.html">rspconfig</a> command expects each BPA's otherinterfaces attribute to be set to the dynamic IP address that it currently has, and the node name of the BPA to be set to the permanent IP address you want it to have.</p>
+<pre><code>    rspconfig bpa1 --resetnet</code></pre>
+<ul>
+<li>Note: the --resetnet may fail if enough time has elasped that the BPAs already automatically renewed their leases and received the new permanent IP addresses. In that case, just confirm that DHCP server has the proper IPs configured. If rspconfig does not work properly you may need to EPO the P775 frame for the new BPA primary IPs to get assigned.</li>
+</ul>
+<p>Have xCAT's DFM daemon (hdwr_server) on the xCAT EMS establish connections to all of the frames for the primary service VLAN: The default attributes for mkhwconn are -T lpar and --port 0 for the primary hardware service VLAN.</p>
+<pre><code>    mkhwconn frame -t</code></pre>
+<p>The support for Dual hardware service VLANs is not currently supported for the P775 cluster in xCAT 2.6.6. If the admin needs to work with a 2nd hardware service VLAN, they need to specify the -T lpar and --port 1 options to establish connections to the second service VLAN for each BPA of the frames.</p>
+<pre><code>    mkhwconn frame -t -T lpar --port 1</code></pre>
+<p>Verify the hardware connections were made successfully for the primary service VLAN. If the admin does allocate a second service VLAN for the cluster, these hardware connections may show a &quot;LINE DOWN&quot;.</p>
+<pre><code>    lshwconn frame
+    frame14: 40.14.0.1: side=a,ipadd=40.14.0.1,alt_ipadd=unavailable,state=LINE UP
+    frame14: 40.14.0.2: side=b,ipadd=40.14.0.2,alt_ipadd=unavailable,state=LINE UP</code></pre>
+<p>If the BPA passwords are still the factory defaults, you must change them before running any other commands to them:</p>
+<pre><code>    rspconfig frame general_passwd=general,&lt;newpd&gt;
+    rspconfig frame admin_passwd=admin,&lt;newpd&gt;
+    rspconfig frame HMC_passwd=,&lt;newpd&gt;</code></pre>
+<p>Verify the hardware control setup is correct for the frames. If this is the initial frame setup or an EPO happened, the BPAs will at rack standby state. The normal state of the BPAs if not in &quot;rack standby&quot; should be at &quot;Both BPAs at standby&quot; state.:</p>
+<pre><code>    rpower frame state
+    frame14: BPA state - Both BPAs at rack standby
+
+    lshwconn frame
+    frame14(40.14.0.2): resource_type=frame,side=b,ipaddr=192.168.200.239,alt_ipaddr=unavailable,state=Connected
+    frame14(40.14.0.1): resource_type=frame,side=a,ipaddr=192.168.200.247,alt_ipaddr=unavailable,state=Connected
+    frame14(20.0.0.167): Connection not found
+    frame14(20.0.0.168): Connection not found</code></pre>
+<p>There is a possibility that you will need to update the frame power code firmware as part of the P775 installation. Make sure you locate and down load the supported P775 power code and firmware from IBM Fix Central to a directory on your xCAT MN. The rflash command references this GFW directory and updates the frame power code for your frames. Make sure that there is space available in /tmp file system since rflash temporarily places GFW tracking files under /tmp/fwupdate. You will update the CECs firmware at a later time. Before do the firmware update, make sure the pending power on side of the Frames' BPAs are temp. If not, set it to temp.</p>
+<pre><code>    rspconfig frame pending_power_on_side
+    rspconfig frame pending_power_on_side=temp</code></pre>
+<p>And then, start the update.</p>
+<pre><code>    rflash frame -p &lt;directory&gt; --activate disruptive
+    (output to be added here)
+    rinv frame firm</code></pre>
+<p>Set the frame number in each frame object: You should first check to make sure you have setup the &quot;id&quot; attribute to match the proper frame number. If the frame id=0, you should update using the &quot;chdef&quot; for each frame object.</p>
+<pre><code>    rspconfig frame &#39;frame=*&#39;</code></pre>
+<p>Note: at this point in the process, the CECs should not have power to them yet. But if for some reason they do, they must be powered off before the frame number can be set.</p>
+<p>Set the system name of the frame to match the node name in the xCAT database. This will cause the frame names displayed in the HMC to match the frame names in the xCAT database.</p>
+<pre><code>rspconfig frame &#39;sysname=*&#39;</code></pre>
+<p>To enable xCAT to connect Frames to the target HMC, you must add the current HMC username password for the frame nodes in the xCAT database. If the password for all of the frames are the same, you can set the username/password in the passwd table; if unique passwords are used, they must be updated in the ppcdirect table.</p>
+<pre><code>    chtab key=frame,username=HMC passwd.password=xxx</code></pre>
+<p>Associate the HMCs with the appropriate frames: You should first make sure that the frame objects have setup the &quot;sfp&quot; attribute to the proper HMC node object. This is needed to allow the frame to support connections to the BPA through DFM and the HMC. You also need to make sure that there is proper SSH connection from the EMS to the HMC.</p>
+<pre><code>    mkhwconn frame -s</code></pre>
+<p>Inform the hardware installation team that the HMCs should now be able to recognize the frames and that they may begin to fill the water in the frames.</p>
+<p><strong>Note:</strong> the HMC may list the frames as incomplete.</p>
+<p>Have the hardware installation team inform you when the water fill procedure is complete. Then use xCAT to move the frames out of rack standby mode so the final top-off procedure can be completed on the HMC:</p>
+<pre><code>    rpower frame exit_rackstandby</code></pre>
+<p>Verify the state of the frames:</p>
+<pre><code>    rpower frame state
+    frame14: BPA state - Both BPAs at standby</code></pre>
+<h3 id="power-on-the-fsps-discover-them-modify-network-information-and-connect"><a href="#TOC">Power On the FSPs, Discover Them, Modify Network Information, and Connect</a></h3>
+<p>When the frames exited rackstandby mode in the end of the last section, the FSPs were powered on. This should have caused the FSPs to request and receive a dynamic IP address from DHCP. The MAC addresses cannot be collected by the lsslp command below until this has taken place.</p>
+<p>Run lsslp to discover the CECs/FSPs, and match the discovered hardware with the corresponding objects in the database, and write additional attributes in the database. The -i flag specifies the ip subnet that is configured as the dynamic range in DHCP.</p>
+<pre><code>    lsslp -s CEC -i 10.230.0.0,10.231.0.0 -w</code></pre>
+<p>For each FSP discovered on the network, the lsslp command uses the cage # and its parent (frame) MTMS to match the correct CEC entry in the database. The attributes that will be written to the database are:</p>
+<ul>
+<li>the mtms of each CEC object</li>
+<li>the MAC for each FSP will be stored in the mac.mac attribute and the dynamic IP address of each FSP object will be temporarily stored in the hosts.otherinterfaces attribute.</li>
+</ul>
+<p>You can confirm these settings by running:</p>
+<pre><code>    lsdef -i mtm,serial cec
+    lsdef -S -i mac,otherinterfaces fsp</code></pre>
+<p>You can compare this information to the labels on the front of the CECs to verify that the matching worked correctly. Review/verify all of the attributes of the CECs and FSPs:</p>
+<pre><code>    lsdef cec
+    lsdef fsp -S      # normally FSPs are hidden from output, so need the -S flag</code></pre>
+<p>Verify that:</p>
+<ul>
+<li>The parent of the FSPs are set to the CEC they are in</li>
+<li>The parent of the CECs are set to the frame they are in</li>
+<li>The supernode attribute is set for each CEC</li>
+</ul>
+<p>Configure DHCP with the permanent ip/mac pairs so that it will always give the FSPs their permanent IP address from now on:</p>
+<pre><code>    makedhcp fsp</code></pre>
+<p>Create nodename/ip mapping for FSPs:</p>
+<pre><code>    makehosts fsp</code></pre>
+<p>Verify that the proper IP/MAC pairs were configured in dhcp:</p>
+<pre><code>    cat /var/lib/dhcpd/dhcpd.leases # RHEL 6
+    cat /var/lib/dhcp/db/dhcpd.leases # SLES 11
+    cat /etc/db_file.cr # AIX</code></pre>
+<p>The FSPs will send their DHCP request to the DHCP server about every five minutes. So after the DHCP configured, the FSPs will get their permanent IP addresses about five minutes later. The <a href="http://xcat.sourceforge.net/man1/pping.1.html">pping</a> can be a help to see if the FSPs has got new IP addresses. If the FSP has got its permanent IP address, the pping result will be: &quot;FSP1:ping&quot;.</p>
+<pre><code>    pping fsp</code></pre>
+<p>For the FSPs who can't refresh their IP addresses, the --resetnet option, the <a href="http://xcat.sourceforge.net/man1/rspconfig.1.html">rspconfig</a> command expects each FSP's otherinterfaces attribute to be set to the dynamic IP address that it currently has, and the node name of the FSP to be set to the permanent IP address you want it to have.</p>
+<pre><code>    rspconfig fsp1 --resetnet</code></pre>
+<ul>
+<li>Note: the --resetnet may fail if enough time has elasped that the CECs already automatically renewed their leases and received the new IP addresses. In that case, just confirm that they have the correct IP address.</li>
+</ul>
+<p>If you want to verify that all the BPAs and FSPs now have the correct IP addresses and are defined in the database with the correct parents, you can run lsslp to have it match what it discovers on the network with what is defined in the database:</p>
+<pre><code>    $ lsslp -i 10.230.0.0,10.231.0.0
+    BPA     78AC-100    9920035        A-0   40.11.0.1      f11c00bpca_a
+    BPA     78AC-100    9920035        B-0   40.11.0.2      f11c00bpcb_a
+    CEC     9125-F2C    02C4D86                             f11c01
+    FSP     9125-F2C    02C4D86        A-0   40.11.1.1      f11c01fsp1_a
+    FSP     9125-F2C    02C4D86        B-0   40.11.1.2      f11c01fsp2_a
+    CEC     9125-F2C    02C4E06                             f11c02
+    FSP     9125-F2C    02C4E06        A-0   40.11.2.1      f11c02fsp1_a
+    FSP     9125-F2C    02C4E06        B-0   40.11.2.2      f11c02fsp2_a
+    ...
+    CEC     9125-F2C    02C5066                             f12c12
+    FSP     9125-F2C    02C5066        A-0   40.12.12.1     f12c12fsp1_a
+    FSP     9125-F2C    02C5066        B-0   40.12.12.2     f12c12fsp2_a
+    FRAME   78AC-100    9920035                             frame11
+    FRAME   78AC-100    9920033                             frame12
+</code></pre>
+<p>To enable xCAT to connect to the FSPs, you must add the current passwords for the CEC/FSPs in the xCAT database. If the password for all of the CECs is the same, you can set the username/password in the passwd table:</p>
+<pre><code>    chtab key=fsp,username=HMC passwd.password=xxx
+    chtab key=fsp,username=admin passwd.password=yyy
+    chtab key=fsp,username=general passwd.password=zzz</code></pre>
+<p>If the passwords for some of the CEC/FSPs are different, you can set the passwords for individual CEC/FSPs in the ppcdirect table:</p>
+<pre><code>    chdef cec1 passwd.HMC=xxx passwd.admin=yyy passwd.general=zzz</code></pre>
+<p>Have xCAT's DFM daemon (called hw server) establish connections to all of the CECs:</p>
+<pre><code>    mkhwconn cec -t</code></pre>
+<p>For Dual VLAN, need to specify the --port option to establish the two connections for each FSP of the CECs:</p>
+<pre><code>    mkhwconn cec -t -T lpar
+    mkhwconn cec -t -T lpar --port 1</code></pre>
+<p>If the FSP passwords are still the factory defaults, you must change them before running any other commands to them:</p>
+<pre><code>    rspconfig cec general_passwd=general,&lt;newpd&gt;
+    rspconfig cec admin_passwd=admin,&lt;newpd&gt;
+    rspconfig cec HMC_passwd=abc123,&lt;newpd&gt;</code></pre>
+<p>Set the system name of the CEC to match the node name in the xCAT database. This will cause the CEC names displayed in the HMC to match the CEC names in the xCAT database.</p>
+<pre><code>    rspconfig cec &#39;sysname=*&#39;</code></pre>
+<p>To enable xCAT to connect CECs to the target HMC, you must add the current HMC username password for the cec nodes in the xCAT database. If the password for all of the cecs are the same, you can set the username/password in the passwd table; if unique passwords are used, they must be updated in the ppcdirect table.</p>
+<pre><code>    chtab key=cec,username=HMC passwd.password=xxx</code></pre>
+<p>Associate the HMCs with the appropriate CECs:</p>
+<pre><code>    mkhwconn cec -s</code></pre>
+<p>Verify the connections were made successfully:</p>
+<pre><code>    lshwconn cec
+    (output to be added here)</code></pre>
+<p>Verify the hardware control setup is correct for the CECs:</p>
+<pre><code>    rpower cec state
+    (output to be added here)</code></pre>
+<pre><code>    lshwconn cec -s
+    cec1(192.168.200.239): resource_type=frame,side=b,ipaddr=192.168.200.239,alt_ipaddr=unavailable,state=Connected
+    cec1(192.168.200.247): resource_type=frame,side=a,ipaddr=192.168.200.247,alt_ipaddr=unavailable,state=Connected
+    cec1(20.0.0.167): Connection not found
+    cec1(20.0.0.168): Connection not found</code></pre>
+<h3 id="update-the-cec-firmware-and-validate-cecs-can-power-up"><a href="#TOC">Update the CEC firmware, and Validate CECs Can Power Up</a></h3>
+<p>The admin should plan to upgrade the firmware for both the Bulk Power Code (BPC), and the CEC firmware. This is accomplished by using the rflash xCAT command from the xCAT EMS. The admin should download the supported GFW from the IBM Fix central website, and place it in a directory that is available to be read by the xCAT EMS.</p>
+<p>Use rinv command to get the current firmware levels of the frames and CECs:</p>
+<pre><code>    rinv frame firm
+    rinv cec firm
+    (output to be added here)</code></pre>
+<p>Make sure the pending power on side of the CEC's FSPs are temp. If not, set it to temp.</p>
+<pre><code>    rspconfig cec pending_power_on_side
+    rspconfig cec pending_power_on_side=temp</code></pre>
+<p>Use the rflash command to update the firmware levels for the CECs. Then validate that the new firmware is loaded:</p>
+<pre><code>    rflash cec -p &lt;directory&gt; --activate disruptive
+    (output to be added here)
+    rinv cec firm</code></pre>
+<p>Verify that the CECs are healthy:</p>
+<pre><code>    rpower cec state
+    rvitals cec lcds</code></pre>
+<p>You may want to check that the CNM switch configuration data is properly defined in the xCAT DB prior to powering up the CECs and working with the Octant/LPAR definitions. This activity may save you some CEC reboot time later.</p>
+<p>Check that the correct HFI switch topology has been set in the site table. The topology definition is based on the the number of CECs and type of HFI network configured for your Power 775 cluster.</p>
+<pre><code>     lsdef -t site -l -i topology     # should be one of supported configs: 8D, 32D, 128D</code></pre>
+<p>Check to make sure that the CEC node objects have the proper &quot;supernode&quot; attribute defined. The supernode will specify the HFI configuration being used by the CEC. You should also make sure the cage id is properly defined where the &quot;id&quot; attribute matches the cage position for the CEC node. The CNM daemon and configuration commands will setup the Master ISR identifier for each CEC. This will allow the HFI communications to work within the Power 775 cluster.</p>
+<pre><code>     lsdef  cec     # check supernode and id attribute for each cec object</code></pre>
+<p>The P775 admin can now power on the CECs, and validate they come up to working state. You can monitor the power up of the CECs using the rpower and rvitals command. You are looking for the CECs to be &quot;Operating&quot; with a finished good state. If they are not in the &quot;Operating&quot; state, additional hardware debug will be necessary to understand the failure.</p>
+<pre><code>    rpower cec on
+    rvitals cec lcds
+    rpower cec state</code></pre>
+<p>When we power on all the cecs within a frame, we must put a 30 second delay between each CEC within one frame. We use the syspowerinterval attribute in the site table to control the cec boot up speed.</p>
+<pre><code>      chdef -t site syspowerinterval=30</code></pre>
+<p>And then put the all the cecs within one frame as a group, and power them on:</p>
+<pre><code>      rpower cecswithin_one_frame on</code></pre>
+<p>For 12 CECs within one Frame, the rpower will take about 5m33s.</p>
+<p>Check the HMCs for any SFP service events that were generated during CEC boot. Then, make sure there are no unexpected deconfigured resources in the CECs:</p>
+<pre><code>    rinv cec deconfig</code></pre>
+<h3 id="define-the-lpar-nodes-and-create-the-serviceutility-lpars"><a href="#TOC">Define the LPAR Nodes and Create the Service/Utility LPARs</a></h3>
+<p>You can define the LPAR nodes in different ways: use xcatsetup, or implement manually with xCAT commands. Using xcatsetup will be faster/easier for large clusters because it will generate the lpar configuration based on a cluster configuration file. Alternatively, the admin can define the lpars in the database using the xCAT rscan command to create a lpar stanza file. You need to then edit the stanza file to modify the node name of each LPAR. This approach is simpler for small clusters, but becomes tedious quickly for large clusters.</p>
+<p><strong>Follow either the green section entitled &quot;Define LPAR Nodes with xcatsetup&quot; or the blue section entitled &quot;Define LPAR Nodes with rscan&quot; (but not both). After that, continue on with the section &quot;Splitting the Service Node Octant into Multiple LPARS&quot;.</strong></p>
+<h4 id="define-lpar-nodes-with-xcatsetup"><a href="#TOC"><strong>Define LPAR Nodes with xcatsetup</strong></a></h4>
+<p>Use the <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup</a> config file that you used earlier in this document to define the hardware components. To that file, add stanzas for xcat-lpars, xcat-service-nodes, xcat-storage-nodes, and xcat-compute-nodes. Here's an example:</p>
+<pre><code>    # A small cluster config file for a single 2 frame bldg block.
+    # Just the hmcs, frames, bpas, cecs, and fsps are created.
+    xcat-site:
+    use-direct-fsp-control = 1
+
+    xcat-hmcs:
+    hostname-range = hmc[1-2]
+
+    xcat-frames:
+    hostname-range = frame[1-2]
+    num-frames-per-hmc = 1
+    vpd-file = vpd-frame.stanza
+       # This assumes you have 2 service LANs:  a primary service LAN 40.x.y.z/255.0.0.0 that all of the port 0&#39;s
+       # are connected to, and a backup service LAN 41.x.y.z/255.0.0.0 that all of the port 1&#39;s are connected to.
+       # &quot;x&quot; is the frame number and &quot;z&quot; is the bpa/fsp id (1 for the first BPA/FSP in the Frame/CEC, 2 for the
+       # second BPA/FSP in the Frame/CEC). For BPAs &quot;y&quot; is always be 0 and for FSPs &quot;y&quot; is the cec id.
+     vlan-1 = 40
+     vlan-2 = 41
+
+    xcat-cecs:
+    hostname-range = cec[01-24]
+    num-cecs-per-frame = 12
+
+    xcat-building-blocks:
+     num-frames-per-bb = 2
+     num-cecs-per-bb = 24
+
+    xcat-lpars:
+    num-lpars-per-cec = 8
+
+    xcat-service-nodes:
+    num-service-nodes-per-bb = 1
+    cec-positions-in-bb = 1
+    # this is for the ethernet NIC on each SN
+    hostname-range = sn1
+    starting-ip = 10.250.1.1
+    # this value is the same format as the
+    # hosts.otherinterfaces attribute except
+    # the IP addresses are starting IP addresses
+    otherinterfaces = -hf0:10.251.1.1,-hf1:11.251.1.1,-hf2:12.251.1.1,-hf3:13.251.1.1,-ml0:14.251.1.1
+    # if you want the service nodes to route traffic
+    # between the MN and compute nodes,
+    # then provide the netmask that should be used
+    # for each compute network the service
+    # nodes are connected to.  The netmask should
+    # limit the ip range to just the compute
+    # nodes served by this service node.
+    route-masks = -hf0:255.255.0.0,-hf1:255.255.0.0,-hf2:255.255.0.0,-hf3:255.255.0.0,-ml0:255.255.0.0
+
+    xcat-storage-nodes:
+    num-storage-nodes-per-bb = 2
+    cec-positions-in-bb = 12,24
+    hostname-range = stor1-stor2
+    starting-ip = 10.252.1.1
+    aliases = -hf0
+    otherinterfaces = -hf1:11.253.1.1,-hf2:12.253.1.1,-hf3:13.253.1.1,-ml0:14.253.1.1
+
+    xcat-compute-nodes:
+    hostname-range = n001-n189
+    starting-ip = 10.1.1.1
+    aliases = -hf0
+    # ml0 is for aix.  For linux, use bond0 instead.
+    otherinterfaces = -hf1:11.1.1.1,-hf2:12.1.1.1,-hf3:13.1.1.1,-ml0:14.1.1.1</code></pre>
+<p>Now run xcatsetup with this config file, telling it to just process the new stanzas (since we already created the hardware components earlier):</p>
+<pre><code>    xcatsetup -s xcat-lpars,xcat-service-nodes,xcat-storage-nodes,xcat-compute-nodes &lt;config-file-name&gt;</code></pre>
+<p>This will create definitions in the database for the service nodes, storage nodes, and compute nodes with the proper attributes and located in the proper LPARs/CECs. Use the <a href="http://xcat.sourceforge.net/man1/lsdef.1.html">lsdef</a> command to display the node definitions to confirm they were created the way you want them.</p>
+<p>By default, all of these LPARs already exist in the CECs themselves, with one exception: if you plan to split the service node octant into multiple LPARs (because you don't need all of the octant's resources for the service node), that must be done manually. An example of doing this will be covered in the next section.</p>
+<h4 id="define-lpar-nodes-with-rscan"><a href="#TOC"><strong>Define LPAR Nodes with rscan</strong></a></h4>
+<p>The <a href="http://xcat.sourceforge.net/man1/rscan.1.html">rscan</a> command reads the actual LPAR configuration in the CEC and creates node definitions in the xCAT database to reflect them. Before use rscan, you should put the cec in operating or standby state. If you already used the xcatsetup command to create the LPAR node definitions, you can skip this section.</p>
+<p>Run the <a href="http://xcat.sourceforge.net/man1/rscan.1.html">rscan</a> command against all of the CECs to create a stanza file of LPAR node definitions:</p>
+<pre><code>    rscan cec -z &gt;nodes.stanza</code></pre>
+<p>Edit the stanza file and give each LPAR definition the node name that you want it to have. Remember to name the service node and storage node LPARs the way you want them, and to set the servicenode and xcatmaster attributes of all the non-service node LPARs to the appropriate service node name. Then create the definitions in the database:</p>
+<pre><code>    cat nodes.stanza | mkdef -z</code></pre>
+<p>Use the <a href="http://xcat.sourceforge.net/man1/lsdef.1.html">lsdef</a> command to display the node definitions to confirm they were created the way you want them.</p>
+<h4 id="splitting-the-service-node-octant-into-multiple-lpars"><a href="#TOC"><strong>Splitting the Service Node Octant into Multiple LPARS</strong></a></h4>
+<p>In most cases, the service nodes don't need all of the resources of the octant it is in. Normally, the service node only needs 25% of the CPUs and memory in the octant, unless you are also running the Loadleveler central manager on that service node, in which case we recommend 50% of the resources. This leaves the other 75% or 50% of the resources for an additional LPAR of your choosing: utility node, login node, etc. To create a second LPAR in a service node octant, follow these steps:</p>
+<ul>
+<li>List the LPARs in the CEC to confirm the current configuration:</li>
+</ul>
+<pre><code>    lsvm cec01
+    1: 520/U78A9.001.312M001-P1-C14/0x21010208/0/0
+    1: 514/U78A9.001.312M001-P1-C17/0x21010202/0/0
+    1: 513/U78A9.001.312M001-P1-C15/0x21010201/0/0
+    1: 512/U78A9.001.312M001-P1-C16/0x21010200/0/0
+    1: 569/U78A9.001.312M001-P1-C1/0x21010239/0/0
+    1: 568/U78A9.001.312M001-P1-C2/0x21010238/0/0
+    1: 561/U78A9.001.312M001-P1-C3/0x21010231/0/0
+    1: 560/U78A9.001.312M001-P1-C4/0x21010230/0/0
+    1: 553/U78A9.001.312M001-P1-C5/0x21010229/0/0
+    1: 552/U78A9.001.312M001-P1-C6/0x21010228/0/0
+    1: 545/U78A9.001.312M001-P1-C7/0x21010221/0/0
+    1: 544/U78A9.001.312M001-P1-C8/0x21010220/0/0
+    1: 537/U78A9.001.312M001-P1-C9/0x21010219/0/0
+    1: 536/U78A9.001.312M001-P1-C10/0x21010218/0/0
+    1: 529/U78A9.001.312M001-P1-C11/0x21010211/0/0
+    1: 528/U78A9.001.312M001-P1-C12/0x21010210/0/0
+    1: 521/U78A9.001.312M001-P1-C13/0x21010209/0/0
+    cec01: PendingPumpMode=1,CurrentPumpMode=1,OctantCount=8:
+    OctantID=0,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=1,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=2,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=3,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=4,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=5,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=6,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=7,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2
+</code></pre>
+<ul>
+<li>Create a group entry for the Utility node and the attributes that will be the same for this type of node (only have to do this once):</li>
+</ul>
+<pre><code>    mkdef -t group util mgt=fsp cons=fsp netboot=yaboot nodetype=ppc,osi
+    chtab node=util ppc.nodetype=lpar   # soon you can add hwtype=lpar to the mkdef cmd instead of this</code></pre>
+<ul>
+<li>Create the utility LPAR node definition in the xCAT database:</li>
+</ul>
+<pre><code>    mkdef util01 groups=util,all mgt=fsp hcp=cec01 parent=cec01 id=2 servicenode=sn01 xcatmaster=sn01-hf0</code></pre>
+<ul>
+<li>Create two lpars on the first octant for the utility and service node. This will split the first octant 50/50 and the rest of the lpars will remain allocated with all available memory and CPU. See chvm manpage for more options.</li>
+</ul>
+<pre><code>    chvm sn01,util01  -i 1 -m non-interleaved -r 0:2</code></pre>
+<ul>
+<li>Verify the Pending now says '2', and Current OctCfg still says '1':</li>
+</ul>
+<pre><code>    lsvm cec01</code></pre>
+<ul>
+<li>Re-IPL the CEC to have the octant reconfiguration take effect:</li>
+</ul>
+<pre><code>    rpower cec01 off
+    rpower cec01 on
+</code></pre>
+<ul>
+<li>Verify the Current OctCfg now says '2':</li>
+</ul>
+<pre><code>    lsvm cec01</code></pre>
+<ul>
+<li>Capture the resources assigned to LPAR 1. All the resources will be assigned to the service node by default. If adapters need to be moved (like ethernet adapters for utility nodes or SAS adapters for I/O nodes) then gather the current configuration.</li>
+</ul>
+<pre><code>    lsvm sn01 &gt; resources.txt
+    1: 520/U78A9.001.312M001-P1-C14/0x21010208/0/0
+    1: 514/U78A9.001.312M001-P1-C17/0x21010202/0/0
+    1: 513/U78A9.001.312M001-P1-C15/0x21010201/0/0
+    1: 512/U78A9.001.312M001-P1-C16/0x21010200/0/0
+    1: 569/U78A9.001.312M001-P1-C1/0x21010239/0/0
+    1: 568/U78A9.001.312M001-P1-C2/0x21010238/0/0
+    1: 561/U78A9.001.312M001-P1-C3/0x21010231/0/0
+    1: 560/U78A9.001.312M001-P1-C4/0x21010230/0/0
+    1: 553/U78A9.001.312M001-P1-C5/0x21010229/0/0
+    1: 552/U78A9.001.312M001-P1-C6/0x21010228/0/0
+    1: 545/U78A9.001.312M001-P1-C7/0x21010221/0/0
+    1: 544/U78A9.001.312M001-P1-C8/0x21010220/0/0
+    1: 537/U78A9.001.312M001-P1-C9/0x21010219/0/0
+    1: 536/U78A9.001.312M001-P1-C10/0x21010218/0/0
+    1: 529/U78A9.001.312M001-P1-C11/0x21010211/0/0
+    1: 528/U78A9.001.312M001-P1-C12/0x21010210/0/0
+    1: 521/U78A9.001.312M001-P1-C13/0x21010209/0/0</code></pre>
+<ul>
+<li>The LPARs being reconfigured must be powered off to make any changes for the I/O configuration.</li>
+</ul>
+<pre><code>    rpower sn01,util01 off</code></pre>
+<ul>
+<li>Edit resources.txt to change the LPAR id 1 to be LPAR id 2 to move resources assigned from LPAR 1 to LPAR 2.</li>
+</ul>
+<pre><code>    1: 520/U78A9.001.312M001-P1-C14/0x21010208/0/0
+    1: 514/U78A9.001.312M001-P1-C17/0x21010202/0/0
+    1: 513/U78A9.001.312M001-P1-C15/0x21010201/0/0
+    1: 512/U78A9.001.312M001-P1-C16/0x21010200/0/0
+    1: 569/U78A9.001.312M001-P1-C1/0x21010239/0/0
+    1: 568/U78A9.001.312M001-P1-C2/0x21010238/0/0
+    1: 561/U78A9.001.312M001-P1-C3/0x21010231/0/0
+    1: 560/U78A9.001.312M001-P1-C4/0x21010230/0/0
+    1: 553/U78A9.001.312M001-P1-C5/0x21010229/0/0
+    1: 552/U78A9.001.312M001-P1-C6/0x21010228/0/0
+    1: 545/U78A9.001.312M001-P1-C7/0x21010221/0/0
+    1: 544/U78A9.001.312M001-P1-C8/0x21010220/0/0
+    1: 537/U78A9.001.312M001-P1-C9/0x21010219/0/0
+    1: 536/U78A9.001.312M001-P1-C10/0x21010218/0/0
+    2: 529/U78A9.001.312M001-P1-C11/0x21010211/0/0
+    2: 528/U78A9.001.312M001-P1-C12/0x21010210/0/0
+    2: 521/U78A9.001.312M001-P1-C13/0x21010209/0/0
+</code></pre>
+<ul>
+<li>Then reassign those resources moving from lpar1 &quot;sn01&quot; to lpar2 &quot;util01&quot; which will be updated in the CEC:</li>
+</ul>
+<pre><code>    cat resources.txt | chvm sn01,util01
+</code></pre>
+<ul>
+<li>Revalidate that the I/O resources are moved by executing the lsvm command against the 2 lpars.</li>
+</ul>
+<pre><code>    lsvm  sn01,util01</code></pre>
+<ul>
+<li>Power on the LPARs with the new resources:</li>
+</ul>
+<pre><code>    rpower sn01,util01 on</code></pre>
+<h2 id="xcat-direct-fsp-and-bpa-management-capabilities"><a href="#TOC">xCAT Direct FSP and BPA Management Capabilities</a></h2>
+<p><strong>Note:</strong> this chapter is an overview of xCAT's DFM capabilities and <strong>not</strong> a list of steps to be performed during cluster set. This is not a continuation of the Discovery chapter.</p>
+<p>xCAT has the capability to manage system p hardware by communicating directly with the FSPs and BPAs of the hardware, instead of using the HMC. This is called Direct FSP/BPA Management (DFM). (Note that the HMC is still used to collect hardware service events.) This section gives an overview of using these capabilities.</p>
+<h3 id="xcat-commands-which-were-modified-to-add-dfm-support"><a href="#TOC">xCAT commands which were modified to add DFM support</a></h3>
+<p>Several xCAT commands were modified to add DFM support:</p>
+<p>DFM Support</p>
+<!---
+begin_xcat_table;
+numcols=2;
+colwidths=10,30;
+-->
+
+
+<p>|Command | Function ---------|------------------------- |rpower |LPAR and Drawer Power |rpower |P7IH - Transition low power states |rcons |Remote Console |rflash |Firmware support for FSP and BPA |rinv | Get the firmware level of FSP and BPA; get the deconfigured resource of CEC |rvitals|Display LCD values; Get the rack environmental information |getmacs|Adapter information collection |rvitals|List environmental information |mkhwconn/rmhwconn|Make and remove FSP and BPA hardware connections |lshwconn|List hardware connection status |rnetboot|Remote network boot |lsvm, chvm|LPAR list, creation and removal; I/O slot assignment |rbootseq|sets the net or hfi device as the first boot device for the specified PPC LPARs |rspconfig|FSP and BPA password support; get and modify the frame number</p>
+<!---
+end_xcat_table
+-->
+
+
+<h3 id="overview-of-using-dfm-hierarchically"><a href="#TOC">Overview of Using DFM Hierarchically</a></h3>
+<p>For the large clusters, we recommend that you set up the DFM hw ctrl hierarchically, so that each service node executes the hw ctrl operations for its nodes (instead of the EMS doing it for all nodes). Hhere is a summary of the procedure:</p>
+<ol style="list-style-type: decimal">
+<li>On the EMS, remove the LPAR Tooltype connections for non-sn-CECs (non-sn-CECs means the CEC objects that do not contain a SN): rmhwconn &lt;non-SN-CECs&gt;</li>
+<li>For non-sn-CECs, set the servicenode attribute (noderes.servicenode) to the SN</li>
+<li>Set the conserver attribute (nodehm.conserver) for all the non-SN LPARs
+<ol style="list-style-type: decimal">
+<li>set nodehm.conserver of the LPARs in the non-sn-CECs to SN</li>
+<li>set the nodehm.conserver of the non-SN LPARs in the sn-CECs to EMS, or do not set it.</li>
+</ol></li>
+<li>Install dfm and hdwr_svr on the SNs</li>
+<li>Configure the SN NICs that are connected to the service LANs</li>
+<li>From the EMS, for the non-SN cecs, run: mkhwconn &lt;non-SN-CECs&gt; -t</li>
+<li>Test/verify setup with lshwconn and rpower state</li>
+</ol>
+<p>For the whole flow of setting up a Hierarchical Cluster, refer to the following two docs:</p>
+<ul>
+<li>[Setting_Up_an_AIX_Hierarchical_Cluster]</li>
+<li>[Setting_Up_a_Linux_Hierarchical_Cluster]</li>
+</ul>
+<h3 id="defining-xcat-dfm-and-hmc-hardware-connections-to-frames-and-cecs"><a href="#TOC">Defining xCAT DFM and HMC hardware connections to Frames and CECs</a></h3>
+<p>The xCAT administrator can set up the xCAT cluster to connect the Frames and CECs to selected HMCs, xCAT management node, and xCAT service nodes that are attached to the xCAT cluster service VLAN. They can also setup a security environment with passwords used with the HMC, Frame, and CEC. This section will describe what is needed to make the connections to the system p hardware and how to use the mkhwconn, lshwconn, and rmhwconn commands.</p>
+<ul>
+<li><strong>Set proper passwords for CEC/Frame/HMC</strong></li>
+</ul>
+<p>The passwords used with CEC/Frame userids 'HMC', 'general' and 'admin' needs to be set correctly in xCAT table <strong>ppcdirect</strong> or table <strong>passwd</strong>, if the cluster is not going to use the default passwords.</p>
+<p>Here is an example of table ppcdirect:</p>
+<pre><code>    #hcp,username,password,comments,disable
+    &quot;frame1&quot;,&quot;HMC&quot;,&quot;abc123&quot;,,
+    &quot;frame1&quot;,&quot;general&quot;,&quot;abc123&quot;,,
+    &quot;frame1&quot;,&quot;admin&quot;,&quot;abc123&quot;,,
+    &quot;cec16c1&quot;,&quot;HMC&quot;,&quot;abc123&quot;,,
+    &quot;cec16c1&quot;,&quot;general&quot;,&quot;abc123&quot;,,
+    &quot;cec16c1&quot;,&quot;admin&quot;,&quot;abc123&quot;,,</code></pre>
+<p>The passwords used with the HMC nodes working with userid hscroot is located in the xCAT table ppchcp. If you are using xCAT Direct Managment, you need to make the connections between CEC/Frames and xCAT management node, instead of HMC, so you need to set passwords for HMCs.</p>
+<p>Here is an example of table ppchcp:</p>
+<pre><code>    #hcp,username,password,comments,disable
+    &quot;c76v1hmc02&quot;,&quot;hscroot&quot;,&quot;abc123&quot;,,</code></pre>
+<h3 id="make-hmc-hardware-connections-to-frames-for-service-focal-point"><a href="#TOC">Make HMC hardware connections to Frames for Service Focal point</a></h3>
+<p>Since the HMC is required for our Service Focal Point (SFP) support, it needs to be connected to the designated Frames and be connected on the xCAT MN. To allow the xCAT MN to support DFM and HMC at the same time, xCAT has provided a new attribute &quot;sfp&quot; in the ppc table that can get assigned to each Power 775 Frame node.</p>
+<p>The mkhwconn command allows the xCAT administrator to properly setup the BPA/FSP connection between the xCAT management node and Frames/Cecs working with DFM.</p>
+<pre><code>    mkhwconn noderange -t [-T tooltype] [--port port_value]</code></pre>
+<p>Note: For xCAT 2.6.6 code support, we only support P775 HW connections working with the primary HW service VLAN. The --port value specifies which service VLAN will be used to create the connection to the FSP/BPA. The value could be 0 or 1. The default value for port will be 0 which is the primary service VLAN. It will be listed in the vpd table where the side column should be as A-0 and B-0; If the port value is 1 this will make HW connections to the back up HW service VLAN, and will represent the side column as A-1 and B-1.</p>
+<p>This command will make the proper connections on the target xCAT management node if the Frame is not already connected. To work with xCAT DFM, you should have defined the HMC, admin, and general passwords for Frames in ppcdirect table, run mkhwconn to create the HW connections between xCAT management node and Frames using DFM.</p>
+<pre><code>    mkhwconn frame1 -t -T lpar</code></pre>
+<p>For Dual VLAN (not supported in xCAT 2.6.6), we need to specify the --port option to create backup connections for each BPA:</p>
+<pre><code>    mkhwconn frame1 -t -T lpar --port 1</code></pre>
+<p>To assign the sfp attribute for the HMC, execute the &quot;chdef&quot; command to the target Frame node object. The admin then executes the &quot;mkhwconn&quot; to connect the target Frame and known CEC to the HMC node object that was previously defined.</p>
+<pre><code>    chdef frame1 sfp=c76v1hmc02
+    mkhwconn frame1 -s</code></pre>
+<p>will result with Frame node frame1 to be connected by HMC node c76v1hmc02.</p>
+<p>See mkhwconn man page for details of this command</p>
+<ul>
+<li><strong>List frames/CECs from HMC</strong></li>
+</ul>
+<p>There is the lshwconn command that will provide the current Frame/CEC connection data that is specified on a target HMC, xCAT management node if using xCAT Direct Managementsupport. This information currently provides the Frame/CEC nodes, the FSP/BPA IP address, and the connection status of the BPA/FSP used for the target HMC/xCAT management node.</p>
+<p><strong>Run the following to locate the Frame servers working with connections.</strong></p>
+<pre><code>    lshwconn &lt;HMC node&gt;</code></pre>
+<p>See lshwconn man page for the details.</p>
+<h3 id="using-rspconfig"><a href="#TOC"><strong>Using rspconfig</strong></a></h3>
+<h4 id="rspconfig-to-update-password-optional"><a href="#TOC"><strong>rspconfig to update password (optional)</strong></a></h4>
+<p>The xCAT admin can run the rspconfig command to modify the HMC, admin, and general userid passwords on the Frame/CEC servers. The Frame/CEC servers are pre-set by System P manufacturing using default passwords.</p>
+<p>You can use the same password logic for all the System P frames and CECs in your xCAT cluster, or specify unique passwords for HMC, admin, and general userids for selected Frame or CEC server node. You can only execute one Frame/CEC userid one at a time with the rspconfig command in xCAT2.4 . The following contains the rspconfig changing the HMC userid password from access to abc123 used with the Frame and CEC.</p>
+<pre><code>    rspconfig &lt;frame&gt; HMC_passwd=access,abc123
+    rspconfig &lt;cec&gt; HMC_passwd=access,abc123
+</code></pre>
+<p>Note:</p>
+<p>The default password for userid HMC on Frame/CEC is empty, so if the frame or CEC is new or has been reset to manufactory setting, you can use the following command to initialize the userid HMC's password:</p>
+<pre><code>    rspconfig &lt;cec&gt; HMC_passwd=,abc123</code></pre>
+<p>The defualt passwords for userids admin and general are admin and general, so there is no difference between initializing passwords and changing passwords for userids admin and general.</p>
+<h4 id="rspconfig-to-update-frame-number-optional"><a href="#TOC"><strong>rspconfig to update frame number (optional)</strong></a></h4>
+<p>The xCAT administratorcan run the rspconfig command to specify the frame number information when working with 24 inch frames that contain the BPA logic. This information is helpful for large System P clusters where many frames are being used. The rspconfig command will allow the xCAT admin to list the current frame number, or can set Frame server node to a specific frame number. The admin can work with the ppc table to setup the frame number or execute one Frame server at a time. Setting the frame number is a disruptive command which requires all CECs to be powered off prior to issuing the command.</p>
+<pre><code>    rspconfig &lt;frame&gt; frame (list current frame number)
+    rspconfig &lt;frame&gt; frame=4 (change Frame number to now be frame 4)
+</code></pre>
+<h4 id="rspconfig-to-query-or-request-huge-page-memory-optional"><a href="#TOC"><strong>rspconfig to query or request huge page memory (optional)</strong></a></h4>
+<p>The huge page memory can be used to increase performance for certain applications in specific customer environments, such as the running DB2 on AIX and applications using large mapping on Linux.</p>
+<p>You can use the same password logic for all the System P frames and CECs in your xCAT cluster, or specify unique passwords for HMC, admin, and general userids for selected Frame or CEC server node. You can only execute one Frame/CEC userid one at a time with the rspconfig command in xCAT2.4 . The following contains the rspconfig changing the HMC userid password from access to abc123 used with the Frame and CEC.</p>
+<pre><code>    rspconfig &lt;cec&gt; huge_page
+    rspconfig &lt;cec&gt; huge_page=&lt;NUM&gt;</code></pre>
+<p>Note:</p>
+<p>If no value specified, it means query huge page information for the specified CECs, if a CEC is specified, the specified huge_page value NUM will be used as the requested number of huge pages for the CEC, if CECs are specified, it means to request the same NUM huge pages for all the specified CECs.</p>
+<h3 id="using-the-vm-commands-to-define-partitions-in-xcat-dfm"><a href="#TOC">Using the *vm commands to define partitions in xCAT DFM</a></h3>
+<p>Now that the definitions are in the database and the hardware connections have been made, the xCAT administrator can use the chvm and lsvm commands to define the LPARs within each CEC.</p>
+<p>THIS SECTION IS STILL UNDER CONSTRUCTION AND WILL BE UPDATED WITH MORE DETAIL ON THE USE OF THESE COMMANDS</p>
+<h5 id="the-power-775-partitioning-overview"><a href="#TOC"><strong>The Power 775 Partitioning Overview</strong></a></h5>
+<h4 id="power-775-manufacturing-defaults"><a href="#TOC">Power 775 Manufacturing Defaults</a></h4>
+<p>The Power 775 is configured with a default set of LPARs from manufacturing. These defaults are intended to support the HPC environment and are specific to the needs of the HPC clusters. The default rules are as follows:</p>
+<ol style="list-style-type: decimal">
+<li>Any IO adapters in a CEC will be assigned to the first partition. This includes the disk drive adapters, Ethernet adapters, external storage adapters, etc.</li>
+<li>Any CEC with a disk drive will cause the first octant to have a 25/75 LPAR split with the first LPAR being assigned all the IO including the disk drive and giving it 25% of cores and memory. The second partition in this octant will have 75% of the cores and memory.</li>
+<li>All other octants will be defined as full partitions.</li>
+</ol>
+<p>These rules were defined to make the initial configuration match the cluster requirements for our HPC customers. This will allow the CECs with the disk drives and Ethernet adapters to be setup with the hardware needed to act as the service node while only using the minimal number of cores and memory. It also allows for the automatic assignment of the CEC with the external Disk drives to be assigned to a partition to be used as the GPFS NSD server. These defaults are intended to simplify the bring-up process by preconfiguring the CECs with a set of defaults which should meet most of our customers requirements. Should you need to change these default LPAR configurations we provide commands to do this which are discussed in this section.</p>
+<p><strong>Octant Overview</strong></p>
+<p>The Power 775 CEC contains up to eight octants with each octant containing up to four 8-core P7 processors, associated memory and a single Torrent hub. These octants are defined as octant 0 through octant 7.</p>
+<p><strong>Octant Partition Configurations</strong></p>
+<p>The octants can be logically partitioned into one of a preset number of configurations which define the split of resources for processors and memory per partition. The preset configurations are:</p>
+<pre><code>  1. One partition containing all resources [100]
+  2. Two partitions with each containing equal resources [50, 50]
+  3. Three partitions with the first two partitions containing 25
+     percent of the resources and the third partition containing 50
+     percent of the resources [25, 25, 50]
+  4. Four partitions with each containing equal resources [25, 25, 25, 25]
+  5. Two partitions with the first partition containing 25 percent
+     of the resources and the second partition containing 75 percent
+     of the resources. [25, 75]</code></pre>
+<p>The lparid is fixed regardless of how many partitions are defined such that the first lpar in an octant will always have a fixed value. If other partitions are defined for the octant they are defined with the following lparid:</p>
+<pre><code>    Octant ID 0 - lparid 1, lparid 2, lparid 3, lparid 4
+    Octant ID 1 - lparid 5, lparid 6, lparid 7, lparid 8
+    Octant ID 2 - lparid 9, lparid 10, lparid 11, lparid 12
+    Octant ID 3 - lparid 13, lparid 14, lparid 15, lparid 16
+    Octant ID 4 - lparid 17, lparid 18, lparid 19, lparid 20
+    Octant ID 5 - lparid 21, lparid 22, lparid 23, lparid 24
+    Octant ID 6 - lparid 25, lparid 26, lparid 27, lparid 28
+    Octant ID 7 - lparid 29, lparid 30, lparid 31, lparid 32</code></pre>
+<p>With the default configuration of eight octants with one partition per octant, the lpars are defined with lpar ids of 1, 5, 9, 13, 17, 21, 25 and 29.</p>
+<p><strong>Octant Memory</strong></p>
+<p>The memory of an octant can also be configured to use interleaved or non-interleaved memory. Non-interleaved mode means that memory allocations are only interleaved across the two memory controllers on the local chip in an octant. This is also known as 2MC mode. Interleaved means memory allocations are interleaved across all eight memory controllers in the octant. If an octant is to be partitioned then its memory interleaving value MUST BE non-interleaved. For more information on this please see the Firmware Pervasive Level Design Document for PERCS P7IH and Torrent IO Hub.</p>
+<p>The Memory Interleaving Mode can be set to the following values:</p>
+<pre><code> 1 - interleaved (also 8MC mode)
+ 2 - non-interleaved (also 2MC mode)</code></pre>
+<p>You may see a value of &quot;0&quot; returned for the memory interleaving value in the lsvm output. This is the default value from the factory or may be seen after a firmware upgrade. If the current memory interleave value is set to 0 then the chvm command must be used to set it to either 1 or 2.</p>
+<p><strong>Pump Mode and memory interleaving</strong></p>
+<p>The pump mode determines what is allowed for the interleaving of memory per CEC. The pump mode has 2 valid values:</p>
+<pre><code>     0x01 - Node Pump Mode
+     0x02 - Chip Pump Mode</code></pre>
+<p>The default Pump Mode on the CEC is 0x01 (Node Pump Mode). This value allows the memory interleave value to be set to either interleaved or non-interleaved for the octant. A pump mode of Chip Pump Mode forces the memory interleave mode to be non-interleaved for the octant. However, the pump mode value can not be changed by customers and should always be 0x01 - Node Pump Mode.</p>
+<p>xCAT partition related commands for Power 775 The partition commands for Power 775 are different from P5 &amp; P6 implementation based on the unique hardware configuration in the Power 775:</p>
+<h4 id="chvm"><a href="#TOC"><strong>chvm</strong></a></h4>
+<p><a href="http://xcat.sourceforge.net/man1/chvm.1.html">chvm</a> is designed to set the Octant configure value to split the CPU and memory for partitions, and set Octant Memory interleaving value. The chvm will only set the pending attributes value. After chvm, the CEC needs to be rebooted manually for the pending values to be enabled. Before reboot the cec, the administrator can use chvm to change the partition plan. If the the partition needs I/O slots, the administrator should use chvm to assign the I/O slots.</p>
+<p>chvm is also designed to assign the I/O slots to the new LPAR. Both the current IO owning LPAR and the new IO owning LPAR must be powered off before an IO assignment. Otherwise, if the I/O slot is belonged to an LPAR and the LPAR is power on, the command will return an error when trying to assign that slot to a different lpar.</p>
+<p>syntax:</p>
+<pre><code>    chvm [-V| --verbose] noderange -i id [-m memory_interleaving] -r partition_rule
+    chvm [-V| --verbose] noderange [-p profile]</code></pre>
+<p>options:</p>
+<pre><code>-i Starting numeric id of the newly created partitions. The id value only could be 1, 5, 9, 13, 17, 21, 25 and 29.
+-m memory interleaving. The setting value only could be 1 or 2. 2 means non-interleaved mode, the memory cannot be shared across the processors in an octant.  1 means interleaved mode, the memory can be shared. The default value of memory interleaving in chvm is 1 .
+-r partition rule.
+If all the octants configuration value are same in one CEC,  it will be  &quot; -r  0-7:value&quot; .
+If the octants use the different configuration value in one cec, it will be &quot;-r 0:value1,1:value2,...7:value7&quot;, or &quot;-r 0:value1,1-7:value2&quot; and so on.
+The octants configuration value for one Octant could be  1, 2, 3, 4, 5.
+
+The meanings of the octants configuration value  are as following:
+
+1 - One partition with all cpus and memory of the octant
+2 - Two partitions with a 50/50 split of cpus and memory
+3 - Three partitions with a 25/25/50 split of cpus and memory
+4 - Four partitions with a 25/25/25/25 split of cpus and memory
+5 - Two partitions with a 25/75 split of cpus and memory
+
+-p the I/O profile.
+
+The administrator should use [lsvm](http://xcat.sourceforge.net/man1/lsvm.1.html) to get the profile content, and then edit the content, and add the node name with &quot;:&quot; manually before the I/O which will be assigned to the node. It looks like:</code></pre>
+<pre><code>    lparid1:bus_id1/physical_location_code/drc_index/owner_type/owner/description
+    lparid1:bus_id2/physical_location_code/drc_index/owner_type/owner/description
+    ...
+    lparid2:bus_id/physical_location_code/drc_index/owner_type/owner/description
+    ...
+
+    lparidn:bus_id/physical_location_code/drc_index/owner_type/owner/description
+
+    ...</code></pre>
+<p>The chvm also supports that the file being piped to the command is in above profile format.</p>
+<h4 id="lsvm"><a href="#TOC"><strong>lsvm</strong></a></h4>
+<p><a href="http://xcat.sourceforge.net/man1/lsvm.1.html">lsvm</a> lists all partition I/O slots information for the partitions specified in noderange. If noderange is a CEC, it gets the CEC's pump mode value, octant's memory interleaving value, the all the octants configure value, and all the I/O slots information</p>
+<p>syntax:</p>
+<pre><code>    lsvm noderange [-l|--long]</code></pre>
+<p>If no option specify, the output is similar too:</p>
+<pre><code>    lparid1:bus_id1/physical_location_code/drc_index/owner_type/owner/description
+    lparid1:bus_id2/physical_location_code/drc_index/owner_type/owner/description
+    ...
+    lparid2:bus_id/physical_location_code/drc_index/owner_type/owner/description
+    ...
+
+    lparidn:bus_id/physical_location_code/drc_index/owner_type/owner/description
+
+    cecname: octant configuration value
+
+If option -l or --long specify, the output is similar too:
+
+    lpar_name1: lparid1: bus_id1/physical_location_code/drc_index/owner_type/owner/description: BSR_array_number1: Min1/Req1/Max1
+    lpar_name1: lparid1: bus_id2/physical_location_code/drc_index/owner_type/owner/description: BSR_array_number1: Min1/Req1/Max1
+    ...
+    lpar_name2: lparid2: bus_id/physical_location_code/drc_index/owner_type/owner/description: BSR_array_number2: Min2/Req2/Max2
+    ...
+
+    lpar_namen: lparidn: bus_id/physical_location_code/drc_index/owner_type/owner/description: BSR_array_numbern: Minn/Reqn/Maxn
+
+    cecname: octant configuration value</code></pre>
+<h4 id="some-examples-for-the-partitioning-commands"><a href="#TOC"><strong>Some examples for the partitioning commands</strong></a></h4>
+<h6 id="for-chvm"><a href="#TOC">For chvm</a></h6>
+<p>1. To create a new partition lpar1 on the first octant of the cec, lpar1 will use all the cpu and memory of the octant 0, enter:</p>
+<pre><code>    mkdef -t node -o lpar1 mgt=fsp groups=all parent=cec01 nodetype=ppc,osi hwtype=lpar hcp=cec01</code></pre>
+<p>then:</p>
+<pre><code>    chvm lpar1 -i 1 -m 1 -r 0:1</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    lpar1: Success
+    cec01: For Power 775, if chvm succeeds, please reboot the CEC cec01 before using chvm to assign the I/O slots</code></pre>
+<p>2. To create a new partition lpar1-lpar2 on the first octant of the cec, each lpar will use 50% cpu and 50% memory of the octant 0, enter:</p>
+<pre><code>    mkdef -t node -o lpar1-lpar2 mgt=fsp groups=all parent=cec01 nodetype=ppc,osi hwtype=lpar hcp=cec01
+</code></pre>
+<p>then:</p>
+<pre><code>    chvm lpar1-lpar2 -i 1 -m 2 -r 0:2</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    lpar1: Success
+    lpar2: Success
+    cec01: For Power 775, if chvm succeeds, please reboot the CEC cec01 before using chvm to assign the I/O slots
+</code></pre>
+<p>3. To create new partitions lpar1-lpar32 on the whole cec, each LPAR will use 25% cpu and 25% memory of each octant, enter:</p>
+<pre><code>    mkdef -t node -o lpar1-lpar32 nodetype=ppc,osi hwtype=lpar  mgt=fsp groups=all parent=cec01  hcp=cec01</code></pre>
+<p>then:</p>
+<pre><code>    chvm lpar1-lpar32 -i 1 -m 2 -r 0-7:4</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    lpar1: Success
+    lpar10: Success
+    lpar11: Success
+    lpar12: Success
+    lpar13: Success
+    lpar14: Success
+    lpar15: Success
+    lpar16: Success
+    lpar17: Success
+    lpar18: Success
+    lpar19: Success
+    lpar2: Success
+    lpar20: Success
+    lpar21: Success
+    lpar22: Success
+    lpar23: Success
+    lpar24: Success
+    lpar25: Success
+    lpar26: Success
+    lpar27: Success
+    lpar28: Success
+    lpar29: Success
+    lpar3: Success
+    lpar30: Success
+    lpar31: Success
+    lpar32: Success
+    lpar4: Success
+    lpar5: Success
+    lpar6: Success
+    lpar7: Success
+    lpar8: Success
+    lpar9: Success
+    cec01: For Power 775, if chvm succeeds, please reboot the CEC cec01 before using chvm to assign the I/O slots</code></pre>
+<p>4. To create new partitions lpar1-lpar8 on the whole cec, each LPAR will use all the cpu and memory of each octant, enter:</p>
+<pre><code>    mkdef -t node -o lpar1-lpar8 nodetype=ppc,osi hwtype=lpar  mgt=fsp groups=all parent=cec01  hcp=cec01</code></pre>
+<p>then:</p>
+<pre><code>    chvm lpar1-lpar8 -i 1 -m 1 -r 0-7:1</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    lpar1: Success
+    lpar2: Success
+    lpar3: Success
+    lpar4: Success
+    lpar5: Success
+    lpar6: Success
+    lpar7: Success
+    lpar8: Success
+    cec01: For Power 775, if chvm succeeds, please reboot the CEC cec01 before using chvm to assign the I/O slots</code></pre>
+<p>5. To create new partitions lpar1-lpar9, the lpar1 will use 25% CPU and 25% memory of the first octant, and lpar2 will use 75% CPU and memory of the first octant. lpar3-lpar9 will use all the cpu and memory of each octant. Note that the chvm command does not support both memory interleaving values in one call. Therefore the chvm must be entered twice, once for &quot;-m 2&quot; for partitioned octants and again for &quot;-m 1&quot; for single lpar octants. For example:</p>
+<pre><code>    mkdef -t node -o lpar1-lpar9 mgt=fsp groups=all parent=cec1 nodetype=ppc,osi hwtype=lpar hcp=cec1</code></pre>
+<p>then:</p>
+<pre><code>    chvm lpar1-lpar9 -i 1 -m 2 -r 0:5
+    chvm lpar3-lpar9 -i 5 -m 1 -r 1-7:1</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    lpar1: Success
+    lpar2: Success
+    cec1: For Power 775, if chvm succeeds, please reboot the CEC cec1 before using chvm to assign the I/O slots
+    lpar3: Success
+    lpar4: Success
+    lpar5: Success
+    lpar6: Success
+    lpar7: Success
+    lpar8: Success
+    lpar9: Success
+    cec1: For Power 775, if chvm succeeds, please reboot the CEC cec1 before using chvm to assign the I/O slots</code></pre>
+<p>6. To change the I/O slot profile for lpar4 using the configuration data in the file /tmp/lparfile, the I/O slots information is similar to:</p>
+<pre><code>    4: 514/U78A9.001.0123456-P1-C17/0x21010202/2/1
+    4: 513/U78A9.001.0123456-P1-C15/0x21010201/2/1
+    4: 512/U78A9.001.0123456-P1-C16/0x21010200/2/1</code></pre>
+<p>then run the command:</p>
+<pre><code>    cat /tmp/lparfile | chvm lpar4</code></pre>
+<p>7. To change the I/O slot profile for lpar1-lpar8 using the configuration data in the file /tmp/lparfile. Users can use the output of lsvm.and remove the cec information, and modify the lpar id before each I/O, and run the command as following:</p>
+<pre><code>    chvm lpar1-lpar8 -p /tmp/lparfile</code></pre>
+<h6 id="for-lsvm"><a href="#TOC">For lsvm</a></h6>
+<p>1. To list the I/O slot information of lpar1, enter:</p>
+<pre><code>    lsvm lpar1</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    1: 514/U78A9.001.0123456-P1-C17/0x21010202/2/1
+    1: 513/U78A9.001.0123456-P1-C15/0x21010201/2/1
+    1: 512/U78A9.001.0123456-P1-C16/0x21010200/2/1</code></pre>
+<p>2. To list the I/O slot information and octant configuration of cec1, enter:</p>
+<pre><code>    lsvm cec1</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    1: 514/U78A9.001.0123456-P1-C17/0x21010202/2/1
+    1: 513/U78A9.001.0123456-P1-C15/0x21010201/2/1
+    1: 512/U78A9.001.0123456-P1-C16/0x21010200/2/1
+    13: 537/U78A9.001.0123456-P1-C9/0x21010219/2/13
+    13: 536/U78A9.001.0123456-P1-C10/0x21010218/2/13
+    17: 545/U78A9.001.0123456-P1-C7/0x21010221/2/17
+    17: 544/U78A9.001.0123456-P1-C8/0x21010220/2/17
+    21: 553/U78A9.001.0123456-P1-C5/0x21010229/2/21
+    21: 552/U78A9.001.0123456-P1-C6/0x21010228/2/21
+    25: 569/U78A9.001.0123456-P1-C1/0x21010239/2/25
+    25: 561/U78A9.001.0123456-P1-C3/0x21010231/2/25
+    25: 560/U78A9.001.0123456-P1-C4/0x21010230/2/25
+    29: 568/U78A9.001.0123456-P1-C2/0x21010238/2/29
+    5: 521/U78A9.001.0123456-P1-C13/0x21010209/2/5
+    5: 520/U78A9.001.0123456-P1-C14/0x21010208/2/5
+    9: 529/U78A9.001.0123456-P1-C11/0x21010211/2/9
+    9: 528/U78A9.001.0123456-P1-C12/0x21010210/2/9
+    cec1:  PendingPumpMode=1,CurrentPumpMode=1,OctantCount=8:
+    OctantID=0,PendingOctCfg=5,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=1,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=2,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=3,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=4,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=5,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=6,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;
+    OctantID=7,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=1;</code></pre>
+<p>3. To list the detailed I/O slot information and octant configuration of cec1, enter:</p>
+<pre><code>    lsvm cec1 -l</code></pre>
+<p>Output is similar to:</p>
+<pre><code>    cec1:
+    lpar1: 1: 514/U78A9.001.0123456-P1-C17/0x21010202/2/1: 16: 0/3/3
+    lpar1: 1: 513/U78A9.001.0123456-P1-C15/0x21010201/2/1: 16: 0/3/3
+    lpar1: 1: 512/U78A9.001.0123456-P1-C16/0x21010200/2/1: 16: 0/3/3
+    lpar13: 13: 537/U78A9.001.0123456-P1-C9/0x21010219/2/13: 16: 0/3/3
+    lpar13: 13: 536/U78A9.001.0123456-P1-C10/0x21010218/2/13: 16: 0/3/3
+    lpar17: 17: 545/U78A9.001.0123456-P1-C7/0x21010221/2/17: 16: 0/0/0
+    lpar17: 17: 544/U78A9.001.0123456-P1-C8/0x21010220/2/17: 16: 0/0/0
+    lpar21: 21: 553/U78A9.001.0123456-P1-C5/0x21010229/2/21: 16: 0/0/0
+    lpar21: 21: 552/U78A9.001.0123456-P1-C6/0x21010228/2/21.16: 0/0/0
+    lpar25: 25: 569/U78A9.001.0123456-P1-C1/0x21010239/2/25.16: 0/0/0
+    lpar25: 25: 561/U78A9.001.0123456-P1-C3/0x21010231/2/25.16: 0/0/0
+    lpar25: 25: 560/U78A9.001.0123456-P1-C4/0x21010230/2/25.16: 0/0/0
+    lpar29: 29: 568/U78A9.001.0123456-P1-C2/0x21010238/2/29.8: 0/0/0
+    lpar5: 5: 521/U78A9.001.0123456-P1-C13/0x21010209/2/5.8: 0/3/3
+    lpar5: 5: 520/U78A9.001.0123456-P1-C14/0x21010208/2/5.8: 0/3/3
+    lpar9: 9: 529/U78A9.001.0123456-P1-C11/0x21010211/2/9.16: 0/3/3
+    lpar9: 9: 528/U78A9.001.0123456-P1-C12/0x21010210/2/9.16: 0/3/3
+    PendingPumpMode=1,CurrentPumpMode=1,OctantCount=8:
+    OctantID=0,PendingOctCfg=5,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=1,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=2,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=3,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=4,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=5,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=6,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    OctantID=7,PendingOctCfg=1,CurrentOctCfg=1,PendingMemoryInterleaveMode=2,CurrentMemoryInterleaveMode=2;
+    Number of BSR arrays: 256, Bytes per BSR array: 4096, Available BSR arrays: 0;
+    Available huge page memory(in pages):     0
+    Configurable huge page memory(in pages):  12
+    Page Size(in GB):                         16
+    Maximum huge page memory(in pages):       24
+    Requested huge page memory(in pages):     15;</code></pre>
+<h3 id="using-xcat-dfm-rpower-support-to-control-the-frame-cec-and-lpar-power"><a href="#TOC">Using xCAT DFM rpower support to control the Frame, CEC, and LPAR power</a></h3>
+<p>This section will outline the general xCAT DFM rpower support as well as new support for the P7IH servers. See the rpower man page for more detail for each option.</p>
+<p>Here is a list of xCAT DFM supported rpower options.</p>
+<pre><code>    rpower &lt;noderange&gt; [on|onstandby|off|reset|stat|state|boot|of|sms|lowpower|rackstandby|exit_rackstandby]</code></pre>
+<p>Administrators will need to control power for different hardware boundaries depending on the tasks being performed. During an initial startup of a cluster they will be issuing commands to the BPA to bring up the frame and start the FSPs. Once the FSPs are up they will issue commands to IPL the CEC and later commands to the FSP to start each LPAR. During normal operation they may wish to reboot LPARs to cause them to use an updated OS level. Each of these commmands require the administrator to select the appropriate Frame, CEC, or LPAR as the noderange.</p>
+<h4 id="rpower-actions-on-a-frame"><a href="#TOC">rpower actions on a Frame</a></h4>
+<p>The following actions are supported for a nodelist of Frame</p>
+<pre><code>    rpower &lt;noderange&gt; [rackstandby|exit_rackstandby|stat|state]</code></pre>
+<h4 id="rpower-actions-on-an-cec"><a href="#TOC">rpower actions on an CEC</a></h4>
+<p>The following actions are supported for a nodelist of CEC</p>
+<pre><code>    rpower &lt;noderange&gt; [on|off|stat|state|lowpower]</code></pre>
+<p>For lowpower , turn CEC to low power state (state EOCT). This is a disruptive operation which requires the CEC to be powered off prior to entering low power mode. And we can use &quot;power off&quot; command to get out of lowepower state.</p>
+<h4 id="rpower-actions-on-an-lpar"><a href="#TOC">rpower actions on an LPAR</a></h4>
+<p>The following actions are supported for a nodelist of LPAR</p>
+<pre><code>    rpower &lt;noderange&gt; [on|off|reset|stat|state|boot|of|sms]</code></pre>
+<h3 id="updating-the-bpa-and-fsp-firmware-using-xcat-dfm"><a href="#TOC">Updating the BPA and FSP firmware using xCAT DFM</a></h3>
+<h4 id="overview"><a href="#TOC"><strong>Overview</strong></a></h4>
+<p>The xCAT DFM supoprt includes the ability to apply firmware updates to the Frame and CEC using the rflash command</p>
+<p>The xCAT DFM firmware related commands are rspconfig, rinv and rflash. And the noderange <strong>MUST</strong> be CEC and Frame.</p>
+<p>1. use rspconfig to set the pending power on side</p>
+<pre><code>     rspconfig &lt;noderange&gt;  pending_power_on_side</code></pre>
+<pre><code>     rspconfig &lt;noderange&gt; pending_power_on_side={temp|perm}</code></pre>
+<p>2. Use rinv with the option firm to get the firmware level of the CECs or Frames</p>
+<pre><code>    rinv &lt;noderange&gt; firm</code></pre>
+<p>3. use the rflash command to perform firmware updates.</p>
+<pre><code>    rflash  &lt;noderange&gt; -p directory --activate  &lt;disruptive|deferred&gt; [-d data_directory]</code></pre>
+<pre><code>    rflash &lt;noderange&gt; [--commit|--recover]</code></pre>
+<p>The rflash command initiates Firmware updates for the CECs and Frames.</p>
+<p>The flash chip system P managed system or power subsystem stores firmware in two locations, referred to as the temporary side and the permanent side. By default, most system P systems boot from the temporary side of the flash. When the rflash command updates code, the current contents of the temporary side are written to the permanent side, and the new code is written to the temporary side. The new code is then activated. Therefore, the two sides of the flash will contain different levels of code when the update has completed.</p>
+<p>In Direct FSP/BPA Management, there is -d &lt;data_directory&gt; option. The default value is /tmp. When do firmware update, rflash will put some related data from rpm packages in &lt;data_directory&gt; directory, so the execution of rflash will require available disk space in &lt;data_directory&gt; for the command to properly execute:</p>
+<p>For one GFW rpm packages and power code rpm package , if the GFW rpm package size is gfw_rpmsize, and the Power code rpm package size is power_rpmsize, it requires that the available disk space should be more than:</p>
+<pre><code>   1.5*gfw_rpmsize + 1.5*power_rpmsize</code></pre>
+<p>The --activate flag determines how the affected systems activate the new code. In currently Direct FSP/BPA Management, our rflash doesn't support concurrent option, and only support disruptive and deferred.</p>
+<p>The disruptive option will cause any affected systems that are powered on to be powered down before installing and activating the update. So we require that the systems should be powered off before do the firmware update.</p>
+<p>The deferred option will load the new firmware into the T (temp) side, but will not activate it like the disruptive firmware. The customer will continue to run the Frames and CECs working with the P (perm) side and can wait for a maintenance window where they can activate and boot the Frame/CECs with new firmware levels. Refer to the section <a href="XCAT_Power_775_Hardware_Management/#perform-deferred-firmware-upgrades-for-framecec-on-power-775">Perform_Deferred_Firmware_upgrades_for_frameFCEC_on_Power_775</a> below to get more details.</p>
+<p><strong>Note</strong>: When doing the firmware update on the frame's BPAs, rflash flashes the LIC code into the BPAs, and then reboots the BPAs to activate the new firmware, and then issues the ACDL action at last. ACDL means Auto Code Down Load of the Power/Thermal subsystem which updates other parts in the frame. All the actions of ACDL are done within the frame automatically. In most of the time, about 10 minutes later, the ACDL will finish automatically. During the ACDL, it doesn't affect any hardware control operations on the related CECs, and ACDL only pertains to power /thermal FRUs. That's the expected behavior.</p>
+<p>The --commit flag is used to copy the contents of the temporary side of the flash to the permanent side. This flag should be used after updating code and verifying correct system operation.</p>
+<p>The --recover flag is used to copy the permanent side of the flash chip back to the temporary side. This flag should be used to recover from a corrupt flash operation, so that the previously running code can be restored.</p>
+<p>For Power 775, the rflash command takes effect on the primary and secondary FSPs or BPAs almost in parallel.</p>
+<p>The detailed information will be added to the xCAT rflash manpage.</p>
+<h4 id="preparing-for-a-firmware-upgrade"><a href="#TOC"><strong>Preparing for a firmware upgrade</strong></a></h4>
+<p>To prepare for the firmware upgrade download the Microcode update package and associated XML file from the IBM Web site:</p>
+<p>http://www-933.ibm.com/support/fixcentral/ .</p>
+<p>Go to <a href="http://www-933.ibm.com/support/fixcentral/">Fix Central</a> and use the following options:</p>
+<pre><code>  Product Group = Power
+  Product = Firmware, SDMC, and HMC
+  Machine type-model = 9125-F2C</code></pre>
+<h4 id="perform-disruptive-firmware-update-for-framecec-on-power-775"><a href="#TOC"><strong>Perform disruptive Firmware update for Frame/CEC on Power 775</strong></a></h4>
+<p>Check firmware level</p>
+<pre><code>    rinv &lt;noderange&gt; firm</code></pre>
+<p>Update the firmware</p>
+<p>Download the Microcode update package and associated XML file from the IBM Web site:</p>
+<p>http://www-933.ibm.com/support/fixcentral/ .</p>
+<p>Go to <a href="http://www-933.ibm.com/support/fixcentral/">Fix Central</a> and use the following options:</p>
+<pre><code>  Product Group = Power
+  Product = Firmware, SDMC, and HMC
+  Machine type-model = 9125-F2C</code></pre>
+<p>Create the /tmp/fw directory, if necessary, and copy the downloaded files to the /tmp/fw directory.</p>
+<p>Run the rflash command with the --activate flag to specify the update mode to perform the updates.Please see the &quot;rflash&quot; manpage for more information.</p>
+<pre><code>    rflash  &lt;noderange&gt; -p /tmp/fw --activate disruptive</code></pre>
+<p>Notes:</p>
+<p>System Power 775 firmware updates can require time to complete and there is no visual indication that the command is proceeding.</p>
+<h4 id="perform-deferred-firmware-upgrades-for-framecec-on-power-775"><a href="#TOC"><strong>Perform Deferred Firmware upgrades for frame/CEC on Power 775</strong></a></h4>
+<h5 id="deferred-firmware-update-background"><a href="#TOC"><strong>Deferred firmware update Background</strong></a></h5>
+<p>It takes more than 2 hours to finish the disruptive firmware update in a large P775 cluster. To reduce the down time of the cluster, customers may want to flash new firmware levels while the cecs are up and running, The deferred firmware update will load the new firmware into the T (temp) side, but will not activate it like the disruptive firmware. The customer will continue to run the Frames and CECs working with the P (perm) side and can wait for a maintenance window where they can activate and boot the Frame/CECs with new firmware levels.</p>
+<h5 id="tempperm-side-pending_power_on_side-attributes-in-deferred-firmware-update"><a href="#TOC"><strong>temp/perm side, pending_power_on_side attributes in Deferred firmware update</strong></a></h5>
+<p>The deferred firmware update includes 2 parts: The first part (1) is to apply the firmware to the T (temp) sides of Frames' BPAs and CECs' FSPs when the cluster is up and running. The second part (2) is to activate the new firmware on the Frames and Cecs at a scheduled time.</p>
+<p>The default setting is that the CEC/FSPs are working from the temp side (current_power_on_side). During part(1) of the deferred firmware update implementation, the CEC will continue to run on the perm side while the rflash of the new firmware levels will installed to the temp side. It is very important that the perm side contains the current stable version of firmware. The perm side is usually only used as a recovery environment when working with firmware updates.</p>
+<p>When executing a reboot the CEC (FSPs), the CEC will run on the side which the pending_power_on_side attribute is set. After we finish the part (1), the admin will want to make sure the pending_power_on_side attribute is set to &quot;perm&quot; if the CECs want to be rebooted working with the older stable firmware. When you are ready to activate the new firmware and reboot the Cecs,you will want to make sure the pending_power_on_side attribute is set to &quot;temp&quot;.</p>
+<h5 id="the-procedure-of-the-deferred-firmware-update"><a href="#TOC">**The procedure of the deferred firmware update **</a></h5>
+<p>Before starting the deferred firmware update, the admin should first make sure that the most recent stable firmware level has been applied to the P (perm) side. We should note that T-side firmware will be moved over to the P-side automatically when we execute the rflash of the new firmware into the T (temp) side.</p>
+<p>1. Apply the firmware for Frame and CECs</p>
+<p>In this part, rflash command with --activate deferred is used to load the firmware to the Frame and CECs, while the Frame and CECs are in running state. The admins should make sure that the Frame power code is loaded first and that GFW levels are compatible with power code.</p>
+<p>1.1 Check the Firmware level of the Frames or CECs:</p>
+<pre><code>      rinv &lt;noderange&gt; firm</code></pre>
+<p>Then, download the suitable power code for Frame or GFW code for CEC. For example, if the Release Level of the CEC is '01AFxxx', the code witch has the same perfix '01AF' is suitable for updating.</p>
+<p>To prepare for the firmware upgrade download the Microcode update package and associated XML file from the IBM Web site:</p>
+<p>http://www-933.ibm.com/support/fixcentral/ .</p>
+<p>Go to <a href="http://www-933.ibm.com/support/fixcentral/">Fix Central</a> and use the following options:</p>
+<pre><code>  Product Group = Power
+  Product = Firmware, SDMC, and HMC
+  Machine type-model = 9125-F2C</code></pre>
+<p>1.2 Apply the power code into the Frames's BPAs</p>
+<pre><code>      rflash &lt;frame&gt; -p &lt;rpm_directory&gt; --activate deferred</code></pre>
+<p>1.3 Apply the GFW code into the CECs's FSPs</p>
+<pre><code>      rflash &lt;cec&gt; -p &lt;rpm_directory&gt; --activate deferred</code></pre>
+<p>1.4 Check to make sure the proper Firmware levels have been loaded into the temp side (new) and the perm side (previous) for the Frames or CECs. The rflash working with &quot;deferred&quot; should now specify Current Power on side to now be &quot;perm&quot;:</p>
+<pre><code>      rinv &lt;noderange&gt; firm</code></pre>
+<p>2. Setup Cecs pending power to Perm (needed for CEC reboot -- power off/on)</p>
+<p>In part 1, the new firmware is now loaded on the temp side. If you need to keep the Frame and CECs active for a period of time (such as several days) we need to make sure we are working with previous firmware level, which is running on the P-side. You should change the pending_power_on_side attribute from temp to perm. The expectation is that the admin should only need to set the CECs pending_power_on_side, but the admin can also set the frame environment if needed.</p>
+<pre><code>      rspconfig &lt;cec&gt; pending_power_on_side
+      If not, set CEC&#39;s the pending power on side to P-side:
+      rspconfig &lt;cec&gt; pending_power_on_side=perm</code></pre>
+<p><strong>Note</strong>: The P775 system should continue to run working on the P-side with previous level firmware until you are ready to activate the new firmware , since the pending_power_on_side has been set to perm side, this will make sure that the CECs will be powered up working with the previous firmware level. This may be necessary if the CECs have an issue, or that the admin may need to reboot one of the CECs prior to the scheduled outage.</p>
+<p>3.Activate the new firmware at schedule time</p>
+<p>The new firmware level has been loaded on the temp side, and it is time to activate the Frame and CECs with new firmware level. The admin should make sure the pending_power_on_side is now set back from perm to temp.</p>
+<p>3.1 Check if the pending power on side for Frame and CEC are T-side</p>
+<pre><code>      rspconfig &lt;frame&gt; pending_power_on_side
+      rspconfig &lt;cec&gt; pending_power_on_side
+      If not, set the pending power on side to T-side
+      rspconfig &lt;frame&gt; pending_power_on_side=temp
+      rspconfig &lt;cec&gt; pending_power_on_side=temp</code></pre>
+<p>3.2 Power off all CECs</p>
+<pre><code>      rpower cec off</code></pre>
+<p>3.3 reboot the service processors and do ACDL for Frames</p>
+<p>When all of the CECs are powered off, the admin should reboot the BPAs to activate the new power code in the BPAs, and run Auto Code Down Load (ACDL) of the Power/Thermal subsystem which updates other parts in the Frame. The ACDL really a small code update of the firmware on all the miscellaneous electrical components, such as fans and pumps, that are part of the Frame and are controlled by the BPC.</p>
+<p>At the end of the BPAs rebooting, it will run the ACDL automatically, but we want to issue a manual ACDL to make sure the automatic ACDL was successful. The manual ACDL is a 'double-check' to make sure ACDL runs properly.</p>
+<p>3.3.1 Reboot the Frames' BPAs</p>
+<pre><code>       rpower &lt;frame&gt; resetsp</code></pre>
+<p>Wait for 5-10 minutes for BPA to restart. When the connections become LINE_UP again, the BPAs have finished the reboot.</p>
+<pre><code>       lshwconn &lt;frame&gt;</code></pre>
+<p>3.3.2 Execute the manual ACDL</p>
+<pre><code>       rflash &lt;frame&gt; --bpa_acdl</code></pre>
+<p>3.4 Verify that the frame updates are the new power code level and that they are using the temp side for the current_power_on_side .</p>
+<pre><code>      rinv &lt;frame&gt; firm</code></pre>
+<p>3.5 Reboot the service processor for the CECs</p>
+<pre><code>       rpower &lt;cec&gt; resetsp</code></pre>
+<p>Wait for 5-10 minutes for FSPs to restart. When the connections become LINE_UP again, the FSPs have finished the reboot.</p>
+<pre><code>       lshwconn &lt;cec&gt;</code></pre>
+<p>3.6 Verify that the cec updates are the new firmware level and that they are using the temp side for the current_power_on_side .</p>
+<pre><code>       rinv &lt;cec&gt; firm</code></pre>
+<p>3.7 Power on the CECs and bring up the Power 775 cluster .</p>
+<p><strong>Note</strong>: Before doing the rpower on the CECs, make sure all P775 software is synchronized with CEC firmware. The Power 775 admin should check that the CNM/HFI software environment is updated on the EMS and that the HPC software is updated in the diskful and diskless images to properly work with the new firmware on the CECs.</p>
+<pre><code>       rpower &lt;cec&gt; on</code></pre>
+<h5 id="recover-the-system-if-the-power-codefirmware-failed-to-be-loaded-available-for-both-cecs-and-frames"><a href="#TOC"><strong>Recover the system if the power code/firmware failed to be loaded (Available for both CECs and Frames)</strong></a></h5>
+<p>If the power code/firmware failed to be loaded or be stopped in purpose, refer to the section <a href="XCAT_Power_775_Hardware_Management/#recover-the-system-from-a-pp-situation-because-of-the-failed-firmware-update">Recover_the_system_from_a_PP_situation_because_of_the_failed_firmware_update</a> to recover the system.</p>
+<h4 id="recovery-procedure-if-the-new-firmware-does-not-perform-well-available-for-cecs-and-frames"><a href="#TOC"><strong>Recovery procedure if the new firmware does not perform well (Available for CECs and Frames)</strong></a></h4>
+<p>1. Make sure the pending_power_on_side be temp</p>
+<pre><code>      rspconfig &lt;cec&gt; pending_power_on_side</code></pre>
+<p>If not, set the pending power on side to T-side</p>
+<pre><code>      rspconfig &lt;cec&gt; pending_power_on_side=temp</code></pre>
+<p>2. Copy the P-side firmware to T-side</p>
+<pre><code>  rflash &lt;cec&gt; --recover</code></pre>
+<p>And then the CECs will be running the T-side with the original firmware from P-side.</p>
+<h4 id="commit-currently-activated-lic-updatecopy-t-to-p-for-a-cecframe-on-power-775"><a href="#TOC"><strong>Commit currently activated LIC update(copy T to P) for a CEC/Frame on Power 775</strong></a></h4>
+<p>Check firmware level</p>
+<p>Refer to the environment setup in the section 'Firmware upgrade for CEC on Power 775' to make sure the firmware version is correct.</p>
+<p>Commit the firmware LIC</p>
+<p>Run the rflash command with the commit flag.</p>
+<pre><code>    rflash  &lt;noderange&gt; --commit</code></pre>
+<p>Notes:</p>
+<p>When the --commit or --recover two flags is used, the noderange is CEC for Power 775, and it will take effect for managed systems. If it is frame for Power 775, and will take effect for power subsystems only.</p>
+<h4 id="recover-the-system-from-a-pp-situation-because-of-the-failed-firmware-update"><a href="#TOC"><strong>Recover the system from a P/P situation because of the failed firmware update</strong></a></h4>
+<p>Before running the following steps, make sure the connections to both the primary FSP and the secondary FSP(or both the BPC A and the BPC B) are LINE UP.</p>
+<pre><code>     lshwconn cec01
+      cec01: 40.17.1.1: sp=primary,ipadd=40.17.1.1,alt_ipadd=unavailable,state=LINE UP
+      cec01: 40.17.1.2: sp=secondary,ipadd=40.17.1.2,alt_ipadd=unavailable,state=LINE UP</code></pre>
+<p>The following steps could be used to recover the system from the Current Boot Side P/P situation, if the system is on P/P side because of the failed firmware update. <strong>All the steps should be run</strong>:</p>
+<ol style="list-style-type: decimal">
+<li>check if the current power on side is perm(P-side):</li>
+</ol>
+<pre><code>      rinv cec01 firm</code></pre>
+<p>If yes, switch step(2); otherwise, NOT do the following steps because the current boot side is T-side.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>check if the pending power on side is T:</li>
+</ol>
+<pre><code>      rspconfig cec01 pending_power_on_side</code></pre>
+<p>If not, set the pending power on side to T:</p>
+<pre><code>     rspconfig cec01 pending_power_on_side=temp</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>remove the current connection</li>
+</ol>
+<pre><code>      rmhwconn cec01</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>recreate the connections:</li>
+</ol>
+<pre><code>      mkhwconn cec01 -t</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>make sure the connections states are LINE UP:</li>
+</ol>
+<pre><code>      lshwconn cec01</code></pre>
+<p>(It's required that the states are LINE.UP. Maybe need to wait for several minutes)</p>
+<ol start="6" style="list-style-type: decimal">
+<li>recover the system</li>
+</ol>
+<pre><code>      rflash cec01  --recover</code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li>Check the result:</li>
+</ol>
+<pre><code>       rinv cec01 firm</code></pre>
+<p>The current power on side will be temp(T-side).</p>
+<h3 id="opening-a-remote-console-to-the-cec-lpar-using-xcat-dfm"><a href="#TOC">Opening a remote console to the CEC LPAR using xCAT DFM</a></h3>
+<p>xCAT DM rcons supports the capability of opening a remote console to one or more LPARs. This section will outline this capability and the use of rcons to open consoles using xCAT DFM.</p>
+<p>See the rcons man page for details and other options.</p>
+<pre><code>    rcons &lt;noderange&gt;</code></pre>
+<p>By changing the nodelist specification you can use the rcons command to open a coneole to the BPA or FSP ASM menu. It can also be used to open a console to an LPAR OS prompt. This support is useful to access the ASM menus and also to access the console for an LPAR. Common uses for rconsole include opening a console to monitor node installation or boot processing. rcons may be used when other network access to an LPAR is not available and to understand the state of the OS on the LPAR.</p>
+<h3 id="enable-dev-and-celogin1-login-for-cecframe-optional"><a href="#TOC">Enable 'dev' and 'celogin1' login for CEC/Frame (optional)</a></h3>
+<p>Depending on the class of your systems, the dev user may or may not be enabled by default. P5 (Squadrons) systems have dev enabled, and by default have a dynamic password, P6 (Eclipz) and P7 (Apollo) have dev disabled. The celogin is always enabled and has a dynamic password by default. You should access http://w3.pok.ibm.com/organization/prodeng/pw/ to enter the Password Request page to get the dynamic password. And then put the username .celogin. and password in the passwd table, or input the username .celogin. and the password of CEC/Frame into the ppcdirect table. Before using our rspconfig command, we should make sure that the username .celogin. and password are valid.</p>
+<p>Because this function is implemented through ASMI, the users should make sure the &quot;enableASMI=yes&quot; in the site table. If not, please run the following commmand:</p>
+<pre><code>      chdef -t site enableASMI=yes</code></pre>
+<p>And then, check 'dev' and 'celogin1' state for CEC/Frame</p>
+<pre><code>    rspconfig &lt;noderange&gt; dev
+    rspconfig &lt;noderange&gt; celogin1</code></pre>
+<p>If needed, run the following command to enable or disable the 'dev' and 'celogin1' accounts.</p>
+<pre><code>    rspconfig &lt;noderange&gt; dev={enable|disable}
+    rspconfig &lt;noderange&gt; celogin1={enable|disable}</code></pre>
+<p>After this operation, we require users to set the enableASMI=no in the site table:</p>
+<pre><code>     chdef -t site enableASMI=no</code></pre>
+<h2 id="hardware-discovery-directly-from-the-xcat-management-node"><a href="#TOC">Hardware Discovery Directly from the xCAT Management Node</a></h2>
+<p>For information on Hardware Discover Directly from the xCAT MN. See <a href="XCAT_Power_775_Hardware_Management/#appendix-system-p-hardware-discovery-directly-from-xcat-mn">XCAT_Power_775_Hardware_Management/#appendix-system-p-hardware-discovery-directly-from-xcat-mn</a></p>
+<h2 id="energy-management"><a href="#TOC">Energy Management</a></h2>
+<p><a href="Energy_Management">Energy_Management</a></p>
+</body>
+</html>

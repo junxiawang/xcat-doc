@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-2-packaging-and-download-structure">xCAT 2 Packaging and Download Structure</a><ul>
+<li><a href="#xcat.sf.net">xcat.sf.net:</a></li>
+<li><a href="#frs">FRS:</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-2-packaging-and-download-structure">xCAT 2 Packaging and Download Structure</a></li>
+<li><a href="#xcatsfnet">xcat.sf.net:</a></li>
+<li><a href="#frs">FRS:</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h1 id="xcat-2-packaging-and-download-structure"><a href="#TOC">xCAT 2 Packaging and Download Structure</a></h1>
+<p>The organization of the xCAT download areas is more complicated than one would like because we have 2 download areas, niether of which satisfy all of our requirements:</p>
+<ul>
+<li><a href="https://sourceforge.net/project/platformdownload.php?group_id=208749">FRS</a> - this is the traditional download area for sourceforge projects. The biggest drawbacks: we can't fully automate the uploading of our pkgs (because it requires a manual step via the browser interface), and we can't set up a yum repository and directory structure.</li>
+<li><a href="http://xcat.sourceforge.net/yum">xcat.sf.net</a> - this is our web site and shell service space. It has all of the flexibility we want, but is limited to only 100 MB.</li>
+</ul>
+<p>Because of the above restrictions, here's how we organize our downloads. (Note: both Linux and AIX pkgs are organized the same way, so the following applies to both.)</p>
+<h2 id="xcat.sf.net"><a href="#TOC">xcat.sf.net:</a></h2>
+<ul>
+<li>The latest xCAT code (as opposed to xcat-dep):
+<ul>
+<li>in expanded form and tarball</li>
+<li>for the stable and development branches</li>
+<li>both snap and official builds.</li>
+</ul></li>
+<li>Only the xcat-dep contents in expanded form.</li>
+<li>No xcat-dep tarball, and no back versions of xCAT code</li>
+</ul>
+<h2 id="frs"><a href="#TOC">FRS:</a></h2>
+<ul>
+<li>The official xCAT code tarballs for the latest stable release and previous stable releases.</li>
+<li>The xcat-dep tarball (both current and previous releases)
+<ul>
+<li>The xcat-dep tarball file should be named with the same version number as the latest stable xcat-core, even though it also supports previous versions of xcat.</li>
+<li>The xcat-dep tarball should always be put in Release &quot;2.x Linux&quot; or &quot;2.x AIX&quot;. No need to (and you should not) create a new Release.</li>
+</ul></li>
+<li>No snap builds, no development builds</li>
+</ul>
+</body>
+</html>

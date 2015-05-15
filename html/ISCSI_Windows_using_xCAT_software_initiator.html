@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#iscsi-windows-using-xcat-software-initiator">iSCSI Windows using xCAT software initiator</a><ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#xcat-package-requirements-and-management-server-changes">xCAT Package Requirements and Management Server changes</a><ul>
+<li><a href="#windows-netboot-image">Windows Netboot Image</a></li>
+<li><a href="#setup-samba-on-the-headnode">Setup Samba on the headnode</a></li>
+</ul></li>
+<li><a href="#xcat-table-changes">xCAT Table Changes</a></li>
+<li><a href="#install-a-node">Install a Node</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#iscsi-windows-using-xcat-software-initiator">iSCSI Windows using xCAT software initiator</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#xcat-package-requirements-and-management-server-changes">xCAT Package Requirements and Management Server changes</a>
+<ul>
+<li><a href="#windows-netboot-image">Windows Netboot Image</a></li>
+<li><a href="#setup-samba-on-the-headnode">Setup Samba on the headnode</a></li>
+</ul></li>
+<li><a href="#xcat-table-changes">xCAT Table Changes</a></li>
+<li><a href="#install-a-node">Install a Node</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<h1 id="iscsi-windows-using-xcat-software-initiator"><a href="#TOC">iSCSI Windows using xCAT software initiator</a></h1>
+<p>Note: You may have better luck following the updated Windows documentation <a href="http://www-03.ibm.com/support/techdocs/atsmastr.nsf/WebIndex/WP101470">here</a>.</p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>xCAT has the power to let any node boot from an iSCSI device. The machine only has to support PXE boot in order to do this. In this example we'll use the management node as an iSCSI target device and install Windows Server 2008 from a RedHat Linux machine. Our node is called x01 and our management server is redhouse.</p>
+<p>We assume that you set up your xCAT server as normal and that you can install machines from it. If so, then please continue.</p>
+<h2 id="xcat-package-requirements-and-management-server-changes"><a href="#TOC">xCAT Package Requirements and Management Server changes</a></h2>
+<p>You'll need a few packages that don't install with the standard xCAT 2.1 distribution:</p>
+<pre><code>yum -y install gpxe-xcat scsi-target-utils-0.9.1-1 samba
+service tgtd start
+chkconfig tgtd on</code></pre>
+<p>You'll also need to copy the Windows ISO image on to the management server. You can get that ISO <a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=13C7300E-935C-415A-A79C-538E933D5424&amp;WT.sp=_technet_,dcsjwb9vb00000c932fd0rjc7_5p3t&amp;displaylang=en">here</a>.</p>
+<pre><code>copycds windows_server_2008_x64.iso</code></pre>
+<p>During copycds the % complete will probably hang for a while on 52%. Don't be alarmed, just be patient and let it finish.</p>
+<h3 id="windows-netboot-image"><a href="#TOC">Windows Netboot Image</a></h3>
+<p>You'll also need to download a netboot image file for the Windows install to boot.<br />On an existing Windows Vista/Server 2008 node: (or whatever node type you are booting)<br />Download the Automated Install Kit (AIK) ISO <a href="https://www.microsoft.com/downloads/details.aspx?displaylang=en&amp;FamilyID=94bb6e34-d890-4932-81a5-5b50c657de08">here</a><br />Mount the ISO with a tool like Daemon Tools, or burn it to a disk and put it in the system<br />Install the AIK<br />Copy the contents of /opt/xcat/share/xcat/netboot/windows/ on the headnode to a Windows node (genimage.bat and startnet.cmd)</p>
+<p><strong>For 64-bit:</strong><br />At the Windows command prompt, run:</p>
+<pre><code>genimage.bat amd64</code></pre>
+<p>Copy the contents of the C:_64folder to /tftpboot/ on the xCAT headnode</p>
+<p><strong>For 32-bit:</strong><br />At the Windows command prompt, run:</p>
+<pre><code>genimage.bat x86</code></pre>
+<p>Copy the contents of the C:folder to /tftpboot/ on the xCAT headnode</p>
+<h3 id="setup-samba-on-the-headnode"><a href="#TOC">Setup Samba on the headnode</a></h3>
+<p>Make sure that a samba service is installed.</p>
+<p>Edit /etc/samba/smb.conf</p>
+<p>In the [global] section, change security to:</p>
+<pre><code>security = share</code></pre>
+<p>Paste the following lines under Share Definitions</p>
+<pre><code>[install]
+path = /install
+public = yes
+writable = no</code></pre>
+<p>Restart the Samba server.</p>
+<pre><code>service smb restart</code></pre>
+<h2 id="xcat-table-changes"><a href="#TOC">xCAT Table Changes</a></h2>
+<p>Each machine will need its own license to run Windows 2008 x64. You put this in the <strong>prodkey table</strong>. Our table looks like:</p>
+<pre><code># tabdump prodkey
+#node,product,key,comments,disable
+&quot;all&quot;,&quot;win2k8.enterprise&quot;,&quot;xxxxx-xxxxx-xxxxx-xxxxx-xxxxx&quot;,,</code></pre>
+<p>You'll also need to set the <strong>iscsi table</strong>:</p>
+<pre><code>tabdump iscsi
+#node,server,target,lun,iname,file,userid,passwd,kernel,kcmdline,initrd,comments,disable
+&quot;x01&quot;,&quot;redhouse&quot;,</code></pre>
+<p>Notice that the first two arguments: The node and the server are all you need. xCAT will populate the other fields automatically.<br />You'll also need to know where you're iscsi targets are going to live. We made a directory called iscsi to put ours in. Do this by modifying the <strong>site table</strong>. And finally, you'll need the password for your Windows machine:</p>
+<pre><code>chdef -t site -o clustersite iscsidir=&quot;/iscsi&quot;
+chtab key=system passwd.username=Administrator passwd.password=(password)</code></pre>
+<h2 id="install-a-node"><a href="#TOC">Install a Node</a></h2>
+<pre><code>setupscsidev x01 -s 10240 # you may need 20GB: 20480
+rinstall -o win2k8 -p enterprise -a x86_64 x01</code></pre>
+<p>If you run the command:</p>
+<pre><code>tail -n 20 /var/lib/dhcpd.leases</code></pre>
+<p>You should see the gpxe entry in the DHCP file:</p>
+<pre><code>host x01 {
+  dynamic;
+  hardware ethernet 00:14:5e:55:58:61;
+  fixed-address 192.168.15.71;
+        supersede host-name = &quot;x01&quot;;
+        if exists gpxe.bus-id {
+          supersede server.filename = &quot;pxelinux.0&quot;;
+        } elsif exists client-architecture {
+          supersede server.filename = &quot;undionly.kpxe&quot;;
+        }
+        supersede root-path = &quot;iscsi:redhouse:::1:iqn.2009-0.cluster.net:x01&quot;;
+        supersede server.next-server = c0:a8:0f:01;
+}</code></pre>
+</body>
+</html>

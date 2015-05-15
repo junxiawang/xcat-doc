@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#main-procedure-of-using-xcatopenstack-chef-cookbook-to-setup-clouds">Main Procedure of using xCAT/OpenStack-chef-Cookbook to Setup clouds</a></li>
+<li><a href="#internal-implementation">Internal Implementation</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#main-procedure-of-using-xcatopenstack-chef-cookbook-to-setup-clouds">Main Procedure of using xCAT/OpenStack-chef-Cookbook to Setup clouds</a></li>
+<li><a href="#internal-implementation">Internal Implementation</a></li>
+<li><a href="#controller----the-controller-of-the-openstack-cloud">controller -- The controller of the OpenStack cloud</a></li>
+<li><a href="#hostip-----the-host-ip-is-in-openstack-management-network-on-the-controller-node-its-always-the-rabbitmqs-host-ip-and-nova_metadata_ip">hostip -- The host IP is in openstack management network on the controller node. It's always the rabbitmq's host IP and nova_metadata_ip.</a></li>
+<li><a href="#pubinterface----interface-to-use-for-external-bridge-the-default-value-is-eth1-external_network_bridge_interface-in-the-environment-template-">pubinterface -- Interface to use for external bridge. The default value is eth1. (external_network_bridge_interface in the environment template. )</a></li>
+<li><a href="#mgtinterface----interface-to-use-for-openstack-management-its-supposed-that-the-mgtinterface-for-all-the-nodes-are-the-same-and-in-the-same-network">mgtinterface -- Interface to use for openstack management. It's supposed that the mgtinterface for all the nodes are the same, and in the same network.</a></li>
+<li><a href="#datainterface----interface-to-use-for-openstack-nova-vm-communication-its-supposed-that-the-datainterface-for-all-the-nodes-are-the-same-and-in-the-same-network">datainterface -- Interface to use for OpenStack nova vm communication. It's supposed that the datainterface for all the nodes are the same, and in the same network.</a></li>
+<li><a href="#virttype-----what-hypervisor-software-layer-to-use-with-libvirt-eg-kvm-qemu">virttype -- What hypervisor software layer to use with libvirt (e.g., kvm, qemu).</a></li>
+<li><a href="#template-----every-cloud-should-be-related-to-one-environment-template-file-the-absolute-path-is-required">template -- Every cloud should be related to one environment template file. The absolute path is required.</a></li>
+<li><a href="#repository----every-cloud-should-be-related-to-the-openstack-chef-cookbooks-the-absolute-path-is-required-in-the-repository-there-are--cookbooks-environments-roles-and-on-on">repository -- Every cloud should be related to the openstack-chef-cookbooks. The absolute path is required. In the repository, there are cookbooks/, environments/, roles and on on.</a></li>
+<li><a href="#tenant_network_type----its-not-using-now-and-default-in-the-template-files--type-of-network-to-allocate-for-tenant-networksthe-default-value-local-is-useful-only-for-single-box-testing-and-provides-no-connectivity-between-hosts-you-must-either-change-this-to-vlan-and-configure-network_vlan_ranges-below-or-change-this-to-gre-and-configure-tunnel_id_ranges-below-in-order-for-tenant-networks-to-provide-connectivity-between-hosts">tenant_network_type -- (It's not using now and default in the template files.) Type of network to allocate for tenant networks.The default value 'local' is useful only for single-box testing and provides no connectivity between hosts. You MUST either change this to 'vlan' and configure network_vlan_ranges below or change this to 'gre' and configure tunnel_id_ranges below in order for tenant networks to provide connectivity between hosts.</a></li>
+<li><a href="#bridge_mappings----in-the-first-step-i-would-not-add-it-into-clouds-table-but-its-important-do-it-later----not-using">bridge_mappings -- (In the first step, I would not add it into clouds table, but it's important. Do it later.) -- not using.</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>==Introduction== This mini-design discusses how to use xCAT/OpenStack-Chef-Cookbook to set up clouds. OpenStack-Chef-Cookbooks is from https://github.com/stackforge/ . We can get one overview from the doc http://www.joinfu.com/2013/05/working-with-the-openstack-code-review-and-ci-system-chef-edition/ https://wiki.openstack.org/wiki/Chef/GettingStarted</p>
+<p>We will integrate the xCAT/OpenStack-chef-Cookbook to set up clouds, and make the setup more easier, and more automatically.</p>
+<p>This doc discusses the procedure including xCAT MN installation, chef-server/chef-client installation and clouds deployment. And the &quot;Internal&quot; section will discuss the implementations. We'll have the following assumption:</p>
+<ul>
+<li>All the nodes have an external network that has internet connection and a internal network.</li>
+<li>The OpenStack controller will not be the same as the xCAT management node. This is due to the conflict of OpenStack DHCP and xCAT DHCP server.</li>
+</ul>
+<p>We'd like to divide it into following two functions:</p>
+<h1 id="main-procedure-of-using-xcatopenstack-chef-cookbook-to-setup-clouds"><a href="#TOC">Main Procedure of using xCAT/OpenStack-chef-Cookbook to Setup clouds</a></h1>
+<h1 id="internal-implementation"><a href="#TOC">Internal Implementation</a></h1>
+<p>== Terminology ==</p>
+<p>The following terms will be used in this document:</p>
+<p>'''xCAT Management node''': xCAT Management node is used to manage one or more clouds cluster. And it's used to do hardware control, install OS on other nodes, software maintenance, cloud deployment and so on.</p>
+<p>'''chef-server node''': A node which install the chef-server. It can be in the same node with xCAT management node, or not. xCAT management node will provide OpenStack chef cookbooks to the chef-server, and deploy OpenStack through chef-server.</p>
+<p>'''chef-client node''': is the nodes which we will deploy OpenStack on. The chef-client nodes will communicate with the chef-server node.</p>
+<p>'''controller node''': An OpenStack node to manage one OpenStack cloud. It provides Databases (with MySQL), Messages Queue (Rabbitmq for　Ubuntu, and Qpid for Redhat), Keystone, Glance, Nova (without nova-compute), Cinder, Quantum Server, Dashboard (with Horizon) and so on.</p>
+<p>'''network node''': the OpenStack Networking service on a separate node which will act as the network node. It also can be within the cloud controller. In this doc, we will consider it as a separate node.</p>
+<p>'''compute node'''： One or more compute nodes provide capacity for tenant instances (nova VMs) to run. Compute nodes run nova-compute, and OpenStack Networking plugin agents. OpenStack Networking agents on each compute node communicate with the network node to provide network services to virtual machine instances.</p>
+<p>== Example of Networking Planning ==</p>
+<p>OpenStack networking is a little complicated. There are several use cases in the OpenStack-Network(quantum) document. You can get more info from the following link: http://docs.openstack.org/grizzly/openstack-network/admin/content/use_cases.html And you also can get more info about how to configure the network manually for some of the use cases. http://docs.openstack.org/grizzly/openstack-network/admin/content/app_demo.html In this part, I would like to introduce the network Planning for our solution. We can take the [http://docs.openstack.org/grizzly/openstack-network/admin/content/app_demo_routers_with_private_networks.html Per-tenant Routers with Private Networks] as an example. The whole hardware network topology looks like:</p>
+<p>[[File:XCAT-Chef-OpenStack-image1.png]]</p>
+<p>From the above example figure, the xCAT management node is known as 'mgt', the chef-server node names are chefserver01-chefserver10, the chef-client node names are cloudAnode001-couldAnode240, and the domain will be 'clusters.com'. All the nodes are not in the figure.</p>
+<p>There are 3 networks:</p>
+<ol style="list-style-type: decimal">
+<li><p>Management network: is shared by the xCAT management, chef management and OpenStack management.</p></li>
+<li><p>Data Network: is used by the nova vm instances.</p></li>
+<li><p>External Network: is used by all the nodes to access the public internet.</p></li>
+</ol>
+<p>==Main Procedure of using xCAT/OpenStack-chef-Cookbook to Setup clouds==</p>
+<p>===Prepare the Management Node for xCAT-OpenStack Installation===</p>
+<p>OS provision of xCAT management node</p>
+<p>=== Install xCAT-OpenStack on the Management Node ===</p>
+<p>install xCAT-OpenStack meta-meta and its prerequisite packages</p>
+<p>yum install xCAT-OpenStack</p>
+<p>The following will be in the packages:</p>
+<ol style="list-style-type: decimal">
+<li><p>the schema definition for cloud/clouds tables</p></li>
+<li><p>scripts to configure OpenStack</p></li>
+<li><p>the OpenStack Chef cookbooks repository(including cookbooks, example/template of environment files, roles and so on). After installation, it will be in /install/chef-cookbooks/ directory. There may be many different repositories in the /install/chef-cookbooks/</p></li>
+</ol>
+<p>=== node definition===</p>
+<p>hardware discovery automatically(sequential discovery, or discovery based on switch ports, or based on SLP) or define the nodes manually ...</p>
+<p>=== Configure xCAT===</p>
+<p>==== set the IPs of the network interfaces for the nodes ====</p>
+<p>According to the OpenStack network topology, we need to configure all the chef-server/chef-client nodes Ethernet interfaces at first.</p>
+<ol style="list-style-type: decimal">
+<li>set the nics table</li>
+</ol>
+<ul>
+<li>For one node: chdef <one_node> nicips.eth0=10.1.89.8 nicips.eth1=11.1.89.8 nicips.eth2=12.1.89.8<br /></li>
+<li>For very large openstack cluster, there may be many nodes including many controller nodes, network nodes, and compute nodes. xCAT could use regular expression to set the IPs. We can put many nodes in one group, such as <cloudA_nodes_group>, the nodes definition may looks like: chdef cloudAnode[001-240] groups=<cloudA_nodes_group>,all And we can use regular expression to set the IPs for the nodes， such as : chdef <cloudA_nodes_group> nicips.eth0='|cloudAnode(+)|10.1.89.($1+0)|' nicips.eth1='|cloudAnode(+)|11.1.89.($1+0)|' nicips.eth2='|cloudAnode(+)|12.1.89.($1+0)|'<br />About the regular expression in xCAT, you can get more info from http://xcat.sourceforge.net/man5/xcatdb.5.html</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Set the postscripts for nodes chdef <one_node> -p postbootscripts=confignics or chdef <cloudA_nodes_group> -p postbootscripts=confignics</li>
+</ol>
+<ul>
+<li>NOTE: I plan to add one section to introduce &quot;OpenStack network topology plan&quot; at the beginning of the procedure.</li>
+</ul>
+<p>==== assign the chef-server for the chef-client nodes ====</p>
+<p>For one node, chdef cloudAnode001 cfgmgr=chef cfgserver=chefserver001<br />For a noderange, we can use chdef cloudAnode001-cloudAnode240 cfgmgr=chef cfgserver=chefserver001 * Note: if the cfgmgr.cfgserver is empty, the cfgserver will be <xcatmaster> by default.</p>
+<p>==== define the cloud and generate the cloud data ====</p>
+<p>1 define the cloud</p>
+<p>For example: mkdef -t cloud -o <cloud_name> controller=oscn2 ...... Currently, most of the attributes in clouds table are for nova-network. The attributes publicnet,novanet,mgtnet,vmnet will not be used in Quantum. There is a discussion about it later.</p>
+<p>2 generate the cloud data</p>
+<p>generate the environment files/databag files on xCAT MN (The command will be discussed later) makeclouddata <cloudnameA, cloudnameB><br /> or makeclouddata</p>
+<p>=== Set the node's roles in the cfgmgt table ===</p>
+<p>The <roles_value> could be allinone-compute, os-compute-single-controller, os-compute-networker, os-compute-worker. These 4 roles are typical.</p>
+<p>chdef oscn2 roles=<roles_value></p>
+<p>If we want to deploy the OpenStack more flexible, we need to get more roles using chef's knife command, and the <roles_value> can be set to a list of the chef roles. The users can check the roles in the chef cookbook repository, for example(/install/chef-cookbooks/grizzy-xcat/roles).</p>
+<p>=== install the chef-server node ===</p>
+<p>xCAT management node will install OS on the chef-server node, and then install the chef-server on the chef-server node.</p>
+<p>xCAT is automatically adding and authenticating the chef clients to the chef server. So it's required that we should install the chef-server at first, and then chef-client.</p>
+<p>For rhels, we will use the chef kit, and add the chef_server_kit,chef_workstation_kit components to the image of the node that will be the chef server; for ubuntu, we will add the add install_chef_server,install_chef_workstation to the postscripts for the node.</p>
+<p>If the chef-server and the xCAT　MN are not the same node. when we install the OS on the chef-server node, the chef-server will also be installed on the node. If the chef-server and the xCAT MN are the same node, we can use &quot;updatenode ...&quot; command to install the chef-server on the xCAT MN. We can get more details from [Adding_Chef_in_xCAT_Cluster]</p>
+<p>*Note: The OpenStack Chef cookbooks repository will be in the /install on the management node, and this /install will be mounted on the chef-server node.</p>
+<p>When finishing this step, on the chef-server node, we will have completed that 1. install the OS 2. install the chef-server 3. upload the openstack-cookbooks to the chef-server 4. upload the roles to the chef-server 5. create the chef-client nodes on the chef-server 6. assign the role to the chef-client nodes 7. assign the environment name to the chef-client nodes</p>
+<p>Once the cookbooks/roles are uploaded on the chef-server, the users can run the following command to see which roles can be used: xdsh <chef-server_node> knife role list</p>
+<p>=== prepare the repository for chef-client nodes===</p>
+<p>The chef-client nodes will be used to deploy OpenStack.</p>
+<p>Prepare the repository for openstack on all the OpenStack node(also the chef-client nodes)</p>
+<p>For redhat, the rdo-release-grizzly-1.noarch.rpm will be packed into the chef-kit, and it will be a new kit component. It will install the rdo-release-grizzly-1.noarch.rpm on the chef-server.</p>
+<p>For Ubuntu, it need to add the openstack repository on ubuntu into the /etc/apt/sources.list ( using otherpkgsdir ?), refresh the repository -- There will be a new postscript to do add the repository and refresh the repository.</p>
+<p>=== Deploy OpenStack ===</p>
+<p>There are 2 solutions to setup the OpenStack: * Make the OpenStack setup at the end of the OS provision. install/deploy the <controller> at first, and then install/deploy the <network_node>, and install/deploy the <compute_node> at last. * At first, install all the OpenStack nodes(chef-client node) OS. And then use ''updatenode'' command to deploy OpenStack.</p>
+<p>In this procedure, we will list the two solutions here:</p>
+<p>====solution 1: set up the OpenStack during OpenStack nodes provision ====</p>
+<ol style="list-style-type: decimal">
+<li><p>Set the postscripts for OpenStack nodes Add a new function ito the chef-client script: copy the keys from <chef-server_node>:/etc/chef-server/ to <chef-client><br /> chdef cloudAnode001-cloudAnode240 -p postbootscripts=chef-client</p></li>
+<li><p>Install the controller node OS</p></li>
+<li><p>Install the network node OS</p></li>
+<li><p>Install the compute node OS</p></li>
+</ol>
+<p>====solution 2: set up the OpenStack after OpenStack nodes provision ====</p>
+<p>1 install the OS and chef-client, and update the OpenStack repository</p>
+<p>For rhels, we will use the chef kit, and add the chef_client_kit component to the image of the node that will be the chef server; for ubuntu, we will add the add install_chef_client to the postscript for the node. So when we install the OS on the chef-server node, the chef-server will also be installed on the node.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><p>Setup OpenStack'''</p></li>
+<li><p>1 upload the cookbooks, roles, environment file to the <chef-server-nodes>, and then assign the role to the chef client nodes on the <chef-server-nodes> updatenode <chef-server-nodes> loadclouddata</p></li>
+<li><p>2 . Deploy the controller node updatenode <controller> -P chef-client</p></li>
+<li><ol start="3" style="list-style-type: decimal">
+<li>Deploy the network node updatenode <network_node> -P chef-client</li>
+</ol></li>
+<li><ol start="4" style="list-style-type: decimal">
+<li>Deploy the compute node updatenode <computer> -P chef-client</li>
+</ol></li>
+</ol>
+<p>output message to each node for debug. When -V, it will output all the messages to the terminal.</p>
+<p>=== Testing OpenStack Cloud ===</p>
+<p>== Internal ==</p>
+<p>===install_chef_client Script Enhancement===</p>
+<p>1 the config_chef_client script will be changed or invoked by a new postcript /install/postscripts/chef-client</p>
+<p>2 when the chef-server and xCAT MN are one the same node, the script config_chef_client couldn't scp the *.pem from chef-server to chef-client directly. This should be fixed.</p>
+<p>=== Add New Attributes to clouds Table===</p>
+<p>Currently, the clouds table includes the following attributes. #name,controller,publicnet,novanet,mgtnet,vmnet,adminpw,dbpwcomments,disable But the attributes publicnet,novanet,mgtnet,vmnet are for OpenStack nova-network, not used in quantum. For some attributes which are usefull for OpenStack, So we need to add them into the cloud table.</p>
+<p>Remove the attribute publicnet,novanet,mgtnet,vmnet,adminpw,dbpwcomments firstly, we may add it again in the clouds table. Currently, I don't want to add them once.</p>
+<p>The following attribute may be added into the clouds table: # controller -- The controller of the OpenStack cloud # hostip -- The host IP is in openstack management network on the controller node. It's always the rabbitmq's host IP and nova_metadata_ip. # pubinterface -- Interface to use for external bridge. The default value is eth1. (external_network_bridge_interface in the environment template. ) # mgtinterface -- Interface to use for openstack management. It's supposed that the mgtinterface for all the nodes are the same, and in the same network. # datainterface -- Interface to use for OpenStack nova vm communication. It's supposed that the datainterface for all the nodes are the same, and in the same network. # virttype -- What hypervisor software layer to use with libvirt (e.g., kvm, qemu). # template -- Every cloud should be related to one environment template file. The absolute path is required. # repository -- Every cloud should be related to the openstack-chef-cookbooks. The absolute path is required. In the repository, there are cookbooks/, environments/, roles and on on. # tenant_network_type -- (It's not using now and default in the template files.) Type of network to allocate for tenant networks.The default value 'local' is useful only for single-box testing and provides no connectivity between hosts. You MUST either change this to 'vlan' and configure network_vlan_ranges below or change this to 'gre' and configure tunnel_id_ranges below in order for tenant networks to provide connectivity between hosts. # bridge_mappings -- (In the first step, I would not add it into clouds table, but it's important. Do it later.) -- not using.</p>
+<p>The following attributes will be in the environment template files: developer_mode, db_bind_interface, mq_bind_interface, identity_bind_interface, image_api_bind_interface, image_registry_bind_interface, dashboard_use_ssl, nova_metadata_ip, rabbit_host_ip, network_api_bind_interface, external_network_bridge_interface, allow_overlapping_ips, use_namespaces, tenant_network_type, tunnel_id_ranges, enable_tunneling, local_ip_interface,network_vlan_ranges, bridge_mappings , identity_service_chef_role, compute_rabbit_host, network_service_type, libvirt_virt_type, libvirt_bind_interface ....</p>
+<p>For DB, we can use mysql, and postgresql to setup openstack. And we may also support for DB2. I just try the mysql, and there are some attributes I don't list above: such as :<br /> mysql_allow_remote_root , mysql_root_network_acl</p>
+<p>For network, there are some 3-rd part plugin, such as bigswitch, cisco, nec, linuxbridge and so on. I don't try them. I just try the openvswitch and L3-agent.</p>
+<p>For message queue, we will have two: rabbitmq for ubuntu, and qpid for redhat.</p>
+<p>For storage, there may be more back-end in future.</p>
+<p>We couldn't put so many attributes into our cloud table. We can put some basic attributes, and some attributes which are needed by one typical configuration into the cloud table. The users can define most of the attribute through the cloud table. And then run our new command '''mkchefdata''' to generate a environment file, if needed, he/she could edit the environment file directly to add more attribute/value. Is it acceptable ?</p>
+<p>So I have one question here: Could we only put the attributes in the cloud table for the use cases in the openstack network document? For example : db(mysql), network plugin(openvswtich and L3-agent), messaging(rabbitmq for ubuntu, or qpid for redhat ), and the typical configuration is '''per tenant routers with private networks''', and the tenant network type is '''GRE''' .</p>
+<p>What are your ideas ?</p>
+<p>=== About the enviornment files Generation===</p>
+<p>1 Add some templates for environment file. We can support the &quot;per-tenant Router with Private network&quot; at first.</p>
+<p>The environment template will be located in /opt/xcat/share/xcat/openstack_environments. These files will be packed into the xCAT-OpenStack-xxx.rpm .</p>
+<p>2 Add a new command to generate the environment files according to the clouds table, data_bags file /opt/xcat/sbin/makeclouddata This command will run on the xCAT MN.</p>
+<p>===Add one new postscript to : /install/postscripts/loadclouddata === 1 upload cookbooks, roles to the chef-server 2 upload the environment file, 3 upload the databag file ? 4. assign the roles to the <chef-client-node> on the <chef-server-node></p>
+<p>This script will run on <chef-server> . The script could upload the cookbooks/roles/environment files, may be not only for OpenStack.</p>
+<p>And I would like to make this script default for OpenStack. So the default cookbooks,roles and environment directories are in the /install/openstack-chef-repo/, the environment files are <cloudname>.rb .</p>
+<p>The roles will be from cfgmgt.roles for <chef-client-node>, and the enviornment_name will be the cloud. cloudname for <chef-client-node> . The two attribute will be put into the mypostscript.tmpl. The script will invoke the knife command to assign the roles/environment_name to the chef-client. Such as: knife node run_list add rhcn2.ppd.pok.ibm.com &quot;role[single-compute]&quot; knife exec -E 'nodes.transform(&quot;chef_environment:_default&quot;) { |n| n.chef_environment(&quot;production&quot;) }'</p>
+<p>== Other Design Considerations ==</p>
+<ul>
+<li>'''Required reviewers''': Bruce, Linda, Guang Cheng, Gao Ling, Sun Jing and etc.</li>
+<li>'''Required approvers''': Bruce Potter</li>
+<li>'''Database schema changes''': clouds</li>
+<li>'''Affect on other components''': N/A</li>
+<li>'''External interface changes, documentation, and usability issues''': N/A</li>
+<li>'''Packaging, installation, dependencies''': N/A</li>
+<li>'''Portability and platforms (HW/SW) supported''': N/A</li>
+<li>'''Performance and scaling considerations''': N/A</li>
+<li>'''Migration and coexistence''': N/A</li>
+<li>'''Serviceability''': N/A</li>
+<li>'''Security''': N/A</li>
+<li>'''NLS and accessibility''': N/A</li>
+<li>'''Invention protection''': N/A</li>
+</ul>
+</body>
+</html>

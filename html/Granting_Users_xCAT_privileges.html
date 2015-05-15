@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#granting-users-xcat-privileges-setting-up-a-remote-client">Granting Users xCAT privileges &amp; Setting Up a Remote Client</a></li>
+<li><a href="#create-ssl-certificate-so-that-user-can-be-authenticated-to-xcat">Create SSL certificate so that user can be authenticated to xCAT</a><ul>
+<li><a href="#change-the-policy-table-to-allow-the-user-to-run-commands">Change the policy table to allow the user to run commands</a></li>
+<li><a href="#make-sure-xcat-commands-are-in-the-users-path">Make sure xCAT commands are in the user's path</a></li>
+</ul></li>
+<li><a href="#setup-remote-commands-for-user">Setup remote commands for user</a></li>
+<li><a href="#setup-sudo-for-xcat-user">Setup sudo for xCAT user</a></li>
+<li><a href="#setup-login-node-remote-client">Setup Login Node (remote client)</a></li>
+<li><a href="#setting-up-mounted-user-home-directory">Setting Up Mounted User Home Directory</a></li>
+<li><a href="#setting-up-a-non-root-userid-for-passwordless-ssh-access-no-xcat-privileges">Setting up a non-root userid for passwordless ssh access (no xCAT privileges)</a></li>
+<li><a href="#set-up-to-run-xdsh-to-the-node-running-as-root-but-authenticating-as-a-non-root-userid.">Set up to run xdsh to the node running as root but authenticating as a non-root userid.</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#granting-users-xcat-privileges-&amp;amp-setting-up-a-remote-client">Granting Users xCAT privileges &amp; Setting Up a Remote Client</a></li>
+<li><a href="#create-ssl-certificate-so-that-user-can-be-authenticated-to-xcat">Create SSL certificate so that user can be authenticated to xCAT</a></li>
+<li><a href="#change-the-policy-table-to-allow-the-user-to-run-commands">Change the policy table to allow the user to run commands</a></li>
+<li><a href="#make-sure-xcat-commands-are-in-the-users-path">Make sure xCAT commands are in the user's path</a></li>
+<li><a href="#setup-remote-commands-for-user">Setup remote commands for user</a></li>
+<li><a href="#setup-sudo-for-xcat-user">Setup sudo for xCAT user</a></li>
+<li><a href="#setup-login-node-remote-client">Setup Login Node (remote client)</a></li>
+<li><a href="#setting-up-mounted-user-home-directory">Setting Up Mounted User Home Directory</a></li>
+<li><a href="#setting-up-a-non-root-userid-for-passwordless-ssh-access-no-xcat-privileges">Setting up a non-root userid for passwordless ssh access (no xCAT privileges)</a></li>
+<li><a href="#set-up-to-run-xdsh-to-the-node-running-as-root-but-authenticating-as-a-non-root-userid">Set up to run xdsh to the node running as root but authenticating as a non-root userid.</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="granting-users-xcat-privileges-setting-up-a-remote-client"><a href="#TOC">Granting Users xCAT privileges &amp; Setting Up a Remote Client</a></h2>
+<p>By default, only root on the management node can run xCAT commands. But xCAT can be configured to allow both non-root users and remote users to run xCAT commands. The steps below will explain how. If you only want non-root local users, you can stop after step 2.</p>
+<p><strong>Note: this support assumes the non-root and root userids are maintained in /etc/passwd.</strong></p>
+<h2 id="create-ssl-certificate-so-that-user-can-be-authenticated-to-xcat"><a href="#TOC">Create SSL certificate so that user can be authenticated to xCAT</a></h2>
+<p>This is done by running the following command on the Management node as root:</p>
+<pre><code>    /opt/xcat/share/xcat/scripts/setup-local-client.sh &lt;username&gt;</code></pre>
+<p>By running this command you'll see SSL certificates created. Enter yes where prompted and take the defaults.</p>
+<p>This will create the following files in the $HOME/.xcat directory of your userid:</p>
+<pre><code>    ca.pem
+    client-cert.pem
+    client-cred.pem
+    client-key.pem
+    client-req.pem</code></pre>
+<p>This causes xCAT to recognize this userid, so that it can be specified in the policy table in the next step.</p>
+<h3 id="change-the-policy-table-to-allow-the-user-to-run-commands"><a href="#TOC">Change the policy table to allow the user to run commands</a></h3>
+<p>For information on the policy table. See man the man the manpage: http://xcat.sourceforge.net/man5/policy.5.html</p>
+<p>To give a user all xCAT command privileges, run &quot;tabedit policy&quot;, and add a line:</p>
+<pre><code>    6,&quot;username&quot;,,,,,,allow,,</code></pre>
+<p>where <username> is the name of the user that you are granting privileges to. In the above case, this user can now perform <em>all</em> xCAT commands, including changing the policy table to do things like allow them to become other users, so this should be used with caution.</p>
+<p>You may only want to grant users limited access. One example, is that one user may only be allowed to run the nodels command. This can be done as follows:</p>
+<pre><code>    6,&quot;username&quot;,,nodels,,,,allow</code></pre>
+<p>If you want to grant all users the ability to run nodels, add this line:</p>
+<pre><code>    6.1,*,,nodels,,,,allow</code></pre>
+<p>Another example is to allow the user to run the rpower command with only the &quot;stat&quot; parameter, and only on certain nodes. **(Note: use of the noderange does not currently work for the <em>def commands).</em>*</p>
+<pre><code>    
+    # mkdef -t policy -o 7 name=&lt;username&gt; commands=rpower parameters=stat noderange=h02-h05 rule=allow
+    # su - &lt;username&gt;
+    -bash-3.2$ rpower h02 on
+    Error: Permission denied for request
+    -bash-3.2$ rpower h02 stat
+    h02: on
+    -bash-3.2$ rpower h01 stat
+    Error: Permission denied for request</code></pre>
+<p>For a full explanation of the policy table, refer to the policy man page: ~~~~<br /> man policy ~~~~</p>
+<h3 id="make-sure-xcat-commands-are-in-the-users-path"><a href="#TOC">Make sure xCAT commands are in the user's path</a></h3>
+<p>Make sure the directories that contain the xcat commands are in the user's path. If not, add them to the path as appropriate for your AIX or Linux system.</p>
+<pre><code>    echo $PATH | grep xcat
+    /opt/xcat/bin:/opt/xcat/sbin: .......</code></pre>
+<h2 id="setup-remote-commands-for-user"><a href="#TOC">Setup remote commands for user</a></h2>
+<p>To give a user the ability to run remote commands (xdsh,xdcp,psh,pcp), as the username run: ~~~~<br /> xdsh <noderange> -K ~~~~ This will setup the user and root ssh keys for the user under the $HOME/.ssh directory of the user on the nodes. The root ssh keys are needed for the user to run the xCAT commands under the xcatd daemon, where the user will be running as root. Note: the uid for the user should match the uid on the Management Node and a password for the user must have been set on the nodes.</p>
+<p>If your userid's $HOME directory is mounted from the Management Node, you can just do the following on the Management Node instead of using xdsh -K:</p>
+<p><strong>As root on the MN</strong>:</p>
+<pre><code>    cat ~/.ssh/id_rsa.pub &gt;&gt;  &lt;Userid home directory&gt;/.ssh/authorized_keys</code></pre>
+<h2 id="setup-sudo-for-xcat-user"><a href="#TOC">Setup sudo for xCAT user</a></h2>
+<p>In xCAT 2.8, you can setup a non-root user to run the updatenode and xdsh commands as root on the nodes using sudo. This is only supported in a <strong>non-hierarchical cluster</strong> ( no service nodes) for the first release. As of xCAT 2.8.1, hierarchy is supported. The non-root userid must be setup as an xCAT user as described above. On the nodes , the non-root user id must be defined in sudo (visudo) to be able to run the commands you would like it to run as root.</p>
+<p>If you have not used sudo before, you might check this link for information, which will help understand our setup below.</p>
+<pre><code>    http://www.sudo.ws/sudoers.man.html</code></pre>
+<p>For updatenode -P -S to run as non-root user you need to setup sudo on the nodes. updatenode -S is only supported on Linux for this feature. You may want to give more permission to the non-root user than we have defined below. The minimum required setup is described here.</p>
+<p>Using visudo command. On any node, where you want to run xdsh or updatenode, comment out the following line, if it exists.</p>
+<pre><code>    #Defaults    requiretty</code></pre>
+<p>The non-root user must be able to execute commands in /tmp without being prompted for a password as a minimum requirement. Using visudo create the following entry, where admin is the group name of your non-root userid.</p>
+<pre><code>    %admin ALL=NOPASSWD: /tmp/*.dsh</code></pre>
+<p>You can then run the following, where the username is a non-root id.</p>
+<pre><code>    updatenode &lt;nodename&gt; -l username -P syslog
+      
+    xdsh &lt;nodename&gt; -l username --sudo /tmp/mytest.dsh</code></pre>
+<p>In xCAT 2.8.1, we have added sudo support for scp and rsync in xdcp and updatenode -F and support hierarchical clusters. Depending on what options you use in xdcp -F and updatenode -F you will have to tailor your sudo permission for the non-root userid. The following will allow your non-root userid to run any command.</p>
+<pre><code>    visudo
+    %admin  ALL=(ALL)       NOPASSWD: ALL</code></pre>
+<h2 id="setup-login-node-remote-client"><a href="#TOC">Setup Login Node (remote client)</a></h2>
+<p>In some cases, you many not want your non-root user to login to the Management Node, but to use a Login Node and run the xCAT commands from the Login Node.<br />To setup a Linux or AIX Login Node, first install the following rpms:</p>
+<pre><code>perl-xCAT-*  
+xCAT-client-+ </code></pre>
+<p>and from dependencies:</p>
+<pre><code>
+perl-IO-Socket-SSL*  
+perl-Net-SSLeay-*  
+perl-DBI-* </code></pre>
+<p>When running on the Login Node, the environment variable XCATHOST must be export to the name or address of the Management node and the port for connections (usually 3001).</p>
+<pre><code>    export XCATHOST=myManagmentServer:3001</code></pre>
+<p>The userids and groupids of the non-root users should be kept the same on the Login Node, the Management Node, Service Nodes and compute nodes.</p>
+<p>As in the first step, setup the credentials on the Management node by running the /opt/xcat/share/xcat/scripts/setup-local-client.sh <username> command as root. The credentials are placed in $HOME/.xcat directory. These file must be copied to the $HOME/.xcat directory of the username on the Login Node.</p>
+<p>As in the second step, setup your policy table on the Managment Node with the permissions that you would like the non-root id to have. Remember, you are giving this id the authority to run the xcat commands as root.</p>
+<p>At this time, the id should be able to execute any commands that have been set in the policy table from the Login Node as their userid.</p>
+<p>If any remote shell commmands (psh,xdsh) are needed, then you need to follow the step 3.</p>
+<h2 id="setting-up-mounted-user-home-directory"><a href="#TOC">Setting Up Mounted User Home Directory</a></h2>
+<p>This process is to setup the userid's in order to be able to run xcat commands from the login node. The additional work to be done here is to setup ssh such that the user can run the xcat commands from a login node to the Management Node , and the user home directory is nfs mounted from the login node on the Management Node and nodes.</p>
+<p>First, the root admin must define the user and it's group and ensure that the uid and gid are the same across the cluster. It is also desirable to assign a password and distribute this across the cluster. We will be using ssh keys, but if the keys are not there, you can always login with a password.</p>
+<p>Since the home directory of all the users will be mounted on the nodes from the login node ( in our case /nfs01). The home directory must be exported as follows:</p>
+<pre><code>    /nfs01 -sec=sys:krb5p:krb5i:krb5:dh,rw</code></pre>
+<p>This ensures that only a user can write to their own directory ( not even root). This is required for the ssh keys in $HOME/.ssh to work. The user's home directory must have permission set to 0700 for ssh.</p>
+<p>On the Management Node, for each user, root must generate the needed credentials for the user. Since root cannot write to the $HOME directory of the user, we must put the credentials in a directory where root can write, and then have the user copy them to their $HOME/,xcat directory.</p>
+<p>So as root:</p>
+<ul>
+<li>Create /u/xcat directory in a global mounted /u directory ( substitute &quot;home&quot; for &quot;u&quot; for AIX).</li>
+<li>For each user, generate the credential and store in this directory under the user name.</li>
+</ul>
+<pre><code>    /opt/xcat/share/xcat/scripts/setup-local-client.sh &lt;user&gt; /u/xcat/&lt;user&gt;</code></pre>
+<p>On the login node as root:</p>
+<pre><code>    chown -R &lt;user&gt;:usr /u/xcat/&lt;user&gt;
+    mv /u/xcat/&lt;user&gt;/.xcat  /u/user/.xcat</code></pre>
+<p>Mount the user home directories on the Management Node and nodes.</p>
+<p>On the Management Node, root must update the policy table to indicate which users are able to run which commands. One way is to just have all users run a subset of xcat commands, like xdsh, xdsh,psh, nodels, lsdef,xcoll,xdshbak, rpower, nodestat, rnetboot, tabdump, sinv,rinv.etc.</p>
+<p>Make sure that in the site table the attribute &quot;useSSHonAIX&quot;,&quot;yes&quot;, if your logon node or your Management Node is AIX.</p>
+<p>To setup ssh so the user can run as root under the xcatd daemon, we need the root ssh authorized_key files from the Managment node added to the users authorized_key files. Root needs to copy to the Login node, the /install/postscripts/_ssh from the Management node:</p>
+<pre><code>    mkdir /u/xcat/c906mgrs1/_ssh
+    scp c906mgrs1:/install/postscripts/_ssh/* /u/xcat/c906mgrs1_ssh</code></pre>
+<p>Now the user needs to generate their ssh keys on login node:</p>
+<pre><code>    /usr/bin/ssh-keygen -t rsa1. Hit enter to take defaults on all questions, do not set a passphrase.
+    /usr/bin/ssh-keygen -t rsa . Hit enter to take all defaults.
+    /usr/bin/ssh-keygen -t dsa. Hit enter to take all defaults.</code></pre>
+<p>You should have public and private keys (identity, rsa,dsa) in $HOME/.ssh Make sure your $HOME directory permission is set to 0700. Make sure you $HOME/.ssh directory permission is set to 0700.</p>
+<p>~~~~ cat identity.pub &gt; authorized_keys cat id_rsa.pub &gt; authorized_keys2 cat id_dsa.pub &gt;&gt; authorized_keys2 ~~~~</p>
+<p>add roots keys:</p>
+<pre><code>    cat /u/xcat/c906mgrs1_ssh/authorized_keys &gt;&gt; authorized_keys
+    cat /u/xcat/c906mgrs1_ssh/authorized_keys2 &gt;&gt; authorized_keys2
+    chmod 0600 authorized_keys*</code></pre>
+<p>At this point on the Login node, the user must</p>
+<pre><code>    &quot;export XCATHOST=Management Node:3001&quot;
+    to run xCAT commands on the MN.</code></pre>
+<p>Added entries to /etc/profile so this is set up for all users. Right now points to Linux mn. Will need to switch to point to AIX MN when we switch modes on the cluster. Also, users should check their PATH and MANPATH for xCAT directories. These are set in /etc/profile, but many users override these settings in their private .profile files.</p>
+<p>Verify your setup, as non-root user on the login node run:</p>
+<pre><code>    nodels to verify database access
+    xdsh &lt;node&gt; -l root date   to verify root xdsh access.</code></pre>
+<h2 id="setting-up-a-non-root-userid-for-passwordless-ssh-access-no-xcat-privileges"><a href="#TOC">Setting up a non-root userid for passwordless ssh access (no xCAT privileges)</a></h2>
+<p>To setup a userid to be able to ssh without being prompted for a password do the following:</p>
+<pre><code>    login as userid or su - userid
+    ssh-keygen -t rsa   ( for every question just hit enter to take the default and no passphrase)</code></pre>
+<p>If your userid's home directory is common (mounted) on all machines, then</p>
+<pre><code>    cp ~/.ssh/id_rsa.pub  ~/.ssh/authorized_keys2</code></pre>
+<p>If your userid's home directory is not mounted on the node where you wish to run ssh do the following. Note: the userid must exist and have a password on the node. You will be prompted for the password the one time to do the below copy.</p>
+<pre><code>    scp ~/.ssh/id_rsa.pub &lt;nodename&gt;:.ssh/authorized_keys2</code></pre>
+<h2 id="set-up-to-run-xdsh-to-the-node-running-as-root-but-authenticating-as-a-non-root-userid."><a href="#TOC">Set up to run xdsh to the node running as root but authenticating as a non-root userid.</a></h2>
+<p>To have root run a command like the one below, where it authenticates to the node as lissatest.</p>
+<pre><code>    xdsh  node -l lissatest date</code></pre>
+<p>You will have to cat /root/.ssh/id_rsa.pub key from the Management Node into /home/lissatest/.ssh/authorized_keys file on the node. Make sure the permission on that directory look like this on the node.</p>
+<pre><code>     drwx------ 2 lissatest lissatest 4096 Aug 19 06:32 .
+     drwx------ 5 lissatest lissatest 4096 Aug 19 06:30 ..
+     -rw------- 1 lissatest lissatest  381 Aug 19 06:32 authorized_keys</code></pre>
+</body>
+</html>

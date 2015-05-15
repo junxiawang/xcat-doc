@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Overview</p>
+<p>This design describes the xCAT 2.8.5 support for Power 8 BE, specifically Tuleta. The basic idea is to take the Tuleta as a general Power box and support the hw ctrl, os provisioning and Infiniband features. Because of the resource and schedule constrains, with xCAT 2.8.5, only part of the hw ctrl capabilities will be support and only RHEL 7 will be supported.</p>
+<p>Features supported on Power 8 BE in xCAT 2.8.5</p>
+<ol style="list-style-type: decimal">
+<li><p>Hardware discovery 1.1 Define the HMC as node object</p>
+<p>[root@xcatmn ~]# lsdef hmc01 Object name: hmc01 groups=hmc,all hwtype=hmc ip=x.x.x.x mgt=hmc nodetype=ppc password=abc123 postbootscripts=otherpkgs postscripts=syslog,remoteshell,syncfiles username=hscroot</p>
+<p>Create the hostname and ip address mapping. [root@xcatmn ~]# makehosts hmc01</p>
+<p>1.2 Discover CECs and LPARs through HMC</p>
+<p>[root@xcatmn ~]# rscan hmc01 -w type name id type-model serial-number side<br />cec Server-8284-22A-SN1084A7T 8284-22A 1084A7T<br />hmc hmc01 7042-CR5 10F0D1B<br />lpar lpar1 1 8284-22A 1084A7T</p></li>
+<li><p>Hardware initialization 2.1 Configure password-less ssh between xCAT management node and HMC rspconfig <node> sshcfg=enable</p>
+<p>2.2 Firmware update rflash cec_name -p /tmp/fw --activate disruptive</p></li>
+<li><p>Hardware control 3.1 remote power rpower node [on|off|...] 3.2 remote console rcons node<br /> 3.3 network boot rnetboot node</p></li>
+<li><p>Hardware inventory (rinv) 4.1 MTMS 4.2 Physical slots information 4.3 Number of processors<br /> 4.4 Amount of memory 4.5 Firmware version 4.6 MAC addresses</p></li>
+<li><p>Hardware vitals (rvitals) 5.1 Power/system status 5.2 LCDs</p></li>
+<li><p>OS support - RHEL 7 only</p></li>
+<li><p>Infiniband support - FDR</p></li>
+</ol>
+<p>Features not supported on Power 8 BE in xCAT 2.8.5</p>
+<p>The following features will not be supported on Power 8 BE machine in xCAT 2.8.5, the decision was made based on the requirements from different teams, we will investigate on supporting these features in a later release like in xCAT 2.9.</p>
+<ol style="list-style-type: decimal">
+<li><p>Partitioning</p></li>
+<li><p>DFM</p></li>
+<li><p>Energy management</p></li>
+<li><p>SLP hardware discovery and hardware connections management, this feature is for HMC-managed scalability configuration</p></li>
+</ol>
+<p>Other Design Considerations • Required reviewers: xCAT ALL • Required approvers: Li Guang Cheng, Joan McComb • Database schema changes: N/A • Affect on other components: N/A • External interface changes, documentation, and usability issues: Yes • Packaging, installation, dependencies: N/A • Portability and platforms (HW/SW) supported: Tuleta, RHEL 7. • Performance and scaling considerations: N/A • Migration and coexistence: Yes • Serviceability: N/A • Security: N/A • NLS and accessibility: N/A • Invention protection: N/A</p>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#default-postscripts">Default Postscripts</a></li>
+<li><a href="#service-node-postscripts">Service Node Postscripts</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#default-postscripts">Default Postscripts</a></li>
+<li><a href="#service-node-postscripts">Service Node Postscripts</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h3 id="overview"><a href="#TOC">Overview</a></h3>
+<p>For Linux/AIX mixed cluster support, xCAT default postscripts and servicenode postscripts can no longer be separate for AIX/Linux. There must be common postscripts that will run on either AIX or Linux.</p>
+<h3 id="default-postscripts"><a href="#TOC">Default Postscripts</a></h3>
+<ul>
+<li>On AIX, currently the default postscripts are the following: &quot;xcatdefaults&quot;,&quot;syslog,aixremoteshell,syncfiles&quot;,,,</li>
+<li>On Linux: &quot;xcatdefaults&quot;,&quot;syslog,remoteshell,syncfiles&quot;,&quot;otherpkgs&quot;,,</li>
+</ul>
+<p>Note: as of xCAT 2.8, we no longer put aixremoteshell in the postscripts table. remoteshell is used for both AIX and Linux nodes. aixremoteshell is called by remoteshell on AIX nodes.</p>
+<p>After the change there will be one postscript (written in shell), remoteshell that will setup either Linux or AIX and the default postscripts for either Linux or AIX will become: &quot;xcatdefaults&quot;,&quot;syslog,remoteshell,syncfiles&quot;,&quot;otherpkgs&quot;,,</p>
+<h3 id="service-node-postscripts"><a href="#TOC">Service Node Postscripts</a></h3>
+<ul>
+<li>On AIX, currently the servicenode postscript shipped is the following: &quot;service&quot;,,&quot;servicenode&quot;,,</li>
+<li>On Linux currently the servicenode postscripts shipped are as follows: &quot;service&quot;,&quot;servicenode,xcatserver,xcatclient&quot;,,</li>
+</ul>
+<p>In xCAT 2.7 there is one postscript (written in Perl), servicenode that will be for either Linux or AIX, and the postscript entry will be the following: &quot;service&quot;,,&quot;servicenode&quot;,,</p>
+<p>servicenode postscripts will be modified to call xcatserver and xcatclient, if the servicenode is Linux. Also, postage.pm will add an Env Variable to the mypost* file, designating the release. Since xcatserver and xcatclient will still exist, they can check that Env Variable and know, if it is that release or later then servicenode has already run them and exit. The admin can remove their entries from the postscripts table when convenient. (Anyone got any better ideas?).</p>
+<p>Another possibility is we copy the logic that is currently in xcatserver and xcatclient to two new scripts and call those scripts and then modify xcatserver and xcatclient so they do nothing but return 0. That way they stay in the postscripts table, without affecting anything until the they are removed. The only problem with this is if the SN does not mount the /install/postscripts directory and they do not update the SN, they will have problems.</p>
+</body>
+</html>

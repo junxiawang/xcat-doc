@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#obtain-additional-packages-for-hfi-network">Obtain additional packages for HFI network</a></li>
+<li><a href="#additional-configuration-for-power-775">Additional configuration for Power 775</a></li>
+<li><a href="#install-loadleveler">Install LoadLeveler</a><ul>
+<li><a href="#initialize-the-loadleveler-database-configuration"><strong>Initialize the LoadLeveler database configuration</strong></a></li>
+</ul></li>
+<li><a href="#install-teal"><strong>Install Teal</strong></a></li>
+<li><a href="#install-isnm"><strong>Install ISNM</strong></a><ul>
+<li><a href="#install-isnm-prerequisite-software"><strong>Install ISNM prerequisite software</strong></a></li>
+</ul></li>
+<li><a href="#discover-and-define-hardware-components">Discover and define hardware components</a></li>
+<li><a href="#install-and-configure-isnm">Install and Configure ISNM</a><ul>
+<li><a href="#check-the-hardware-component-and-site-definitions."><strong>Check the hardware component and site definitions.</strong></a></li>
+<li><a href="#hardware-server-connections"><strong>Hardware server connections</strong></a></li>
+<li><a href="#start-cnmd-and-setup-master-isr-id"><em>* Start CNMD and setup Master ISR ID :</em>*</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#obtain-additional-packages-for-hfi-network">Obtain additional packages for HFI network</a></li>
+<li><a href="#additional-configuration-for-power-775">Additional configuration for Power 775</a></li>
+<li><a href="#install-loadleveler">Install LoadLeveler</a></li>
+<li><a href="#initialize-the-loadleveler-database-configuration"><strong>Initialize the LoadLeveler database configuration</strong></a></li>
+<li><a href="#install-teal"><strong>Install Teal</strong></a></li>
+<li><a href="#install-isnm"><strong>Install ISNM</strong></a></li>
+<li><a href="#install-isnm-prerequisite-software"><strong>Install ISNM prerequisite software</strong></a></li>
+<li><a href="#discover-and-define-hardware-components">Discover and define hardware components</a></li>
+<li><a href="#install-and-configure-isnm">Install and Configure ISNM</a></li>
+<li><a href="#check-the-hardware-component-and-site-definitions"><strong>Check the hardware component and site definitions.</strong></a></li>
+<li><a href="#hardware-server-connections"><strong>Hardware server connections</strong></a></li>
+<li><a href="#-start-cnmd-and-setup-master-isr-id&amp;nbsp"><em>* Start CNMD and setup Master ISR ID :</em>*</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>If not using Power 775 Clusters, skip this section.</p>
+<p>This section describes the additional setup required for the Power 775 support. This includes the setup of the cluster hardware components and the installation of TEAL, ISNM, and LoadLeveler on the xCAT management node. TEAL, ISNM and LoadLeveler have dependencies on each other so all three must be installed.</p>
+<h3 id="obtain-additional-packages-for-hfi-network"><a href="#TOC">Obtain additional packages for HFI network</a></h3>
+<p>To work with HFI network in Power 775 clusters, the following RPMs and scripts must be obtained from IBM and put on the xCAT MN in the suggested directories. These packages and files should exist as part of the IBM LTC RH6 customized kernel:</p>
+<pre><code>/hfi/dd/kernel-2.6.32-*.ppc64.rpm
+/hfi/dd/kernel-headers-2.6.32-*.ppc64.rpm
+/hfi/dd/hfi_util-*.el6.ppc64.rpm
+/hfi/dd/hfi_ndai-*.el6.ppc64.rpm
+
+
+/hfi/dhcp/net-tools-*.el6.ppc64.rpm
+/hfi/dhcp/dhcp-*.el6.ppc64.rpm
+/hfi/dhcp/dhclient-*.el6.ppc64.rpm</code></pre>
+<h3 id="additional-configuration-for-power-775"><a href="#TOC">Additional configuration for Power 775</a></h3>
+<ul>
+<li>Increase /boot filesystem size for service nodes</li>
+</ul>
+<p>A customized kernel is required on service nodes to work with the HFI network. Since both the base and customized kernels will exist on the service nodes, the /boot filesystem will need be increased from the standard default when installing a service node.</p>
+<pre><code>Note, increasing /boot is a workaround for using the customized kernel. After this kernel is accepted by the Linux Kernel community, only one kernel will be required on the service node, and this step will no longer be needed. 
+
+Copy the service node Kickstart install template provided by xCAT to a custom location. For example: 
+
+ cp /opt/xcat/share/xcat/install/rh/service.rhels6.ppc64.tmpl /install/custom/install/rh</code></pre>
+<p>Edit the copied file and change the line:</p>
+<pre><code> # From:
+     part /boot --size 50 --fstype ext4&amp;lt;/pre&amp;gt;
+ # To:
+     part /boot --size 200 --fstype ext4&amp;lt;/pre&amp;gt;</code></pre>
+<h3 id="install-loadleveler"><a href="#TOC">Install LoadLeveler</a></h3>
+<p>This section lists a quick summary of steps required to install LoadLeveler on your xCAT management node. For full instructions, please refer to the following documentation for setting up LL in an HPC cluster: [IBM_HPC_Stack_in_an_xCAT_Cluster]</p>
+<ul>
+<li><p>Create the loadl group and userid:</p>
+<p>groupadd loadl useradd -g loadl -d /&lt;user_home&gt;/loadl loadl</p></li>
+<li><p>Download the LoadLeveler packages to the xCAT management node and place in a directory such as:</p>
+<p>/install/post/otherpkgs/rhels6/ppc64/loadl</p></li>
+<li><p>Make sure the following packages are installed on your management node:</p>
+<p>compat-libstdc++-33.ppc64 libXmu.ppc64 libXtst.ppc64 libXp.ppc64 libXScrnSaver.ppc64</p></li>
+<li><p>Install the LoadLeveler license rpm:</p>
+<p>cd /install/post/otherpkgs/rhels6/ppc64/loadl rpm -Uvh ./LoadL-full-license*.rpm</p></li>
+<li><p>Accept the LoadLeveler license and install the product rpms:</p>
+<p>/opt/ibmll/LoadL/sbin/install_ll -y -d .</p></li>
+</ul>
+<p>Note: The LoadLeveler.scheduler fileset must be installed before installing teal-ll.</p>
+<h4 id="initialize-the-loadleveler-database-configuration"><a href="#TOC"><strong>Initialize the LoadLeveler database configuration</strong></a></h4>
+<p>Copy and edit the sample files LoadL_config.l and LoadL_admin.l in /opt/ibmll/LoadL/full/samples with site-specific configuration, such as machine_groups or regions.</p>
+<p>Then initialize using these files and your cluster configuration file :</p>
+<pre><code>llconfig -i -t &amp;lt;cluster_configuration_file&amp;gt;</code></pre>
+<h3 id="install-teal"><a href="#TOC"><strong>Install Teal</strong></a></h3>
+<p>Download the Teal prerequisite rpm packages and the Teal product rpms to your xCAT management. The Teal product does have prerequisites on the LoadL resource manager. Place the packages in a directory such as:</p>
+<pre><code>/install/post/otherpkgs/rhels6/ppc64/teal</code></pre>
+<p>The Teal prerequisites are:</p>
+<pre><code> gdbm-1.8.3-5
+ readline-4.3-2
+ python-2.6.2-2
+ pyodbc-2.1.7-1   ***  this is in the latest xCAT deps package</code></pre>
+<p>Other than pyodbc, these rpms were most likely installed with your base RedHat installation. If these rpms are not installed, run a command similar to the following to install:</p>
+<pre><code> yum install gdbm.ppc64 readline.ppc64 python.ppc64 </code></pre>
+<p>The Teal rpms for the xCAT EMS are:</p>
+<pre><code>teal-base-1.1.0.0-1.ppc64.rpm -used with base Teal support 
+teal-ll-1.1.0.0-1.ppc64.rpm -used with LL teal 
+teal-sfp-1.1.0.0-1.ppc64.rpm -used with HMC Service focal point 
+teal-isnm-1.1.0.0-1.ppc64.rpm -used with isnm Teal
+teal-pnsd-1.1.0.0-1.ppc64.rpm -used with PE  pnsd teal </code></pre>
+<p>There are other Teal rpms for GPFS that will be required on the Power 775 cluster.</p>
+<pre><code>teal-gpfs-1.1.0.0-1.ppc64.rpm
+teal-gpfs-sn-1.1.0.0-1.ppc64.rpm   </code></pre>
+<p>To install:</p>
+<pre><code> yum install pyodbc
+ cd /install/post/otherpkgs/&amp;lt;os&amp;gt;/&amp;lt;arch&amp;gt;/teal
+ rpm -Uvh ./teal*.rpm</code></pre>
+<p>Teal tables should only be viewed using xCAT database commands (e.g. tabedit, tabdump). Changes should be made using the following teal commands:</p>
+<p>tlchalert : close an alert that has been resolved. It will also close all duplicate alerts that have been reported. tlrmalert : remove select/all alerts that have been closed that are not associated with other alerts. tlrmevent : remove select/all events that are not associated with an alert that is still being saved in the alert log.</p>
+<p>Typically a user will do these steps to manage Teal alerts and maintain the Teal tables:</p>
+<pre><code>Resolve the active/open alerts and then close them with tlchalert
+tlrmalert --older-than &amp;lt;timestamp&amp;gt; to remove the alerts that are no longer required
+tlrmevent --older-than &amp;lt;timestamp&amp;gt; to remove the events that are no longer required</code></pre>
+<p>For more information on Teal please refer to the Teal documentation. (ptr)</p>
+<h3 id="install-isnm"><a href="#TOC"><strong>Install ISNM</strong></a></h3>
+<p>Download the ISNM packages to the xCAT MN and place them in a directory such as</p>
+<pre><code>/install/post/otherpkgs/&amp;lt;os&amp;gt;/ppc64/isnm</code></pre>
+<h4 id="install-isnm-prerequisite-software"><a href="#TOC"><strong>Install ISNM prerequisite software</strong></a></h4>
+<ul>
+<li><p>Install RSCT</p>
+<p>rpm –ivh rsct.core.utils-3.1.0.2-10266.ppc.rpm rsct.core-3.1.0.2-10266.ppc.rpm src-1.3.1.1-10266.ppc.rpm</p></li>
+</ul>
+<p>Obtain RSCT from:</p>
+<pre><code>https://www14.software.ibm.com/webapp/iwm/web/preLogin.do?lang=en_US&amp;source=stg-rmc</code></pre>
+<ul>
+<li>Install unixODBC and pam (32 and 64 bit version)</li>
+</ul>
+<p>ISNM requires 32 bit rpms for the unixODBC and pam installed on xCAT MN. For RHEL 6 (ppc64): You will need to validate that both the pam-1.1.1-4.el6.ppc64 and the pam-1.1.1-4.el6.ppc rpm packages are installed on the xCAT MN. The RH6 yum package may install or update the 64 bit packages only. You manually need to install the 32 bit pam-1.1.1-4.el6.ppc rpm package.</p>
+<p>You then need to validate that both unixODBC-2.2.14-11.el6.ppc64 and unixODBC-2.2.14-11.el6.ppc rpms are installed on the xCAT. Make sure that unixODBC-2.2.14-11.el6.ppc64 rpm is installed first through yum, and then manually install the 32 bit unixODBC-2.2.14-11.el6.ppc rpm. Some files such as isql, odbc_config, and odbcinst, will be overwritten by the second rpm install.</p>
+<p>There is one hdwr_svr lib that is not in the package that must be manually placed in /usr/lib on the Managment Node. ( This will be fixed soon). Right now the lib is in the following backing tree:</p>
+<pre><code>/project/spreldenali/build/rdenali1107b/export/ppc64_redhat_6.0.0/usr/lib/libnetchmcx.so
+cp -p libnetchmcx.so /usr/lib</code></pre>
+<h3 id="discover-and-define-hardware-components"><a href="#TOC">Discover and define hardware components</a></h3>
+<p>The System P hardware components must be discovered, configured and defined in the xCAT database. If you haven't done so already, follow the steps in [XCAT_Power_775_Hardware_Management].</p>
+<h3 id="install-and-configure-isnm"><a href="#TOC">Install and Configure ISNM</a></h3>
+<p>Install the ISNM package:</p>
+<pre><code>cd /install/post/otherpkgs/&amp;lt;os&amp;gt;/&amp;lt;arch&amp;gt;/isnm 
+rpm -Uvh ./isnm-cnm*.rpm</code></pre>
+<p>Note: you should have already install hardware server as part of xCAT's DFM.</p>
+<pre><code>**NOTE**
+There should be pointer to the ISNM documentation in the High Performance Clustering 
+using 9125-F2C  that describes   HFI-ISR network for Power 775  cluster.
+This would be a good place to describe how the HFI is being used with xCAT.
+We can provide a pointer where the admin should locate the HFI device drivers. 
+If you are only trying to communicate over hfi from one octant to another in the same CEC,
+the CNM daemon must be running on the EMS.  and the master ISR ID must be loaded to the CEC. 
+If you are communicating over the HFI from one CEC to another, the HFI cable links 
+(Dlinks and/or LR links) must be physically configured between the Power 775 CECs.  </code></pre>
+<h4 id="check-the-hardware-component-and-site-definitions."><a href="#TOC"><strong>Check the hardware component and site definitions.</strong></a></h4>
+<pre><code>**NOTE:** Check for what????</code></pre>
+<p>The CNM HFI network requires that the Power 775 frame and cecs be physically installed and properly defined in the xCAT DataBase. This activity is defined in the xCAT Power 775 Hardware Management guide. The CNM HFI network requires the following data to be defined in the xCAT DB.</p>
+<p>Check that the correct Topology has been set in the site table. The topology definition is based on the the number of CECs and type of HFI network configured for your Power 775 cluster.</p>
+<pre><code> lsdef -t site -l | grep topology   (should be one of supported configs 8D, 32D, 128D)
+   if there is no topology value found you can set the value with xCAT chdef  command
+ chdef -t site  topology=32D</code></pre>
+<p>Check to make sure that the frame and the CECs node objects have the proper definitions. The frame must be connected to the EMS with DFM, and the frame number is assigned in the &quot;id&quot; attribute. The lsdef frame will list all the frame objects in your cluster, check that each frame has the frame number defined id=&lt;frame #&gt; . You should execute xCAT command &quot;rspconfig&quot; to set the frame number.</p>
+<pre><code> lsdef  frame   (check id attribute for each frame object&amp;gt;
+ rspconfig frame17 frame=17  (sets &quot;id&quot; to 17 for frame17 node, and will update frame number to 17 in BPA  </code></pre>
+<p>Check to make sure that the Power 775 CECs have the proper parent associations defined in the xCAT DB.</p>
+<pre><code> - lpars/octants should have the proper CEC node as the assigned parent attribute.
+ - fsp node should have the proper CEC node as the assigned parent attribute
+ - cec nodes should have the proper Frame node as the assigned parent attribute
+ - bpa nodes should have the proper Frame node as the assigned parent attribute
+ - frame nodes will have a building block number or will be empty </code></pre>
+<p>Check to make sure that the cec node objects have the proper &quot;supernode&quot; attribute defined. The supernode will specify the HFI configuration being used by the cec. You should also make sure the cage id is properly defined where the &quot;id&quot; attribute matches the cage position for the CEC node. The CNM daemon and configuration commands will setup the Master ISR identifier for each cec. This will allow the HFI communications to work between the Power 775 cluster.</p>
+<pre><code> lsdef  cec  (check supernode and id attribute for each cec object)
+ chdef  f17c01  supernode=0,0   (will set HFI supernode setting)    </code></pre>
+<h4 id="hardware-server-connections"><a href="#TOC"><strong>Hardware server connections</strong></a></h4>
+<p>The CNM hardware server daemon will be started as part of the Power 775 Hardware setup working with DFM. The hardware server daemon is used by both xCAT and CNM to track the hardware connections between the xCAT EMS and the Frame/BPA and CEC/FSPs. There are two different connections &quot;tooltype&quot; used with the hardware server daemon and the xCAT mkhwconn command. The tooltype &quot;lpar' is used by the xCAT DFM support, and the tooltype &quot;fnm&quot; is used by the CNM support.</p>
+<pre><code>mkhwconn frame17 -T fnm   (will make the HW connection for the frame17  frame and cecs (drawers))</code></pre>
+<p>The hardware server daemon works with the /var/opt/isnm/hdwr_svr/data/HmcNetConfig file. The expectation is that HmcNetConfig file will get created as part of the first mkhwconn execution working with xCAT DFM . The CNM will add additional connections for the &quot;fnm&quot; HW connections.</p>
+<p>There are hardware server log files that are created and saved under /var/opt/isnm/hdwr_svr/log directory. If you have issues with hardware server daemon, you may want to check the recent &quot;hdwr_svr.log.*&quot; log files. If you need to take a hardware server daemon dump, you can execute &quot;kill -USR1 &lt;hdwr_svr.pid&gt; (this will create the hdwr_svr dump file)</p>
+<h4 id="start-cnmd-and-setup-master-isr-id"><a href="#TOC"><em>* Start CNMD and setup Master ISR ID :</em>*</a></h4>
+<p>Once all the xCAT definitions are properly updated with CNM configuration data, It is time to start up the CNM daemon and load ounthe proper ISR data in the CECs. Make sure that all the CECs have been powered off prior to the initialization of the CNM daemon. This is necessary to setup the proper HFI configuration data in the Frame and CECs. You can execute the CNM command &quot;chnwm&quot; to activate or deactivate the CNM daemon for AIX EMS</p>
+<pre><code>/opt/isnm/cnm/bin/chnwm -d  (take down the CNM daemon)
+rpower cec  off             (power down all cecs)
+/opt/isnm/cnm/bin/chnwm -a   (activate the CNM daemon)</code></pre>
+<p>You can execute the Linux &quot;service&quot; command to activate or deactivite the CNM daemon for Linux EMS.</p>
+<pre><code>service cnmd stop     (take down the CNM daemon)
+rpower cec off        (power down all cecs)  
+service cnmd  start   (activate the CNM daemon) </code></pre>
+<p>You can now load the HFI master ISR identifier on the Power 775 frame and cecs. This will be accomplished using the CNM command &quot;chnwsvrconfig&quot; . You will need to specify this command for each frame in you configuration.</p>
+<pre><code>/opt/isnm/cnm/bin/chnwsvrconfig  -f 17 -A   (will configure frame 17 and associated cecs withHFI data)</code></pre>
+<p>You can now verify that the CNM daemon and HFI configuration is working by executing the CNM command &quot;nmcmd&quot; to dump the drawer status information. This will list the current state of the drawers working with CNM. Please reference the HPC using the 9125-F2C guide for more detail about CNM commands, implementation, and debug.</p>
+<pre><code> /opt/isnm/cnm/bin/nmcmd -D -D 
+ # nmcmd -D -D
+ Frame 17  Cage 3 Supernode 0 Drawer 0 RUNTIME
+ Frame 17  Cage 5 Supernode 0 Drawer 2 RUNTIME
+ Frame 17  Cage 4 Supernode 0 Drawer 1 TERMINATE</code></pre>
+</body>
+</html>

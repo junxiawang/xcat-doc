@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#make-a-diskless-install-server-image">Make A diskless Install Server Image</a></li>
+<li><a href="#edit-xcat-tabs">Edit xCAT Tabs</a><ul>
+<li><a href="#postscripts">postscripts</a></li>
+<li><a href="#noderes">noderes</a></li>
+<li><a href="#servicenode">servicenode</a></li>
+<li><a href="#nodetype">nodetype</a></li>
+</ul></li>
+<li><a href="#installing">Installing</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#make-a-diskless-install-server-image">Make A diskless Install Server Image</a></li>
+<li><a href="#edit-xcat-tabs">Edit xCAT Tabs</a></li>
+<li><a href="#postscripts">postscripts</a></li>
+<li><a href="#noderes">noderes</a></li>
+<li><a href="#servicenode">servicenode</a></li>
+<li><a href="#nodetype">nodetype</a></li>
+<li><a href="#installing">Installing</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="intro"><a href="#TOC">Intro</a></h2>
+<p>Installing an Install Server makes your cluster scale. In this example I have 2 install servers. Each install server is an install server for 128 nodes. This for SLES10.1. If you're running another OS, mkinstall probably won't work for you. Use the default in /opt/xcat/share/xcat/netboot/rh.</p>
+<p>Also note, that you'll need genimage.yum. If you use something else, then change the below script. This should be used as a reference and not copied directly.</p>
+<h2 id="make-a-diskless-install-server-image"><a href="#TOC">Make A diskless Install Server Image</a></h2>
+<p>Here is the code I used to make a diskless install image. To run it just run:</p>
+<pre><code>./mkinstall &lt;new image name&gt;
+</code></pre>
+<p>This is not tested anywhere but on my cluster. YMMV.</p>
+<p><strong>mkinstall</strong></p>
+<pre><code>    #!/bin/bash
+
+    NAME=$1
+    GENIMAGEDIR=/opt/xcat/share/xcat/netboot/sles
+    GENIMAGE=$GENIMAGEDIR/genimage.yum
+    IMGROOT=/install/netboot/sles10.1/x86_64/$NAME/rootimg
+    MASTERIP=$(grep `hostname` /etc/hosts | head -1 | awk &#39;{print $1}&#39;)
+    echo &quot;master is: $MASTERIP&quot;
+    sleep 5
+    #MASTERIP=10.4.2.30
+    ERROR=0
+
+
+    if [ ! -f $GENIMAGEDIR/$NAME.pkglist ]
+    then
+     echo &quot;Creating $GENIMAGEDIR/$NAME.pkglist&quot;
+     cat &gt; &quot;$GENIMAGEDIR/$NAME.pkglist&quot; &lt;EOF
+    atftp
+    bash
+    bind
+    bind-utils
+    bzip2
+    compat-libstdc++
+    dbus-1
+    dbus-1-glib
+    dhclient
+    dhcp-relay
+    dhcp
+    dhcpcd
+    expat
+    gcc
+    gcc-fortran
+    hal
+    iputils
+    kernel
+    kernel-smp
+    ksh
+    libgfortran
+    libxml2
+    make
+    nfs-utils
+    ntp
+    numactl
+    openssh
+    procps
+    psmisc
+    resmgr
+    rpm
+    rsh
+    stunnel
+    tar
+    tcsh
+    tk
+    vim
+    cron
+    vsftpd
+    wget
+    perl-DBD-Pg
+    apache2
+    xCATsn
+    conserver
+    expect
+    fping
+    ipmitool
+    perl-XML-Parser
+    perl-xCAT
+    postgresql
+    postgresql-server
+    syslinux
+    xCAT-client
+    xCAT-nbkernel-x86_64
+    xCAT-nbroot-core-x86_64
+    xCAT-nbroot-oss-x86_64
+    xCAT-server
+    xCATsn
+    dhcp-server
+    EOF
+    fi
+
+    if [ ! -f $GENIMAGEDIR/$NAME.exlist ]
+    then
+      echo &quot;Creating $GENIMAGEDIR/$NAME.exlist&quot;
+      cat &gt; &quot;$GENIMAGEDIR/$NAME.exlist&quot; &lt;EOF2
+    ./usr/share/man*
+    ./usr/share/locale*
+    ./usr/share/i18n*
+    ./var/cache/yum*
+    ./usr/share/doc*
+    ./usr/share/gnome*
+    ./usr/share/zoneinfo*
+    ./usr/share/cracklib*
+    ./usr/share/info*
+    ./usr/share/omf*
+    ./usr/lib/locale*
+    ./boot*
+    EOF2
+
+    fi
+
+
+    $GENIMAGE -i eth0 -n tg3,bnx2 -o sles10.1 -p $NAME
+    chroot $IMGROOT insserv boot.localnet
+    chroot $IMGROOT insserv haldaemon
+    chroot $IMGROOT insserv dbus
+    chroot $IMGROOT insserv network
+
+    # change syslog
+    echo &quot;*.* @$MASTERIP&quot; &gt; $IMGROOT/etc/syslog.conf
+    chroot $IMGROOT insserv syslog
+
+
+    chroot $IMGROOT insserv portmap
+    chroot $IMGROOT insserv sshd
+
+    # NTP
+    echo &quot;server $MASTERIP&quot; &gt;&gt; $IMGROOT/etc/ntp.conf
+    cp /etc/localtime $IMGROOT/etc/
+    cp /etc/hosts $IMGROOT/etc/
+    chroot $IMGROOT insserv ntp
+    chroot $IMGROOT insserv apache2
+
+    # stop dhcp from starting up until xCAT does it.
+    chroot $IMGROOT chkconfig dhcpd off
+    chroot $IMGROOT chkconfig dhcrelay off
+
+    # copy head nodes sysctl for kernel params
+    cp /etc/sysctl.conf $IMGROOT/etc/
+
+    # add more nfs threads
+    perl -pi -e &#39;s/USE_KERNEL_NFSD_NUMBER=&quot;4&quot;/USE_KERNEL_NFSD_NUMBER=&quot;64&quot;/g&#39; $IMGROOT/etc/sysconfig/nfs
+
+    # dhcp interface assignment
+    perl -pi -e &#39;s/DHCPD_INTERFACE=&quot;&quot;/DHCPD_INTERFACE=&quot;eth0&quot;/g&#39; $IMGROOT/etc/sysconfig/dhcpd
+
+    # NFS vodoo
+    echo &#39;/install *(ro,no_root_squash,sync,fsid=13)&#39; &gt;&gt;$IMGROOT/etc/exports
+
+    # FSTAB vodoo
+    perl -pi -e &#39;s/tmpfs/#tmpfs/g&#39; $IMGROOT/etc/fstab
+    echo &quot;$NAME   /   tmpfs rw 0 1 &quot; &gt;&gt;$IMGROOT/etc/fstab
+    #echo &quot;none    /tmp    tmpfs   defaults,size=10m 0 2&quot; &gt;&gt;$IMGROOT/etc/fstab
+    #echo &quot;none    /var/tmp    tmpfs   defaults,size=10m 0 2&quot; &gt;&gt;$IMGROOT/etc/fstab
+
+    #HTTP fix
+    mv $IMGROOT/etc/httpd/conf.d/xcat.conf $IMGROOT/etc/apache2/conf.d/
+
+
+    cp /etc/security/limits.conf $IMGROOT/etc/security
+    cp /usr/bin/strace $IMGROOT/usr/bin
+    echo &quot;Packing Image...&quot;
+    packimage -o sles10.1 -p $NAME -a x86_64
+    echo &quot;Install Server Image: $NAME has been created.  Please remember to edit&quot;
+
+    #echo &quot;the nodetype table:  e.g.: tabedit nodetype&quot;
+    #echo &quot;then run: nodeset service netboot&quot;
+    #echo &quot;then reboot service nodes:  rpower, or reboot&quot;
+    #echo &quot;make sure tabedit site has installloc set to /install&quot;
+    #echo &quot;you should also verify post install scripts.&quot;
+</code></pre>
+<h2 id="edit-xcat-tabs"><a href="#TOC">Edit xCAT Tabs</a></h2>
+<p>I'll show you the important tables here. The rest are just normal.</p>
+<h3 id="postscripts"><a href="#TOC">postscripts</a></h3>
+<pre><code>
+    #node,postscripts,comments,disable
+    &quot;service&quot;,&quot;servicenode,xcatclient,xcatserver,setupeth,restartxcat&quot;,,
+</code></pre>
+<p>As of xCAT 2.7, the servicenode postscript calls the xcatclient and xcatserver postscripts, so all three are not needed in the postscript table. The table would look like the following:</p>
+<pre><code>    #node,postscripts,comments,disable
+    &quot;service&quot;,&quot;servicenode,setupeth,restartxcat&quot;,,
+</code></pre>
+<p>All the scripts here are included with xCAT. I added setupeth because I wanted to change the GbE cards. Then after I did that I needed to restart xCAT so a made a script to do that.</p>
+<p>Here are the scripts:</p>
+<p><strong>setupeth</strong> Here I have a 10GbE card that I needed to load the driver on. I also needed to change the way they were ordered because I wanted my 10GbE card to be eth0. So here is how I did it. (Notice this is all in SLES10)</p>
+<pre><code>    insmod /xcatpost/myri10ge.ko
+    ME=`hostname`
+    MMM=`grep $ME-bmm /etc/hosts | awk &#39;{print $1}&#39;`
+    TENGE=`grep $ME /etc/hosts | head -1 | awk &#39;{print $1}&#39;`
+
+    # flip the udev&#39;s around
+    cp /etc/udev/rules.d/30-net_persistent_names.rules /tmp/net_persistent_names.rules.ORIG
+    perl -pi -e &#39;s/eth0/ethX/g&#39; /etc/udev/rules.d/30-net_persistent_names.rules
+    perl -pi -e &#39;s/eth2/eth0/g&#39; /etc/udev/rules.d/30-net_persistent_names.rules
+    perl -pi -e &#39;s/eth1/eth2/g&#39; /etc/udev/rules.d/30-net_persistent_names.rules
+    perl -pi -e &#39;s/ethX/eth1/g&#39; /etc/udev/rules.d/30-net_persistent_names.rules
+
+    echo &quot;BOOTPROTO=&#39;static&#39;
+    IPADDR=$TENGE
+    NETMASK=255.255.0.0
+    STARTMODE=auto
+    MTU=1500
+    &quot; &gt;/etc/sysconfig/network/ifcfg-eth0
+
+    echo &quot;BOOTPROTO=&#39;static&#39;
+    IPADDR=$MMM
+    NETMASK=255.255.0.0
+    STARTMODE=auto
+    &quot; &gt;/etc/sysconfig/network/ifcfg-eth1
+    service network stop
+    rmmod bnx2
+    rmmod myri10ge
+    modprobe bnx2
+    insmod /xcatpost/myri10ge.ko
+    sleep 5
+    service network start
+    #sleep 10
+</code></pre>
+<p><strong>restartxcat</strong> does just what it says it does... oh, and syslog too.</p>
+<pre><code>    service syslog restart
+    service xcatd restart
+</code></pre>
+<h3 id="noderes"><a href="#TOC">noderes</a></h3>
+<pre><code>    &quot;service&quot;,,&quot;pxe&quot;,,&quot;10.1.2.30&quot;,,,,,,,&quot;eth0&quot;,&quot;eth0&quot;,&quot;10.1.2.30&quot;,,,,
+    &quot;hgroup&quot;,&quot;dnh01&quot;,&quot;pxe&quot;,&quot;dnh01&quot;,&quot;dnh01&quot;,,,,,,,&quot;eth0&quot;,&quot;eth0&quot;,&quot;dnh01&quot;,,,,
+    &quot;igroup&quot;,&quot;dni01&quot;,&quot;pxe&quot;,&quot;dni01&quot;,&quot;dni01&quot;,,,,,,,&quot;eth0&quot;,&quot;eth0&quot;,&quot;dni01&quot;,,,,
+</code></pre>
+<p>Here my two install servers are dnh01 and dni01. They service the hgroup and the igroup. Each of these groups has about 128 nodes. The nodes are assigned in the nodelist table.</p>
+<h3 id="servicenode"><a href="#TOC">servicenode</a></h3>
+<p>Looks like this:</p>
+<pre><code>    #node,nameserver,dhcpserver,tftpserver,nfsserver,conserver,monserver,ldapserver,ntpserver,ftpserver,comments,disable
+    &quot;dnh01&quot;,&quot;0&quot;,&quot;1&quot;,&quot;1&quot;,&quot;1&quot;,&quot;0&quot;,&quot;1&quot;,&quot;0&quot;,&quot;1&quot;,&quot;1&quot;,,
+    &quot;dni01&quot;,&quot;0&quot;,&quot;1&quot;,&quot;1&quot;,&quot;1&quot;,&quot;0&quot;,&quot;1&quot;,&quot;0&quot;,&quot;1&quot;,&quot;1&quot;,
+</code></pre>
+<h3 id="nodetype"><a href="#TOC">nodetype</a></h3>
+<pre><code>    #node,os,arch,profile,nodetype,comments,disable
+    &quot;service&quot;,&quot;sles10.1&quot;,&quot;x86_64&quot;,&quot;s10&quot;,&quot;osi&quot;,,
+</code></pre>
+<p>Notice that when I ran mkinstall above I ran it like:</p>
+<pre><code>    mkinstall s10
+</code></pre>
+<p>So since that's the image I made, I want to boot to it.</p>
+<h2 id="installing"><a href="#TOC">Installing</a></h2>
+<p>The rest is all just done using normal xCAT commands. Run: nodeset &lt;servicenodes&gt; netboot. The biggest problem I had when doing this initially was that the 10GbE card runs at 9000MTU by default and my switch wasn't set to handle that. So when I added the MTU in there it made everything work fine.</p>
+<p>Hopefully this helps someone else.</p>
+</body>
+</html>

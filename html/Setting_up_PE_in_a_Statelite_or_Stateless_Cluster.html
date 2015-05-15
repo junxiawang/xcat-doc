@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#linux">Linux</a><ul>
+<li><a href="#add-compilers-and-pe-to-your-diskless-image">Add Compilers and PE to your diskless image</a></li>
+<li><a href="#network-boot-the-nodes">Network boot the nodes</a></li>
+<li><a href="#starting-pe-on-cluster-nodes">Starting PE on cluster nodes</a></li>
+<li><a href="#poe-hostlist-files">POE hostlist files</a></li>
+</ul></li>
+<li><a href="#aix">AIX</a><ul>
+<li><a href="#add-compilers-and-pe-to-your-diskless-image-1">Add Compilers and PE to your diskless image</a><ul>
+<li><a href="#optionaluse-xcat-prescript-when-installing-multiple-pe-releases">(Optional)Use xCAT prescript when installing multiple PE releases</a></li>
+</ul></li>
+<li><a href="#network-boot-the-nodes-1">Network boot the nodes</a></li>
+<li><a href="#use-xcat-prescript">Use xCAT prescript</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#linux">Linux</a></li>
+<li><a href="#add-compilers-and-pe-to-your-diskless-image">Add Compilers and PE to your diskless image</a></li>
+<li><a href="#network-boot-the-nodes">Network boot the nodes</a></li>
+<li><a href="#starting-pe-on-cluster-nodes">Starting PE on cluster nodes</a></li>
+<li><a href="#poe-hostlist-files">POE hostlist files</a></li>
+<li><a href="#aix">AIX</a>
+<ul>
+<li><a href="#add-compilers-and-pe-to-your-diskless-image-1">Add Compilers and PE to your diskless image</a></li>
+<li><a href="#optionaluse-xcat-prescript-when-installing-multiple-pe-releases">(Optional)Use xCAT prescript when installing multiple PE releases</a></li>
+<li><a href="#network-boot-the-nodes-1">Network boot the nodes</a></li>
+<li><a href="#use-xcat-prescript">Use xCAT prescript</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This document assumes that you have already purchased your Parallel Environment product, have the Linux rpms available, and are familiar with the PE documentation: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/topic/com.ibm.cluster.pe.doc/pebooks.html">http://publib.boulder.ibm.com/infocen.../pebooks.html</a></p>
+<p>These instructions are based on PE 5.2.1, PE RTE 1.1.0.0 and PE RTE 1.2.0.0. If you are using a different version of ParallelEnvironment, you may need to make adjustments to the information provided here.</p>
+<p>Before proceeding with these instructions, you should have the following already completed for your xCAT cluster:</p>
+<ul>
+<li>Your xCAT management node is fully installed and configured,</li>
+<li>If you are using xCAT hierarchy, your service nodes are installed and running.</li>
+<li>Your compute nodes are defined to xCAT, and you have verified your hardware control capabilities, gathered MAC addresses, and done all the other necessary preparations for a diskless install.</li>
+<li>You should have a diskless image created with the base OS installed and verified on at least one test node.</li>
+</ul>
+<p>PE requires that you have a working C compiler installed before installing the PE rpms. This document contains instructions for installing both IBM vacpp and xlf compilers and the PE packages.</p>
+<p>POE requires that userids be common across all nodes in a cluster, and that the user home directories are shared. There are many different ways to handle user management and to set up a cluster-wide shared home directory (for example, using NFS or through a global filesystem such as GPFS). These instructions assume that the shared home directory has already been created and mounted across the cluster and that the xCAT management node and all xCAT service nodes are also using this directory. You may wish to have xCAT invoke your custom postbootscripts on nodes to help set this up.</p>
+<h2 id="linux"><a href="#TOC">Linux</a></h2>
+<p>Follow these instructions for installing IBM Compilers and PE in your Linux xCAT cluster.</p>
+<h3 id="add-compilers-and-pe-to-your-diskless-image"><a href="#TOC">Add Compilers and PE to your diskless image</a></h3>
+<p>Include Compilers and PE in your diskless image:</p>
+<p>Install the optional xCAT-IBMhpc rpm on your xCAT management node. This rpm is available with xCAT and should already exist in your zypper or yum repository that you used to install xCAT on your managaement node. A new copy can be downloaded from: <a href="Download_xCAT">Download xCAT</a>.</p>
+<p>To install the rpm in SLES:</p>
+<pre><code>      zypper refresh
+      zypper install xCAT-IBMhpc</code></pre>
+<p>To install the rpm in Redhat:</p>
+<pre><code>      yum install xCAT-IBMhpc</code></pre>
+<p>Copy the PE and compiler rpms from your distribution media onto the xCAT management node (MN). Suggested target location to put the rpms on the xCAT MN:</p>
+<pre><code>       /install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/pe
+       /install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/compilers</code></pre>
+<p>For rhels6 ppc64, the target locations on the xCAT MN are as following:</p>
+<pre><code>       /install/post/otherpkgs/rhels6/ppc64/pe/
+       /install/post/otherpkgs/rhels6/ppc64/compilers/</code></pre>
+<p>Note1: PE requires the System Resource Controller (src) rpm. Please ensure this rpm is included with your other rpms in the above directory before proceeding. Note2: PE requires a special Java rpm to run its license acceptance script. The correct version of this rpm is identified in the PE product documentation. Ensure the Java rpm is included in the pe otherpkgs directory. Note3: You should create repodata in your /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/* directory so that yum or zypper can be used to install these packages and automatically resolve dependencies for you:</p>
+<pre><code>        createrepo /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/pe
+        createrepo /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/compilers
+</code></pre>
+<p>If the createrepo command is not found, you may need to install the createrepo rpm package that is shipped with your Linux OS. For SLES 11, this is found on the SDK media.</p>
+<p>Note4: If you are using PE below v1.1.0.0 or beyond,install the pe-license:</p>
+<pre><code>       rpm -ivh  IBM_pe_license*.rpm
+       /opt/ibmhpc/install/sbin/accept_ppe_license.sh</code></pre>
+<p>If there are some dependent packages of IBM_pe_license*.rpm, please install the dependent packages firstly. For rhels6 ppc64, make sure the compat-libstdc++-33.ppc64 is installed; If not, please run &quot;yum install compat-libstdc++-33.ppc64&quot; on rhels6 xCAT MN.</p>
+<p>Add to pkglist: Edit your /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/IBMhpc.&lt;ostype&gt;.&lt;arch&gt;.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.rhels6.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe-1200.&lt;ostype&gt;.&lt;arch&gt;.pkglist#</code></pre>
+<p>Fill in &lt;ostype&gt; and &lt;arch&gt; in the above pkglist files according to your cluster configuration, and verify the pkglist files are existing. For rhels6 ppc64, edit /install/custom/netboot/rh/compute.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/IBMhpc.rhels6.ppc64.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.rhels6.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe-1200.rhels6.ppc64.pkglist#</code></pre>
+<p>Note: If you are using PE v1.1.0.0 or below, please use /opt/xcat/share/xcat/IBMhpc/pe/pe.pkglist as pkglist. Verify that the above sample pkglists contain the correct packages. If you need to make changes to any of these pkglists, you can copy the contents of the file into your &lt;profile&gt;.pkglist and edit as you wish instead of using the #INCLUDE: ...# entry.</p>
+<p>Add to otherpkgs: Edit your /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.otherpkgs.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe-1200.&lt;ostype&gt;.&lt;arch&gt;.otherpkgs.pkglist#</code></pre>
+<p>For rhels6 ppc64, edit /install/custom/netboot/rh/compute.otherpkgs.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe-1200.rhels6.ppc64.otherpkgs.pkglist#</code></pre>
+<p>Note: If you are using PE v1.1.0.0, please use /opt/xcat/share/xcat/IBMhpc/pe/pe-1100.otherpkgs.pkglist as otherpkgs list. Verify that the above sample pkglists contain the correct packages. If you need to make changes to any of these pkglists, you can copy the contents of the file into your &lt;profile&gt;.otherpkgs.pkglist and edit as you wish instead of using the #INCLUDE: ...# entry.</p>
+<p>If you are building a stateless image that will be loaded into the node's memory, you will want to remove all unnecessary files from the image to reduce the image size. Files will be removed when the xCAT packimage command is run. Add to exclude list: Edit your /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.exlist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/IBMhpc.&lt;ostype&gt;.ppc64.exlist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.exlist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe.exlist#</code></pre>
+<p>For rhels6 ppc64, edit /install/custom/netboot/rh/compute.exlist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/IBMhpc.rhels6.ppc64.exlist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.exlist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe.exlist#</code></pre>
+<p>Note that PE catalog function needs multiple locale support, but /usr/lib/locale/ has been listed in exlist list and removed from stateless images. So for PE integration, you will want to comment out the line:</p>
+<pre><code>      vi /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.exclude
+      #./usr/share/locale/*</code></pre>
+<p>Verify that the above sample exclude list contains the files and directories you want deleted from your diskless image. If you need to make changes, you can copy the contents of the file into your &lt;profile&gt;.exlist and edit as you wish instead of using the #INCLUDE: ...# entry. Note: Several of the exclude list files shipped with xCAT-IBMhpc re-include files (with &quot;+<em>directory</em>&quot; syntax) that are normally deleted with the base exclude lists xCAT ships in /opt/xcat/share/xcat/netboot/&lt;os&gt;/compute.*.exlist. Keeping these files in the diskless image is required for the install and functionality of some of the HPC products.</p>
+<p>If you are building a statelite image, refer to the xCAT documentation for statelite images for creating persistent files, identifying mount points, and configuring your xCAT cluster for working with statelite images. For your PE support, add writable and persistent directories/files required by PE to your litefile table in the xCAT database:</p>
+<pre><code>      tabedit litefile</code></pre>
+<p>In a separate window, cut the contents of /opt/xcat/share/xcat/IBMhpc/pe/litefile.csv paste into your tabedit session, modify as needed for your environment, and save</p>
+<p>When using persistent files, you should also make sure that you have an entry in your xCAT database statelite table pointing to the location for storing those files for each node.</p>
+<p>Add to postinstall scripts:</p>
+<p>Edit your /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.postinstall and add:</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/IBMhpc.&lt;os&gt;.postinstall $1 $2 $3 $4 $5
+      installroot=$installroot NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license
+      installroot=$installroot pedir=/install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/pe NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200
+</code></pre>
+<p>Note: UPC compiler is supported on Power 775 cluster. If UPC compiler is used, you will need to edit the &lt;profile&gt;.postinstall file and add for UPC compiler.</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/IBMhpc.&lt;os&gt;.postinstall $1 $2 $3 $4 $5
+      installroot=$installroot NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license
+      installroot=$installroot NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/compilers/upc_license
+      installroot=$installroot pedir=/install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/pe NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200
+</code></pre>
+<p>Note: If you are using PE v1.1.0.0, please refer to /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1100 as the sample postscript.</p>
+<p>For rhels6 ppc64, edit /install/custom/netboot/rh/compute.postinstall and add:</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/IBMhpc.rhel.postinstall $1 $2 $3 $4 $5
+      installroot=$1 NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license
+      installroot=$1 pedir=/install/post/otherpkgs/rhels6/ppc64/pe NODESETSTATE=genimage   /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200
+</code></pre>
+<p>Note: If you are using PE v1.1.0.0, please refer to /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1100 as the sameple postscript. Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. They will be run by genimage after all of your rpms are installed into the image. It will first run the general IBMhpc setup script to create filesystems, turn on services, and set system tunables. Then it will run the next script to accept the compiler licenses. Then the script to install and accept the PE license, install all of the PE rpms, and configure some options for PE will be run. Verify that these scripts will work correctly for your cluster. If you wish to make changes to any of these scripts, copy it to /install/postscripts and adjust the above entry in the postinstall script to invoke your updated copy.</p>
+<p>(Optional) Enable checkpoint and restart function in PE:</p>
+<p>To enable checkpoint and restart function in PE, several additional steps are required to setup related system environment on compute node. Starting from xCAT 2.7.2, there is a script ckpt.sh provided by xCAT to config the system environment, including: virtualized pts support, unlinked file support, and read checkpoint key from rootfs which generated by xCAT postinstall script. Check PE document for more checkpointing and restarting function: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/index.jsp">http://publib.boulder.ibm.com/infocen.../index.jsp</a></p>
+<p>Step 1 : Copy the ckpt.sh script from the PE installation directory to the /install/postscripts/ directory. Set the file permissions so that the scripts are world readable and executable by root. Step 2 : Register the scripts in the node definitions in the xCAT database. If an xCAT nodegroup is defined for all nodes that will be using these scripts, run the following xCAT command:</p>
+<pre><code>        chdef -t group -o &lt;compute nodegroup&gt; -p postscripts=&quot;ckpt.sh&quot;</code></pre>
+<p>(Optional) Use pelinks script to support multiple PE releases:</p>
+<p>PE provides a root-owned script, pelinks, which allows installers and system administrators to establish symbolic links to the common locations such as /usr/bin and /usr/lib for the production PE version. Refer to [IBM PE Runtime Edition]: Operation and Use for a description of the pelinks script. If you want to switch among multiple PE releases in a Linux diskless image, you can edit PE postinstall script pe_install-1200 to uncomment following lines in script and change to the correct PE version that you intend to use.</p>
+<pre><code>       # pelinks script support, uncomment the following lines and change to the correct pe version that you intend to use.
+       #PE_VERSION=1202
+       #if [ &quot;$OS&quot; != &quot;AIX&quot; ]; then
+       #    if [ $NODESETSTATE == &quot;install&quot; ] || [ $NODESETSTATE == &quot;boot&quot; ]; then
+       #        MP_CONFIG=$PE_VERSION /opt/ibmhpc/pe$PE_VERSION/ppe.poe/bin/pelinks
+       #    else
+       #echo &quot;chroot $installroot MP_CONFIG=$PE_VERSION /opt/ibmhpc/pe$PE_VERSION/ppe.poe/bin/pelinks&quot;
+       #        export MP_CONFIG=$PE_VERSION;chroot $installroot /opt/ibmhpc/pe$PE_VERSION/ppe.poe/bin/pelinks
+       #    fi
+       #fi
+</code></pre>
+<p>You can also issue chroot command directly:</p>
+<pre><code>       export MP_CONFIG=&lt;PE version&gt;; chroot &lt;osimage directory&gt; &quot;/opt/ibmhpc/pe&lt;PE version&gt;/ppe.poe/bin/pelinks&quot;</code></pre>
+<p>For example, if you want to establish PE links to PE 1.2.0.2 release, run command:</p>
+<pre><code>       export MP_CONFIG=1202; chroot &lt;osimage directory&gt; &quot;/opt/ibmhpc/pe1202/ppe.poe/bin/pelinks&quot;</code></pre>
+<p>(Optional) Synchronize system configuration files:</p>
+<p>PE requires that userids be common across the cluster. There are many tools and services available to manage userids and passwords across large numbers of nodes. One simple way is to use common /etc/password files across your cluster. You can do this using xCAT's syncfiles function. Create the following file:</p>
+<pre><code>     vi /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.synclist</code></pre>
+<pre><code> add the following line (modify as appropriate for the files you wish to synchronize):</code></pre>
+<pre><code>       /etc/hosts /etc/passwd /etc/group /etc/shadow -&gt; /etc/</code></pre>
+<p>When packimage or litemiage is run, these files will be copied into the image. You can periodically re-sync these files as changes occur in your cluster. See the xCAT documentation for more details: [Sync-ing_Config_Files_to_Nodes].</p>
+<p>(Optional, Power 775 cluster only) Enable BSR support for PE RTE:</p>
+<p>BSR is a Power 775 cluster specific hardware feature. To config it for PE RTE, you will need to install BSR package from otherpkg list, edit PE postinstall script pe_install-1200 and uncomment several lines of script for BSR configuration. Check PE document for more BSR function details: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/index.jsp">http://publib.boulder.ibm.com/infocen.../index.jsp</a> Edit PE otherpkg list to include BSR package in PE otherpkg list.</p>
+<pre><code>       vi pe-1200.rhels6.ppc64.otherpkgs.pkglist</code></pre>
+<p>uncomment the following red line:</p>
+<pre><code>         pe/src
+         #pe/libbsr</code></pre>
+<p>Edit PE postinstall script to config BSR.</p>
+<pre><code>       vi /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200</code></pre>
+<pre><code>   uncomment the following lines:</code></pre>
+<pre><code>        # BSR configuration, uncomment the following lines to enable BSR configuration on Power Linux cluter.
+        #if [ &quot;$OS&quot; != &quot;AIX&quot; ]; then
+        #    chroot $installroot groupadd bsr
+        #    chroot $installroot mkdir -p /var/lib/bsr
+        #    chroot $installroot chown root:bsr /var/lib/bsr
+        #    chroot $installroot chmod g+sw /var/lib/bsr
+        #fi
+</code></pre>
+<p>xCAT provides a postscript IBMhpc.post to setup one additional configuration for BSR support after the nodes bootup, you will need following steps to enable the configuration:</p>
+<p>Step 1: Copy the IBMhpc.post from IBM HPC installation directory to the /install/postscripts/ directory. Set the file permissions so that the scripts are world readable and executable by root:</p>
+<pre><code>         cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.post /install/postscripts/</code></pre>
+<p>Step 2: Uncomment the BSR code in IBMhpc.post:</p>
+<pre><code>         vi /install/postscripts/IBMhpc.post
+         # BSR configuration on Power 775 cluster. More BSR configuration should
+         # be done by PE postinstall in genimage or postbootscript in statefull install
+         #chown root:bsr /dev/bsr*</code></pre>
+<p>Step 3: Register the script in the node definitions in the xCAT database. If an xCAT nodegroup is defined for all nodes that will be using these scripts, run the following xCAT command:</p>
+<pre><code>         chdef -t group -o &lt;compute nodegroup&gt; -p postscripts=&quot;IBMhpc.post&quot;</code></pre>
+<p>(Optional, Power 775 cluster only) Enable UPC compiler.</p>
+<p>UPC compiler is supported on Power 775 cluster, you will want to install UPC compiler RPMs from otherpkg list and accept the license by postinstall script if UPC compiler is used. You will need to copy the sample pkglist file and sample postinstall script, and add the include for UPC compiler. For example, you could:</p>
+<pre><code>     ## Add upc.otherpkgs.pkglist to sample otherpkgs list:
+     cp /opt/xcat/share/xcat/IBMhpc/compute.rhels6.ppc64.otherpkgs.pkglist /install/custom/netboot/rh/&lt;profile&gt;.otherpkgs.pkglist
+     vi /install/custom/netboot/rh/&lt;profile&gt;.otherpkgs.pkglist
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/gpfs/gpfs.ppc64.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/upc.otherpkgs.pkglist#
+
+     ## Add upc_license postinstall script to sample postinstall scripts:
+     cp /opt/xcat/share/xcat/IBMhpc/compute.rhels6.ppc64.postinstall /install/custom/netboot/rh/&lt;profile&gt;.postinstall
+     vi &lt;profile&gt;.postinstall
+     #### Change the line for UPC compiler from:
+     #installroot=$installroot NODESETSTATE=genimage   $hpc/compilers/upc_license
+     #### To
+     installroot=$installroot NODESETSTATE=genimage   $hpc/compilers/upc_license
+</code></pre>
+<p>Note: The xlf, vacpp, and upc compilers all have a dependency on the xlmass-lib rpm. There is a problem that the current versions of the compilers require DIFFERENT versions of xlmass. xlf 13.1.0.x and vacpp 11.1.0.x compilers requires xlmass 6.1 while upc 12.0.0.x compiler requires xlmass 7.1. To workaround it, you will need to add additional manual steps in compilers_license to install xlmass 6.1 and 7.1 both for nodes. For example, edit the compilers_license to install xlmass 6.1 manually:</p>
+<pre><code>     #Make sure the following xlmass.lib-6.1.0.x file name is correct and uncomment the red lines:
+     vi /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license
+       if [ $NODESETSTATE == &quot;genimage&quot; ]; then
+             # Being called from &lt;image&gt;.postinstall script
+             # Assume we are on the same machine
+          ## Worakround for xlf/vacpp and upc compiler dependceies conflict issue.
+          ## Install a low version of xlmass manually
+          ## Uncomment the following lines for UPC compiler use
+          #cp -p /install/post/otherpkgs/rhels6.2/ppc64/compilers/xlmass.lib-6.1.0*.rpm  $installroot/tmp
+          #chroot $installroot rpm -ivh --oldpackage /tmp/xlmass.lib-6.1.0*.rpm
+          if [ -n &quot;$vacpp_script&quot; ] ; then
+              echo 1 | chroot $installroot /$vacpp_script
+       fi</code></pre>
+<p>Change otherpkglist and pkglist definition to customized list path in osimage definition; Run genimage for your image using the appropriate options for your OS, architecture, adapters, etc. Run packimage or liteimg for your image</p>
+<h3 id="network-boot-the-nodes"><a href="#TOC">Network boot the nodes</a></h3>
+<p>Network boot your nodes:</p>
+<ul>
+<li><ul>
+<li>Run &quot;nodeset &lt;noderange&gt; netboot&quot; for all your nodes</li>
+<li>Run rnetboot to boot your nodes</li>
+<li>When the nodes are up, verify that the Compiler and PE rpms are all correctly installed, that your compiler licenses have been accepted, and that you can run a sample POE job.</li>
+</ul></li>
+</ul>
+<h3 id="starting-pe-on-cluster-nodes"><a href="#TOC">Starting PE on cluster nodes</a></h3>
+<p>The PNSD daemon is started from xinetd on your compute nodes. This daemon should start automatically at node boot time. Verify that xinetd is running on your nodes and that your PNSD daemon is active.</p>
+<h3 id="poe-hostlist-files"><a href="#TOC">POE hostlist files</a></h3>
+<p>If you are using POE to start a parallel job, xCAT can help create your host list file. Simply run the nodels command against the desired noderange and redirect the output to a file. For example:</p>
+<pre><code>      nodels compute &gt; /tmp/hostlist
+      poe -hostfile /tmp/hostlist ....</code></pre>
+<h2 id="aix"><a href="#TOC">AIX</a></h2>
+<p>As stated at the beginning of this page, these instructions assume that you have already created a diskless image with a base AIX operating system and tested a network installation of that image to at least one compute node. This will ensure you understand all of the processes, networks are correctly defined, NIM operates well, NFS is correct, xCAT postscripts run, and you can xdsh to the node with proper ssh authorizations. For detailed instructions, see the xCAT document for deploying AIX diskless nodes [XCAT_AIX_Diskless_Nodes].</p>
+<p>xCAT recommends that you use the mknimimage --sharedroot option to use the NIM shared root support for your diskless nodes. Your nodes will be stateless in that they will not maintain persistent files in the / root directory across reboots, but the node NIM initialization process will be much quicker, and the load on your NFS server (NIM master) will be significantly reduced.</p>
+<h4 id="add-compilers-and-pe-to-your-diskless-image-1"><a href="#TOC">Add Compilers and PE to your diskless image</a></h4>
+<p>Include Compilers and PE in your diskless image:</p>
+<p>Install the optional xCAT-IBMhpc rpm on your xCAT management node. This rpm is available with xCAT and should already exist in the directory that you downloaded your xCAT rpms to. It did not get installed when you ran the instxcat script. A new copy can be downloaded from: <a href="Download_xCAT">Download xCAT</a>.</p>
+<p>To install the rpm:</p>
+<pre><code>      cd &lt;your xCAT rpm directory&gt;
+      rpm -Uvh xCAT-IBMhpc*.rpm
+</code></pre>
+<p>Copy the product packages and PTFS from your distribution media onto the xCAT management node (MN). Suggested target location to put the packages on the xCAT MN:</p>
+<pre><code>    /install/post/otherpkgs/aix/ppc64/compilers
+    /install/post/otherpkgs/aix/ppc64/pe</code></pre>
+<p>The packages that will be installed by the xCAT HPC Integration support are listed in sample bundle files. Review the following files to verify you have all the product packages you wish to install (instructions are provided below for copying and editing this file if you choose to use a different list of packages):</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/compilers/compilers.bnd
+      /opt/xcat/share/xcat/IBMhpc/pe/pe.bnd</code></pre>
+<p>Note: If you are using PE v1.1.0.0 or beyond, please refer to /opt/xcat/share/xcat/IBMhpc/pe/pe-1100.bnd as the sample bundle file.</p>
+<p>Add the packages to the lpp_source used to build your diskless image:</p>
+<pre><code>     inutoc /install/post/otherpkgs/aix/ppc64/compilers
+     nim -o update -a packages=all -a source=/install/post/otherpkgs/aix/ppc64/compilers &lt;lpp_source_name&gt;
+     inutoc /install/post/otherpkgs/aix/ppc64/pe
+     nim -o update -a packages=all -a source=/install/post/otherpkgs/aix/ppc64/pe &lt;lpp_source_name&gt;</code></pre>
+<p>Some of the HPC products require additional AIX packages that may not be part of your default AIX lpp_source. Review the following file to verify all the AIX packages needed by the HPC products are included in your lpp_source (instructions are provided below for copying and editing this file if you choose to use a different list of packages):</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/IBMhpc_base.bnd</code></pre>
+<p>To list the contents of your lpp_source, you can use:</p>
+<pre><code>      nim -o showres &lt;lpp_source_name&gt;</code></pre>
+<p>And to add additional packages to your lpp_source, you can use the nim update command similar to above specifying your AIX distribution media and the AIX packages you need.</p>
+<p>Create NIM bundle resources for base AIX prerequisites and for your HPC packages:</p>
+<pre><code>     cp /opt/xcat/share/xcat/IBMhpc/IBMhpc_base.bnd /install/nim/installp_bundle
+     nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/IBMhpc_base.bnd IBMhpc_base
+     cp /opt/xcat/share/xcat/IBMhpc/compilers/compilers.bnd /install/nim/installp_bundle
+     nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/compilers.bnd compilers
+     cp /opt/xcat/share/xcat/IBMhpc/pe/pe-1200.bnd /install/nim/installp_bundle
+     nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/pe-1200.bnd pe
+</code></pre>
+<p>Note: If you are using PE v1.1.0.0 or beyond, please refer to /opt/xcat/share/xcat/IBMhpc/pe/pe-1100.bnd as the sample bundle file. Review these sample bundle files and make any changes as desired.</p>
+<p>Add the bundle resources to your xCAT diskless image definition:</p>
+<pre><code>     chdef -t osimage -o &lt;image_name&gt; -p installp_bundle=&quot;IBMhpc_base,compilers,pe&quot;</code></pre>
+<p>Update the image:</p>
+<p>Note: Verify that there are no nodes actively using the current diskless image. NIM will fail if there are any NIM machine definitions that have the SPOT for this image allocated. If there are active nodes accessing the image, you will either need to power them down and run rmdkslsnode for those nodes, or you will need to create a new image and then switch your nodes to that image later. For more information and detailed instructions on these options, see the xCAT document for updating software on AIX nodes: [Updating_AIX_Software_on_xCAT_Nodes]</p>
+<pre><code>      mknimimage -u &lt;image_name&gt;</code></pre>
+<p>Add postscripts:</p>
+<pre><code>     cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.postscript /install/postscripts
+     cp -p /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200 /install/postscripts
+     chdef -t group -o &lt;compute nodegroup&gt; -p postscripts=&quot;IBMhpc.postscript,pe_install-1200&quot;</code></pre>
+<p>Note: If you are using PE v1.1.0.0 or beyond, please refer to /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1100 as the sameple postscript. Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. This script will be run on the node after it has booted as part of the xCAT diskless node postscript processing.</p>
+<p>(Optional) Synchronize system configuration files:</p>
+<p>PE requires that userids be common across the cluster. There are many tools and services available to manage userids and passwords across large numbers of nodes. One simple way is to use common /etc/password files across your cluster. You can do this using xCAT's syncfiles function. Create the following file:</p>
+<pre><code>      vi /install/custom/netboot/aix/&lt;profile&gt;.synclist</code></pre>
+<p>add the following lines (and modify these entries based on the files you wish to synchronize):</p>
+<pre><code>       /etc/hosts /etc/passwd /etc/group -&gt; /etc/
+       /etc/security/passwd /etc/security/group /etc/security/limits /etc/security/roles -&gt; /etc/security/</code></pre>
+<p>Add this syncfile to your image:</p>
+<pre><code>      chdef -t osimage -o &lt;imagename&gt; synclists=/install/custom/netboot/aix/&lt;profile&gt;.synclist</code></pre>
+<p>Update the image:</p>
+<pre><code>      mknimimage -u &lt;imagename&gt;</code></pre>
+<p>You can periodically re-sync these files to the nodes as changes occur in your cluster by running 'updatenode &lt;noderange&gt; -F'. See the xCAT documentation for more details: [Sync-ing_Config_Files_to_Nodes]</p>
+<h5 id="optionaluse-xcat-prescript-when-installing-multiple-pe-releases"><a href="#TOC">(Optional)Use xCAT prescript when installing multiple PE releases</a></h5>
+<p>PE provides a root-owned script, pelinks, which allows installers and system administrators to establish symbolic links to the common locations such as /usr/bin and /usr/lib for the production PE version. Refer to <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/topic/com.ibm.cluster.pe.doc/pebooks.html">IBM PE Runtime Edition: Operation and Use</a> for a description of the pelinks script.</p>
+<p>If you are installing multiple PE releases on AIX diskless nodes, additional setup is required. After you finish the steps listed in <a href="Setting_up_PE_in_a_Statelite_or_Stateless_Cluster/#add-compilers-and-pe-to-your-diskless-image_1">Setting_up_PE_in_a_Statelite_or_Stateless_Cluster/#add-compilers-and-pe-to-your-diskless-image_1</a>, run the command below to establish the PE links correctly:</p>
+<pre><code>     xcatchroot -i &lt;osimage name&gt; &quot;/usr/lpp/bos/inst_root/opt/ibmhpc/&lt;pe release&gt;/ppe.poe/bin/pelinks&quot;</code></pre>
+<p>For example, if you want to establish PE links to PE 1.1.0.1 release, run command:</p>
+<pre><code>     xcatchroot -i &lt;osimage name&gt; &quot;/usr/lpp/bos/inst_root/opt/ibmhpc/pe1101/ppe.poe/bin/pelinks&quot;</code></pre>
+<p>This can be automated by using xCAT prescripts, refer to the xCAT documentation [Postscripts_and_Prescripts] to see more details on how to do it.</p>
+<h4 id="network-boot-the-nodes-1"><a href="#TOC">Network boot the nodes</a></h4>
+<p>Follow the instructions in the xCAT AIX documentation [XCAT_AIX_Diskless_Nodes] to network boot your nodes:</p>
+<ul>
+<li><ul>
+<li>Run mkdsklsnode for all your nodes</li>
+<li>Run rnetboot to boot your nodes</li>
+<li>When the nodes are up, verify that the compilers, PE are correctly installed.</li>
+</ul></li>
+</ul>
+<h4 id="use-xcat-prescript"><a href="#TOC">Use xCAT prescript</a></h4>
+</body>
+</html>

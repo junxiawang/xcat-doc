@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#basic-idea">Basic Idea</a></li>
+<li><a href="#external-user-interface">External User Interface</a></li>
+<li><a href="#internal-implementation">Internal Implementation</a><ul>
+<li><a href="#ddns.pm">ddns.pm</a></li>
+</ul></li>
+<li><a href="#documentation-change">Documentation Change</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#basic-idea">Basic Idea</a></li>
+<li><a href="#external-user-interface">External User Interface</a></li>
+<li><a href="#internal-implementation">Internal Implementation</a></li>
+<li><a href="#ddnspm">ddns.pm</a></li>
+<li><a href="#documentation-change">Documentation Change</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="background"><a href="#TOC">Background</a></h2>
+<p>This requirement is from the scenario where the users want to use xcat SN as DNS failover, but current xcat DNS structure can not support it because current SN acts as DNS forwarding/caching server, so when MN goes down, SN can not be working independently. See more details in <a href="https://sourceforge.net/p/xcat/bugs/3863/">bug3863</a></p>
+<h2 id="basic-idea"><a href="#TOC">Basic Idea</a></h2>
+<p>Using DDNS master/slave configuration can meet this requirement, after making corresponding configuration on DNS master/slave(/etc/named.conf), the master allows to transfer DNS zones to the DNS slaves, it means when DNS records are updated dynamically(for example, makedns &lt;noderange&gt; is issued), the auto-sync will be done between the master and slaves without xcat's involvement. So this can make sure DNS records synced between MN and SNs, even MN goes down, SNs can be working for name resolution.</p>
+<h2 id="external-user-interface"><a href="#TOC">External User Interface</a></h2>
+<ul>
+<li>add to the servicenode.nameserver attribute an additional valid value, 2, that means make it a slave dns (a value of 1 will still mean a forwarding dns).</li>
+<li>makedsn -n can check to see if there are any SNs defined in the servicenode table with nameserver=2, and if so, add them to MN's named.conf.</li>
+<li>if they add their SN definitions in the db after they initially ran makedns -n, then they need to run makedns -n again after adding the SNs.</li>
+<li>for the config of named.conf on the SN, it can still be done by AAsn.pm when xcatd starts on the SN.</li>
+</ul>
+<p>This setting(servicenode.nameserver=2) only impacts the behavior of &quot;makedns -n&quot; to generate a different /etc/named.conf supporting dns master/slave mode, &quot;makedns &lt;noderange&gt;&quot; or &quot;makedns -d &lt;noderange&gt;&quot; can just keep the current logic to update DNS records on MN(DNS master), then named will be responsible to transfer/sync them to slaves.</p>
+<h2 id="internal-implementation"><a href="#TOC">Internal Implementation</a></h2>
+<h3 id="ddns.pm"><a href="#TOC">ddns.pm</a></h3>
+<p>The code change in ddns.pm impacts /etc/named.conf on MN(dns master).</p>
+<p>Modify the logic for /etc/named.conf generation, get servicenode.nameserver value, if it's 2, indicates servicenode.node(can be noderange or nodegroup) should be set as dns slave, generate /etc/named.conf as below (only list the difference here).</p>
+<pre><code># diff /etc/named.conf.master_slave /etc/named.conf.org
+7,9d6
+&amp;lt;slave IP1&amp;gt;; &amp;lt;slave IP2&amp;gt;;...};
+&amp;lt;slave IP1&amp;gt;; &amp;lt;slave IP2&amp;gt;;...};
+45d41
+&amp;lt;master_IP&amp;gt;; };
+       file &quot;db.xx.xx&quot;;
+};</code></pre>
+<h2 id="documentation-change"><a href="#TOC">Documentation Change</a></h2>
+<p>Since there is user interface change for this implementation, so the documentation <a href="https://sourceforge.net/apps/mediawiki/xcat/index.php?title=Cluster_Name_Resolution#Option_.233:_Run_DNS_on_Management_Node_and_Service_Nodes">Cluster Name Resolution</a> needs to be updated accordingly.</p>
+<p>Need to add comments in the Schema.pm file for the servicenode table ( nameserver attribute) for this new setting, so it will show up on man servicenode.</p>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: xCAT ALL</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: Yes</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: Yes</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

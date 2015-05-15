@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#required-reviewers">Required Reviewers</a></li>
+<li><a href="#required-approvers">Required Approvers</a></li>
+<li><a href="#background">Background</a></li>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#makentp">makentp</a></li>
+<li><a href="#database-changes">Database changes</a></li>
+<li><a href="#changes-to-existing-code">Changes to existing code</a><ul>
+<li><a href="#aasn.pm"><strong>AAsn.pm</strong></a></li>
+<li><a href="#xcatconfig"><strong>xcatconfig</strong></a></li>
+<li><a href="#setupntp"><strong>setupntp</strong></a></li>
+<li><a href="#new-option"><strong>new option</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#required-reviewers">Required Reviewers</a></li>
+<li><a href="#required-approvers">Required Approvers</a></li>
+<li><a href="#background">Background</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#makentp">makentp</a></li>
+<li><a href="#database-changes">Database changes</a></li>
+<li><a href="#changes-to-existing-code">Changes to existing code</a>
+<ul>
+<li><a href="#aasnpm"><strong>AAsn.pm</strong></a></li>
+<li><a href="#xcatconfig"><strong>xcatconfig</strong></a></li>
+<li><a href="#setupntp"><strong>setupntp</strong></a></li>
+<li><a href="#new-option"><strong>new option</strong></a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h3 id="required-reviewers"><a href="#TOC">Required Reviewers</a></h3>
+<ul>
+<li>Lissa Valletta</li>
+</ul>
+<h3 id="required-approvers"><a href="#TOC">Required Approvers</a></h3>
+<ul>
+<li>Bruce Potter</li>
+</ul>
+<h2 id="background"><a href="#TOC">Background</a></h2>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This design is to add automatic setup of a NTP server on the Management Node. It also changes/improves the setup of NTP on the nodes. This can be implemented in 2.8.2 or even 2.8.3.</p>
+<h3 id="makentp"><a href="#TOC">makentp</a></h3>
+<p><strong>makentp</strong> is a new command that will be written to setup a NTP server on the Management Node. It will need to read the new site table externalntpserver attribute to get the address(s) of the external time servers to use for time. If none defined, use MN's local clock.</p>
+<p>makentp will need to check to see if the NTP server is already setup (either by makentp or the admin). It will need to determine, if it needs changing and restarting. For example, if the external server changed. If no change, just exit.</p>
+<p>If the logic needed in makentp is very similar to what is done in setupntp for the service node, then makentp could just query site.externalntpserver and pass it into setupntp.</p>
+<h3 id="database-changes"><a href="#TOC">Database changes</a></h3>
+<p>A new site table attribute, externalntpservers, will be added to list addresses of NTP servers to be used for clock time by the Management Node.</p>
+<p>makedhcp needs to honor the site.ntpservers and networks.ntpservers.</p>
+<h3 id="changes-to-existing-code"><a href="#TOC">Changes to existing code</a></h3>
+<h4 id="aasn.pm"><a href="#TOC"><strong>AAsn.pm</strong></a></h4>
+<p>AAsn.pm will be modified, if running on the Management Node and there is a servicenode table entry for the MN and ntpserver is set, it will then call makentp, to setup the NTP Server on the MN.</p>
+<h4 id="xcatconfig"><a href="#TOC"><strong>xcatconfig</strong></a></h4>
+<p>For a new install, xcatconfig should add the setupntp postscript to the default postscripts. This is only for new install, because for existing xCAT clusters, the admin may already have created and added a ntp setup postscript by some other name.</p>
+<h4 id="setupntp"><a href="#TOC"><strong>setupntp</strong></a></h4>
+<p>Evaluate the current logic in setupntp, and also see if the suggestion in this defect should be added. https://sourceforge.net/p/xcat/bugs/3048/</p>
+<h4 id="new-option"><a href="#TOC"><strong>new option</strong></a></h4>
+<p>Add a new option to sync hw clock. It's set to &quot;no&quot; by default in file /etc/sysconfig/ntpdate:</p>
+<pre><code># Set to &#39;yes&#39; to sync hw clock after successful ntpdate
+SYNC_HWCLOCK=no</code></pre>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce, Lissa, Guang Cheng</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

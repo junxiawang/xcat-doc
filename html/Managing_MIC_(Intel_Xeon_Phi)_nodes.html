@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#build-kit-for-mpss">Build Kit for MPSS</a><ul>
+<li><a href="#the-procedure-to-build-mpss-kit-run-on-xcat-management-node">The Procedure to Build mpss Kit (Run on xCAT Management Node):</a></li>
+</ul></li>
+<li><a href="#configure-host-node">Configure Host Node</a><ul>
+<li><a href="#install-mpss-kit-on-your-host-node">Install mpss kit on your Host Node</a></li>
+<li><a href="#update-the-mpss-kit">Update the mpss kit</a></li>
+<li><a href="#configure-virtual-network-bridge">Configure Virtual Network Bridge</a></li>
+</ul></li>
+<li><a href="#discover-and-define-the-mic-node">Discover and Define the Mic Node</a><ul>
+<li><a href="#discover-mic-node">Discover MIC Node</a></li>
+<li><a href="#configure-mic-node">Configure MIC Node</a></li>
+<li><a href="#set-ip-for-mic-node">Set IP for Mic Node</a></li>
+<li><a href="#set-bridge-for-mic-node">Set Bridge for Mic Node</a></li>
+<li><a href="#set-power-management-for-mic-node">Set Power Management for Mic Node</a></li>
+</ul></li>
+<li><a href="#prepare-the-osimage-for-mic-node">Prepare the Osimage for Mic Node</a><ul>
+<li><a href="#create-osimage-definition">Create Osimage Definition</a></li>
+<li><a href="#install-hpc-software-into-the-osimage">Install HPC Software into the Osimage</a><ul>
+<li><a href="#three-formats-to-customize-osimage"><strong>Three Formats to Customize Osimage</strong></a></li>
+<li><a href="#directory-tree-in-osimage"><strong>Directory Tree in Osimage</strong></a></li>
+<li><a href="#install-hpc-software"><strong>Install HPC Software</strong></a></li>
+<li><a href="#add-additional-libraries"><strong>Add Additional Libraries</strong></a></li>
+<li><a href="#add-a-start-script"><strong>Add a Start Script</strong></a></li>
+</ul></li>
+<li><a href="#generate-the-osimage">Generate the Osimage</a></li>
+<li><a href="#configure-nfs-mount-for-mic-node">Configure NFS Mount for MIC Node</a></li>
+<li><a href="#service-node-consideration">Service Node Consideration</a></li>
+</ul></li>
+<li><a href="#create-ramfs-for-mic-node">Create Ramfs for Mic Node</a></li>
+<li><a href="#hardware-control-for-mic-node">Hardware Control for Mic Node</a></li>
+<li><a href="#faq">FAQ</a><ul>
+<li><a href="#the-debug-hints">The Debug Hints</a></li>
+<li><a href="#the-mic-card-cannot-be-enabled-or-used">The MIC Card Cannot be Enabled or Used</a></li>
+<li><a href="#reboot-host-node-to-solve-any-strange-issue-that-mic-card-cannot-be-used">Reboot host node to solve any strange issue that MIC Card Cannot be Used</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#build-kit-for-mpss">Build Kit for MPSS</a></li>
+<li><a href="#the-procedure-to-build-mpss-kit-run-on-xcat-management-node">The Procedure to Build mpss Kit (Run on xCAT Management Node):</a></li>
+<li><a href="#configure-host-node">Configure Host Node</a></li>
+<li><a href="#install-mpss-kit-on-your-host-node">Install mpss kit on your Host Node</a></li>
+<li><a href="#update-the-mpss-kit">Update the mpss kit</a></li>
+<li><a href="#configure-virtual-network-bridge">Configure Virtual Network Bridge</a></li>
+<li><a href="#discover-and-define-the-mic-node">Discover and Define the Mic Node</a></li>
+<li><a href="#discover-mic-node">Discover MIC Node</a></li>
+<li><a href="#configure-mic-node">Configure MIC Node</a></li>
+<li><a href="#set-ip-for-mic-node">Set IP for Mic Node</a></li>
+<li><a href="#set-bridge-for-mic-node">Set Bridge for Mic Node</a></li>
+<li><a href="#set-power-management-for-mic-node">Set Power Management for Mic Node</a></li>
+<li><a href="#prepare-the-osimage-for-mic-node">Prepare the Osimage for Mic Node</a></li>
+<li><a href="#create-osimage-definition">Create Osimage Definition</a></li>
+<li><a href="#install-hpc-software-into-the-osimage">Install HPC Software into the Osimage</a>
+<ul>
+<li><a href="#three-formats-to-customize-osimage"><strong>Three Formats to Customize Osimage</strong></a></li>
+<li><a href="#directory-tree-in-osimage"><strong>Directory Tree in Osimage</strong></a></li>
+<li><a href="#install-hpc-software"><strong>Install HPC Software</strong></a></li>
+<li><a href="#add-additional-libraries"><strong>Add Additional Libraries</strong></a></li>
+<li><a href="#add-a-start-script"><strong>Add a Start Script</strong></a></li>
+</ul></li>
+<li><a href="#generate-the-osimage">Generate the Osimage</a></li>
+<li><a href="#configure-nfs-mount-for-mic-node">Configure NFS Mount for MIC Node</a></li>
+<li><a href="#service-node-consideration">Service Node Consideration</a></li>
+<li><a href="#create-ramfs-for-mic-node">Create Ramfs for Mic Node</a></li>
+<li><a href="#hardware-control-for-mic-node">Hardware Control for Mic Node</a></li>
+<li><a href="#faq">FAQ</a></li>
+<li><a href="#the-debug-hints">The Debug Hints</a></li>
+<li><a href="#the-mic-card-cannot-be-enabled-or-used">The MIC Card Cannot be Enabled or Used</a></li>
+<li><a href="#reboot-host-node-to-solve-any-strange-issue-that-mic-card-cannot-be-used">Reboot host node to solve any strange issue that MIC Card Cannot be Used</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>Xeon Phi is an Intel Coprocessor which is designed with Intel Many Integrated Core (MIC) Architecture. Xeon Phi coprocessor is shipped as a PCIe card which can be installed on Xeon server. Each Xeon server could install one or more (8 or more) Xeon Phi PCIe cards, the Xeon Phi Coprocessor is depending on Xeon Server to function and all the management work for Xeon Phi coprocessor need to be done through the Xeon server. The relationship between 'Xeon Phi coprocessor' and 'Xeon Server' is similar with the relationship between 'Virtual Machine Guest' and 'Hypervisor' in the virtualization industry . In this document, the 'Xeon Server' which has 'Xeon Phi Coprocessor' installed is called 'host node' for 'Xeon Phi Coprocessor' since it's a host of 'Xeon Phi' card. 'Xeon Phi Coprocessor' is called 'mic node' because of its arch is 'Intel Many Integrated Core (MIC) Architecture'.</p>
+<p>This document describes how to use xCAT to manage hardware discovery, hardware control and software installation for mic host and mic nodes in a cluster. 'mic node' can run in offload and native mode, this document only focus on the management for native mode that manage each mic card as a 'mic node'.</p>
+<p>xCAT supports the 'host node' to be stateful and stateless. The steps which are specific for stateful and stateless will be described separated with the marks <strong>[stateful]</strong> and <strong>[stateless]</strong>.</p>
+<p>This document will be organized that follows the procedure that how cluster administrator manages a 'Xeon Phi' cluster. Following is the usual management procedure for Xeon Phi cluster:</p>
+<ul>
+<li>Build mpss kit for 'MPSS' rpm packages</li>
+<li><strong>[stateful]</strong> Install 'MPSS' on 'host node'</li>
+<li><strong>[stateless]</strong> Install 'MPSS' in statelss osimage for 'host node'</li>
+<li>Configure 'virtual bridge' on 'host node'</li>
+<li>Discover the 'mic node' from 'host node'</li>
+<li>Define 'mic node' in xCAT database</li>
+<li>Configure 'mic node'</li>
+<li>Prepare ramfs image for the 'mic node'</li>
+<li>Install software (HPC products) into ramfs</li>
+<li>Boot 'mic node' with corresponding ramfs</li>
+<li>Use xCAT management tools 'rpower', 'rinv', 'rvitals', 'rscan', 'rflash' to manage the 'mic node'</li>
+</ul>
+<p>The example environment will be used in this document:</p>
+<pre><code>**Host Node**:                        michost1
+**MIC Nodes**:                        michost1-mic0, michost1-mic1
+**MPSS Package**:                     mpss-3.1-rhel-6.2.tar
+**kit name for MPSS**:                mpss
+**Partial kit package for MPSS**:     mpss-3.1-0.1.1-x86_64.NEED_PRODUCT_PKGS.tar.bz2
+**MIC osimage Name**:                 mpss3.1
+**Host osimage Name**:                **[stateful]** rhels6.2-x86_64-install-compute/**[stateless]** rhels6.2-x86_64-netboot-compute
+**Virtual Bridge Name on Host Node**: xbr0 (External Bridge)/ micbr0 (Internal Bridge)
+**Network for mic node**              192.168.0.1/24
+**IP of Bridge**                      192.168.0.254
+**IP of mic nodes**                   192.168.0.1 (michost1-mic0); 192.168.0.2 (michost1-mic1)</code></pre>
+<p>Note: The Xeon Phi support is available in xCAT 2.8.2 and higher release. In xCAT 2.8.2 release, only MPSS 2.x is supported. In xCAT 2.8.3 and higher release, only MPSS 3.1 and higher version is supported.</p>
+<h2 id="build-kit-for-mpss"><a href="#TOC">Build Kit for MPSS</a></h2>
+<p>The Many Integrated Core (MIC) Platform Software Stack (MPSS) is a collection of software that is used to support all the functionalities of mic nodes. Without MPSS installed on 'host node', 'mic node' cannot be function.</p>
+<p>xCAT offers a kit package named 'mpss' to manage the install/update of MPSS rpms. Since MPSS rpms include binaries and drivers for specific kernel version, xCAT offers a 'Partial kit' that user could build complete kit from the 'partial kit' + 'MPSS rpms'.</p>
+<h3 id="the-procedure-to-build-mpss-kit-run-on-xcat-management-node"><a href="#TOC">The Procedure to Build mpss Kit (Run on xCAT Management Node):</a></h3>
+<ul>
+<li>Create a temporary directory '/kit' to build mpss kit package</li>
+</ul>
+<pre><code>    mkdir -p /kit/
+    cd /kit/</code></pre>
+<ul>
+<li><p>Download the mpss partial kit 'mpss-3.1-0.1.1-x86_64.NEED_PRODUCT_PKGS.tar.bz2' to /kit/</p>
+<p>Get in the web site <a href="https://sourceforge.net/projects/xcat/files/kits/mpss%20for%20Xeon%20Phi/">kit for mpss</a> and download the up to date partial mpss kit.</p></li>
+<li><p>Download the MPSS tar file which shipped by Intel to /kit/ (e.g. the MPSS tar file name is mpss-3.1-rhel-6.2.tar)</p>
+<p>Get in the download path <a href="http://software.intel.com/en-us/articles/intel-manycore-platform-software-stack-mpss">MPSS for Xeon Phi</a>, and select the MPSS package base on the version of Operating System for your 'host node'.</p></li>
+<li><p>Extract the files from MPSS tar file</p></li>
+</ul>
+<pre><code>    tar xvf mpss-3.1-rhel-6.2.tar</code></pre>
+<p>Then you can see a new created directory like 'mpss-3.1' which contains all the MPSS rpm packages. In the /kit/mpss-3.1/, you can see lots of rpms named mpss*.rpm.</p>
+<ul>
+<li>Build the mpss kit</li>
+</ul>
+<p>Build complete kit from partial kit</p>
+<pre><code>    buildkit addpkgs mpss-3.1-0.1.1-x86_64.NEED_PRODUCT_PKGS.tar.bz2 --pkgdir /kit/mpss-3.1</code></pre>
+<p>After a successful building, you can see a created complete kit package in /kit/: mpss-3.1-0.1.1-x86_64.tar.bz2</p>
+<ul>
+<li>Add the mpss kit to your management node</li>
+</ul>
+<pre><code>    addkit mpss-3.1-0.1.1-x86_64.tar.bz2</code></pre>
+<p>Then you can run 'lsdef -t kit' and 'lsdef -t kitcomponent' to display the added kit and kit component. In this example, the kit 'mpss-3.1-0.1.1-x86_64' and kit component 'mpss_compute-3.1-0.1.1-rhels-6-x86_64' will be displayed.</p>
+<h2 id="configure-host-node"><a href="#TOC">Configure Host Node</a></h2>
+<p>Xeon Phi cards are installed on 'host node' and all the management operations are performed on 'host node', therefore the 'host node' needs to be installed and configured before performing any management against the 'mic node'. The Operating System for 'host node' should be a latest RedHat Enterprise Server or SUSE Linux Enterprise Server.</p>
+<p>Note: currently, only Redhat Linux is supported for 'host node'.</p>
+<p>This document assumes:</p>
+<ul>
+<li>You are familiar with the os deployment for 'host node' (System x server).</li>
+<li>The definition for 'host node' has been created correctly.</li>
+<li>The network connections for 'host node' has been done correctly.</li>
+<li>You can run os deployment (stateful and stateless) for 'host node' successfully.</li>
+</ul>
+<h3 id="install-mpss-kit-on-your-host-node"><a href="#TOC">Install mpss kit on your Host Node</a></h3>
+<p><strong>[stateful]</strong> Add the mpss kit component to the osimage of your 'host node'</p>
+<pre><code>    addkitcomp -a -i rhels6.2-x86_64-install-compute mpss_compute-3.1-0.1.1-rhels-6-x86_64</code></pre>
+<p>Then the mpss rpms will be installed to your 'host node' during os deployment. Or you could run 'updatenode &lt;host node&gt;' to install mpss rpms for an OS ready 'host node'.</p>
+<p><strong>[stateless]</strong> Add the mpss kit component to the osimage of your 'host node'</p>
+<pre><code>    addkitcomp -a -i rhels6.2-x86_64-netboot-compute mpss_compute-3.1-0.1.1-rhels-6-x86_64</code></pre>
+<p>Since configuring mic needs 'perl' pakcage to run on 'host node', you have to add 'perl' to the .pkglist for host node osimage.</p>
+<pre><code>Add &#39;perl&#39; package to .pkglist of host node osimage</code></pre>
+<p>Then you need run 'genimage' command to install mpss rpms into the root image for stateless 'host node'</p>
+<pre><code>    genimage rhels6.2-x86_64-netboot-compute</code></pre>
+<h3 id="update-the-mpss-kit"><a href="#TOC">Update the mpss kit</a></h3>
+<p>Repeat the steps in <a href="Managing_MIC_(Intel_Xeon_Phi)_nodes/#build-kit-for-mpss">Build Kit for MPSS</a> to build the new version of mpss kit. And repeat the step in <a href="Managing_MIC_(Intel_Xeon_Phi)_nodes/#install-mpss-kit-on-your-host-node">Install mpss kit on your Host Node</a> to update the MPSS rpms on 'host node'.</p>
+<p>In each install or update of mpss by kit, the mpss rpm packages which have been installed will be removed first and then install the new rpms.</p>
+<p>If you see the error message like following during install/update, try to reboot host node after install/update to make the new mic driver takes effect. Or you can try to reboot the host node before installing/updating.</p>
+<pre><code>Removing MIC Module: FATAL: Module mic is in use.</code></pre>
+<h3 id="configure-virtual-network-bridge"><a href="#TOC">Configure Virtual Network Bridge</a></h3>
+<p>The virtual network bridge needs to be created on the 'host node' to enable the 'mic node' communication with other 'mic node', 'host node' and even beyond the 'host' in the cluster.</p>
+<p>xCAT supports two types of Bridge on 'host node':</p>
+<pre><code>**External Bridge** \- the bridge needs be bound to a physical Ethernet interface. &#39;mic node&#39; can use it to communicate outside of &#39;host node&#39;.
+**Internal Bridge** \- this is an internal bridge for a specific &#39;host node&#39;. That means the &#39;mic nodes&#39; only can communicate inside &#39;host node&#39;. If you want the &#39;mic node&#39; gets outside of &#39;host node&#39;, a router needs be configured.</code></pre>
+<ul>
+<li>Configure <strong>External Bridge</strong></li>
+</ul>
+<p>An xCAT postscript 'xHRM' can be used to create virtual bridge on the 'host node' when install/update a 'host node'.</p>
+<pre><code>    chdef michost1 -p postscripts=&#39;xHRM bridgeprereq xbr0&#39;</code></pre>
+<p>Usage of bridgeprereq option for 'xHRM' postscript</p>
+<pre><code>xHRM bridgeprereq xbr0 - Create a bridge named xbr0 which is attached to the primary interface that used for the &#39;host node&#39; installing.
+xHRM bridgeprereq eth0:xbr0 - Create a bridge name xbr0 which is attached to the &#39;eth0&#39; interface on &#39;host node&#39;.
+xHRM bridgeprereq eth0:xbr0 192.168.0.254 - Create a bridge name xbr0 which is attached to the &#39;eth0&#39; and assign static IP &#39;192.168.0.254&#39; for the bridge.</code></pre>
+<p>You can run updatenode command to create a new bridge in anytime</p>
+<pre><code>    updatenode michost1</code></pre>
+<ul>
+<li>Configure <strong>Internal Bridge</strong></li>
+</ul>
+<p>The Internal Bridge will be created automatically when you run 'nodeset' against a 'mic node'. But you need assign an IP and bridge type in 'host node' definition first.</p>
+<p>Set the IP and Bridge type for Internal Bridge 'micbr0'</p>
+<pre><code>    chdef michost1 nicips.micbr0=192.168.0.254 nictypes.micbr0=Internal</code></pre>
+<h2 id="discover-and-define-the-mic-node"><a href="#TOC">Discover and Define the Mic Node</a></h2>
+<h3 id="discover-mic-node"><a href="#TOC">Discover MIC Node</a></h3>
+<p>Each Xeon Phi card is defined as an xCAT general node which can be managed individually. <strong>rscan</strong> command can be used to discover the mic node and define them into xCAT database. The default name of mic node will be &lt;host name&gt;-micX, 'X' is the device number of the mic which started from 0 to n.</p>
+<pre><code>    # rscan michost1
+    type    name              id      host
+    mic     michost1-mic0     0       michost1
+    mic     michost1-mic1     1       michost1</code></pre>
+<ul>
+<li>The major attributes of mic are stored in xCAT <strong>mic</strong> table.</li>
+<li>You can use 'rscan michost1 -w' to write the discovered mic nodes to xCAT database directly.</li>
+<li>You can also use 'rscan michost1 -z' to display the discovered mic nodes with stanza format and redirect it to a stanza file, then change the stanza file and use 'mkdef -z' command to define them to xCAT database.</li>
+</ul>
+<pre><code>    rscan michost1 -z &gt; /tmp/micstanza
+    cat /tmp/micstanza | mkdef -z</code></pre>
+<h3 id="configure-mic-node"><a href="#TOC">Configure MIC Node</a></h3>
+<p>Except the auto discovered attributes, there are other several attributes need to be set to configure the mic node.</p>
+<pre><code> ip - Set the IP of the mic node so that it could communicate with other mic node.
+ micbridge - The bridge which created on host node to offer communication channel for mic node.
+ miconboot (Optional) - Set whether auto boot of the mic node when host node boot up. Default is &#39;yes&#39;.
+ micvlog (Optional) - Set whether enable the verbose console log for mic node. Default is &#39;no&#39;.
+ micpowermgt (Optional) - Set the power management for mic node. Default is &#39;on&#39; for all power management features.</code></pre>
+<h3 id="set-ip-for-mic-node"><a href="#TOC">Set IP for Mic Node</a></h3>
+<p>Make sure the IP for 'mic node' is in the same network with 'Bridge IP', otherwise the 'mic node' cannot join to the Bridge.</p>
+<pre><code>    chdef michost1-mic0 ip=192.168.0.1
+    chdef michost1-mic1 ip=192.168.0.2</code></pre>
+<h3 id="set-bridge-for-mic-node"><a href="#TOC">Set Bridge for Mic Node</a></h3>
+<p>The Bridge name must be the one which set by 'xHRM' postscript (External Bridge) or the one which set in nics table (Internal Bridge).</p>
+<pre><code>    chdef michost1-mic0 micbridge=xbr0    # set the External bridge
+    chdef michost1-mic0 micbridge=micbr0  # set the Internal bridge</code></pre>
+<h3 id="set-power-management-for-mic-node"><a href="#TOC">Set Power Management for Mic Node</a></h3>
+<p>You can set the power management state for 'mic node' through 'micpowermgt' attribute. Four sub-attributes are supported for power management: cpufreq, corec6, pc3 and pc6. The valid values are 'on' or 'off'. Refer to doc of MPSS to get more information of 'Power Management'.</p>
+<pre><code>chdef michost1-mic0 micpowermgt=&#39;cpufreq=on!corec6=off!pc3=off!pc6=off&#39;</code></pre>
+<p>Note: Currently, setting of 'cpufreq' does not work. And set others attributes to 'on' does not work too. This is a bug of Intel.</p>
+<h2 id="prepare-the-osimage-for-mic-node"><a href="#TOC">Prepare the Osimage for Mic Node</a></h2>
+<p>This section uses the terms <strong>osimage</strong> and <strong>ramfs</strong> to source that is used to boot mic node. Following are the concepts of them:</p>
+<pre><code>**osimage** \- A directory which contains files to create ramfs for mic node. It&#39;s created by xCAT on xCAT management node and will be mounted to &#39;host node&#39; so that all the host node could share the same build resource. Part of files which are used to create ramfs come from it.
+**ramfs** \- It is a cpio.gz file which will be loaded to mic node as root image for mic Linux system. The ramfs for each mic node needs to be created base on the osimage, Get generated ramfs will be put in /var/mpss of host node.</code></pre>
+<h3 id="create-osimage-definition"><a href="#TOC">Create Osimage Definition</a></h3>
+<p>You can run copycds command to create osimage definition and create a file structure in xCAT repository path /install (refer to the osimage.pkgdir attribute). The argument for copycds command should be the tar file of MPSS which is downloaded from Intel web site.</p>
+<pre><code>    copycds mpss-3.1-rhel-6.2.tar</code></pre>
+<p>After the successful running of copycds, the directory '/install/mpss3.1' is created. And a new osimage object named mpss3.1-rhels6.2-compute is created too. You will use this osimage name to run the genimage and nodeset command to configure the osimage.</p>
+<h3 id="install-hpc-software-into-the-osimage"><a href="#TOC">Install HPC Software into the Osimage</a></h3>
+<p>Mic node only has 8G memory that will be shared by 64 cores. To reduce the memory usage by the Operating System which running on mic node, Intel supplies a reduced Linux kernel and basic file system. For end user, except the basic file system, there are several ways to add additional files or software for the mic file system.</p>
+<p>The additional file and software need be installed in the osimage (The directory is /install/&lt;osimage name&gt;) so that all ramfs for mic could get the additions.</p>
+<h4 id="three-formats-to-customize-osimage"><a href="#TOC"><strong>Three Formats to Customize Osimage</strong></a></h4>
+<p>xCAT supports three formats to add files or software to osimage:</p>
+<ul>
+<li><strong>filelist format</strong> - It includes a directory which contains all the files and a .filelist configuration file to specify which file should be install to where on mic node. Refer to the mic document to get more detail of filelist format.</li>
+<li><strong>rpm format</strong> - The rpm will be copied to ramfs of mic node, it will be installed just before the running of init during boot of mic Linux system.</li>
+<li><strong>simple format</strong> - A directory is specified that the whole directory will be copied directly to mic ramfs.</li>
+</ul>
+<h4 id="directory-tree-in-osimage"><a href="#TOC"><strong>Directory Tree in Osimage</strong></a></h4>
+<p>Following is the directory structure in the &lt;pkgdir of osimage&gt;, you can use any of them to add files or software.</p>
+<pre><code>    --&lt;pkgdir of osimage&gt; e.g. /install/mpss3.1
+         --system (files for system boot)
+         --common.filelist
+         --common
+         --overlay
+               --rpm
+               --simple
+                   --s1,s2,...
+                   --simple.cfg
+               --rootimg (2.8.4 and later) / package (2.8.3)
+                    --the base file for fs
+                    --opt/mic
+                         --yy.filelist
+               --xx.filelist
+               --xx</code></pre>
+<ul>
+<li>&lt;pkgdir of osimage&gt;/common + common.filelist - Apply filelist format - The added files will be common for all mic node in a host node.</li>
+<li>&lt;pkgdir of osimage&gt;/overlay/rpm - Apply rpm format - You can put any rpm that you want to install on mic node in this directory. Note: the architecture for rpm must be 'k1om' or 'noarch' so that it can be installed on mic node directly.</li>
+<li>&lt;pkgdir of osimage&gt;/overlay/simple/s1,s2... + simple.cfg - Apply simple format - You can copy the directories (e.g. s1, s2) which need be copied to mic nodes here. And configure the simple.cfg to specify the destination path of the directories. The simple.cfg must be multiple lines of 's1-&gt;d1' format; 's1' is dir name in simple/, 'd1' is the path on mic for 's1'</li>
+<li>/&lt;pkgdir of osimage&gt;/overlay/&lt;osimage|package&gt;/ + ./opt/mic/yy.filelist - Apply filelist format - You can install all of your software in &lt;pkgdir of osimage&gt;/overlay/&lt;osimage|package&gt;/ (by chroot) and add yy.filelist for each software in &lt;pkgdir of osimage&gt;/overlay/&lt;package|rootimg&gt;/opt/mic/. 'yy' should be name of software.</li>
+</ul>
+<p>Note: In xCAT 2.8.3, the path '/&lt;pkgdir of osimage&gt;/overlay/&lt;package&gt;/' is supported as rootimage directory when installing rpms in the osimage. xCAT released a patch <a href="https://sourceforge.net/p/xcat/bugs/3917/">patch for genimage</a> which changed osimage root directory to /&lt;pkgdir of osimage&gt;/overlay/&lt;osimage&gt;. All customers who want to use kit or otherpkgs to install software in mic osimage are recommended to apply this patch.</p>
+<ul>
+<li>&lt;pkgdir of osimage&gt;/overlay/xx + xx.filelist - Apply filelist format - You can add multiple pair of xx + xx.filelist in &lt;pkgdir of osimage&gt;/overlay/ to install any files you want.</li>
+</ul>
+<h4 id="install-hpc-software"><a href="#TOC"><strong>Install HPC Software</strong></a></h4>
+<p>For installation of software which contains a lot files, xCAT recommends user to use '&lt;pkgdir of osimage&gt;/overlay/rootimg/ + ./opt/mic/yy.filelist' or '&lt;pkgdir of osimage&gt;/overlay/rpm'</p>
+<ul>
+<li>If using '&lt;pkgdir of osimage&gt;/overlay/rootimg/ + ./opt/mic/yy.filelist', the software can be packaged as .rpm or .tar. With any format the file /opt/mic/yy.filelist is necessary. If using .tar format, just untar the .tar file to &lt;pkgdir of osimage&gt;/overlay/rootimg/. If using .rpm format, you can using the kit or otherpkgs format to add your rpm for osimage. The architecture for rpm must be 'x86_64' or 'noarch' so that it can be installed to osimage. Refer to the <a href="https://sourceforge.net/p/xcat/bugs/3917/">patch</a> for 2.8.3.</li>
+</ul>
+<p><strong>Example:</strong> Install a rpm named pe-1.0-1.x86_64.rpm into '&lt;pkgdir of osimage&gt;/overlay/rootimg/' by <strong>otherpkgs</strong> mechanism.</p>
+<pre><code>1. Create rpm pe-1.0-1.x86_64.rpm.
+  It includes following files:</code></pre>
+<pre><code>       /etc/init.d
+       /etc/init.d/pe
+       /etc/pe.cfg
+       /opt/mic
+       /opt/mic/pe.filelist
+       /opt/pe
+       /opt/pe/pe.bin
+       /root/pe.run
+      /opt/mic/pe.filelist</code></pre>
+<p>/opt/mic/pe.filelist is a must have configuration file for xCAT to know where to install the files in mic ramfs. It has the entries like following:</p>
+<pre><code>         file /etc/init.d/pe etc/init.d/pe 0755 0 0
+         file /root/pe.run root/pe.run 0644 0 0
+         file /etc/pe.cfg etc/pe.cfg 0644 0 0
+         dir /opt 0755 0 0
+         dir /opt/pe 0755 0 0
+         file /opt/pe/pe.bin opt/pe/pe.bin 0755 0 0
+</code></pre>
+<pre><code>2. Add the rpm in otherpkgs list:</code></pre>
+<pre><code>       mkdir -p /install/post/otherpkgs/mic3.1/x86_64/test
+       cp pe-1.0-1.x86_64.rpm /install/post/otherpkgs/mic3.1/x86_64/test
+       Create a test.otherpkglist configuration file with following line
+           wxp/pe-1.0-1
+       Add path of test.otherpkglist to osimage.otherpkglist</code></pre>
+<pre><code>3. Run genimage to install rpm to mic osimage</code></pre>
+<pre><code>       genimage mpss3.1-rhels6.2-compute</code></pre>
+<ul>
+<li>If using '&lt;pkgdir of osimage&gt;/overlay/rpm', just copy the rpms to '&lt;pkgdir of osimage&gt;/overlay/rpm'. The architecture for rpms must be 'k1om' or 'noarch' to make sure the rpm can be installed successfully on mic node. You can test the install by manually install the rpm in mic node.</li>
+</ul>
+<h4 id="add-additional-libraries"><a href="#TOC"><strong>Add Additional Libraries</strong></a></h4>
+<p>The base file system for mic node includes some shared libraries for binaries to use. But sometimes you need the libraries which are built by customers themselves or installed from Intel compiler package, following steps can be followed to add additional libraries.</p>
+<p>Use '&lt;pkgdir of osimage&gt;/overlay/simple/s1,s2... + simple.cfg' format to add a bunch of libraries to /usr/lib64.</p>
+<p>Make a directory '/usr/lib64' at &lt;pkgdir of osimage&gt;/overlay/simple/ Copy all the additional libraries to '&lt;pkgdir of osimage&gt;/overlay/simple/usr/lib64' Add a simple format configuration file at &lt;pkgdir of osimage&gt;/overlay/simple/usr/lib64/simple.cfg which contains configuration entry:</p>
+<pre><code>       /usr/lib64-&gt;/usr</code></pre>
+<pre><code>Run nodeset command against mic node to take effect.</code></pre>
+<h4 id="add-a-start-script"><a href="#TOC"><strong>Add a Start Script</strong></a></h4>
+<p>If you want to add a start script that will be run during the boot of mic node, follow these steps:</p>
+<p>Add a start script in /etc/init.d/. e.g. /etc/init.d/start Add a symbol link from /etc/init.d/ to /etc/rc5.d/ e.g. /etc/rc5.d/S50start -&gt; /etc/init.d/start</p>
+<p>e.g. Add a start script named 'start' with start order 'S50'</p>
+<pre><code>    mkdir &lt;pkgdir of osimage&gt;/overlay/st
+    vi &lt;pkgdir of osimage&gt;/overlay/st.filelist to add following lines
+        file /etc/init.d/start etc/init.d/start 0755 0 0
+        slink /etc/rc5.d/S50start ../../etc/init.d/start 0755 0 0</code></pre>
+<h3 id="generate-the-osimage"><a href="#TOC">Generate the Osimage</a></h3>
+<ul>
+<li>To enable the user accounts and ssh connections cross the cluster, the following files will be copied from xCAT management node to osimage by genimage command.</li>
+</ul>
+<pre><code>     &quot;/etc/hosts&quot;,
+     &quot;/etc/group&quot;,
+     &quot;/etc/passwd&quot;,
+     &quot;/etc/shadow&quot;,
+     &quot;/etc/resolv.conf&quot;,
+     &quot;/etc/nsswitch.conf&quot;,
+     &quot;/etc/ssh/ssh_host_rsa_key&quot;,
+     &quot;/etc/ssh/ssh_config&quot;,
+     &quot;/etc/ssh/ssh_host_key&quot;,
+     &quot;/etc/ssh/sshd_config&quot;,
+     &quot;/etc/ssh/ssh_host_dsa_key&quot;,
+     &quot;/etc/ssh/ssh_host_key.pub&quot;,
+     &quot;/root/.ssh/id_rsa&quot;,
+     &quot;/root/.ssh/id_rsa.pub&quot;,
+     &quot;/root/.ssh/authorized_keys&quot;,</code></pre>
+<ul>
+<li>If you have added kit components for osimage or added rpms through otherpkgs mechanism, run 'genimage' will install the rpms to &lt;pkgdir of osimage&gt;/overlay/rootimg.</li>
+</ul>
+<p>Run genimage command:</p>
+<pre><code>    genimage mpss3.1-rhels6.2-compute</code></pre>
+<h3 id="configure-nfs-mount-for-mic-node"><a href="#TOC">Configure NFS Mount for MIC Node</a></h3>
+<p>xCAT supports to mount certain directories from nfs server to 'mic node' during the booting of 'mic node'.</p>
+<ul>
+<li>Set the mount source and mount point in litefile table. Each mount request should be an entry in litefile table.</li>
+</ul>
+<pre><code>     image,file,options,comments,disable
+    &quot;mpss3.1-rhels6.2-compute&quot;,&quot;/nfs/a:/a&quot;,&quot;micmount&quot;,,
+    &quot;mpss3.1-rhels6.2-compute&quot;,&quot;/nfs/b:/b&quot;,&quot;micmount&quot;,,</code></pre>
+<p>The columns in litefile table:</p>
+<pre><code>image: The name of mpss osimage
+file: To specify the source and destination of mount operation. The format must be: src:dest.
+options: The mic mount flag. Must be set to &#39;micmount&#39;</code></pre>
+<ul>
+<li>Set nfs server (Optional)</li>
+</ul>
+<p>This step is optional that if not set nfs server in statelite table, the nfs server will be the 'host node' of 'mic node'</p>
+<p>Set the nfs server in statelite table:</p>
+<pre><code>    #node,image,statemnt,mntopts,comments,disable
+    &quot;michost1-mic0&quot;,,&quot;192.168.0.100:/nfsroot&quot;,,,</code></pre>
+<ul>
+<li>In the above example, after booting of mic node, the /a and /b on mic node will be mounted to nfs server. For debugging, you can see the following entry in the &lt;mic host&gt;:/var/mpss/mic0/etc/fstab if the setting is correct.</li>
+</ul>
+<p>Without nfs server set in statelite table, the nfs server will be 'host node'.</p>
+<pre><code>    192.168.0.254:/nfs/a /a  nfs             nolock          1 1</code></pre>
+<p>With nfs server set in statelite table, the nfs server will get from statelite table.</p>
+<pre><code>    192.168.0.100:/nfsroot/nfs/a /a  nfs             nolock          1 1</code></pre>
+<p>Note1: xCAT will not cover the setup of nfs server. User needs make sure the nfs server has been set up correctly before booting of mic node.</p>
+<p>Note2: <strong>[Stateless]</strong> The flag 'fsid=0' needs be set for nfs export. e.g. /nfs *(rw,no_root_squash,sync,no_subtree_check,fsid=0)</p>
+<h3 id="service-node-consideration"><a href="#TOC">Service Node Consideration</a></h3>
+<p>The osimage is locate at xCAT Management Node or Service Node, it will be mounted to 'host node' when run the 'nodeset' or 'rflash' commands. So if you have Service Node, the /install directory on Service Node should be synced from xCAT Management Node instead of a mount from Management Node. And after any change in the osimage, the syncing of /install directory to Service Node is necessary to be done again:</p>
+<pre><code>    cd /
+    prsync install &lt;sn&gt;:/</code></pre>
+<h2 id="create-ramfs-for-mic-node"><a href="#TOC">Create Ramfs for Mic Node</a></h2>
+<p>When the osimage for mic node is ready, you can create ramfs for each mic node. The osimage is located at xCAT Management Node or Service Node, but ramfs will be created at mic host node (/var/mpss).</p>
+<p>nodeset command will generate configuration file for each mic node base on the previous setting, and generate ramfs which 'mic node' boots from for each mic node.</p>
+<pre><code>    nodeset michost1-mic0 osimage=mpss3.1-rhels6.2-compute</code></pre>
+<p>If not set miconboot to 'no', after nodeset, the mic node will be on boot status. Then you can log in to the mic node to check the configuration.</p>
+<p><strong>[Stateless]</strong> Note: Since the reboot of 'host node' will lose all the configuration for mic node, you have to rerun 'nodeset' for each mic node after rebooting of 'host node'.</p>
+<h2 id="hardware-control-for-mic-node"><a href="#TOC">Hardware Control for Mic Node</a></h2>
+<ul>
+<li>Remote power control: [stat|state|on|off|reset|boot]</li>
+</ul>
+<pre><code>    rpower michost1-mic0 stat
+    michost1-mic0:  online (mode: linux image: /opt/intel/mic/mnt/lib/firmware/mic/uos.img)</code></pre>
+<ul>
+<li>Get the inventory information for mic node</li>
+</ul>
+<pre><code>    rinv  michost1-mic0
+
+    michost1-mic0: HOST OS : Linux
+    michost1-mic0: OS Version : 2.6.32-220.el6.x86_64
+    michost1-mic0: Driver Version : 6720-15
+    michost1-mic0: MPSS Version : 2.1.6720-15 michost1-mic0: HOST OS : Linux
+    michost1-mic0: OS Version : 2.6.32-220.el6.x86_64
+    michost1-mic0: Driver Version : 3.1-0.1.build0
+    michost1-mic0: MPSS Version : 3.1
+    michost1-mic0: Host Physical Memory : 65902 MB
+    michost1-mic0: Flash Version : NotAvailable
+    michost1-mic0: SMC Firmware Version : NotAvailable
+    michost1-mic0: SMC Boot Loader Version : NotAvailable
+    michost1-mic0: uOS Version : NotAvailable
+    michost1-mic0: Device Serial Number : NotAvailable
+    michost1-mic0: Vendor ID : 0x8086
+    michost1-mic0: Device ID : 0x2250
+    michost1-mic0: Subsystem ID : 0x2500
+    michost1-mic0: Coprocessor Stepping ID : 3
+    michost1-mic0: PCIe Width : x16
+    michost1-mic0: PCIe Speed : 5 GT/s
+    michost1-mic0: PCIe Max payload size : 256 bytes
+    michost1-mic0: PCIe Max read req size : 4096 bytes
+    michost1-mic0: Coprocessor Model : 0x01
+    michost1-mic0: Coprocessor Model Ext : 0x00
+    michost1-mic0: Coprocessor Type : 0x00
+    michost1-mic0: Coprocessor Family : 0x0b
+    michost1-mic0: Coprocessor Family Ext : 0x00
+    michost1-mic0: Coprocessor Stepping : B1
+    michost1-mic0: Board SKU : B1PRQ-5110P
+    michost1-mic0: ECC Mode : NotAvailable
+    michost1-mic0: SMC HW Revision : NotAvailable
+    michost1-mic0: Total No of Active Cores : 60
+    michost1-mic0: Voltage : 0 uV
+    michost1-mic0: Frequency : 1052631 kHz
+    michost1-mic0: GDDR Vendor : Elpida
+    michost1-mic0: GDDR Version : 0x1
+    michost1-mic0: GDDR Density : 2048 Mb
+    michost1-mic0: GDDR Size : 7936 MB
+    michost1-mic0: GDDR Technology : GDDR5
+    michost1-mic0: GDDR Speed : 5.000000 GT/s
+    michost1-mic0: GDDR Frequency : 2500000 kHz
+    michost1-mic0: GDDR Voltage : 0 uV</code></pre>
+<ul>
+<li>Get the remote console for mic node</li>
+</ul>
+<p>Before running rcons command against mic node, you need make sure the <strong>screen</strong> rpm package has been installed on 'host node' (for both stateful and stateless host node)</p>
+<pre><code>    rcons michost1-mic0</code></pre>
+<ul>
+<li>Flash the firmware for mic node</li>
+</ul>
+<p>The 'Xeon Phi Card' has 'bootloader' (SMC) and 'firmware' (FLASH) which are used to boot mic node to standby stat. rflash command can be used to update the 'bootloader' and 'firmware' in the flash for the 'mic node'. By default, the up to date firmware will be searched from '/usr/share/mpss/flash' which installed by mpss kit for 'host node'.</p>
+<pre><code>    rflash michost1-mic0</code></pre>
+<h2 id="faq"><a href="#TOC">FAQ</a></h2>
+<h3 id="the-debug-hints"><a href="#TOC">The Debug Hints</a></h3>
+<ul>
+<li>After running of nodeset against mic node, you can check following configuration files on host node for debugging purpose.</li>
+</ul>
+<pre><code>    /etc/mpss/*.conf - the configuration files of mic node
+    /var/mpss/ - the source files for ramfs of mic node
+    /tmp/mictmp/miccfg.&lt;host node&gt; - the configuration file that is used by xCAT to configure mic node
+    /tmp/mictmp/micflash.&lt;host node&gt; - the configuration file that is used by xCAT to flash mic node
+    /var/log/xcat/configmic.log - the log file for the steps that how xCAT configures mic node
+    /var/log/xcat/flash.log - the log file for the steps that how xCAT flash mic node</code></pre>
+<ul>
+<li>If Overlay configuration for adding files or software to mic node does NOT work, check the /var/mpss/mnt on host node has been mounted to xCAT management node (run mount command on host node).</li>
+</ul>
+<pre><code>    &lt;xcat management node&gt;:/install/mpss3.1 on /var/mpss/mnt type nfs</code></pre>
+<ul>
+<li>The auto nfs mount was not done correctly on mic node</li>
+</ul>
+<pre><code>    Check the nfs server has been started correctly.
+    Check the /etc/fstab on mic node has correct entries.
+    Run &#39;show mount -e &lt;nfs server&gt;&#39; to check the exported directories on nfs server.</code></pre>
+<h3 id="the-mic-card-cannot-be-enabled-or-used"><a href="#TOC">The MIC Card Cannot be Enabled or Used</a></h3>
+<p><strong>Symptom:</strong></p>
+<p>Your mic card cannot be found or used by the micctrl command or mpss failed to start that it complains the mic card is not installed.</p>
+<p>In the syslog you can see the error message of kernel like following:</p>
+<pre><code>    kernel: mic 0000:2a:00.0: device not available because of BAR 0 [0x000000-0x1ffffffff] collisions
+    kernel: pci_enable failed board #0
+    kernel: mic: probe of 0000:2a:00.0 failed with error -22</code></pre>
+<p><strong>Solution:</strong></p>
+<ul>
+<li><p>Generally you need enable the MMIO for larger than 4GB</p>
+<p>Enable large BAR setting: Integrated Devices &gt;&gt; Memory I/O larger than 4GB in Bios Settings &gt;&gt; Enabled</p></li>
+<li><p>If your are using IBM server, try to update the UEFI firmware to the latest version</p></li>
+</ul>
+<p>1. Download the firmwares from IBM web page</p>
+<pre><code>    IBM web site -&amp;gt; support -&amp;gt; download fix, driver -&amp;gt; select the machine type you want to update</code></pre>
+<p>2. Download the firmwares for uEFI and IMM</p>
+<pre><code>The files has suffix .uxz, .xml need be downloaded</code></pre>
+<p>Note: you also could try to download the UpdateXpess service packs which includes all the firmwares for the target nodes. It's a little big. If you don't know which one to update or when you want to update all the firmware, do it this way.</p>
+<p>3. Download the UXSP which will be used to run the update</p>
+<pre><code>Download it from here: [UXSPI](http://www-947.ibm.com/support/entry/portal/docdisplay?lndocid=SERV-XPRESS)</code></pre>
+<p>4. Transport all the firmware files and uxsp(bin file) to the target node, and run following command to do the update</p>
+<pre><code>./ibm_utl_uxspi_9.41_rhel6_32-64.bin update --local=./ -L -u</code></pre>
+<p>5. Reboot the node for the firmware to take effect.</p>
+<h3 id="reboot-host-node-to-solve-any-strange-issue-that-mic-card-cannot-be-used"><a href="#TOC">Reboot host node to solve any strange issue that MIC Card Cannot be Used</a></h3>
+<p><strong>Symptom:</strong></p>
+<p>For any Xeon Phi card issue that you do NOT know how to handle like following cases:</p>
+<pre><code>1. Xeon Phi card fails to reset: reset failed
+2. mic* command: No devices found : opendir: /sys/class/mic: No such file or directory
+3. service mpss unload: Removing MIC Module: FATAL: Module mic is in use
+4. rflash failed to finish the update for SMC or flash and it causes the mic node does not work.</code></pre>
+<p><strong>Solution:</strong></p>
+<p>Just recycle the host node. The best approach is unplug the power cable and waiting for a while, then plug back the power cable.</p>
+</body>
+</html>

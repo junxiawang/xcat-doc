@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-featuresmodified-behavior">New features/Modified behavior</a></li>
+<li><a href="#fixes">Fixes</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-featuresmodified-behavior">New features/Modified behavior</a></li>
+<li><a href="#fixes">Fixes</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h2 id="new-featuresmodified-behavior"><a href="#TOC">New features/Modified behavior</a></h2>
+<ul>
+<li>CLI clients now stay 'connected' through a server restart (confetty at prompt or running console).</li>
+<li>Sensor data is now available (/nodes/<node>/sensors/)</li>
+<li>Noderanges are (mostly) implemented
+<ul>
+<li>Can do multi-numbered ranges, e.g. 'r1u1-r10u10', which xCAT can not do</li>
+<li>Also added pagination: <n Skips 'n' nodes into the range, >x limits matches to x</li>
+<li>Implemented in the API tree as '/noderange/' with members that auto-vivify (sort of like automount)
+<ul>
+<li><code>/noderange/n1-n8/</code> (n1 through n8)</li>
+<li><code>/noderange/n[1-8]/</code> (same as above)</li>
+<li><code>/noderange/compute@rack1/</code> (nodes both in compute and rack1)</li>
+<li><code>/noderange/rack1,rack2/</code> (rack1 and rack2, multiple groups)</li>
+<li><code>/noderange/compute&lt;50&gt;25/</code> (skip first 50, show 25 nodes in compute group)</li>
+</ul></li>
+</ul></li>
+<li>Dynamic nodegroups, members defined as a noderange evaluated on the fly</li>
+<li>xCAT style commands that go straight to confluent (named so as not to conflict)
+<ul>
+<li>nodepower (like rpower)</li>
+<li>nodesetboot (like rsetboot)</li>
+<li>nodeidentify (like rbeacon)</li>
+<li>nodehealth (new concept, summarize health of nodes)</li>
+</ul></li>
+<li>nodesensors offers more powerful tools for gathering data
+<ul>
+<li>Can specify interval and data points for controlled data collection</li>
+<li>Can specify csv output</li>
+<li>Default behavior is similar to 'rvitals'</li>
+</ul></li>
+<li>Valid PAM users are no longer allowed unless they <em>also</em> have a /users/ entry in confluent. No password is needed for the entry, password is verified by PAM and not confluent in this mode.</li>
+<li>stdout/stderr logs now report the source of any data that comes in</li>
+<li>Set identify LED is implemented</li>
+<li>node collections are now sorted when enumerated</li>
+</ul>
+<h2 id="fixes"><a href="#TOC">Fixes</a></h2>
+<ul>
+<li>Various issues with handling UTF-8 data</li>
+<li>More robust handling of shellmodule plugins</li>
+<li>Address some errors that were logged but no failure sent to client</li>
+<li>nodegroup requests without trailing '/' no longer fail</li>
+<li>Improved handling of console plugin exceptions</li>
+<li>Connected client count no longer goes negative</li>
+<li>Fix confetty behavior when not outputting straight to terminal</li>
+<li>Confluent no longer fails to work on ppc64</li>
+<li>More specifically indicate a remote system 'timeout' condition to client</li>
+<li>HTTP API now tolerates invalid cookies that may leak in from another site in the same domain</li>
+<li>Configuration change handlers could induce errors to clients that aren't trying to care about the handlers. This is addressed by redirecting those errors to the trace log.</li>
+</ul>
+</body>
+</html>

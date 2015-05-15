@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#update-methods">Update Methods</a></li>
+<li><a href="#updating-software-using-the-xcat-updatenode-command">Updating software using the xCAT updatenode command</a></li>
+<li><a href="#updating-software-in-an-existing-diskless-image">Updating software in an existing diskless image</a></li>
+<li><a href="#create-a-new-diskless-image-with-the-software-updates">Create a new diskless image with the software updates</a></li>
+<li><a href="#workaround-for-known-problem-with-loadleveler-ptf-updates">Workaround for Known Problem with LoadLeveler PTF Updates</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#update-methods">Update Methods</a></li>
+<li><a href="#updating-software-using-the-xcat-updatenode-command">Updating software using the xCAT updatenode command</a></li>
+<li><a href="#updating-software-in-an-existing-diskless-image">Updating software in an existing diskless image</a></li>
+<li><a href="#create-a-new-diskless-image-with-the-software-updates">Create a new diskless image with the software updates</a></li>
+<li><a href="#workaround-for-known-problem-with-loadleveler-ptf-updates">Workaround for Known Problem with LoadLeveler PTF Updates</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>If you have used the xCAT IBM HPC Integration support to initially install HPC software on your cluster nodes, you can apply product updates to your cluster in several different ways. The method you choose will depend upon many factors:</p>
+<ul>
+<li>the type of cluster you are running: stateless, statelite, or stateful, and also Linux or AIX</li>
+<li>the extent of the software updates and your confidence in the stability of those updates</li>
+<li>whether the updates can be applied to a running cluster</li>
+<li>whether node reboots are required after applying the software</li>
+<li>whether you need to preserve the existing compute node image and be able to revert back to that image if you encounter problems with the updates</li>
+</ul>
+<h3 id="update-methods"><a href="#TOC">Update Methods</a></h3>
+<p>Some of the ways you can apply software updates to your cluster using xCAT are:</p>
+<ul>
+<li>For minor patches that can be applied to a running stateless (Linux only) or stateful (Linux or AIX) cluster, use the xCAT updatenode command to update software packages, syncronize files, and run postscripts. Remember to apply the same updates to the stateless compute node image on the management node and service nodes so that if a stateless node is rebooted, it will be running with the correct software.</li>
+<li>For minor patches that can be applied to a stateless or statelite cluster in a maintenance window, shut down all of the cluster nodes, apply the updates to the compute node image, and reboot the nodes with the updated image.</li>
+<li>For more extensive updates to a stateless or statelite cluster, create a new OS image for your compute nodes,install the HPC product software and updates in the image, and reboot your compute nodes switching to this new image. You also have the possibility of switching back to the original image if you encounter problems.</li>
+</ul>
+<p>In all cases, you will need to start by downloading the product updates to your xCAT management node and putting them into the same directories you placed the original product software:</p>
+<pre><code>       /install/post/otherpkgs/&lt;osver&gt;/&lt;arch&gt;/&lt;product&gt;</code></pre>
+<p>where <product> is:</p>
+<pre><code>    gpfs 
+    loadl 
+    pe 
+    essl 
+    compilers 
+    rsct </code></pre>
+<p>Note: For GPFS on Linux, only the base GPFS rpms can be placed in the above directories. If you have GPFS update rpms, copy them to the following location:</p>
+<pre><code>      /install/post/otherpkgs/gpfs_updates</code></pre>
+<p>And for AIX, you will also need to add the updates to your NIM lpp_source. For each &lt;product&gt; that you have updates for:</p>
+<pre><code>     inutoc /install/post/otherpkgs/aix/ppc64/&lt;product&gt;
+     nim -o update -a packages=all -a source=/install/post/otherpkgs/aix/ppc64/&lt;product&gt;  &lt;lpp_source_name&gt;
+    </code></pre>
+<p>As with all product updates, you will need to be aware of any new operating system dependencies, any changes required to the product configuration, or any changes to operational procedures for administering or using the product. The default sample xCAT HPC Integration files may not support all the product updates as soon as they are available. Be sure to review all package lists, bundle files, scripts, and other files that you are using to ensure they will work correctly for the product updates you are installing.</p>
+<p>Note: For Linux statelite clusters, a problem exists when updating the LoadLeveler rpms(e.g. PTF6 to PTF7). Currently, a new license rpm is shipped and must be installed and accepted before the other LL rpms will install correctly. This will be fixed in future LL PTFs, so that customers will only need to accept the license when installing the base LL rpms. For LL updates, no LL license rpm will be updated and customers will not need to accept the license a second time. Currently, the xCAT HPC integration does not support LoadLeveler upgrades until a fix becomes available.</p>
+<h3 id="updating-software-using-the-xcat-updatenode-command"><a href="#TOC">Updating software using the xCAT updatenode command</a></h3>
+<p>Use this method for updating your HPC software if you are confident that you are applying stable, minor updates that will not impact an active cluster. You can use updatenode to apply software to Linux stateless nodes that have the operating system fully loaded into memory, and for all stateful nodes that have the operating system installed on a writeable disk. This method will not work if the products are currently installed in read-only directories in statelite or AIX diskless clusters.</p>
+<ul>
+<li>Stop any services running on your cluster nodes that may be impacted by the software update.</li>
+<li>If you are using xCAT service nodes with local /install directories, synchronize all /install changes from the xCAT management node to the service nodes.</li>
+<li>Run the updatenode command for your nodes:</li>
+</ul>
+<pre><code>      updatenode &lt;noderange&gt;</code></pre>
+<pre><code> This will run all three options for updating software, running postscripts, and synchronizing files (in that order). If you only wish to do one or two of those options, or run the operations in a different order, specify the correct flags to the updatenode command. See the [updatenode man page](http://xcat.sourceforge.net/man1/updatenode.1.html) for more details. </code></pre>
+<h3 id="updating-software-in-an-existing-diskless-image"><a href="#TOC">Updating software in an existing diskless image</a></h3>
+<p>Use this method for updating your HPC software if you are confident that you are applying stable updates that you wish to commit to your existing compute node image and you have a scheduled maintenance window for your cluster. You can use this approach for all diskless nodes, either stateless or statelite, Linux or AIX.</p>
+<ul>
+<li>Stop all services running on your cluster nodes and use the OS shutdown command to halt the operating system.</li>
+<li><p>Update the existing diskless image and reboot your nodes.</p>
+<p>For Linux:</p></li>
+<li><ul>
+<li>Run genimage for your image using the appropriate options for your OS, architecture, adapters, etc.</li>
+<li>Run packimage or liteimg for your image</li>
+<li>Run &quot;nodeset &lt;noderange&gt; ...&quot; with the appropriate boot option for all your nodes</li>
+<li>Run rnetboot to boot your nodes</li>
+</ul></li>
+</ul>
+<p>For AIX, follow the detailed documentation provided in [Updating_AIX_Software_on_xCAT_Nodes].</p>
+<ul>
+<li><ul>
+<li>Update the image: mknimimage -u &lt;image_name&gt;</li>
+<li>Run mkdsklsnode for all your nodes (you may need to use the &quot;--force&quot; flag to correctly recreate the NIM resources)</li>
+<li>Run rnetboot to boot your nodes to the updated image</li>
+</ul>
+When the nodes are up, verify that all the HPC software updates are correctly installed.</li>
+</ul>
+<h3 id="create-a-new-diskless-image-with-the-software-updates"><a href="#TOC">Create a new diskless image with the software updates</a></h3>
+<p>Use this method for updating your HPC software when there are extensive changes, you wish to test the changes on a small number of nodes first, you have a limited maintenance window or can do a rolling upgrade, or if you need to keep a copy of your existing image to revert back to if the updates fail. You can use this approach for all diskless nodes, either stateless or statelite, Linux or AIX.</p>
+<p>For Linux:</p>
+<ul>
+<li>Create copies of all of the following files you are currently using, assigning a new profile name:</li>
+</ul>
+<pre><code>      /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.pkglist
+      /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.otherpkgs.pkglist
+      /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.exlist
+      /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.postinstall
+      /install/custom/netboot/&lt;ostype&gt;/&lt;profile&gt;.synclist</code></pre>
+<p>Review and edit these files, making changes as required for your new image.</p>
+<ul>
+<li>If this is a statelite cluster, review the statelite, litefile, and litetree tables in the xCAT database, making changes as required for your new image.</li>
+<li>Create a new image running the genimage and packimage/liteimg commands using this new profile name and the appropriate options for your OS, architecture, adapters, etc.</li>
+<li>If you are using xCAT service nodes with local /install directories, synchronize all /install changes from the xCAT management node to the service nodes.</li>
+<li>Change your xCAT node definitions to reference the new profile:</li>
+</ul>
+<pre><code>      chdef &lt;noderange&gt; profile=&lt;new-profile&gt;</code></pre>
+<ul>
+<li>Run &quot;nodeset &lt;noderange&gt; ...&quot; with the appropriate boot option for all your nodes</li>
+<li>Stop all services running on your cluster nodes and use the OS shutdown command to halt the operating system.</li>
+<li>Run rnetboot to boot your nodes to the new image</li>
+</ul>
+<p>For AIX, follow the detailed documentation provided in: [Updating_AIX_software_in_xCAT_nodes]</p>
+<pre><code> When the nodes are up, verify that all the HPC software updates are correctly installed. </code></pre>
+<h3 id="workaround-for-known-problem-with-loadleveler-ptf-updates"><a href="#TOC">Workaround for Known Problem with LoadLeveler PTF Updates</a></h3>
+<p>For Linux statelite or stateless clusters, a problem exists when updating the LoadLeveler rpms(e.g. PTF6 to PTF7). Currently, a new license rpm is shipped and must be installed and accepted before the other LL rpms will install correctly. This will be fixed in future LL PTFs, so that customers will only need to accept the license when installing the base LL rpms. Once fixed, when LL is updated, no LL license rpm will be updated and customers will not need to accept the license a second time.</p>
+<p>Until a fix is available, please follow this procedure for updating LoadLeveler:</p>
+<ul>
+<li>Move your current LoadLeveler rpms to another directory. For example:</li>
+</ul>
+<pre><code>      mv /install/post/otherpkgs/&lt;OSVER&gt;/&lt;ARCH&gt;/loadl  /install/post/otherpkgs/&lt;OSVER&gt;/&lt;ARCH&gt;/loadl_base</code></pre>
+<ul>
+<li>Copy your LoadLeveler update rpms to the loadl directory:</li>
+</ul>
+<pre><code>     /install/post/otherpkgs/&lt;OSVER&gt;/&lt;ARCH&gt;/loadl</code></pre>
+<ul>
+<li>Remove the license rpm that was shipped with the updates:</li>
+</ul>
+<pre><code>     rm /install/post/otherpkgs/&lt;OSVER&gt;/&lt;ARCH&gt;/loadl/LoadL-full-license-*</code></pre>
+<ul>
+<li>Create a new image running the genimage command using the appropriate options for your profile, OS, architecture, adapters, etc. When genimage runs, it will issue a zypper or yum update command to update all existing rpms. At that point, you should see the update for the LoadLeveler resmgr rpm (and scheduler rpm if also installed in your image). After that, genimage will run the loadl_install postscript. You will see errors from this script when it runs /opt/ibmll/LoadL/sbin/install_ll that it cannot find the correct rpms to install. You can ignore these errors since the rpms have already been installed into the image.</li>
+<li>Continue with the procedures outlined above for running packimage/liteimg, rnetboot, etc.</li>
+</ul>
+</body>
+</html>

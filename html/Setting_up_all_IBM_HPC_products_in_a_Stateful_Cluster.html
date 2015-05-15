@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#linux">Linux</a><ul>
+<li><a href="#copy-the-hpc-software-to-your-xcat-management-node">Copy the HPC software to your xCAT management node</a></li>
+<li><a href="#installbuild-gpfs">Install/Build GPFS</a></li>
+<li><a href="#install-your-loadleveler-central-manageroptional">Install Your LoadLeveler Central Manager(optional)</a></li>
+<li><a href="#add-the-hpc-software-to-your-stateful-image-definition">Add the HPC software to your stateful image definition</a><ul>
+<li><a href="#add-to-pkglist">Add to pkglist:</a></li>
+<li><a href="#add-to-otherpkgs">Add to otherpkgs:</a></li>
+<li><a href="#add-to-postscripts">Add to postscripts:</a></li>
+<li><a href="#add-to-postbootscripts">Add to postbootscripts:</a></li>
+<li><a href="#optional-enable-checkpoint-and-restart-function-in-pe">(Optional) Enable checkpoint and restart function in PE:</a></li>
+<li><a href="#optional-synchronize-system-configuration-files">(Optional) Synchronize system configuration files:</a></li>
+<li><a href="#optional-use-pelinks-script-to-support-multiple-pe-releases">(Optional) Use pelinks script to support multiple PE releases:</a></li>
+<li><a href="#optional-power-775-cluster-only-enable-bsr-support-for-pe-rte">(Optional, Power 775 cluster only) Enable BSR support for PE RTE:</a></li>
+<li><a href="#optional-power-775-cluster-only-enable-upc-compiler">(Optional, Power 775 cluster only) Enable UPC compiler</a></li>
+</ul></li>
+<li><a href="#instructions-for-adding-hpc-software-to-existing-xcat-nodes">Instructions for adding HPC Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes">Network boot the nodes</a></li>
+</ul></li>
+<li><a href="#aix">AIX</a><ul>
+<li><a href="#copy-the-hpc-software-to-your-xcat-management-node-1">Copy the HPC software to your xCAT management node</a><ul>
+<li><a href="#install-the-optional-xcat-ibmhpc-rpm-on-your-xcat-management-node">Install the optional xCAT-IBMhpc rpm on your xCAT management node</a></li>
+<li><a href="#copy-all-of-your-ibm-hpc-product-software">Copy all of your IBM HPC product software</a></li>
+<li><a href="#add-the-hpc-packages-to-the-lpp_source-used-to-build-your-image">Add the HPC packages to the lpp_source used to build your image:</a></li>
+<li><a href="#add-additional-base-aix-packages-to-your-lpp_source">Add additional base AIX packages to your lpp_source:</a></li>
+</ul></li>
+<li><a href="#install-gpfs-optional">Install GPFS (optional)</a></li>
+<li><a href="#install-your-loadleveler-central-manager-optional">Install Your LoadLeveler Central Manager (optional)</a></li>
+<li><a href="#use-loadleveler-database-configuration-option">Use LoadLeveler Database Configuration Option</a></li>
+<li><a href="#add-the-hpc-software-to-your-stateful-image">Add the HPC software to your stateful image</a></li>
+<li><a href="#instructions-for-adding-hpc-software-to-existing-xcat-nodes-1">Instructions for adding HPC Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes-1">Network boot the nodes</a></li>
+</ul></li>
+<li><a href="#build-and-configure-your-gpfs-cluster">Build and configure your GPFS cluster</a></li>
+<li><a href="#starting-hpc-software-on-cluster-nodes">Starting HPC software on cluster nodes</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#linux">Linux</a>
+<ul>
+<li><a href="#copy-the-hpc-software-to-your-xcat-management-node">Copy the HPC software to your xCAT management node</a></li>
+<li><a href="#installbuild-gpfs">Install/Build GPFS</a></li>
+<li><a href="#install-your-loadleveler-central-manageroptional">Install Your LoadLeveler Central Manager(optional)</a></li>
+<li><a href="#add-the-hpc-software-to-your-stateful-image-definition">Add the HPC software to your stateful image definition</a></li>
+<li><a href="#add-to-pkglist">Add to pkglist:</a></li>
+<li><a href="#add-to-otherpkgs">Add to otherpkgs:</a></li>
+<li><a href="#add-to-postscripts">Add to postscripts:</a></li>
+<li><a href="#add-to-postbootscripts">Add to postbootscripts:</a></li>
+<li><a href="#optional-enable-checkpoint-and-restart-function-in-pe">(Optional) Enable checkpoint and restart function in PE:</a></li>
+<li><a href="#optional-synchronize-system-configuration-files">(Optional) Synchronize system configuration files:</a></li>
+<li><a href="#optional-use-pelinks-script-to-support-multiple-pe-releases">(Optional) Use pelinks script to support multiple PE releases:</a></li>
+<li><a href="#optional-power-775-cluster-only-enable-bsr-support-for-pe-rte">(Optional, Power 775 cluster only) Enable BSR support for PE RTE:</a></li>
+<li><a href="#optional-power-775-cluster-only-enable-upc-compiler">(Optional, Power 775 cluster only) Enable UPC compiler</a></li>
+<li><a href="#instructions-for-adding-hpc-software-to-existing-xcat-nodes">Instructions for adding HPC Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes">Network boot the nodes</a></li>
+</ul></li>
+<li><a href="#aix">AIX</a>
+<ul>
+<li><a href="#copy-the-hpc-software-to-your-xcat-management-node-1">Copy the HPC software to your xCAT management node</a></li>
+<li><a href="#install-the-optional-xcat-ibmhpc-rpm-on-your-xcat-management-node">Install the optional xCAT-IBMhpc rpm on your xCAT management node</a></li>
+<li><a href="#copy-all-of-your-ibm-hpc-product-software">Copy all of your IBM HPC product software</a></li>
+<li><a href="#add-the-hpc-packages-to-the-lpp_source-used-to-build-your-image">Add the HPC packages to the lpp_source used to build your image:</a></li>
+<li><a href="#add-additional-base-aix-packages-to-your-lpp_source">Add additional base AIX packages to your lpp_source:</a></li>
+<li><a href="#install-gpfs-optional">Install GPFS (optional)</a></li>
+<li><a href="#install-your-loadleveler-central-manager-optional">Install Your LoadLeveler Central Manager (optional)</a></li>
+<li><a href="#use-loadleveler-database-configuration-option">Use LoadLeveler Database Configuration Option</a></li>
+<li><a href="#add-the-hpc-software-to-your-stateful-image">Add the HPC software to your stateful image</a></li>
+<li><a href="#instructions-for-adding-hpc-software-to-existing-xcat-nodes-1">Instructions for adding HPC Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes-1">Network boot the nodes</a></li>
+</ul></li>
+<li><a href="#build-and-configure-your-gpfs-cluster">Build and configure your GPFS cluster</a></li>
+<li><a href="#starting-hpc-software-on-cluster-nodes">Starting HPC software on cluster nodes</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This document assumes that you have already purchased all of your IBM HPC products, have the product packages available, and are familiar with each product documentation: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/topic/com.ibm.cluster.infocenter.doc/infocenter.html">IBM Cluster Information Center</a></p>
+<p>These instructions show you how to combine all of the individual product setup samples to install all the IBM HPC products together into your cluster.</p>
+<p>Before proceeding with these instructions, you should have the following already completed for your xCAT cluster:</p>
+<ul>
+<li>Your xCAT management node is fully installed and configured.</li>
+<li>If you are using xCAT hierarchy, your service nodes are installed and running.</li>
+<li>Your compute nodes are defined to xCAT, and you have verified your hardware control capabilities, gathered MAC addresses, and done all the other necessary preparations for a stateful install.</li>
+<li>You should have a test node that you have installed with the base OS and xCAT postscripts to verify that the basic network configuration and installation process are correct.</li>
+</ul>
+<h2 id="linux"><a href="#TOC">Linux</a></h2>
+<p>To set up all HPC products in a stateful cluster, follow these steps:</p>
+<h4 id="copy-the-hpc-software-to-your-xcat-management-node"><a href="#TOC">Copy the HPC software to your xCAT management node</a></h4>
+<p><a href="Copy_the_HPC_software_to_your_xCAT_management_node">Copy_the_HPC_software_to_your_xCAT_management_node</a></p>
+<h4 id="installbuild-gpfs"><a href="#TOC">Install/Build GPFS</a></h4>
+<p>Follow the instructions in [Setting_up_GPFS_in_a_Stateful_Cluster] for installing GPFS on your xCAT management node and building the GPFS portability layer.</p>
+<h4 id="install-your-loadleveler-central-manageroptional"><a href="#TOC">Install Your LoadLeveler Central Manager(optional)</a></h4>
+<p>You may choose to install LoadLeveler on your xCAT management node and set it up as your LL central manager. If so, follow the instructions in [Setting_up_LoadLeveler_in_a_Stateful_Cluster] for installing LoadLeveler on your xCAT management node and setting it up as your central manager.</p>
+<h4 id="add-the-hpc-software-to-your-stateful-image-definition"><a href="#TOC">Add the HPC software to your stateful image definition</a></h4>
+<p>Include all of the HPC software in your stateful image definition:</p>
+<h5 id="add-to-pkglist"><a href="#TOC">Add to pkglist:</a></h5>
+<p><a href="Add_to_pkglist">Add_to_pkglist</a></p>
+<h5 id="add-to-otherpkgs"><a href="#TOC">Add to otherpkgs:</a></h5>
+<p>Edit your /install/custom/install/&lt;ostype&gt;/&lt;profile&gt;.otherpkgs.pkglist and add:</p>
+<pre><code>
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compute.&lt;osver&gt;.&lt;arch&gt;.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/rsct/rsct.otherpkgs.pkglist#</code></pre>
+<p>Verify that the above sample pkglists contains the correct packages. If you need to make changes, you can copy the contents of the file into your &lt;profile&gt;.otherpkgs.pkglist and edit as you wish instead of using the #INCLUDE: ...# entry. These packages will be installed on the node after the first reboot by the xCAT postbootscript otherpkgs.</p>
+<p>Note: You need to explicitly include the rsct.otherpkgs.pkglist file here. The /opt/xcat/share/xcat/IBMhpc/compute.&lt;osver&gt;.&lt;arch&gt;.otherpkgs.pkglist file shipped with xCAT does not include the RSCT pkglist file because it is not used for stateless/statelite installs. You must explicitly include it for stateful installs.</p>
+<p>Note: By default, the compute.&lt;osver&gt;.&lt;arch&gt;.otherpkgs.pkglist file will install PE 1.2.0.0 or upper. If you wish to install PE RTE 1.1.0.0, you will need to copy the sample pkglist file and edit it to change the include for PE. For example, on RHELS6 ppc64, you would:</p>
+<pre><code>
+    cp /opt/xcat/share/xcat/IBMhpc/compute.rhels6.ppc64.otherpkgs.pkglist /install/custom/install/rh/&lt;profile&gt;.otherpkgs.pkglist
+    vi &lt;profile&gt;.otherpkgs.pkglist
+     #### Change the line for pe as indicated:
+     #INCLUDE:/opt  /xcat/share/xcat/IBMhpc/gpfs/gpfs.ppc64.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe-1100.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/essl/essl.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/loadl/loadl-5103.otherpkgs.pkglist#
+</code></pre>
+<p>If you wish to install PE 5.2.1 or below, you will need to copy the sample pkglist file and edit it to change the include for PE. For example, on RHELS6 ppc64, you would:</p>
+<pre><code>    cp /opt/xcat/share/xcat/IBMhpc/compute.rhels6.ppc64.otherpkgs.pkglist /install/custom/install/rh/&lt;profile&gt;.otherpkgs.pkglist
+    vi &lt;profile&gt;.otherpkgs.pkglist
+     #### Change the line for pe as indicated:
+     #INCLUDE:/opt  /xcat/share/xcat/IBMhpc/gpfs/gpfs.ppc64.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/essl/essl.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/loadl/loadl-5103.otherpkgs.pkglist#
+</code></pre>
+<p>Note: By default, the compute.<osver&gt;.<arch&gt;.otherpkgs.pkglist file will install Loadl 5.1.0.3 or upper. If you wish to install Loadl 5.1.0.2 or below, you will need to copy the sample pkglist file and edit it to change the include for LoadLeveler. For example, on RHELS6 ppc64, you would:
+
+
+~~~~
+    cp /opt/xcat/share/xcat/IBMhpc/compute.rhels6.ppc64.otherpkgs.pkglist /install/custom/install/rh/<profile>.otherpkgs.pkglist vi <profile>.otherpkgs.pkglist #INCLUDE:/opt/xcat/share/xcat/IBMhpc/gpfs/gpfs.ppc64.otherpkgs.pkglist# #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist# #INCLUDE:/opt/xcat/share/xcat/IBMhpc/pe/pe-1200.rhels6.ppc64.otherpkgs.pkglist# #INCLUDE:/opt/xcat/share/xcat/IBMhpc/essl/essl.otherpkgs.pkglist# #INCLUDE:/opt/xcat/share/xcat/IBMhpc/loadl/loadl.otherpkgs.pkglist#</p>
+<p>~~~~</p>
+<p>You can find more information on the xCAT otherpkgs package list files and their use in the xCAT documentation [Using_Updatenode]</p>
+<p>You should create repodata in your /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/&lt;product&gt; directory for each product, so that yum or zypper can be used to install these packages and automatically resolve dependencies for you:</p>
+<pre><code>      createrepo /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/&lt;product&gt;</code></pre>
+<p>If the createrepo command is not found, you may need to install the createrepo rpm package that is shipped with your Linux OS. For SLES 11, this is found on the SDK media.</p>
+<h5 id="add-to-postscripts"><a href="#TOC">Add to postscripts:</a></h5>
+<pre><code> Copy the IBMhpc postscript to the xCAT postscripts directory:</code></pre>
+<pre><code>     cp /opt/xcat/share/xcat/IBMhpc/IBMhpc.postscript /install/postscripts</code></pre>
+<p>Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. This script will run after all OS rpms are installed on the node and the xCAT default postscripts have run, but before the node reboots for the first time.</p>
+<p>Add this script to the postscripts list for your node. For example, if all nodes in your compute nodegroup will be using this script:</p>
+<pre><code>      chdef -t group -o compute -p postscripts=IBMhpc.postscript</code></pre>
+<h5 id="add-to-postbootscripts"><a href="#TOC">Add to postbootscripts:</a></h5>
+<pre><code> Copy the all of HPC postbootscripts to the xCAT postscripts directory:</code></pre>
+<pre><code>     cp /opt/xcat/share/xcat/IBMhpc/IBMhpc.postbootscript /install/postscripts
+     cp /opt/xcat/share/xcat/IBMhpc/IBMhpc.post /install/postscripts
+     cp /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license /install/postscripts
+     cp /opt/xcat/share/xcat/IBMhpc/gpfs/gpfs_updates /install/postscripts
+     cp /opt/xcat/share/xcat/IBMhpc/loadl/loadl_install-5103 /install/postscripts
+     cp /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200 /install/postscripts</code></pre>
+<p>Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. These scripts will run on the node after OS has been installed, the node has rebooted for the first time, and the xCAT default postbootscripts have run.</p>
+<p>Note: By default, the IBMhpc.postbootscript will call the install script for Loadleveler 5.1.0.3 or upper. If you wish to install Loadleveler 5.1.0.2 or below, you will need to copy the correct PE script and modify this call:</p>
+<pre><code>      cp /opt/xcat/share/xcat/IBMhpc/loadl/loadl_install /install/postscripts
+      vi /install/postscripts/IBMhpc.postbootscript
+      #### Change the line for PE from:
+      $ps_dir/loadl_install-5103
+      ### to:
+      $ps_dir/loadl_install</code></pre>
+<p>Note: By default, the IBMhpc.postbootscript will call the install script for PE RTE 1.2.0.0 or upper. If you wish to install PE RTE 1.1.0.0, you will need to copy the correct PE script and modify this call:</p>
+<pre><code>      cp /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1100 /install/postscripts
+      vi /install/postscripts/IBMhpc.postbootscript
+      #### Change the line for PE from:
+      $ps_dir/pe_install-1200
+      ### to:
+      $ps_dir/pe_install-1100</code></pre>
+<p>If you wish to install PE 5.2.1 or below, you will need to copy the correct PE script and modify this call:</p>
+<pre><code>      cp /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1100 /install/postscripts
+      vi /install/postscripts/IBMhpc.postbootscript
+      #### Change the line for PE from:
+      $ps_dir/pe_install-1200
+      ### to:
+      $ps_dir/pe_install</code></pre>
+<p>Note: By default, the IBMhpc.postbootscript is assuming to install PESSL 4.1.0 or upper. If you wish to install ESSL 5.1/PESSL 3.3.3 or below , you will need to copy the correct ESSL/PESSL script and modify this call:</p>
+<pre><code>      cp /opt/xcat/share/xcat/IBMhpc/essl/essl_install /install/postscripts
+      vi /install/postscripts/IBMhpc.postbootscript
+      #### Add the line for ESSL/PESSL:
+      $ps_dir/essl_install</code></pre>
+<p>Add the IBMhpc.postbootscript script to the postbootscripts list for your node -- it will invoke all of the other scripts in the correct order. For example, if all nodes in your compute nodegroup will be using these scripts and the nodes' attribute postbootscripts value is otherpkg:</p>
+<pre><code>      chdef -t group -o compute -p postbootscripts=IBMhpc.postbootscript</code></pre>
+<p>If you already have unique postbootscripts attribute settings for some of your nodes (i.e. the value contains more than simply &quot;otherpkgs&quot; and that value is not part of the above group definition), you may need to change those node definitions directly:</p>
+<pre><code>      chdef &lt;noderange&gt; -p postbootscripts=IBMhpc.postbootscript</code></pre>
+<h5 id="optional-enable-checkpoint-and-restart-function-in-pe"><a href="#TOC">(Optional) Enable checkpoint and restart function in PE:</a></h5>
+<p>To enable checkpoint and restart function in PE, several additional steps are required to setup related system environment on compute node. Starting from xCAT 2.7.2, there is a script ckpt.sh provided by xCAT to config the system environment, including: virtualized pts support, unlinked file support, and read checkpoint key from rootfs which generated by xCAT postinstall script. Check PE document for more checkpointing and restarting details: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/index.jsp">http://publib.boulder.ibm.com/infocen.../index.jsp</a></p>
+<p>Step 1 Copy the ckpt.sh script from the PE installation directory to the /install/postscripts/ directory. Set the file permissions so that the scripts are world readable and executable by root. Step 2 Register the scripts in the node definitions in the xCAT database. If an xCAT nodegroup is defined for all nodes that will be using these scripts, run the following xCAT command:</p>
+<pre><code>         chdef -t group -o &lt;compute nodegroup&gt; -p postbootscripts=&quot;ckpt.sh&quot;</code></pre>
+<h5 id="optional-synchronize-system-configuration-files"><a href="#TOC">(Optional) Synchronize system configuration files:</a></h5>
+<p><a href="Synchronize_system_configuration_files">Synchronize_system_configuration_files</a></p>
+<h5 id="optional-use-pelinks-script-to-support-multiple-pe-releases"><a href="#TOC">(Optional) Use pelinks script to support multiple PE releases:</a></h5>
+<p>PE provides a root-owned script, pelinks, which allows installers and system administrators to establish symbolic links to the common locations such as /usr/bin and /usr/lib for the production PE version. Refer to [IBM PE Runtime Edition]: Operation and Use for a description of the pelinks script. If you want to switch among multiple PE releases in a Linux diskless image, you can edit PE postinstall script pe_install-1200 to uncomment following lines in script and change to the correct PE version that you intend to use.</p>
+<pre><code>       # pelinks script support, uncomment the following lines and change to the correct pe version that you intend to use.
+       #PE_VERSION=1202
+       #if [ &quot;$OS&quot; != &quot;AIX&quot; ]; then
+       #    if [ $NODESETSTATE == &quot;install&quot; ] || [ $NODESETSTATE == &quot;boot&quot; ]; then
+       #        MP_CONFIG=$PE_VERSION /opt/ibmhpc/pe$PE_VERSION/ppe.poe/bin/pelinks
+       #    else
+       #echo &quot;chroot $installroot MP_CONFIG=$PE_VERSION /opt/ibmhpc/pe$PE_VERSION/ppe.poe/bin/pelinks&quot;
+       #        export MP_CONFIG=$PE_VERSION;chroot $installroot /opt/ibmhpc/pe$PE_VERSION/ppe.poe/bin/pelinks
+       #    fi
+       #fi
+</code></pre>
+<p>You can also issue chroot command directly:</p>
+<pre><code>       export MP_CONFIG=&lt;PE version&gt;; chroot &lt;osimage directory&gt; &quot;/opt/ibmhpc/pe&lt;PE version&gt;/ppe.poe/bin/pelinks&quot;</code></pre>
+<p>For example, if you want to establish PE links to PE 1.2.0.2 release, run command:</p>
+<pre><code>       export MP_CONFIG=1202; chroot &lt;osimage directory&gt; &quot;/opt/ibmhpc/pe1202/ppe.poe/bin/pelinks&quot;</code></pre>
+<h5 id="optional-power-775-cluster-only-enable-bsr-support-for-pe-rte"><a href="#TOC">(Optional, Power 775 cluster only) Enable BSR support for PE RTE:</a></h5>
+<p>BSR is a Power 775 cluster specific hardware feature. To config it for PE RTE, you will need to install BSR package from otherpkg list, edit PE postscript pe_install-1200 and uncomment several lines of script for BSR configuration. Check PE document for more BSR function details: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/index.jsp">http://publib.boulder.ibm.com/infocen.../index.jsp</a> Edit PE otherpkg list to include BSR package in PE otherpkg list.</p>
+<pre><code>       vi pe-1200.rhels6.ppc64.otherpkgs.pkglist
+       uncomment the following red line:
+         pe/src
+         #pe/libbsr</code></pre>
+<p>Edit PE postinstall script to config BSR.</p>
+<pre><code>       vi /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200</code></pre>
+<p>uncomment the following lines:</p>
+<pre><code>        # BSR configuration, uncomment the following lines to enable BSR configuration on Power Linux cluter.
+        #if [ &quot;$OS&quot; != &quot;AIX&quot; ]; then
+        #    chroot $installroot groupadd bsr
+        #    chroot $installroot mkdir -p /var/lib/bsr
+        #    chroot $installroot chown root:bsr /var/lib/bsr
+        #    chroot $installroot chmod g+sw /var/lib/bsr
+        #fi</code></pre>
+<p>xCAT provides a postscript IBMhpc.post to setup one additional configuration for BSR support after the nodes bootup, you will need following steps to enable the configuration:</p>
+<p>Step 1 Copy the IBMhpc.post from IBM HPC installation directory to the /install/postscripts/ directory. Set the file permissions so that the scripts are world readable and executable by root:</p>
+<pre><code>         cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.post /install/postscripts/</code></pre>
+<p>Step 2</p>
+<p>Uncomment the BSR code in IBMhpc.post: ~~~~ vi /install/postscripts/IBMhpc.post # BSR configuration on Power 775 cluster. More BSR configuration should # be done by PE postinstall in genimage or postbootscript in statefull install #chown root:bsr /dev/bsr* ~~~~</p>
+<h5 id="optional-power-775-cluster-only-enable-upc-compiler"><a href="#TOC">(Optional, Power 775 cluster only) Enable UPC compiler</a></h5>
+<p>UPC compiler is supported on Power 775 cluster, you will want to install UPC compiler RPMs from otherpkg list and accept the license by postbootscript if UPC compiler is used. You will need to copy the sample pkglist file and sample postbootscript, and add the include for UPC compiler. For example, you could:</p>
+<pre><code>     ##Add upc.otherpkgs.pkglist to sample otherpkgs list:
+     cp /opt/xcat/share/xcat/IBMhpc/compute.rhels6.ppc64.otherpkgs.pkglist /install/custom/install/rh/&lt;profile&gt;.otherpkgs.pkglist
+     vi &lt;profile&gt;.otherpkgs.pkglist
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/gpfs/gpfs.ppc64.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/compilers.otherpkgs.pkglist#
+     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/compilers/upc.otherpkgs.pkglist#
+</code></pre>
+<pre><code>     ## Copy upc_license postbootscript to postscripts directory and add it in sample postbootscripts:
+     cp /opt/xcat/share/xcat/IBMhpc/compilers/upc_license /install/postscripts
+     vi /install/postscripts/IBMhpc.postbootscript
+     #### Change the line for UPC compiler from:
+     #$ps_dir/upc_license
+     #### To
+     $ps_dir/upc_license</code></pre>
+<p>Note: The xlf, vacpp, and upc compilers all have a dependency on the xlmass-lib rpm. There is a problem that the current versions of the compilers require DIFFERENT versions of xlmass. xlf 13.1.0.x and vacpp 11.1.0.x compilers requires xlmass 6.1 while upc 12.0.0.x compiler requires xlmass 7.1. To workaround it, you will need to add additional manual steps in compilers_license to install xlmass 6.1 and 7.1 both for nodes. For example, edit the compilers_license to install xlmass 6.1 manually:</p>
+<pre><code>     #Make sure the following xlmass.lib-6.1.0.x file name is correct and uncomment the red lines.
+     #Note that there is one line in the following code different from code in compilers_license, showing with blue.  You will need to update it manually:
+     vi /install/postscripts/compilers_license
+     if [ $NODESETSTATE == &quot;install&quot; ] || [ $NODESETSTATE == &quot;boot&quot; ]; then
+       ## Workaround for xlf/vacpp and upc compiler dependceies conflict issue.
+       ## Install a low version of xlmass manually
+       ## Uncomment the following lines for UPC compiler use
+       #INSTALL_DIR=&#39;/install&#39;
+       #COMPILERS_DIR=&#39;post/otherpkgs/rhels6.2/ppc64/compilers&#39;
+       #mkdir -p /tmp/compilers/
+       #rm -f -R /tmp/compilers/*
+       #cd /tmp/compilers/
+       #wget -l inf -nH -N -r --waitretry=10 --random-wait -T 60 -nH --cut-dirs=6 --reject &quot;index.html*&quot; --no-parent http://$SITEMASTER$INSTALL_DIR/$COMPILERS_DIR/ 2&gt; /tmp/wget.log
+       #if [ -n &quot;`ls xlmass.lib-6.1.0*.rpm 2&gt; /dev/null`&quot; ] ; then
+       #         rpm -ivh --oldpackage xlmass.lib-6.1.0*.rpm
+       #fi
+       #cd $installroot/
+       #rm -f -R /tmp/compilers/
+       #  Being run from a stateful install postscript</code></pre>
+<h4 id="instructions-for-adding-hpc-software-to-existing-xcat-nodes"><a href="#TOC">Instructions for adding HPC Software to existing xCAT nodes</a></h4>
+<p><a href="Instructions_for_adding_IBM_HPC_products_to_existing_xCAT_nodes_Linux">Instructions_for_adding_IBM_HPC_products_to_existing_xCAT_nodes_Linux</a></p>
+<h4 id="network-boot-the-nodes"><a href="#TOC">Network boot the nodes</a></h4>
+<p><a href="Network_boot_the_nodes_Linux">Network_boot_the_nodes_Linux</a></p>
+<h2 id="aix"><a href="#TOC">AIX</a></h2>
+<p>As stated at the beginning of this page, these instructions assume that you have already created a stateful image with a base AIX operating system and tested a network installation of that image to at least one compute node. This will ensure you understand all of the processes, networks are correctly defined, NIM operates well, NFS is correct, xCAT postscripts run, and you can xdsh to the node with proper ssh authorizations. For detailed instructions, see the xCAT document for deploying AIX nodes <a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2onAIXinstall.pdf">&quot;xCAT 2 on AIX: Installing AIX standalone nodes - RTE&quot;</a>.</p>
+<h4 id="copy-the-hpc-software-to-your-xcat-management-node-1"><a href="#TOC">Copy the HPC software to your xCAT management node</a></h4>
+<p>Include the HPC products in your image:</p>
+<h5 id="install-the-optional-xcat-ibmhpc-rpm-on-your-xcat-management-node"><a href="#TOC">Install the optional xCAT-IBMhpc rpm on your xCAT management node</a></h5>
+<p><a href="Install_the_optional_xCAT-IBMhpc_rpm_on_your_xCAT_management_node">Install_the_optional_xCAT-IBMhpc_rpm_on_your_xCAT_management_node</a></p>
+<h5 id="copy-all-of-your-ibm-hpc-product-software"><a href="#TOC">Copy all of your IBM HPC product software</a></h5>
+<p>Copy all of your IBM HPC product software to the following locations:</p>
+<pre><code>   /install/post/otherpkgs/aix/ppc64/&lt;product&gt;
+
+
+ where &lt;product&gt; is:
+
+gpfs
+loadl
+pe
+essl
+compilers
+ The packages that will be installed by the xCAT HPC Integration support are listed in sample bundle files. Review the following file to verify you have all the product packages you wish to install (instructions are provided below for copying and editing this file if you choose to use a different list of packages):
+
+  /opt/xcat/share/xcat/IBMhpc/IBMhpc_all.bnd</code></pre>
+<h5 id="add-the-hpc-packages-to-the-lpp_source-used-to-build-your-image"><a href="#TOC">Add the HPC packages to the lpp_source used to build your image:</a></h5>
+<p><a href="Add_the_HPC_packages_to_the_lpp_source_used_to_build_your_image">Add_the_HPC_packages_to_the_lpp_source_used_to_build_your_image</a></p>
+<h5 id="add-additional-base-aix-packages-to-your-lpp_source"><a href="#TOC">Add additional base AIX packages to your lpp_source:</a></h5>
+<p><a href="Add_additional_base_AIX_packages_to_your_lpp_source">Add_additional_base_AIX_packages_to_your_lpp_source</a></p>
+<h4 id="install-gpfs-optional"><a href="#TOC">Install GPFS (optional)</a></h4>
+<p>Follow the instructions in [Setting_up_GPFS_in_a_Stateful] for optionally installing GPFS on your xCAT management node.</p>
+<h4 id="install-your-loadleveler-central-manager-optional"><a href="#TOC">Install Your LoadLeveler Central Manager (optional)</a></h4>
+<p>You may choose to install LoadLeveler on your xCAT management node and set it up as your LL central manager. If so, follow the instructions in [Setting_up_LoadLeveler_in_a_Stateful_Cluster] for installing LoadLeveler on your xCAT management node and setting it up as your central manager.</p>
+<h4 id="use-loadleveler-database-configuration-option"><a href="#TOC">Use LoadLeveler Database Configuration Option</a></h4>
+<p>LoadLeveler provides the option to use configuration data from files or from a MySQL database. When setting up LoadLeveler in an xCAT HPC cluster, it is recommended that you use the database configuration option. Follow the instructions in [Setting_up_LoadLeveler_in_a_Stateful] for using xCAT to help set up the MySQL ODBC interface to the xCAT database which will also be used as the LoadLeveler configuration database.</p>
+<h4 id="add-the-hpc-software-to-your-stateful-image"><a href="#TOC">Add the HPC software to your stateful image</a></h4>
+<p>Include all of the HPC software in your stateful image:</p>
+<ul>
+<li><p>Create NIM bundle resources for base AIX prerequisites and for your HPC packages:</p>
+<p>cp /opt/xcat/share/xcat/IBMhpc/IBMhpc_base.bnd /install/nim/installp_bundle nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/IBMhpc_base.bnd IBMhpc_base cp /opt/xcat/share/xcat/IBMhpc/IBMhpc_all.bnd /install/nim/installp_bundle nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/IBMhpc_all.bnd IBMhpc_all</p>
+<p>Review these sample bundle files and make any changes as desired.</p></li>
+<li><p>Add the bundle resources to your xCAT image definition:</p>
+<p>chdef -t osimage -o <image_name> -p installp_bundle=&quot;IBMhpc_base,IBMhpc_all&quot;</p></li>
+<li><p>Add HPC postscripts</p>
+<p>cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.postbootscript /install/postscripts cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.postscript /install/postscripts cp -p /opt/xcat/share/xcat/IBMhpc/gpfs/gpfs_updates /install/postscripts cp -p /opt/xcat/share/xcat/IBMhpc/compilers/compilers_license /install/postscripts cp -p /opt/xcat/share/xcat/IBMhpc/pe/pe_install-1200 /install/postscripts cp -p /opt/xcat/share/xcat/IBMhpc/loadl/loadl_install-5103 /install/postscripts chdef -t group -o <compute nodegroup> -p postscripts=IBMhpc.postbootscript</p>
+<p>Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. The scripts will be run on the node after it has booted as part of the xCAT node postscript processing.</p></li>
+<li><p>(Optional) Synchronize system configuration files:</p></li>
+</ul>
+<p>{{:Synchronize system configuration files/AIX}}</p>
+<ul>
+<li><p>(Optional) Use xCAT prescript when installing multiple PE releases:</p>
+<p>PE provides a root-owned script, pelinks, which allows installers and system administrators to establish symbolic links to the common locations such as /usr/bin and /usr/lib for the production PE version. Refer to <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/topic/com.ibm.cluster.pe.doc/pebooks.html">IBM PE Runtime Edition: Operation and Use</a> for a description of the pelinks script.</p>
+<p>If you are installing multiple PE releases on AIX diskless nodes, additional setup is required. After you finish the steps listed in [Setting_up_all_IBM_HPC_products_in_a_Stateful_Cluster#Add_the_HPC_software_to_your_stateful_image], run the command below to establish the PE links correctly:</p>
+<p>xcatchroot -i <osimage name> &quot;/usr/lpp/bos/inst_root/opt/ibmhpc/<pe release>/ppe.poe/bin/pelinks&quot;</p>
+<p>For example, if you want to establish PE links to PE 1.1.0.1 release, run command:</p>
+<p>xcatchroot -i <osimage name> &quot;/usr/lpp/bos/inst_root/opt/ibmhpc/pe1101/ppe.poe/bin/pelinks&quot;</p>
+<p>This can be automated by using xCAT prescripts, refer to the xCAT documentation [Postscripts_and_Prescripts] to see more details on how to do it.</p></li>
+</ul>
+<h4 id="instructions-for-adding-hpc-software-to-existing-xcat-nodes-1"><a href="#TOC">Instructions for adding HPC Software to existing xCAT nodes</a></h4>
+<p><a href="Instructions_for_adding_IBM_HPC_products_to_existing_xCAT_nodes_AIX">Instructions_for_adding_IBM_HPC_products_to_existing_xCAT_nodes_AIX</a></p>
+<h4 id="network-boot-the-nodes-1"><a href="#TOC">Network boot the nodes</a></h4>
+<p><a href="Network_boot_the_nodes_AIX">Network_boot_the_nodes_AIX</a></p>
+<h2 id="build-and-configure-your-gpfs-cluster"><a href="#TOC">Build and configure your GPFS cluster</a></h2>
+<p>Follow the instructions in the GPFS section of this document to create your GPFS cluster.</p>
+<h2 id="starting-hpc-software-on-cluster-nodes"><a href="#TOC">Starting HPC software on cluster nodes</a></h2>
+<ul>
+<li>Follow the instructions in the GPFS section of this document to start GPFS on your GPFS infrastructure nodes.</li>
+<li>Once you have verified their correct operation, start GPFS on a small number of test nodes.</li>
+<li>Once you have verified their correct operation, start PNSD and LoadLeveler on those test nodes.</li>
+<li>Once you have verified their correct operation, network boot the remaining nodes in the cluster.</li>
+<li>Add those nodes to GPFS.</li>
+<li>Once GPFS is running correctly, start PNSD and LoadLeveler on the remaining nodes in the cluster.</li>
+<li>Modify postscripts or other mechanisms you may be using to start the various HPC daemons on your nodes.</li>
+<li>As a final test, shutdown and network boot all of the nodes in your cluster, ensuring that the nodes all start correctly and are running the desired software products.</li>
+</ul>
+</body>
+</html>

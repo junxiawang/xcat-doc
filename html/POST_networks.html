@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#create-a-new-nerwok-object">Create a new nerwok object</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#create-a-new-nerwok-object">Create a new nerwok object</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h3 id="create-a-new-nerwok-object"><a href="#TOC">Create a new nerwok object</a></h3>
+<pre><code>POST https://127.0.0.1/xcatws/networks/xxx_xxx_xxx_0?userName=root&amp;password=cluster</code></pre>
+<p>With data:</p>
+<pre><code>[&quot;nameservers=xxx.xxx.xxx.xxx&quot;,...,&quot;gateway=xxx.xxx.xxx.xxx&quot;]</code></pre>
+<p>&quot;</p>
+<pre><code>xxx_xxx_xxx_0</code></pre>
+<p>&quot; is the network object name. &quot;</p>
+<pre><code>nameservers</code></pre>
+<p>&quot; and &quot;</p>
+<pre><code>gateway</code></pre>
+<p>&quot; are attributes for the network object. For all currently supported attributes, you can refer the output of &quot;</p>
+<pre><code>lsdef -h -t network</code></pre>
+<p>&quot;.</p>
+</body>
+</html>

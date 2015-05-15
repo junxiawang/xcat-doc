@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-dependencies-2.1-release-notes">xCAT Dependencies 2.1 Release Notes</a><ul>
+<li><a href="#additional-changes">Additional Changes:</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-dependencies-21-release-notes">xCAT Dependencies 2.1 Release Notes</a>
+<ul>
+<li><a href="#additional-changes">Additional Changes:</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h1 id="xcat-dependencies-2.1-release-notes"><a href="#TOC">xCAT Dependencies 2.1 Release Notes</a></h1>
+<p>Contains other open source packages that xCAT uses/requires.</p>
+<p>Note: this version of the xcat-dep package supports both xCAT 2.0.x and 2.1.x</p>
+<p>This release enables x336/x346 SOL and support for a few more network devices in the nbfs. It also patches a problem in atftp daemon with multicast. It also defaults to disabling multicast, but is configurable in /etc/sysconfig/atftpd.</p>
+<h3 id="additional-changes"><a href="#TOC">Additional Changes:</a></h3>
+<ul>
+<li>Add Sys::Virt rpm for supporting Xen feature</li>
+<li>Add gPXE to enable iSCSI support on non-iSCSI servers</li>
+<li>Add stgt to provide a more reliable software iSCSI target than comes with RHEL5.2</li>
+<li>Add IO::Stty to some missing platforms</li>
+<li>Update to ipmitool 1.8.10 with isol support</li>
+<li>Add igb driver to the nbfs kernel</li>
+<li>Multicast patch to atftp</li>
+</ul>
+</body>
+</html>

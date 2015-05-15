@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#how-to-setup-a-gpfs-stateless-cluster-for-xcat-2.2-and-greater">How to setup a GPFS stateless cluster (for xCAT 2.2 and greater)</a></li>
+<li><a href="#step-1-setup-gpfs-on-the-management-server">Step 1: Setup GPFS on the management server</a></li>
+<li><a href="#step-2-put-gpfs-in-your-stateless-image">Step 2: Put GPFS in your stateless image</a><ul>
+<li><a href="#file-1-imgrootetcinit.dautogpfsc">File 1: $IMGROOT/etc/init.d/autogpfsc</a></li>
+<li><a href="#file-2-imgrootusrsbinautogpfsc.pl">File 2: $IMGROOT/usr/sbin/autogpfsc.pl</a></li>
+<li><a href="#file-3-imgrootetcsysconfigautogpfsc">File 3: $IMGROOT/etc/sysconfig/autogpfsc</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#how-to-setup-a-gpfs-stateless-cluster-for-xcat-22-and-greater">How to setup a GPFS stateless cluster (for xCAT 2.2 and greater)</a></li>
+<li><a href="#step-1-setup-gpfs-on-the-management-server">Step 1: Setup GPFS on the management server</a></li>
+<li><a href="#step-2-put-gpfs-in-your-stateless-image">Step 2: Put GPFS in your stateless image</a></li>
+<li><a href="#file-1-imgrootetcinitdautogpfsc">File 1: $IMGROOT/etc/init.d/autogpfsc</a></li>
+<li><a href="#file-2-imgrootusrsbinautogpfscpl">File 2: $IMGROOT/usr/sbin/autogpfsc.pl</a></li>
+<li><a href="#file-3-imgrootetcsysconfigautogpfsc">File 3: $IMGROOT/etc/sysconfig/autogpfsc</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p>For current and complete information, refer to [IBM_HPC_Software_Kits].</p>
+<h2 id="how-to-setup-a-gpfs-stateless-cluster-for-xcat-2.2-and-greater"><a href="#TOC">How to setup a GPFS stateless cluster (for xCAT 2.2 and greater)</a></h2>
+<p>GPFS is a premier cluster filesystem. With a few tricks, you can run it stateless on nodes. There are two parts to setting it up.</p>
+<p>1. Install a listener script on a management node or some other node that is already part of a GPFS cluster. This is called autogpfsd and listens for new stateless images to boot up.</p>
+<p>2. Install an autogpfsc client daemon on the stateless node so that when it boots up it contacts the servers running autogpfsd and receives all the configuration files from them.</p>
+<p>This listen mode can happen in two ways: If the autogpfsd is accepting 'new' connections then when a node boots up that has autogpfsc, the node running autogpfsd will check with GPFS to see if this node is already part of the cluster. If it is not, then it will add the node to the cluster. If autogpfsd is running in 'old' mode, then it will not automatically add new nodes to the cluster - you'll have to run mmaddnode manually. This is probably a safer way to do it, but requires more manual work. Once a stable environment is achieved, running the autogpfsd in 'old' mode is the recommended way to remain.</p>
+<h2 id="step-1-setup-gpfs-on-the-management-server"><a href="#TOC">Step 1: Setup GPFS on the management server</a></h2>
+<p>Install the GPFS base rpms and then the update rpms:</p>
+<pre><code>cd &amp;lt;pathtogpfsbaserpms&amp;gt;/
+rpm -ivh gpfs*rpm
+cd &amp;lt;updates&amp;gt;
+rpm -Uivh gpfs*rpm</code></pre>
+<p>Now create the portability layer</p>
+<pre><code>cd /usr/lpp/mmfs/src/
+make AutoConfig
+make World
+make InstallImages</code></pre>
+<p>From here on out you need to configure your GPFS setup environment. This includes running mmcreatecluster, mmcreatensds, etc. We'll refer you to the GPFS documentation for this.</p>
+<p>Now you need to create the autogpfsd file in /etc/init.d.</p>
+<pre><code>cp /opt/xcat/share/xcat/netboot/add-on/autogpfs/autogpfsd /etc/init.d/</code></pre>
+<p>Now you need to copy the file /usr/sbin/autogpfsd.pl. You also need to configure</p>
+<pre><code>cp /opt/xcat/share/xcat/netboot/add-on/autogpfs/autogpfsd.pl /usr/sbin/</code></pre>
+<p>Next put the parameters specific to your cluster in /etc/sysconfig/autogpfsd</p>
+<pre><code>domain cluster.foo
+autogpfsdport 3003
+autogpfsdmax 100
+autogpfsdmode old</code></pre>
+<p>Autogpfsmode old means that it won't automatically run mmaddnode to new nodes on the cluster if they are running autogpfsc</p>
+<p>Now start it up on the management node:</p>
+<pre><code>chkconfig --add autogpfsd
+service autogpfsd start</code></pre>
+<p>This is the code on the management server. Now you need to put code in the stateless servers.</p>
+<h2 id="step-2-put-gpfs-in-your-stateless-image"><a href="#TOC">Step 2: Put GPFS in your stateless image</a></h2>
+<p>When you create your stateless image put GPFS in it and three files.</p>
+<h3 id="file-1-imgrootetcinit.dautogpfsc"><a href="#TOC">File 1: $IMGROOT/etc/init.d/autogpfsc</a></h3>
+<pre><code>export IMGROOT=/install/netboot/rhels5.3/x86_64/compute/rootimg
+cp /opt/xcat/share/xcat/netboot/add-on/autogpfs/autogpfsc $IMGROOT/etc/init.d/</code></pre>
+<h3 id="file-2-imgrootusrsbinautogpfsc.pl"><a href="#TOC">File 2: $IMGROOT/usr/sbin/autogpfsc.pl</a></h3>
+<pre><code>cp /opt/xcat/share/xcat/netboot/add-on/autogpfs/autogpfsc.pl $IMGROOT/usr/sbin/</code></pre>
+<h3 id="file-3-imgrootetcsysconfigautogpfsc"><a href="#TOC">File 3: $IMGROOT/etc/sysconfig/autogpfsc</a></h3>
+<p>This file you need to create that has the configurable parameters specific to your cluster.<br />SERVERS - these are nodes that are running GPFS that have the autogpfsd.pl command running.<br />PORT - this is the port that autogpfsc should run on<br />BLOCK - setting this to 'yes' means that the node will hold on boot up until GPFS is loaded before doing anything. This is useful if the rest of your startup scripts require GPFS to be active, such as /home mounted or job scheduler availability.</p>
+<pre><code>SERVERS=gpfsnode1,gpfsnode2,gpfsnode3
+PORT=3003
+BLOCK=no</code></pre>
+<p>Once you have that in your stateless server it'll boot up, contact the GPFS server on the node and add itself in.</p>
+</body>
+</html>

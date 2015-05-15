@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<pre><code> LoadLeveler and PE require that userids be common across the cluster. There are many tools and services available to manage userids and passwords across large numbers of nodes. One simple way is to use common /etc/password files across your cluster. You can do this using xCAT&#39;s syncfiles function. Create the following file: 
+
+  vi /install/custom/install/aix/&amp;lt;profile&amp;gt;.synclist
+ add the following lines:
+   /etc/hosts /etc/passwd /etc/group -&amp;gt; /etc/
+   /etc/security/passwd /etc/security/group /etc/security/limits /etc/security/roles -&amp;gt; /etc/security/
+
+
+ Add this syncfile to your image: 
+
+  chdef -t osimage -o &amp;lt;imagename&amp;gt; synclists=/install/custom/install/aix/&amp;lt;profile&amp;gt;.synclist
+
+
+When the node is installed or &#39;updatenode &amp;lt;noderange&amp;gt; -F&#39; is run, these files will be copied to the node. You can periodically re-sync these files as changes occur in your cluster. See the xCAT documentation for more details: [Sync-ing_Config_Files_to_Nodes]. </code></pre>
+</body>
+</html>

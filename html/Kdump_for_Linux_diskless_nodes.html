@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#internal-code-changes-of-xcat">Internal Code Changes of xCAT</a><ul>
+<li><a href="#schema.pm">Schema.pm</a></li>
+<li><a href="#genimage-command">&quot;genimage&quot; command</a></li>
+<li><a href="#anaconda.pm-sles.pm">anaconda.pm / sles.pm</a></li>
+<li><a href="#postscript-enablekdump">Postscript <strong>enablekdump</strong></a><ul>
+<li><a href="#workaround-for-rhel6">Workaround for RHEL6</a></li>
+<li><a href="#workaround-for-sles11">Workaround for SLES11</a></li>
+<li><a href="#questions">Questions</a></li>
+</ul></li>
+<li><a href="#source-files-involved">Source Files involved</a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#internal-code-changes-of-xcat">Internal Code Changes of xCAT</a></li>
+<li><a href="#schemapm">Schema.pm</a></li>
+<li><a href="#genimage-command">&quot;genimage&quot; command</a></li>
+<li><a href="#anacondapm--slespm">anaconda.pm / sles.pm</a></li>
+<li><a href="#postscript-enablekdump">Postscript <strong>enablekdump</strong></a>
+<ul>
+<li><a href="#workaround-for-rhel6">Workaround for RHEL6</a></li>
+<li><a href="#workaround-for-sles11">Workaround for SLES11</a></li>
+<li><a href="#questions">Questions</a></li>
+</ul></li>
+<li><a href="#source-files-involved">Source Files involved</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="internal-code-changes-of-xcat"><a href="#TOC">Internal Code Changes of xCAT</a></h2>
+<p>The following sections are for the internal code changes.</p>
+<h3 id="schema.pm"><a href="#TOC">Schema.pm</a></h3>
+<p>Put the <em>dump</em> attribute to the <em>linuximage</em> schema. The user can use the <strong>chdef</strong> command to set/change the <em>dump</em> attribute for the image.</p>
+<h3 id="genimage-command"><a href="#TOC">&quot;genimage&quot; command</a></h3>
+<p>Disable the kdump service by default.</p>
+<pre><code> chroot $rootimg_dir chkconfig kdump off</code></pre>
+<p>Create one fake command (<strong>fsck.nfs</strong>) which always return <em>true</em>, if &quot;fsck.nfs&quot; doesn't exist in the root image.</p>
+<h3 id="anaconda.pm-sles.pm"><a href="#TOC">anaconda.pm / sles.pm</a></h3>
+<p>Update code for</p>
+<pre><code> nodeset &amp;lt;nr&amp;gt; osimage=&amp;lt;imgname&amp;gt;</code></pre>
+<p>or</p>
+<pre><code> nodeset &amp;lt;nr&amp;gt; netboot/statelite</code></pre>
+<p>If the <em>dump</em> attribute is set for the corresponding image, then put the kernel parameter</p>
+<pre><code> crashkernel=128M@32M</code></pre>
+<p>to the boot config file. For the platforms using &quot;yaboot&quot;, the config file is</p>
+<pre><code> /tftpboot/etc/&amp;lt;nodename&amp;gt;</code></pre>
+<p>, and then append another kernel parameter</p>
+<pre><code> dump=&amp;lt;dump value&amp;gt;</code></pre>
+<h3 id="postscript-enablekdump"><a href="#TOC">Postscript <strong>enablekdump</strong></a></h3>
+<p>When the node is booting up, The <em>enablekdump</em> postscipt is used to start the kdump service; for RHEL6, it also do some workaround to generate the initial ramdisk for kdump. In the <em>enablekdump</em> postscript, <strong>/proc/kcmdline</strong> will be parsed, if <em>dump=</em> is found, its value will be parsed, and update the &quot;/etc/kdump.conf&quot; file. After the <em>/etc/kdump.conf</em> file is updated, the <em>kdump</em> service should be started by calling the command:</p>
+<pre><code> /etc/init.d/kdump start</code></pre>
+<p>For SLES11, it alse need workaround to generate the inital ramdisk for kdump. In the <em>enablekdump</em> postscript, <strong>/proc/kcmdline</strong> will be parsed, if <em>dump=</em> is found, its value will be parsed, and update the &quot;/etc/sysconfig/kdump&quot; file. After the &quot;/etc/sysconfig/kdump&quot; file is updated, the <em>kdump</em> service should be started by calling the command:</p>
+<pre><code> /etc/init.d/boot.kdumpstart</code></pre>
+<h4 id="workaround-for-rhel6"><a href="#TOC">Workaround for RHEL6</a></h4>
+<p>Before <em>kdump</em> service is started the NFS directory is mounted to the <strong>/var/tmp</strong> which is used as a temp directory for the <em>mkdumprd</em> command to generate the intial ramdisk for kdump. The NFS directory is read-writeable. The <strong><span class="math"><em>x</em><em>c</em><em>a</em><em>t</em><em>m</em><em>a</em><em>s</em><em>t</em><em>e</em><em>r</em>:  / <em>i</em><em>n</em><em>s</em><em>t</em><em>a</em><em>l</em><em>l</em> / <em>k</em><em>d</em><em>u</em><em>m</em><em>p</em> / <em>t</em><em>m</em><em>p</em> *  * <em>w</em><em>i</em><em>l</em><em>l</em><em>b</em><em>e</em><em>c</em><em>r</em><em>e</em><em>a</em><em>t</em><em>e</em><em>d</em><em>w</em><em>h</em><em>e</em><em>n</em><em>t</em><em>h</em><em>e</em><sub><em>x</em></sub><em>C</em><em>A</em><em>T</em><sub><em>p</em></sub><em>a</em><em>c</em><em>k</em><em>a</em><em>g</em><em>e</em><em>i</em><em>s</em><em>i</em><em>n</em><em>s</em><em>t</em><em>a</em><em>l</em><em>l</em><em>e</em><em>d</em>, <em>s</em><em>i</em><em>n</em><em>c</em><em>e</em><em>t</em><em>h</em><em>e</em><sub> / </sub><em>i</em><em>n</em><em>s</em><em>t</em><em>a</em><em>l</em><em>l</em><sub><em>d</em></sub><em>i</em><em>r</em><em>e</em><em>c</em><em>t</em><em>o</em><em>r</em><em>y</em><em>i</em><em>s</em><em>e</em><em>x</em><em>p</em><em>o</em><em>r</em><em>t</em><em>e</em><em>d</em><em>b</em><em>y</em><em>d</em><em>e</em><em>f</em><em>a</em><em>u</em><em>l</em><em>t</em>, <em>t</em><em>h</em><em>e</em> *  * </span>xcatmaster:/install/kdump/tmp</strong> directory is read-writeable, too. After the <em>kdump</em> service is started successfully, this NFS directory will be umounted from the <strong>/var/tmp</strong> directory, so this workaround won't affect the running of the node.</p>
+<p>For rhels6.1 the <em>kdump</em> service needs <em>/tmp</em> instead of <em>/var/tmp</em> for this workaround.</p>
+<p>The <em>link_delay = 180</em> is added to the <em>/etc/kdump.conf</em> in the <em>enablekdump</em> postscript. Some network cards take a long time to initialize, and some spanning tree enabled networks do not transmit user traffic for long periods after a link state changes. This optional parameter defines a wait period after a link is activated in which the initramfs will wait before attempting to transmit user data.</p>
+<h4 id="workaround-for-sles11"><a href="#TOC">Workaround for SLES11</a></h4>
+<p>On SLES the <em>boot.kdump service</em> is configured via <em>/etc/sysconfig/kdump</em> file. The boot.kdump under <em>/etc/init.d</em> will call mkdumprd -K &quot;<span class="math">$kdump_kernel&quot; -I &quot;$</span>kdump_initrd&quot; -q to create the initrd(call it kdumpinit) which will be used by the kdump. The mkdumprd will call /sbin/mkinitrd to create the kdumpinit. (the mkinitrd only work for diskfull install, it did not consider the diskless install scenario). The /sbin/mkinitrd runs all of the shell script under /lib/mkinitrd/setup to generate the kdumpinit(will pack all scripts under /lib/mkinitrd/boot into the kdumpinit). To simulate a crash do:</p>
+<pre><code>  echo 1 &amp;gt; /proc/sys/kernel/sysrq ; echo c &amp;gt; /proc/sysrq-trigger</code></pre>
+<p>The kdumpinit generated by /sbin/mkinitrd contains all shell scripts under /lib/mkinitrd/boot. All these scripts will be found in the init. There are two special scripts 83-mount.sh and 84-remount.sh. 83-mount.sh is used to mount and check the root device, 84-remount.sh is used to mount the root file system and run the init under the root file system instead of the normal init binary. This is the reason of this problem. For a diskless install server, the root file system is tmpfs and there is no corresponding device, so the hanging error will appear when running 83-mount.sh. If dumping to a remote server, the root file system is useless, only initrd is enough. There is no need to pack these two scripts into the initrd. The around is change these two script names to avoid packing into the initrd. When the initrd created the names are changed back. There is no root device discovering and checking progress so the script 91-kdump.sh can run correctly and the dump is successful.</p>
+<h4 id="questions"><a href="#TOC">Questions</a></h4>
+<p>For hirarchical diskless environment, the <em>/install</em> directory of the Service Node is mounted from the Management Node. When the node is starting up, the <strong>$xcatmaster:/install/kdump/tmp</strong> directory cannot be mounted because NFS denies re-mount action. How can we do for such a scenario?</p>
+<h3 id="source-files-involved"><a href="#TOC">Source Files involved</a></h3>
+<pre><code> xCAT/xCAT.spec 
+ perl-xCAT/xCAT/Schema.pm 
+ xCAT-server/share/xcat/netboot/rh/genimage 
+ xCAT-server/share/xcat/netboot/add-on/statelite/rc.statelite 
+ xCAT-server/lib/xcat/plugins/anaconda.pm 
+ xCAT-server/lib/xcat/plugins/sles.pm 
+ xCAT/postscripts/enablekdump </code></pre>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li>Required reviewers: Bruce Potter</li>
+<li>Required approvers: Bruce Potter</li>
+<li>Database schema changes: N/A</li>
+<li>Affect on other components: N/A</li>
+<li>External interface changes, documentation, and usability issues: N/A</li>
+<li>Packaging, installation, dependencies: N/A</li>
+<li>Portability and platforms (HW/SW) supported: N/A</li>
+<li>Performance and scaling considerations: N/A</li>
+<li>Migration and coexistence: N/A</li>
+<li>Serviceability: N/A</li>
+<li>Security: N/A</li>
+<li>NLS and accessibility: N/A</li>
+<li>Invention protection: N/A</li>
+</ul>
+</body>
+</html>

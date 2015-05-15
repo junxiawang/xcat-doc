@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#authorization-model">Authorization model</a></li>
+<li><a href="#credential-protection">Credential protection</a></li>
+<li><a href="#redacted-backup">Redacted 'Backup'</a></li>
+<li><a href="#running-as-non-root">Running as non-root</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#authorization-model">Authorization model</a></li>
+<li><a href="#credential-protection">Credential protection</a></li>
+<li><a href="#redacted-backup">Redacted 'Backup'</a></li>
+<li><a href="#running-as-non-root">Running as non-root</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h1 id="authorization-model"><a href="#TOC">Authorization model</a></h1>
+<p>In xCAT 2.x, we employ a policy table that implements a rule based authorization scheme. In confluent, try for something simpler with nodes optionally organized into tenants. A user is assigned a role which confers a defined set of authority for all nodes in the same tenant. There is a 'null' tenant meaning users and nodes not defined within a tenant. The null tenant may be considered special (e.g. administrators in the null tenant can examine all tenants and retrieve stored credentials, but administrators in non-null tenants cannot retrieved stored credential data even for 'their' nodes). The following roles are expected be defined:</p>
+<ul>
+<li>administrator (do everything, default role)</li>
+<li>operator (read-only non-secret configuration, read-write consoles, control node power)</li>
+<li>user (allowed to read non-secret information, read-only consoles)</li>
+<li>technician (allowed to look up health details only)</li>
+</ul>
+<h1 id="credential-protection"><a href="#TOC">Credential protection</a></h1>
+<p>All attributes starting with 'secret.' are afforded protection throughout the stack. At the lowest level, it is encrypted and the decryption is an option that is done on demand as requested (unlike expression evaluation which happens eagerly and results are in-memory constantly). By default the decryption key is kept in the clear, with options to seal it to a password (requiring manual unlock on daemon start before real work can be done) or seal to TPM (which allows automated daemon start so long as TPM module is available. Sealed to TPM should only be done if there is also a seal to password version available so that loss of TPM can be recovered through password. When a backup of the configuration is done, a password should be provided to protect the master key so that the key is not in backup in plain text. A user not wishing to mess with it just uses an empty string for password, but should do so explicitly. Restore utility should try an empty string for password before prompting for a password if a utility did not receive a password via other mechanisms.</p>
+<h1 id="redacted-backup"><a href="#TOC">Redacted 'Backup'</a></h1>
+<p>Often times a dump of configuration for review by a less trusted third party is in order. Backup utility should offer a facility to auto-redact. This clearly marks the resultant backup file as redacted to prevent any attempt to 'restore'. The default behavior would simply omit any cryptval data. Identifier redaction is an option that may likely break expressions where applied. If identifier redaction is performed, ip, mac addresses, node names, uuids would be replaced by iterating values. A map from the dummy redacted values to real values is retained in a separate file to help someone map guidance from the dummy values to real values.</p>
+<h1 id="running-as-non-root"><a href="#TOC">Running as non-root</a></h1>
+<p>Every effort should be made to enable non-root mode of execution if possible. Some of the obstacles and mitigation:</p>
+<ul>
+<li>iso currently gets loop mounted. When time comes, use libguestfs to keep kernel out of it</li>
+<li>Server side 'xdsh' like function suggests wide open access. Don't implement server side xdsh</li>
+<li>Binding to privileged ports like 67 Perhaps employ a start as root, drop privilege model. Using capabilities would have been nice, but seems to be unfriendly toward an interpreted implementation (would have to grant capabilities to python executable which would be inappropriate)</li>
+<li>Modifying config files like named.conf. Have a bundled utility to craft basic named.conf and rely upon DDNS to update going forward. Similar scheme as appropriate (dhcpd.conf by utility, OMAPI for dynamic updates <em>IF NEEDED</em></li>
+</ul>
+</body>
+</html>

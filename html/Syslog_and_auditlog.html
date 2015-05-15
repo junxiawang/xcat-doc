@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#syslog">syslog</a><ul>
+<li><a href="#override-sending-logs-to-the-management-node-from-the-servicenodes-and-nodes">Override sending logs to the Management node from the servicenodes and nodes</a></li>
+<li><a href="#leave-default-syslog-configuration-on-the-nodes">Leave default syslog configuration on the nodes</a></li>
+<li><a href="#extracting-xcat-messages">Extracting xCAT messages</a></li>
+<li><a href="#tailor-your-own-syslog-configuration">Tailor your own syslog configuration</a></li>
+<li><a href="#important-logging-for-auditing">important logging for auditing</a></li>
+<li><a href="#sample-xcat-setup">Sample xCAT setup</a></li>
+</ul></li>
+<li><a href="#auditlog">auditlog</a><ul>
+<li><a href="#maintaining-auditlog">Maintaining auditlog</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#syslog">syslog</a></li>
+<li><a href="#override-sending-logs-to-the-management-node-from-the-servicenodes-and-nodes">Override sending logs to the Management node from the servicenodes and nodes</a></li>
+<li><a href="#leave-default-syslog-configuration-on-the-nodes">Leave default syslog configuration on the nodes</a></li>
+<li><a href="#extracting-xcat-messages">Extracting xCAT messages</a></li>
+<li><a href="#tailor-your-own-syslog-configuration">Tailor your own syslog configuration</a></li>
+<li><a href="#important-logging-for-auditing">important logging for auditing</a></li>
+<li><a href="#sample-xcat-setup">Sample xCAT setup</a></li>
+<li><a href="#auditlog">auditlog</a></li>
+<li><a href="#maintaining-auditlog">Maintaining auditlog</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="syslog"><a href="#TOC">syslog</a></h2>
+<p>xCAT automatically sets up syslog during the install on the MN and the nodes. It use local4 to register it syslog entries and it logs to the /var/log/messages file.</p>
+<p>The syslog postscript accomplishes the setup. The syslog script is also called during initial install by xcatconfig on the MN. The xCAT daemon will detect, if the syslog daemon is not running and restart it when it starts.</p>
+<h3 id="override-sending-logs-to-the-management-node-from-the-servicenodes-and-nodes"><a href="#TOC">Override sending logs to the Management node from the servicenodes and nodes</a></h3>
+<p>The setup defined in the syslog script for the service nodes and compute nodes is to send all syslog messages to the Management Node (MN) to the /var/log/messages file. You can override this by doing the following:</p>
+<p>Set the site table, svloglocal attribute to 1. In a hierarchical cluster, this will stop syslogs from being forwarded from the ServiceNodes to the Management Node. After setting it, run updatenode to reconfigure.</p>
+<pre><code>      chdef -t site -o clustersite svloglocal=1
+      updatenode &lt;servicenodes&gt; -P syslog</code></pre>
+<h3 id="leave-default-syslog-configuration-on-the-nodes"><a href="#TOC">Leave default syslog configuration on the nodes</a></h3>
+<p>Take the syslog entry out of the postscripts table. If you do this xcat will not run the syslog postscript on install or when updatenode is run. This will leave the default syslog configuration as setup by the OS. This configuration will leaving logging local on service and compute nodes. If you have already setup syslog using xCAT, you will need to restore the original syslog configuration file on the nodes and restart syslog. You can use xdsh to do this.</p>
+<pre><code>  tabedit postscripts
+  remove the syslog entry</code></pre>
+<h3 id="extracting-xcat-messages"><a href="#TOC">Extracting xCAT messages</a></h3>
+<p>There are a couple of ways that xCAT messages may be extracted from the syslog.</p>
+<p>xCAT messages all start with xCAT: They can easily be extracted from the messages file by grepping for xCAT: in the /var/log/messages file on the MN.</p>
+<h3 id="tailor-your-own-syslog-configuration"><a href="#TOC">Tailor your own syslog configuration</a></h3>
+<p>xCAT messages are all logged to local4. You can add an entry such as the following to the syslog configuation file, for example /etc/rsyslog.conf on Redhat. This will log only the local4 messages to the xcatmessages file. They will also still go into the messages file.</p>
+<pre><code>    
+    #XCAT settings
+    *.debug  /var/log/messages
+    local4.*  /var/log/xcatmessages</code></pre>
+<p>The *syslog.conf file has may ways to tailor logging. This website, explains more options</p>
+<pre><code>    http://www.rsyslog.com/doc/rsyslog_conf.html</code></pre>
+<p>Also check the man page for syslog on the OS you are running.</p>
+<h3 id="important-logging-for-auditing"><a href="#TOC">important logging for auditing</a></h3>
+<p>The xcatd daemon, logs all commands run, and who runs them.</p>
+<p>A typical entry is as follows: Feb 23 09:27:30 xcat20RRmn xCAT: xCAT: Allowing tabdump for root from localhost.localdomain. You can grep for the following string in /var/log/messages on the MN, to obtain those entries:</p>
+<pre><code> fgrep &quot;xCAT: Allowing&quot; /var/log/messages </code></pre>
+<p>You can also grep for all denials of requests:</p>
+<pre><code>fgrep &quot;xCAT: Denying&quot; /var/log/messages </code></pre>
+<p>This information is also available in the auditlog table. See auditlog below.</p>
+<p>The xcatd daemon, logs startup errors and database access errors in syslog. Errors from postscript running on nodes, and service nodes are logged in the syslog on the MN.</p>
+<h3 id="sample-xcat-setup"><a href="#TOC">Sample xCAT setup</a></h3>
+<p>On AIX, xCAT uses syslog:</p>
+<p>xCAT sets up the log to create up to 5 files of 1meg each and then rotate. See /etc/syslog.conf.</p>
+<pre><code>    #xCAT settings     
+    *.debug /var/log/messages rotate 1024K files 5</code></pre>
+<p><strong>On SLES xCAT uses syslog-ng:</strong></p>
+<p>The setup of xCAT used in syslog-ng, is basically the defaults of the syslog-ng software on the MN. It only changes to allow syslogs to be forwarded to the MN from the nodes.</p>
+<p>This setup allows local messages for (local1-7) to be logged to /var/log/localmessages and all messages to /var/log/messages. In many cases you will find that /var/log/localmessages contain only or primarily xCAT messages, so that is the file to check</p>
+<p>When syslog-ng is installed, it sets itself up to use logrotate to rotate the generated logs. See man logrotate for more details.</p>
+<p>On RedHat xCAT uses rsyslog:</p>
+<p>xCAT uses basic defaults for rsyslog. See http://linux.die.net/man/8/rsyslogd for more information.</p>
+<p>When rsyslog is installed, it sets itself up to use logrotate to rotate the generated logs. See man logrotate for more details.</p>
+<p>On a node or service node:</p>
+<p>By default, xCAT directs syslog to send all syslog messages to the Management Node.</p>
+<p>For example on RedHat:</p>
+<p>This entry in /etc/rsyslog.conf, directs syslog to forward all messages to the ip address, which is the ip of the MN. The picking of the debug level implies all levels will be sent. See information on configuring the syslog.conf file on your OS.</p>
+<pre><code>  xCAT settings 
+  .debug* @7.113.44.250 </code></pre>
+<h2 id="auditlog"><a href="#TOC">auditlog</a></h2>
+<p>As of xCAT 2.4, xCAT will not only log all command the xCAT daemon runs and who runs them to syslog, but also to a new auditlog table in the xCAT database. See the <a href="http://xcat.sourceforge.net/man5/auditlog.5.html">manpage for the auditlog table</a>.</p>
+<h3 id="maintaining-auditlog"><a href="#TOC">Maintaining auditlog</a></h3>
+<p>You can control the amount of auditing with the site.auditskipcmds attribute. This attribute allows you to enter a list of commands that will not be logged, or the variable &quot;ALL&quot; which means log no commands. See the <a href="http://xcat.sourceforge.net/man7/site.7.html">manpage for the site table</a>.</p>
+<p>To maintain the table, use the tabprune command. It is recommended to setup a cron job to tabprune the auditlog weekly. Since it records all xCAT commands run, it can grow quite large and can significantly affect you dumpxCATdb/restorexCATdb. See manpage for tabprune:http://xcat.sourceforge.net/man8/tabprune.8.html</p>
+</body>
+</html>

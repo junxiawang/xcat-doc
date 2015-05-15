@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Set the next boot only of the nodes(only BMC-based servers).</p>
+<ul>
+<li>hd: Boot from the hard disk.</li>
+<li>net: Boot over the network, using a PXE or BOOTP broadcast.</li>
+<li>cd: Boot from the CD or DVD drive.</li>
+<li>def|default: Boot using the default set in BIOS.</li>
+</ul>
+<p>Example:</p>
+<pre><code>PUT https://127.0.0.1/xcatws/nodes/b1-b4/setboot?userName=xxx&amp;password=xxx</code></pre>
+<p>With data:</p>
+<pre><code>[&quot;net&quot;]</code></pre>
+</body>
+</html>

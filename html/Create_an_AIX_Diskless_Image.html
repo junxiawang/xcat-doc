@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>In order to boot a diskless AIX node using xCAT and NIM you must create an xCAT osimage definition as well as several NIM resources.</p>
+<p>You can use the xCAT <strong>mknimimage</strong> command to automate this process.</p>
+<p>There are several NIM resources that must be created in order to deploy a diskless node. The main resource is the NIM SPOT (Shared Product Object Tree). An AIX diskless image is essentially a SPOT. It provides a <strong>/usr</strong> file system for diskless nodes and a root directory whose contents will be used for the initial diskless nodes root directory. It also provides network boot support.</p>
+<p>When you run the command you must provide a source for the installable images. This could be the AIX product media, a directory containing the AIX images, or the name of an existing NIM lpp_source resource. You must also provide a name for the osimage you wish to create. This name will be used for the NIM SPOT resource that is created as well as the name of the xCAT osimage definition. The naming convention for the other NIM resources that are created is the osimage name followed by the NIM resource type, (ex. &quot; 61cosi_lpp_source&quot;).</p>
+<p><strong>Stateful or stateless?</strong></p>
+<p>You can choose to have your diskless nodes be either &quot;stateful&quot; or &quot;stateless&quot;. If you want a &quot;stateful&quot; node you must use a NIM &quot;root&quot; resource. If you want a &quot;stateless&quot; node you must use a NIM &quot;shared_root&quot; resource.</p>
+<p><strong>A &quot;stateful&quot; diskless node</strong> preserves its state in individual mounted root filesystems. When the node is shut down and rebooted, any information that was written to a root filesystem will be available</p>
+<p><strong>A &quot;stateless &quot; diskless node</strong> uses a mounted root filesystem that is shared with other nodes. When it writes to its root directory the information is actually written to memory. If the node is shut down and rebooted any data that was written is lost. Any node-specific information must be re-established when the node is booted.</p>
+<p>The advantage of stateless nodes is that there is much less network traffic and fewer resources used which is especially important in a large cluster environment.</p>
+<p>For more information regarding the NIM &quot;root&quot; and &quot;shared_root&quot; resource refer to the NIM documentation.</p>
+<p>If you wish to set up stateless cluster nodes you must use the &quot;-r&quot; option when you run the <strong>mknimimage</strong> command. The default behavior would be to set up stateful nodes.</p>
+<p>For example, to create a stateless-diskless osimage called &quot;61cosi&quot; using the software contained in the /myimages directory you could issue the following command.</p>
+<pre><code>    
+    mknimimage -r -t diskless -s /myimages 61cosi</code></pre>
+<p>(Note that this operation could take a while to complete!)</p>
+<p><strong>Caution:</strong> Do not interrupt (kill) a NIM process while it is creating a SPOT resource.</p>
+<p>Starting with xCAT version 2.5 you can also use the &quot;-D&quot; option to specify that a dump resource should be created. See the section called &quot;ISCSI dump support&quot; in the following document for more information on the diskless ISCSI dump support. <a href="XCAT_AIX_Diskless_Nodes/#iscsi-dump-support">XCAT_AIX_Diskless_Nodes/#iscsi-dump-support</a></p>
+<p><strong>Note</strong>: To populate the /myimages directory you could copy the software from the AIX product media using the AIX <strong>gencopy</strong> command. For example you could run &quot;gencopy -U -X -d /dev/cd0 -t /myimages all&quot;. The <strong>mknimimage</strong> command will display a summary of what was created when it completes. For example:</p>
+<pre><code>    Object name: 61cosi
+    imagetype=NIM
+    lpp_source=61cosi_lpp_source
+    nimtype=diskless
+    osname=AIX
+    paging=61cosi_paging
+    shared_root=61cosi_shared_root
+    spot=61cosi</code></pre>
+<p>The NIM resources will be created in a subdirectory of /install/nim by default. You can use the &quot;-l&quot; option to specify a different location.</p>
+<p>You can also specify alternate or additional resources on the command line using the &quot;attr=value&quot; option, (&quot;&lt;nim resource type&gt;=&lt;resource name&gt;&quot;). For example, if you want to include a &quot;resolv_conf&quot; resource named &quot;61cosi_resolv_conf&quot; you could run the command as follows.</p>
+<pre><code>    mknimimage -t diskless -s /dev/cd0 61cosi resolv_conf=61cosi_resolv_conf</code></pre>
+<p>**Any additional NIM resources specified on the command line must be previously created using NIM interfaces. **(Which means NIM must already have been configured previously. )</p>
+<p><strong>Note</strong>: Another alternative is to run <strong>mknimimage</strong> without the additional resources and then simply add them to the xCAT osimage definition later. You can add or change the osimage definition at any time. When you initialize and install the nodes xCAT will use whatever resources are specified in the osimage definition.</p>
+<p>The xCAT osimage definition can be listed using the <strong>lsdef</strong> command, modified using the <strong>chdef</strong> command and removed using the <strong>rmnimimage</strong> command. See the <strong>man</strong> pages for details.</p>
+<p>To get details for the NIM resource definitions use the AIX <strong>lsnim</strong> command. For example, if the name of your SPOT resource is &quot;61cosi&quot; then you could get the details by running:</p>
+<pre><code>    lsnim -l 61cosi</code></pre>
+<p>To see the actual contents of a NIM resource use &quot;nim -o showres &lt;resource name&gt;&quot;. For example, to get a list of the software installed in your SPOT you could run:</p>
+<pre><code>    nim -o showres 61cosi</code></pre>
+</body>
+</html>

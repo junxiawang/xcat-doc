@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#the-enhancement-of-xdcp-command-for-file-syncing">The enhancement of xdcp command for File Syncing</a><ul>
+<li><a href="#sync-files-to-the-nodes">Sync files to the nodes:</a></li>
+<li><a href="#sync-files-into-images">sync files into images:</a></li>
+<li><a href="#hierarchy-support-for-xdcp-file-syncing">Hierarchy support for xdcp File Syncing:</a></li>
+</ul></li>
+<li><a href="#section"></a><ul>
+<li><a href="#perform-the-file-syncing-periodically">Perform the File syncing periodically</a></li>
+</ul></li>
+<li><a href="#the-enhancement-of-updatenode-command">The enhancement of updatenode command:</a><ul>
+<li><a href="#the-syntax-of-updatenode-command">The syntax of updatenode command:</a></li>
+<li><a href="#add-the-include-capability">Add the include capability:</a></li>
+</ul></li>
+<li><a href="#internal-design-of-file-syncing-function">Internal design of File Syncing function:</a><ul>
+<li><a href="#installation-process">Installation process:</a><ul>
+<li><a href="#full-install">1. Full install</a></li>
+<li><a href="#diskless-netboot">2. Diskless netboot</a></li>
+</ul></li>
+<li><a href="#updatenode--f">Updatenode -F:</a><ul>
+<li><a href="#what-updatenode--f-will-do">What updatenode -F will do:</a></li>
+<li><a href="#for-hierarchical-scenario"><strong>For hierarchical scenario:</strong></a></li>
+<li><a href="#updatenode--p-will-not-run-syncfilesotherpkgs-postscripts">Updatenode -P will not run syncfiles/otherpkgs postscripts:</a></li>
+</ul></li>
+<li><a href="#sync-files-to-the-image">Sync files to the image:</a><ul>
+<li><a href="#linux">Linux:</a></li>
+<li><a href="#aix">AIX:</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#the-enhancement-of-xdcp-command-for-file-syncing">The enhancement of xdcp command for File Syncing</a></li>
+<li><a href="#sync-files-to-the-nodes">Sync files to the nodes:</a></li>
+<li><a href="#sync-files-into-images">sync files into images:</a></li>
+<li><a href="#hierarchy-support-for-xdcp-file-syncing">Hierarchy support for xdcp File Syncing:</a></li>
+<li><a href="#"></a></li>
+<li><a href="#perform-the-file-syncing-periodically">Perform the File syncing periodically</a></li>
+<li><a href="#the-enhancement-of-updatenode-command">The enhancement of updatenode command:</a></li>
+<li><a href="#the-syntax-of-updatenode-command">The syntax of updatenode command:</a></li>
+<li><a href="#add-the-include-capability">Add the include capability:</a></li>
+<li><a href="#internal-design-of-file-syncing-function">Internal design of File Syncing function:</a></li>
+<li><a href="#installation-process">Installation process:</a>
+<ul>
+<li><a href="#1%5C-full-install">1. Full install</a></li>
+<li><a href="#2%5C-diskless-netboot">2. Diskless netboot</a></li>
+</ul></li>
+<li><a href="#updatenode--f">Updatenode -F:</a>
+<ul>
+<li><a href="#what-updatenode--f-will-do">What updatenode -F will do:</a></li>
+<li><a href="#for-hierarchical-scenario"><strong>For hierarchical scenario:</strong></a></li>
+<li><a href="#updatenode--p-will-not-run-syncfilesotherpkgs-postscripts">Updatenode -P will not run syncfiles/otherpkgs postscripts:</a></li>
+</ul></li>
+<li><a href="#sync-files-to-the-image">Sync files to the image:</a>
+<ul>
+<li><a href="#linux">Linux:</a></li>
+<li><a href="#aix">AIX:</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h1 id="the-enhancement-of-xdcp-command-for-file-syncing"><a href="#TOC">The enhancement of xdcp command for File Syncing</a></h1>
+<p>The basis of this capability is the new -F option on xdcp, which inputs a file that lists from/to pairs of files/dirs that should be sync'd to the noderange (or diskless image) that is passed into xdcp. The format of this file is:</p>
+<pre><code>/install/syncfiles/etc/services -&amp;gt; /etc/services/
+/etc/groups /etc/passwd -&amp;gt; /etc</code></pre>
+<p>Each line can have one or more &quot;from&quot; files or dirs, but must have only one &quot;to&quot; file or dir, after the &quot;-&gt;&quot;.</p>
+<h2 id="sync-files-to-the-nodes"><a href="#TOC">Sync files to the nodes:</a></h2>
+<pre><code>xdcp compute -F /install/custom/install/sles11/compute.synclist</code></pre>
+<p>This will sync all the files listed in compute.synclist to the nodes in the compute group. By default, if the -F option is used, -r with /bin/rsync is assumed. For rsync with xdcp, we only support the ssh remote shell for rsync.<br />xdcp will add the following rsync flags to the call to rsync unless the admin adds the -o flag to the call, where they can set their own rsync flags. The default rsync flags will be (-upogtz).</p>
+<h2 id="sync-files-into-images"><a href="#TOC">sync files into images:</a></h2>
+<pre><code>xdcp -i /install/netboot/sles11/ppc64/compute -F /install/custom/install/sles11/compute.synclist</code></pre>
+<h2 id="hierarchy-support-for-xdcp-file-syncing"><a href="#TOC">Hierarchy support for xdcp File Syncing:</a></h2>
+<p>For hierarchical support where nodes are being updated by servicenodes, the following happens.<br />To sync files to the Service nodes for the range of compute nodes, run the following command.</p>
+<pre><code>xdcp compute  -F /tmp/compute.synclist</code></pre>
+<p>Where the compute.synclist file contains lines like this:</p>
+<pre><code>/etc/services -&amp;gt; /etc/services</code></pre>
+<p>xdcp will sync the files to the default /var/xcat/syncfiles directory on the service nodes that service the compute node range.<br />For the example, the /etc/passwd file from the Management Node will be put in /var/xcat/syncfiles/etc/passwd. xdcp will then sync the file from the /var/xcat/syncfiles/etc/passwd on the Service Nodes to the /etc/passwd directory on their compute nodes. The service node default sync directory , /var/xcat/syncfiles, can be changed by setting the site table, SNsyncfiles attribute.</p>
+<h1 id="section"><a href="#TOC"></a></h1>
+<h2 id="perform-the-file-syncing-periodically"><a href="#TOC">Perform the File syncing periodically</a></h2>
+<p>The options -F and -i on the xdcp cmd can be used manually by the admin, put into scripts, put on crontab, or used by FAM. This gives the user maximum control and flexibility.<br />The updatenode -F also can be put into scripts, crontab and FAM.</p>
+<h1 id="the-enhancement-of-updatenode-command"><a href="#TOC">The enhancement of updatenode command:</a></h1>
+<h2 id="the-syntax-of-updatenode-command"><a href="#TOC">The syntax of updatenode command:</a></h2>
+<pre><code>updatenode &amp;lt;noderange&amp;gt; [-F] [-S] [-P] [postscript,...]</code></pre>
+<p>The updatenode command can be used to update the nodes which listed in the noderange. The update features include sync files to the nodes, perform the software maintenance and re-run the postscripts for the nodes.<br />By default, the updatenode command syncs files which defined in the synclist to the nodes, update the software packages of the nodes and re-run the postsrcipts which defined in the postscripts table for the nodes.</p>
+<p>If run updatenode command with only -F option, it syncs files which configured in the synclist configuration file to the nodes. For Linux nodes, the synclist will be worked out from /install/custom/&lt;inst_type&gt;/&lt;distro&gt;/&lt;profile&gt;.&lt;os&gt;.&lt;arch&gt;.synclist; For AIX nodes, the path of synclist will be configured as an attribute of the osimage object. (Norm will handle the AIX part)<br />If run updatenode command with only -S option, it performs the Software Maintenance. For Linux nodes, the otherpkgs postscript will be re-run to handle the software maintenance; For AIX nodes, the NIM installp_bundle of the osimage object will be used to handle the software maintenance. (Norm will handle the AIX part)<br />If run updatenode command with only -P option, it re-runs the postscripts which configured in the node object.<br />If run updatenode command with '-P postscript,...', it re-runs the postscripts listed in the 'postscript,...'.<br />Note: The postscript otherpkgs will not be run when specified the '-P' option, since it's the approach of software maintenance for Linux nodes. This will avoid the otherpkgs to be run twice.</p>
+<h2 id="add-the-include-capability"><a href="#TOC">Add the include capability:</a></h2>
+<p>Add the include capability into the otherpkgs.pkglist configuration file. (Will be done by Ling)<br />Add the include capability into the synclist configuration file. (Will be done by Lissa)</p>
+<h1 id="internal-design-of-file-syncing-function"><a href="#TOC">Internal design of File Syncing function:</a></h1>
+<h2 id="installation-process"><a href="#TOC">Installation process:</a></h2>
+<h3 id="full-install"><a href="#TOC">1. Full install</a></h3>
+<p>Add the xCAT postscript 'syncfiles' in the /install/postscripts/ to handle the file distribution function for the compute node. syncfiles will call the startsyncfiles.awk (for Linux) or startsyncfilesaix(for AIX) to initiate the xdcp operation from the Management Node or Service Node.<br />The work flow should be following:</p>
+<pre><code> getpostscript.awk -&amp;gt; syncfiles -&amp;gt; startsyncfiles.awk/startsyncfilesaix -&amp;gt; xcatd -&amp;gt;
+   syncfiles.pm -&amp;gt; get the synclist file -&amp;gt; xdcp $node -f synclist</code></pre>
+<h3 id="diskless-netboot"><a href="#TOC">2. Diskless netboot</a></h3>
+<p>Since genimage already synced the files to the image directories, the syncfiles postscript will not run during the diskless netboot process (even if you specified the syncfiles postscript in the porstscripts attribute).<br />In order to not run syncfiles during the diskless netboot, the getpostscript will set the $ENV{'NODESETSTATE'} to 'netboot' when working in the diskless netboot process, so syncfiles postscript will do nothing when $ENV{'NODESETSTATE'} equals ”netboot” (Linux) or “diskless” (AIX)</p>
+<h2 id="updatenode--f"><a href="#TOC">Updatenode -F:</a></h2>
+<h3 id="what-updatenode--f-will-do"><a href="#TOC">What updatenode -F will do:</a></h3>
+<p><strong>For Linux node:</strong><br />updatenode finds the synclist file in following location, and calls 'xdcp -F synclist' to sync files to the node.</p>
+<pre><code>    /install/custom/&amp;lt;inst_type&amp;gt;/&amp;lt;distro&amp;gt;/&amp;lt;profile&amp;gt;.&amp;lt;os&amp;gt;.&amp;lt;arch&amp;gt;.synclist
+      &amp;lt;inst_type&amp;gt;: &quot;install&quot;, &quot;netboot&quot;
+      &amp;lt;distro&amp;gt;: &quot;rh&quot;, &quot;centos&quot;, &quot;fedora&quot;, &quot;sles&quot;
+      &amp;lt;profile&amp;gt;,&amp;lt;os&amp;gt; and &amp;lt;arch&amp;gt; are what you set for the node</code></pre>
+<p><strong>For AIX node:</strong><br />updatenode finds synclist file which configured in the osimage.synclist, and calls 'xdcp -F synclist' to sync files to the node.</p>
+<p><strong>Implementation detail:</strong><br />In updatenode.pm, use subroutine xCAT::Utils-&gt;getsynclistfile to get the synclist file for all the nodes, and classify the nodes by the synclist file, then send a request to the xdcp plugin to perform the 'xdcp $node -F synclist'.</p>
+<h3 id="for-hierarchical-scenario"><a href="#TOC"><strong>For hierarchical scenario:</strong></a></h3>
+<p>Since updatenode -F depends on the 'xdcp -F synclist', and 'xdcp -F synclist' has already handled the hierarchical scenario, updatenode -F does not need to take care of this.</p>
+<h3 id="updatenode--p-will-not-run-syncfilesotherpkgs-postscripts"><a href="#TOC">Updatenode -P will not run syncfiles/otherpkgs postscripts:</a></h3>
+<p>Updatenode command will not initiate the syncfiles postscript even if you specify it in the postscript list. To make sure syncfiles is not executed, the following will happen.</p>
+<ul>
+<li>When the postscripts xcatdsklspost/xcataixpost called by the updatenode, a special flag UPDATENODE=1 will be set in the postscript running environment, and syncfiles postscript will not run when it finds UPDATENODE=1 has been set.</li>
+<li>In the xCAT::Postage-&gt;makescript, set the UPDATENODE=0 to the scripts as default, and then in the xcatdsklspost/xcataixpost set the UPDATENODE=1 when it's initiated by the updatenode command.</li>
+</ul>
+<p>updatenode command will not re-run the otherpkgs postscript even if you specify it in the postscript list. The otherpkgs will be removed from the postscript list when the re-run postscripts action initiated by the 'updatenode -P'.</p>
+<h2 id="sync-files-to-the-image"><a href="#TOC">Sync files to the image:</a></h2>
+<h3 id="linux"><a href="#TOC">Linux:</a></h3>
+<p>The packimage command automatically syncs the files to the root image if there is a synclist file in the defined location.<br />Run xCAT::Utils-&gt;getsynclistfile to get the synclist file for the genimage base on the $os, $arch and $profile variables.<br />Run following in the packimage command to sync files to the root image.</p>
+<pre><code>    xdcp -i /install/netboot/sles11/ppc64/compute -F synclist</code></pre>
+<h3 id="aix"><a href="#TOC">AIX:</a></h3>
+<p>The mkdsklsnode command automatically syncs the files to the spot and root resource if there is a synclist file defined in the osimage.synclist<br />Run xCAT::Utils-&gt;getsynclistfile to get the synclist file from the osimage.synclist.<br />Run following command in the mkdsklsnode command to sync files to the nim image.</p>
+<pre><code>    xdcp -i /install/nim/spot/61cosi/ -F synclist</code></pre>
+</body>
+</html>

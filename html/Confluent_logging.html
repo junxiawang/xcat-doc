@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#log-structure">Log structure</a></li>
+<li><a href="#logging-performance">Logging performance</a></li>
+<li><a href="#log-files">Log files</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#log-structure">Log structure</a></li>
+<li><a href="#logging-performance">Logging performance</a></li>
+<li><a href="#log-files">Log files</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>Logging in confluent should still use syslog as appropriate, but it will always use it's internal logging facility.</p>
+<h1 id="log-structure"><a href="#TOC">Log structure</a></h1>
+<p>For every log, there are two files. A plaintext file that should provide roughly equivalent experience to /var/log/messages, and a binary metadata file that utilities can use to more quickly process the plaintext and filter information out from unstructured text that isn't pertinent to the viewing situation. There will be three general classes of log in terms of plaintext file layout (binary metadata is constant across all):</p>
+<ul>
+<li>Console log: plaintext will concatenate the entries without line feeds and interject data like connects, disconnects, timestamps, and so on as [] inside the unstructured text. Most timestamp data will be omitted from the plaintext file.</li>
+<li>Unstructured log files (e.g. trace, debug logs). Entries are always prepended with timestamp and have line feeds appended</li>
+<li>Structured log files (e.g. audit log). Same as unstructured log, but the plaintext data is JSON formatted for easy programmatic or human processing.</li>
+</ul>
+<h1 id="logging-performance"><a href="#TOC">Logging performance</a></h1>
+<p>Conventionally log files are written with as much assurance as possible. This has caused issues with overwhelming IO load for console servers with large numbers of managed targets. In confluent, effort is made to aggregate writes and in fact combine log entries in console log when metadata would match. The thought is that unlike most logging (where the thing logging data is self-monitoring and failing to commit log to disk fast enough has a high chance of missing important clues), confluent is monitoring other entities. If the other entity has a kernel panic, there is no threat to our log due to caching, so we can cache more aggressively than conventional situtations.</p>
+<h1 id="log-files"><a href="#TOC">Log files</a></h1>
+<p>Logs are written to /var/log/confluent.</p>
+<ul>
+<li>audit (what user does what action and when)</li>
+<li>consoles/nodename (historical console output)</li>
+<li>stderr (data that would be printed to stderr is captured here. Ideally this should never get entries but is provided as a last resort)</li>
+<li>stdout (data that would show up in stdout. If a library or plugin does a 'print' it lands here. This shouldn't be needed and this file growing in most cases should be considered a bug.</li>
+<li>trace (if an unexpected condition occurs, the traceback is recorded here)</li>
+<li>plainstdout/plainstderr (if some non-python code writes to stdout/stderr, it will land here without any of the aforementioned binary metadata or timestamping).</li>
+</ul>
+</body>
+</html>

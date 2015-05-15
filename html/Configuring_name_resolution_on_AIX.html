@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#configuring-name-resolution-on-aix"><strong>Configuring name resolution on AIX</strong></a><ul>
+<li><a href="#add-cluster-nodes-to-the-etchosts-file"><strong>Add cluster nodes to the /etc/hosts file</strong></a></li>
+<li><a href="#set-up-a-dns-nameserver"><strong>Set up a DNS nameserver</strong></a><ul>
+<li><a href="#creating-node-resolv.conf-files"><strong>Creating node resolv.conf files</strong></a><ul>
+<li><a href="#providing-domain-and-nameservers-values"><strong>Providing &quot;domain&quot; and &quot;nameservers&quot; values</strong></a></li>
+<li><a href="#description-of-basic-options"><strong>Description of basic options</strong></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#use-etchosts-instead-of-dns-throughout-the-cluster">Use /etc/hosts, instead of DNS, throughout the cluster</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#configuring-name-resolution-on-aix"><strong>Configuring name resolution on AIX</strong></a></li>
+<li><a href="#add-cluster-nodes-to-the-etchosts-file"><strong>Add cluster nodes to the /etc/hosts file</strong></a></li>
+<li><a href="#set-up-a-dns-nameserver"><strong>Set up a DNS nameserver</strong></a>
+<ul>
+<li><a href="#creating-node-resolvconf-files"><strong>Creating node resolv.conf files</strong></a></li>
+<li><a href="#providing-domain-and-nameservers-values"><strong>Providing &quot;domain&quot; and &quot;nameservers&quot; values</strong></a></li>
+<li><a href="#description-of-basic-options"><strong>Description of basic options</strong></a></li>
+</ul></li>
+<li><a href="#use-etchosts-instead-of-dns-throughout-the-cluster">Use /etc/hosts, instead of DNS, throughout the cluster</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="No_Longer_Used_Warning">No_Longer_Used_Warning</a></p>
+<h3 id="configuring-name-resolution-on-aix"><a href="#TOC"><strong>Configuring name resolution on AIX</strong></a></h3>
+<p>Name resolution is required by xCAT. You can use a simple /etc/hosts mechanism or you can optionally set up a DNS name server. In either case you must start by setting up the /etc/hosts file.</p>
+<p><strong>NOTE: If you do not set up DNS you may need to distribute new versions of the /etc/hosts file to all the cluster nodes whenever you add new nodes to the cluster.</strong></p>
+<h4 id="add-cluster-nodes-to-the-etchosts-file"><a href="#TOC"><strong>Add cluster nodes to the /etc/hosts file</strong></a></h4>
+<p>There are several ways to get entries for all the cluster nodes in the /etc/hosts file.</p>
+<p>These include:</p>
+<ul>
+<li>Manually adding the entries.</li>
+<li>Running a custom script that uses some cluster naming convention to automate the adding of the node entries. (User-provided.)</li>
+<li>Using the xCAT <strong>makehosts</strong> command after the XCAT node definitions have been created.</li>
+</ul>
+<p>If you are dealing with a large number of nodes this task can be quite tedious. The xCAT <strong>makehosts</strong> option may be useful in some cases. This process uses a regular expression to automatically determine the IP addresses and hostnames for a set of nodes. To use this method you must decide on appropriate naming conventions and IP address ranges for your nodes. This process may seem a bit complicated but once you get things set up it can save time and add structure to your cluster.</p>
+<p>For an explanation of the regular expressions, see the <a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xCAT database man page</a>.</p>
+<p>If you choose to use this process you will have to come back to this section after you have created the xCAT node definitions later in this process. You should read through this now and decide on naming conventions etc. for when you create your xCAT node definitions.</p>
+<p>The basic process is:</p>
+<ul>
+<li>Decide on a node naming convention such that the node IP &amp; long hostname can be determined from the node name.</li>
+<li>Include all the nodes in a node &quot;group&quot; definition.</li>
+<li>Set the group &quot;ip&quot; and &quot;hostnames&quot; attribute to a regular expression that can be used to derive the node IP and hostname.</li>
+<li>Run the <strong>makehosts</strong> command to add all the node information to the /etc/hosts file. See the man page for makehosts .</li>
+</ul>
+<p>As an example, suppose we decide on a node naming convention that includes the hardware frame number, the CEC number and the partition number. (Say &quot;clstrf01c01p01&quot; etc.) Also, lets say that the IP addresses would look something like &quot;100.1.1.1&quot; where the second number is the frame number, the third is the CEC number and the forth is the partition number.</p>
+<p>With this example we can define a regular expression that, given a node name, could be used to derive a corresponding IP address and long hostname.</p>
+<p>To do this, you need to first create an initial definition of the nodes in the database, if you haven't done that already. For example:</p>
+<pre><code>mkdef node[01-80] groups=compute,all</code></pre>
+<p>To have this regular expression applied to each node you can make use of the xCAT node group support. Let's say that all your cluster nodes belong to the group &quot;compute&quot;. I can add the following values to the &quot;compute&quot; group definition.</p>
+<pre><code>_**chdef -t group -o compute ip=&#39;|clstrf(\d+)c(\d+)p(\d+)|10.($1+0).($2+0).($3+0)|&#39;**_
+hostnames=&#39;|(.*)|($1).cluster.com|&#39;_****_</code></pre>
+<p>This basically says that for any node in the &quot;compute&quot; group the &quot;ip&quot; can be derived by the regular expression '_|clstrf(+)c(+)p(+)|10.($1+0).($2+0).($3+0)|' _, and the hostname can be derived from the expression <em>|(.*)|($1).mycluster.com|'.</em></p>
+<p>Now you could display the node definition as follows:</p>
+<pre><code>_lsdef -l clstrf01c02p03_</code></pre>
+<p>Since this node belongs to the &quot;compute&quot; group, when I display the definition it will use the regular expressions to derive the &quot;ip&quot; and &quot;hostnames&quot; values.</p>
+<p>The output might look something like the following:</p>
+<pre><code>_Object name: clstrf01c02p03_
+_cons=hmc_
+_groups=lpar,all,compute_
+_hcp=clstrhmc01_
+_hostnames=clstrf01c02p03.mycluster.com_
+_id=1_
+_ip=10.1.2.3_
+_mac=001a64f9c009_
+_mgt=hmc_
+_nodetype=ppc,osi_
+_hwtype=lpar_
+_os=AIX_
+_parent=clstrf1fsp01-9125-F2A-SN024C332_
+_postscripts=myscript_
+_profile=MYimg_</code></pre>
+<p>Now that all the nodes have an &quot;ip&quot; and &quot;hostnames&quot; value you can run the xCAT <strong>makehosts</strong> command to update /etc/hosts.</p>
+<pre><code>_**makehosts compute -l**_</code></pre>
+<p>For details on using the <strong>makehosts</strong> coomand see: <a href="http://xcat.sourceforge.net/man8/makehosts.8.html">makehosts</a>.</p>
+<h4 id="set-up-a-dns-nameserver"><a href="#TOC"><strong>Set up a DNS nameserver</strong></a></h4>
+<p>To set up the management node as the DNS name server you must set the &quot;domain&quot;, &quot;nameservers&quot; and &quot;forwarders&quot; attributes in the xCAT &quot;site&quot; definition.</p>
+<p>For example, if the cluster domain is &quot;mycluster.com&quot;, the IP address of the management node is &quot;<em>100.0.0.41</em>&quot; and the site DNS servers are &quot;9.14.8.1,9.14.8.2&quot; then you would run the following command.</p>
+<pre><code>_**chdef -t site domain= mycluster.com nameservers= 100.0.0.41 forwarders= 9.14.8.1,9.14.8.2**_</code></pre>
+<p>Edit &quot;/etc/resolv.conf&quot; to contain the cluster domain and nameserver. For example:</p>
+<pre><code>_search mycluster.com_
+_nameserver 100.0.0.41_</code></pre>
+<p><em>Create xCAT network definitions for each of the cluster networks.</em> (Your network and mask value need to be defined for <strong>makedns</strong> to be able to set up the correct ip range for the management node to serve.)</p>
+<p>You will need a name for the network and values for the following attributes.</p>
+<pre><code>**net** The network address.
+**mask** The network mask.
+**gateway** The network gateway.</code></pre>
+<p>You can use the xCAT <strong>makenetworks</strong> command to gather cluster network information and create xCAT network definitions. See http://xcat.sourceforge.net/man8/makenetworks.8.html makenetworks] for details. (This feature is available in xCAT 2.3 and beyond.)</p>
+<p>You can also use the xCAT <strong>mkdef</strong> command to define the network.</p>
+<p>For example:</p>
+<pre><code>_**mkdef -t network -o net1 net=9.114.113.224 mask=255.255.255.224 gateway=9.114.113.254**_</code></pre>
+<p>Run <strong>makedns</strong> to create the /etc/named.conf file and populate the /var/named directory with resolution files.</p>
+<pre><code>_**makedns**_</code></pre>
+<p>Start DNS:</p>
+<pre><code>_**startsrc -s named**_</code></pre>
+<h5 id="creating-node-resolv.conf-files"><a href="#TOC"><strong>Creating node resolv.conf files</strong></a></h5>
+<p>The resolv.conf files could be created manually or you could use the xCAT support to automate the creation of the files when the nodes are installed.</p>
+<p>This section provides an overview of the various ways you can set up resolv.conf files in the cluster using xCAT. Additional details will be covered in the xCAT installation documentation.</p>
+<h6 id="providing-domain-and-nameservers-values"><a href="#TOC"><strong>Providing &quot;domain&quot; and &quot;nameservers&quot; values</strong></a></h6>
+<p>The resolv.conf file requires a &quot;domain&quot; value and a &quot;nameservers&quot; value. When using xCAT on AIX you must provide this information in one of three ways:</p>
+<ol style="list-style-type: decimal">
+<li><p><em>Create a NIM resolv_conf resource and include it in your xCAT osimage definition.</em> To do this you must create a NIM reolv_conf resource on the xCAT management node and include it in the xCAT osimage definition you will use to install the cluster nodes.</p></li>
+<li><p><em>Add values for the &quot;domain&quot; and &quot;nameservers&quot; attributes to the xCAT &quot;site&quot; definition.</em> When setting up a cluster the xCAT &quot;site&quot; definition is used to save some basic cluster-wide information. You can add the &quot;domain&quot; and &quot;nameservers&quot; values to the &quot;site&quot; definition using the xCAT <strong>chdef</strong> command. For example:</p>
+<p><em>chdef -t site domain=mycluster.com nameservers=30.1.0.102</em></p></li>
+<li><p><em>Add values for the &quot;domain&quot; and &quot;nameservers&quot; attributes to the xCAT &quot;network&quot; definitions.</em> An xCAT &quot;network&quot; definition must be created for each network that is used for cluster management. You can add the &quot;domain&quot; and &quot;nameservers&quot; values to the network definitions using the <strong>chdef</strong> command. For example:</p>
+<p><em>chdef -t network -o cluster_net domain=mycluster.com nameservers=30.1.0.102</em></p></li>
+</ol>
+<p>When xCAT is determining the resolv.conf file for a node it will use the following priority order:</p>
+<ol style="list-style-type: decimal">
+<li>The user provided resolv_conf resource is used if provided.</li>
+<li>If there is no resolv_conf resource then the information from the network definition, that corresponds to the node, will be used. (I.e. If the node is located on the &quot;cluster_net&quot; network then the &quot;domain&quot; and &quot;nameservers&quot; values from that network definition will be used.</li>
+<li>If there is no resolv_conf resource AND the network definition does not contain the &quot;domain&quot; and &quot;nameservers&quot; values then the &quot;site&quot; definition will be used.</li>
+<li>If the &quot;domain&quot; and &quot;nameservers&quot; values are not provided in any of the above then no resolv.conf file will be created on the nodes.</li>
+</ol>
+<p><em>When setting the value for the &quot;nameservers&quot; attribute you may either use a comma-separated list of server IP addresses OR the keyword &quot;&lt;xcatmaster&gt;&quot;.</em> The &quot;&lt;xcatmaster&gt;&quot; keyword will be interpreted as the value of the &quot;xcatmaster&quot; attribute of the node definition. The &quot;xcatmaster&quot; value for a node is the name of it's server as known by the node. This would be either the name of the service node or the name of the management node.</p>
+<h6 id="description-of-basic-options"><a href="#TOC"><strong>Description of basic options</strong></a></h6>
+<p>Use the following descriptions to help determine how you would like to have your resolv.conf files created in the cluster.</p>
+<p><strong>Options</strong>:</p>
+<ol style="list-style-type: decimal">
+<li><p><em>Osimage oriented</em>.</p>
+<p>If you include a NIM resolv_conf resource in an osimage definition then all nodes that are installed with that osimage will get the same resolv.conf file.</p></li>
+<li><p><em>Service node oriented</em>.</p>
+<p>In this case you would set the &quot;domain&quot; and &quot;nameservers&quot; attributes in the site definition but not the network definitions. The &quot;namesevers&quot; attribute would be set to &quot;&lt;xcatmaster&gt;&quot;.</p>
+<p>The result would be that each node would get a resolv.conf file that contained the &quot;domain&quot; value from the site definition. The &quot;nameservers&quot; value would be the name of the nodes server as known by the node. (I.e. The server interface that is on the same network.)</p>
+<p>This is the setup used in Power 775 clusters.</p></li>
+<li><p><em>Cluster oriented</em>.</p>
+<p>In this case you would set the &quot;domain&quot; and &quot;nameservers&quot; attributes in the site definition but not the network definitions. The &quot;namesevers&quot; attribute would be set to one or more comma-separated server names (IP addresses).</p>
+<p>The result would be that each node would get a resolv.conf file that contained the &quot;domain&quot; and &quot;nameservers&quot; values from the site definition.</p></li>
+<li><p><em>Service node/network oriented</em>.</p>
+<p>In this case you would set the &quot;domain&quot; and &quot;nameservers&quot; attributes in the xCAT network definitions. The &quot;namesevers&quot; attribute would be set to &quot;&lt;xcatmaster&gt;&quot;.</p>
+<p>The result would be that each node would get a resolv.conf file that contained the &quot;domain&quot; from the network definition.</p></li>
+</ol>
+<p><strong>Note</strong>: The correct network definition is determined by calculating which network the IP address of the node is part of.</p>
+<pre><code> The &quot;nameservers&quot; value would be the name of the nodes server as known by the node. (The server interface that is on the same network.) </code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li><p><em>Network oriented</em>.</p>
+<p>In this case you would set the &quot;domain&quot; and &quot;nameservers&quot; attributes in the xCAT network definitions. The &quot;namesevers&quot; attribute would be set to one or more comma-separated server names (IP addresses).</p>
+<p>The result would be that each node would get a resolv.conf file that contained the &quot;domain&quot; and &quot;namservers&quot; value from the network definition.</p></li>
+</ol>
+<h4 id="use-etchosts-instead-of-dns-throughout-the-cluster"><a href="#TOC">Use /etc/hosts, instead of DNS, throughout the cluster</a></h4>
+<p>If you choose to use a fully populated /etc/hosts file on every node, you must ensure that the file gets updated throughout the cluster every time a node is added or a hostname or IP address changes.</p>
+<pre><code> **NOTE:** You should also remove the &quot;nameservers&quot; setting from the site definition and from any &quot;network&quot; definiton so that xCAT will not generate an /etc/resolv.conf file for the nodes. For example: 
+
+
+
+chdef -t site nameservers=</code></pre>
+<p>There are several methods you can use to update the /etc/hosts files on the nodes.</p>
+<ol style="list-style-type: decimal">
+<li><p>Use the xCAT <strong>xdcp</strong> command to copy the new files to the nodes.</p>
+<p>See <a href="http://xcat.sourceforge.net/man1/xdcp.1.html">xdcp</a> for details.</p></li>
+<li><p>Use the xCAT xCAT <a href="Sync-ing_Config_Files_to_Nodes">sync files</a> support.</p>
+<p>For example, you could create a synclist file containing the following entry:</p>
+<p>/etc/hosts -&gt; /etc/hosts</p>
+<p>The file can be put anywhere, but let's assume you name it /install/custom/compute-image/synclist .</p>
+<p>Make sure you have an OS image object in the xCAT database associated with your nodes:</p>
+<p>mkdef -t osimage compute-image synclists=/install/custom/compute-image/synclist</p>
+<p>chdef -t group compute provmethod=compute-image</p>
+<p>Each time you install or diskless boot a compute node, xCAT will automatically sync the /etc/hosts file to the node. If you make changes to /etc/hosts while the nodes are running, you must push those changes to the nodes:</p>
+<p>updatenode compute -F</p></li>
+<li><p>Use the xCAT statelite support for diskless AIX nodes.</p>
+<p>If all of your nodes are statelite nodes you can add /etc/hosts to the <a href="http://xcat.sourceforge.net/man5/litefile.5.html">litefile</a> table with the &quot;ro&quot; option and add the place it can be mounted from to the <a href="http://xcat.sourceforge.net/man5/litetree.5.html">litetree</a> table.</p>
+<p>With this approach, changes to the common hosts file on the management node will automatically be available to the nodes via NFS. See the <a href="XCAT_Linux_Statelite">statelite doc</a> for details.</p></li>
+</ol>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#install-tsa">Install TSA</a></li>
+<li><a href="#install-tsa-license">Install TSA License</a></li>
+<li><a href="#create-a-two-node-peer-domain">Create a two node peer domain</a></li>
+<li><a href="#setup-a-tie-breaker">Setup a Tie Breaker</a></li>
+<li><a href="#create-xcatd-application-resource">Create xcatd Application Resource</a></li>
+<li><a href="#create-service-ip-resource">Create Service IP Resource</a></li>
+<li><a href="#create-resource-group">Create Resource Group</a></li>
+<li><a href="#define-relationship-between-the-resources">Define Relationship Between the Resources</a></li>
+<li><a href="#bring-the-resource-group-online">Bring the Resource Group Online</a></li>
+<li><a href="#failover">Failover</a></li>
+<li><a href="#some-useful-tsa-commands">Some Useful TSA Commands</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#install-tsa">Install TSA</a></li>
+<li><a href="#install-tsa-license">Install TSA License</a></li>
+<li><a href="#create-a-two-node-peer-domain">Create a two node peer domain</a></li>
+<li><a href="#setup-a-tie-breaker">Setup a Tie Breaker</a></li>
+<li><a href="#create-xcatd-application-resource">Create xcatd Application Resource</a></li>
+<li><a href="#create-service-ip-resource">Create Service IP Resource</a></li>
+<li><a href="#create-resource-group">Create Resource Group</a></li>
+<li><a href="#define-relationship-between-the-resources">Define Relationship Between the Resources</a></li>
+<li><a href="#bring-the-resource-group-online">Bring the Resource Group Online</a></li>
+<li><a href="#failover">Failover</a></li>
+<li><a href="#some-useful-tsa-commands">Some Useful TSA Commands</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><strong>Disclaimer: xCAT management node can be configured as high availability in various ways by selecting different high availability tools and different xCAT configuration scenarios. This documentation can be treated as a sample example on how to configure a high availability tool with some specific xCAT configuration, it will not work for all xCAT configuration scenarios. You may need to create your own procedure or failover scripts according to your configuration scenario, and you can select different high availability tools other than IBM TSA.</strong></p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This documentation describes how to configure an HA xCAT management node with IBM Tivoli System Automation(TSA). This document is also meant as an example of the types of steps that would be necessary to configure an HA management node with another HA tool. If manual failover of your management node is sufficient for you situation, see [Setting_Up_an_HA_Mgmt_Node] and [Shared_Disks_HA_Mgmt_Node].</p>
+<p>The specific package we are using is IBM Tivoli System Automation for Multiplatform(SAM), the terms TSA and SAM are used interchangeably throughout this documentation. For more details about IBM Tivoli System Automation, refer to the IBM Tivoli System Automation homepage <a href="http://www-01.ibm.com/software/tivoli/products/sys-auto-multi">http://www-01.ibm.com/software/tivoli.../sys-auto-multi</a></p>
+<p>System Automation for Multiplatforms provides a high-availability environment, in which systems are continuously available and whose self-healing infrastructure prevents downtime caused by system problems, it could be used to provide high-availability environment for different applications, in this documentation, we will use TSA to automate the xcatd failover in HAMN environment.</p>
+<p>The structure of the HAMN with TSA is to have two management nodes running simultaneous, there will only be one active xcatd instance on any of the management node using a single IP address(serviceIP) at any given point in time, in case of a failure, the xcatd must be restarted on the same management node or on another management node.</p>
+<p>It is recommended to plan and configure the HAMN from the very beginning of the cluster initial setup, it will reduce the effort on handling some configuration complexities such as xCAT database migration and hostname resolution changes. Since we are not using shared storage to provide data synchronization between the two management nodes, so the database replication and files synchronization steps described in documentation [Setting_Up_an_HA_Mgmt_Node] have to be used together with steps and procedure in this documentation. Generally speaking, all the steps before the <strong>Failover</strong> section in documentation [Setting_Up_an_HA_Mgmt_Node] should be performed before the steps in this documentation.</p>
+<p>This documentation does not cover the shared disks configuration scenario, if you are using shared disks in your cluster, the configuration procedure will be different, you can refer to IBM TSA documentation on how to configure and use shared disk in IBM TSA environment.</p>
+<p>The examples in this documentation are based on the following AIX and DB2 cluster environment, the steps can be applied to None-DB2 and Linux clusters with some modifications.</p>
+<p><em>Primary Management Node: aixmn1(9.114.47.103) running AIX 7.1 and DB2 9.7.SP3</em></p>
+<p>Standby Management Node: aixmn2(9.114.47.104) running AIX 7.1 and DB2 9.7 SP3__</p>
+<p><em>Service IP address: 9.114.47.97</em></p>
+<p>You need to substitute the hostnames and ip address with your own values when setting up your HAMN environment.</p>
+<h2 id="install-tsa"><a href="#TOC">Install TSA</a></h2>
+<p>TSA needs to be installed on both managment nodes. To install TSA, you can use the TSA installation script installSAM, the installSAM can be found in either of the product CD or the electronic distribution. TSA also provides a script prereqSAM to check the prerequisite packages, for example, if the packages Java* are not installed, the prereqSAM will returns error message like &quot;<em>Fileset Java* not installed</em>&quot;.</p>
+<pre><code>aixmn1:/xcat/sam/SAM3210MPAIX#./installSAM
+prereqSAM: All prerequisites for the ITSAMP installation are met on operating system:  AIX 7100-00
+
+SAM is currently not installed.
+
+installSAM: The following package is not installed yet and needs to be installed:  ./AIX/AIX6/sam.core
+
+installSAM: A general License Agreement and License Information specifically for System Automation will be shown.
+
+Scroll down using the Enter key (line by line) or Space bar (page by page).
+
+At the end you will be asked to accept the terms to be allowed to install the product. Select Enter to continue.</code></pre>
+<p>Press Enter or Space to sroll down to the bottom of the license agreement, you will prompted with the following question:</p>
+<pre><code>installSAM: To accept all terms of the preceding License Agreement and License Information type &#39;y&#39;, anything else to decline.
+Answer: y</code></pre>
+<p>When the installation is completed successfully, you will see some message like &quot;installSAM: All packages were installed successfully.&quot;.</p>
+<h2 id="install-tsa-license"><a href="#TOC">Install TSA License</a></h2>
+<p>TSA requires that a valid product license is installed on each system it is running on. The license is contained on the installation medium in the 'license' sub directory. The installation of the license is usually performed during the product installation process. In case this did not succeed, issue the following command to install the license:</p>
+<pre><code>samlicm –i license_file</code></pre>
+<p>In order to display the license, issue:</p>
+<pre><code>samlicm -s</code></pre>
+<p>If the full product license has been installed successfully, the samlicm -s will display message like:</p>
+<pre><code>Product: IBM Tivoli System Automation for Multiplatforms 3.2
+Product ID: 101
+Creation date: Wed Aug 19 00:00:01 2010
+Expiration date: Thu Dec 31 00:00:01 2038</code></pre>
+<p><strong>Note:</strong> In a TSA environment, the environment varilable CT_MANAGEMENT_SCOPE should be set to 2 (peer domain scope) when running any TSA command.</p>
+<h2 id="create-a-two-node-peer-domain"><a href="#TOC">Create a two node peer domain</a></h2>
+<p>1. Issue the <em>preprpnode</em> command on both management nodes to allow TSA communication between the two management nodes.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/preprpnode aixmn1 aixmn2
+aixmn2:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/preprpnode aixmn1 aixmn2</code></pre>
+<p>2. You can now run <em>mkrpdomain</em> command on any of the management node to create a two node peer domain.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/mkrpdomain xcathadomain aixmn1 aixmn2</code></pre>
+<p>To look up the status of the peer domain, issue the <em>lsrpdomain</em> command, since the peer domain is not started, so the peer domain status is &quot;Offline&quot;.</p>
+<pre><code>aixmn1:/#lsrpdomain
+Name         OpState RSCTActiveVersion MixedVersions TSPort GSPort
+xcathadomain Offline 3.1.0.1           No            12347  12348 
+aixmn1:/#</code></pre>
+<p>3. Issue the <em>startrpdomain</em> command to bring the peer domain online</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/startrpdomain xcathadomain</code></pre>
+<p>After a short while, the cluster will be started, so when you issue the lsrpdomain command again, you will see that the cluster is now &quot;Online&quot;.</p>
+<pre><code>aixmn1:/#lsrpdomain
+Name         OpState RSCTActiveVersion MixedVersions TSPort GSPort
+xcathadomain Online  3.1.0.1           No            12347  12348 
+aixmn1:/#</code></pre>
+<h2 id="setup-a-tie-breaker"><a href="#TOC">Setup a Tie Breaker</a></h2>
+<p>The tie breaker is required for a two node peer domain, the tie breaker ensures the situation can be resolved when the peer domain is split. In this documentation, we will use a network tie breaker. The network tie breaker uses an external IP address to resolve the tie status, the external IP address must be reachable from the two management nodes and it responses for ping requests. When selecting the network tie breaker external IP address, you should also make sure that the following situation will NOT occur: both the two management nodes can ping the network tie breaker while they can not communicate with each other. You can choose any ip address which can only be reached via a single path from each management node as the network tie breaker, if the default gateway is not virtualized by the network infrastructure, it will be good network tie breaker.</p>
+<p>Issue command mkrsrc to create the network tie breaker.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/mkrsrc IBM.TieBreaker Type=&quot;EXEC&quot; Name=&quot;mynetworktb&quot; DeviceInfo=&#39;PATHNAME=/usr/sbin/rsct/bin/samtb_net Address=9.114.47.126 Log=1&#39; PostReserveWaitTime=30</code></pre>
+<p>Activate the network tie breaker using command chrsrc:</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/chrsrc -c IBM.PeerNode OpQuorumTieBreaker=&quot;mynetworktb&quot;</code></pre>
+<h2 id="create-xcatd-application-resource"><a href="#TOC">Create xcatd Application Resource</a></h2>
+<p>An IBM.Application resource will be created to represents the xcatd daemon. As part of the definition of application resource xcatd, commands or scripts for starting, stopping and querying the xcatd have to be specified. These commands and/or scripts can be different ones, but it is often convenient to gather these functions in a single script, which has a command line parameter to select start/stop/status actions. These scripts will often be user-written. Here is an example of the definition file and *Command script file:</p>
+<pre><code>aixmn1:/xcat/sam#cat xcatd.def
+PersistentResourceAttributes::
+       Name=&quot;xcatd&quot;
+       StartCommand=&quot;/xcat/sam/samxcatd --start&quot;
+       StartCommandTimeout=1000
+       StopCommand=&quot;/xcat/sam/samxcatd --stop&quot;
+       StopCommandTimeout=120
+       MonitorCommand=&quot;/xcat/sam/samxcatd --monitor&quot;
+       MonitorCommandPeriod=5
+       MonitorCommandTimeout=5
+       UserName=&quot;root&quot;
+       NodeNameList={&quot;aixmn1&quot;,&quot;aixmn2&quot;}
+       ResourceType=1
+
+aixmn1:/xcat/sam#</code></pre>
+<p>You can modify the MonitorCommandTimeout according to your expection on how quick the failover should occur after failure, modify the StartCommandTimeout, StopCommandTimeout and MonitorCommandTimeout based on how long the start, stop and monitor process may take. The unit of the *Timeout attributes is second. The ResourceType=1 is important for the xcatd resource because it indicates that this is a &quot;floating&quot; resource, it means that the resource is not tied to any particilar management node and can be started on any of the management node.</p>
+<pre><code>aixmn1:/xcat/sam#cat samxcatd
+#!/usr/bin/perl
+
+use Getopt::Long;
+
+$Getopt::Long::ignorecase = 0;    #Checks case in GetOptions
+Getopt::Long::Configure(&quot;bundling&quot;);
+
+if (
+             !GetOptions(
+                               &quot;h&quot;         =&amp;gt; \$::HELP,
+                               &quot;v|V&quot;       =&amp;gt; \$::VERBOSE,
+                               &quot;s|start&quot;   =&amp;gt; \$::START,
+                               &quot;S|stop&quot;    =&amp;gt; \$::STOP,
+                               &quot;m|monitor&quot; =&amp;gt; \$::MONITOR,
+                          )
+  )
+{
+       print &quot;USAGE\n&quot;;
+       exit 1;
+}
+
+if ($::START)
+{
+   # DB2 HADR failover
+   my $cmd = &quot;/usr/bin/su - xcatdb \&quot;-c db2pd -d xcatdb -hadr\&quot;&quot;;
+   my $output = &amp;runcmd($cmd);
+   `logger -t xcat &quot;rc = $::RC, output = $output\n\n\n\n&quot;`;
+   if ($::RC || ($output =~ /not activated/))
+   {
+       $cmd = &quot;/usr/bin/su - xcatdb \&quot;-c db2 START HADR ON DATABASE XCATDB AS STANDBY\&quot;&quot;;
+       $output = &amp;runcmd($cmd);
+
+       $cmd = &quot;/usr/bin/su - xcatdb \&quot;-c db2pd -d xcatdb -hadr\&quot;&quot;;
+       $output = &amp;runcmd($cmd);
+   }
+   if (!$::RC &amp;&amp; ($output =~ /LogGapRunAvg\s+\(bytes\)\nStandby\s+/))
+   {
+       $cmd = &quot;/usr/bin/su - xcatdb \&quot;-c db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster\&quot;&quot;;
+       $output = &amp;runcmd($cmd);
+       `logger -t xcat &quot;takeover rc is $::RC&quot;`;
+       `logger -t xcat &quot;takeover output is $output&quot;`;
+       if ($::RC || ($output =~ /cannot complete/))
+       {
+           $cmd = &quot;/usr/bin/su - xcatdb \&quot;-c db2 TAKEOVER HADR ON DATABASE XCATDB USER xcatdb USING cluster BY FORCE\&quot;&quot;;
+           &amp;runcmd($cmd);
+       }
+   }
+
+   # Setup site table
+   $cmd = &quot;XCATBYPASS=1 /opt/xcat/bin/chdef -t site master=9.114.47.97&quot;;
+   &amp;runcmd($cmd);
+
+   # Start xcatd
+   $cmd = &quot;/usr/bin/startsrc -s xcatd&quot;;
+   &amp;runcmd($cmd);
+   exit 0;
+}
+elsif ($::STOP)
+{
+   my $cmd = &quot;/usr/bin/stopsrc -s xcatd&quot;;
+   &amp;runcmd($cmd);
+   exit 0;
+}
+elsif ($::MONITOR)
+{
+   my $output = `/usr/bin/lssrc -s xcatd`;
+   if ($output =~ /active/)
+   {
+      exit 1;
+   }
+   else
+   {
+      exit 2;
+   }
+}
+
+
+sub runcmd()
+{
+   my ($cmd) = @_;
+
+
+   my $out = `$cmd 2&amp;gt;&amp;1`;
+   $::RC = $?;
+   if ($::RC)
+   {
+       `/usr/bin/logger -t xcat &quot;samxcatd command $cmd failed, output is $out&quot;`;
+   }
+   else
+   {
+       `/usr/bin/logger -t xcat &quot;samxcatd command $cmd succeed&quot;`;
+   }
+
+   return $out;
+}
+
+aixmn1:/xcat/sam#</code></pre>
+<p>The &quot;start&quot; script will be run when the xcatd is started or failovered to any management node, the &quot;stop&quot; script will be run when the xcatd is stopped or failed on any management node. The &quot;monitor&quot; script will be run periodically to check the xcatd status. The &quot;stop&quot; and &quot;monitor&quot; script is quite easy in this example, it simply run a command to check the xcatd status or stop xcatd. The &quot;start&quot; script is a little bit complex, because it has to handle the DB2 HADR failover and setup the master attribute in site table to the service ip address before trying to start xcatd. You can add any operations before the xcatd is started or stopped, but please be aware that it will cause the failover process to be longer, for example, you can add the xcat commands makedns, makedhcp or makeconservercf in the &quot;start&quot; script.</p>
+<p>The command mkrsrc can be used to create the xcatd application resource:</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 /usr/bin/mkrsrc -f /xcat/sam/xcatd.def IBM.Application</code></pre>
+<h2 id="create-service-ip-resource"><a href="#TOC">Create Service IP Resource</a></h2>
+<p>The xcatd should be addressable with the same IP address, regardless of which management node it runs on. The IP address is called a &quot;Service IP&quot;, the serivce IP will be configured as an alias IP address on the management node that the xcatd runs on, the service IP address can be any unused ip address that all the compute nodes and service nodes could reach. In this example, the service IP address is 9.114.47.97, netmask is 255.255.255.192, it can be configured on aixmn1 and aixmn2, the following command will create the service IP resource:</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 mkrsrc IBM.ServiceIP NodeNameList=&quot;{&#39;aixmn1&#39;,&#39;aixmn2&#39;}&quot; Name=&quot;xcatip&quot; NetMask=255.255.255.192 IPAddress=9.114.47.97</code></pre>
+<p>Besides the IP address and subnet, we should also specify the network adapters in the peer domain that could host the service IP address, which is called an equivalency. For example, the en0 on aixmn1 and en1 on aixmn2 can carry the service IP, then the command will be:</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 mkequ netequ IBM.NetworkInterface:en0:aixmn1,en1:aixmn2</code></pre>
+<h2 id="create-resource-group"><a href="#TOC">Create Resource Group</a></h2>
+<p>TSA resources needs to be grouped together before defining relationships between the resources, after the resource group is created, operations can be performed against all the resources in the resource group as a single unit. The resource group is created with the mkrg command.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 mkrg xcatdrg</code></pre>
+<p>Both resources &quot;xcatd&quot; and &quot;xcatip&quot;, will be added to the resource group &quot;xcatdrg&quot;. This is done with the addrgmbr command.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 addrgmbr -g xcatdrg IBM.Application:xcatd
+aixmn1:/#CT_MANAGEMENT_SCOPE=2 addrgmbr -g xcatdrg IBM.ServiceIP:xcatip</code></pre>
+<h2 id="define-relationship-between-the-resources"><a href="#TOC">Define Relationship Between the Resources</a></h2>
+<p>The resources &quot;xcatd&quot;, &quot;xcatip&quot; and &quot;netequ&quot; can not be treated separately, there are some kind of relationships between them. For example, it does not make sense if the xcatd is started on one management node and the service IP is configured on another management node node. We need to define two relationships between &quot;xcatd&quot;, &quot;xcatip&quot; and &quot;netequ&quot;:</p>
+<p>1. &quot;xcatd&quot; depends on &quot;xcatip&quot;, i.e., the resource &quot;xcatd&quot; and &quot;xcatip&quot; must be started on the same management node.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 mkrel -p DependsOn -S IBM.Application:xcatd -G IBM.ServiceIP:xcatip xcatd_dependson_xcatip</code></pre>
+<p>2. &quot;xcatip&quot; and &quot;netequ&quot; should be tied together, it means that the &quot;xcatip&quot; could only be configured on the network adapters defined in the resource &quot;xcatip&quot;.</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 mkrel -p DependsOn -S IBM.ServiceIP:xcatip -G IBM.Equivalency:netequ xcatip_dependson_netequ</code></pre>
+<h2 id="bring-the-resource-group-online"><a href="#TOC">Bring the Resource Group Online</a></h2>
+<p>When resources are added to resource groups, they become managed resources with a default automation goal of offline. This can be changed at the level of the resource group with the chrg command. To bring resource group xcatdrg online use the command:</p>
+<pre><code>aixmn1:/#CT_MANAGEMENT_SCOPE=2 chrg -o online xcatdrg</code></pre>
+<p>It may take a short while to take the resources and the resource group online, after the resources and the resource group are online, the lsrg command will display something like:</p>
+<pre><code>aixmn1:/#lsrg -m
+Displaying Member Resource information:
+Class:Resource:Node[ManagedResource] Mandatory MemberOf OpState WinSource Location
+IBM.ServiceIP:xcatip                 True      xcatdrg  Online  Nominal   aixmn1  
+IBM.Application:xcatd                True      xcatdrg  Online  Nominal   aixmn1  
+aixmn1:/#</code></pre>
+<p>After all the above configuration steps are done, we are ready to go...</p>
+<h2 id="failover"><a href="#TOC">Failover</a></h2>
+<p>There are two kinds of failover, planned failover and unplanned failover. The planned failover can be useful for updating the management nodes or any scheduled maintainance activities; the unplanned failover covers the unexpected hardware or software failures.</p>
+<p>1. Planned failover</p>
+<p>Planned failover can be done by command rgreq runs on any management node, it will initialize a failover from the current primary management node to the standby management node:</p>
+<pre><code>CT_MANAGEMENT_SCOPE=2 rgreq -o move xcatdrg</code></pre>
+<p>2. Unplanned failover</p>
+<p>Unplanned failover is done automatically by TSA. No user interaction is needed.</p>
+<p>No matter the failover is a planned failover or unplanned failover, you will see &quot;Pending online&quot; status, and after the failover is completed, the lsrg command will print something like:</p>
+<pre><code>aixmn1:/#lsrg -m
+Displaying Member Resource information:
+Class:Resource:Node[ManagedResource] Mandatory MemberOf OpState WinSource Location
+IBM.ServiceIP:xcatip                 True      xcatdrg  Online  Nominal   aixmn2  
+IBM.Application:xcatd                True      xcatdrg  Online  Nominal   aixmn2  
+aixmn1:/#</code></pre>
+<p>From the output above, we can see that the resources &quot;xcatd&quot; and &quot;xcatip&quot; have been moved to the standby management node aixmn2. And you can also check if the xcatd and service IP are running correctly on the new management node.</p>
+<h2 id="some-useful-tsa-commands"><a href="#TOC">Some Useful TSA Commands</a></h2>
+<p>1. Stop Peer Domain</p>
+<pre><code>CT_MANAGEMENT_SCOPE=2 chrg -o offline xcatdrg
+CT_MANAGEMENT_SCOPE=2 stoprpdomain xcathadomain</code></pre>
+<p>2. Remove Peer Domain</p>
+<pre><code>CT_MANAGEMENT_SCOPE=2 rmrpdomain -f xcathadomain</code></pre>
+<p>3. Remove Resource Group</p>
+<pre><code>CT_MANAGEMENT_SCOPE=2 /usr/bin/rmrgmbr  -g xcatdrg
+CT_MANAGEMENT_SCOPE=2 /usr/bin/rmrg xcatdrg</code></pre>
+<h2 id="references"><a href="#TOC">References</a></h2>
+<ul>
+<li>IBM Redbook &quot;High Availability and Disaster Recovery Options for DB2 on Linux UNIX and Windows&quot; http://www.redbooks.ibm.com/abstracts/sg247363.html</li>
+<li>DB2 Information Center<a href="http://www.redbooks.ibm.com/redbooks/pdfs/sg247352.pdf">http://www.redbooks.ibm.com/redbooks/.../sg247352.pdf</a>http://publib.boulder.ibm.com/infocenter/db2luw/v9r5/index.jsp?topic=/com.ibm.db2.luw.admin.ha.doc/doc/c0011748.html</li>
+<li><a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2SetupDB2.pdf">Setup DB2 as the xCAT Database</a></li>
+<li>Administrator's and User's Guide for System Automation for Multiplatforms Version 3.2</li>
+<li>Installation and Configuration Guide for System Automation for Multiplatforms Version 3.2</li>
+<li>IBM Redbook: End-to-end Automation with IBM Tivoli System Automation for Multiplatforms http://www.redbooks.ibm.com/abstracts/sg247117.html</li>
+</ul>
+</body>
+</html>

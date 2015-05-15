@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#external">External</a></li>
+<li><a href="#internal">Internal</a><ul>
+<li><a href="#databags-in-openstack-chef-cookbooks">Databags in OpenStack-Chef-Cookbooks</a></li>
+<li><a href="#loadclouddata-enhancement">loadclouddata enhancement</a></li>
+<li><a href="#templates-improvement-for-databag">Templates improvement for Databag</a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#external">External</a></li>
+<li><a href="#internal">Internal</a></li>
+<li><a href="#databags-in-openstack-chef-cookbooks">Databags in OpenStack-Chef-Cookbooks</a></li>
+<li><a href="#loadclouddata-enhancement">loadclouddata enhancement</a></li>
+<li><a href="#templates-improvement-for-databag">Templates improvement for Databag</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>This mini-design discusses that using chef databag to support for deploying OpenStack in xCAT. In xCAT 2.8.3, xCAT used OpenStack-Chef-Cookbooks to deploy clouds in xCAT clusters. And the password of each account for different components is default. This is develop mode. If &quot;develop_mode=false&quot;, the OpenStack chef cookbooks need chef databag.</p>
+<p>For the general chef databag knowledge, we can get more information from</p>
+<pre><code>  http://docs.opscode.com/essentials_data_bags.html
+  http://docs.opscode.com/knife_data_bag.html</code></pre>
+<p>This doc discusses how to make the chef databag work in OpenStack-Chef-cookbook.</p>
+<h2 id="terminology"><a href="#TOC">Terminology</a></h2>
+<p><strong>Data Bag</strong>: A data bag is a global variable that is stored as JSON data and is accessible from the chef-server node. The contents of a data bag can vary, but they often include sensitive information (such as database passwords). The xCAT scripts use [<a href="http://docs.opscode.com/knife_data_bag.html">knife</a>] command to create the databag. Before we run the command, it's required to prepare the data bag folders and data bag item JSON files.</p>
+<p><strong>Secret Keys</strong>: Encrypting a data bag requires a secret key. A secret key can be created in any number of ways. xCAT script use OpenSSL to generate a random number, which can then be used as the secret key.</p>
+<h2 id="external"><a href="#TOC">External</a></h2>
+<p>loadclouddata is a postscript of updatenode to update the cookbooks, roles, environment files and chef-client nodes. To support the databag, the postscript loadclouddata will update the databag into the chef-server. Currently, databag is experimental, so I add the option --nodevmode in loadclouddata. When running the following command:</p>
+<pre><code>  updatenode &amp;lt;chef-server-nodes&amp;gt;  &quot;loadclouddata --nodevmode&quot;</code></pre>
+<p>It will update the cookbooks, roles, environment files, chef-client nodes, and databags into the chef-server nodes.</p>
+<h2 id="internal"><a href="#TOC">Internal</a></h2>
+<h3 id="databags-in-openstack-chef-cookbooks"><a href="#TOC">Databags in OpenStack-Chef-Cookbooks</a></h3>
+<p>The OpenStack-Chef-Cookbooks are in /install/chef-cookbooks/grizzly-xCAT/ of xCAT management node. And the community version for grizzly is in https://github.com/stackforge . Currently, there isn't any document to introduce how to use databag in OpenStack-Chef-Cookbook. I made an investigation, and I made a summary. There are 4 different databags:</p>
+<pre><code>   db_passwords, service_passwords, user_passwords, and secrets</code></pre>
+<p><strong>db_passwords</strong> provides the password of each user (always the OpenStack component name) for each OpenStack component database.</p>
+<p><strong>service_passwords</strong> provides the passwords for the users of services in keystone, such as quantum, nova, glance and cinder. these passwords will be in some configuration file, such as /etc/nova/nova.conf</p>
+<p><strong>user_passwords</strong> provides the <strong>guest</strong> password of message queue, and the &quot;admin&quot; password for identify (keystone).</p>
+<p><strong>secrets</strong> provides bootstrap_token for keystone when register services and endpoints, and provide for quantum_metadata_proxy_shared_secret.</p>
+<p>We need to prepare the databag directories and databag items.</p>
+<p>Take db_passwords for example, the directory structure is as follows</p>
+<pre><code> [root@oscn12 databags]# tree db_passwords
+ db_passwords
+ |-- ceilometer_password.json
+ |-- cinder_password.json
+ |-- glance_password.json
+ |-- horizon_password.json
+ |-- keystone_password.json
+ |-- nova_password.json
+ `-- quantum_password.json
+
+ 0 directories, 7 files</code></pre>
+<p>There are 7 databag items in the databag db_passowords. The content of the databag item is very simple, take keystone_password.json as an exmaple:</p>
+<pre><code> [root@oscn12 db_passwords]# cat keystone_password.json
+ {
+   &quot;id&quot;: &quot;keystone&quot;,
+   &quot;keystone&quot;: &quot;xcatcloud&quot;
+ }</code></pre>
+<p>Note: The OpenStack-Chef-Cookbooks are being updated, the databag names or databag items may be changes.</p>
+<h3 id="loadclouddata-enhancement"><a href="#TOC">loadclouddata enhancement</a></h3>
+<p>The postscript &quot;loadclouddata --nodevmode&quot; will update the databags into the chef-server nodes. The basic workflow is as follows:</p>
+<ol style="list-style-type: decimal">
+<li>generate the secret key</li>
+<li>check if the key path in the /root/.chef/knife.rb , if not, add it</li>
+<li>clear all the old databags</li>
+<li>create the databag based on the secret key</li>
+<li>upload each databag item in the databag based on the secret key</li>
+</ol>
+<h3 id="templates-improvement-for-databag"><a href="#TOC">Templates improvement for Databag</a></h3>
+<p>Currently, the cloud_environment template files grizzly_allinone.rb.tmpl and grizzly_per-tenant_routers_with_private_networks.rb.tmpl are not support for databag. To support databag, we should add the following into the template files:</p>
+<pre><code> ...
+ &quot;developer_mode&quot; =&amp;gt; false,
+ &quot;secret&quot;=&amp;gt;{
+     &quot;key_path&quot;=&amp;gt;&quot;/etc/chef/encrypted_data_bag_secret&quot;
+  },
+ ...</code></pre>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce, Linda, Guang Cheng, Gao Ling, Sun Jing and etc.</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

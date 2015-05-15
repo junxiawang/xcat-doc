@@ -1,0 +1,442 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#energy-management"><strong>Energy Management</strong></a><ul>
+<li><a href="#query-power-information"><strong>Query power information</strong></a></li>
+<li><a href="#power-saving"><strong>Power saving</strong></a></li>
+<li><a href="#prerequisite"><strong>Prerequisite</strong></a></li>
+<li><a href="#supported-hardware"><strong>Supported hardware</strong></a></li>
+</ul></li>
+<li><a href="#appendix-system-p-hardware-discovery-directly-from-xcat-mn">Appendix: System P hardware discovery Directly from xCAT MN</a><ul>
+<li><a href="#prerequisites"><strong>Prerequisites</strong></a></li>
+<li><a href="#system-p-hardware-and-hmc"><em>* System P Hardware and HMC</em>*</a><ul>
+<li><a href="#setting-up-the-hmc-network-for-use-by-xcat"><strong>Setting up the HMC network for use by xCAT</strong></a></li>
+<li><a href="#cleanup-bpafsp-ips-service-network-for-hmc-environment"><strong>Cleanup BPA/FSP IPs Service Network for HMC environment</strong></a></li>
+</ul></li>
+<li><a href="#xcat-db-setup-with-hw-discovery"><strong>xCAT DB setup with HW Discovery</strong></a><ul>
+<li><a href="#setup-dhcp-server"><strong>Setup DHCP server</strong></a><ul>
+<li><a href="#update-networks-table"><strong>Update networks table</strong></a></li>
+<li><a href="#stop-bootp-and-initialize-dhcp-aix-only"><strong>Stop bootp and initialize DHCP (AIX only)</strong></a></li>
+<li><a href="#configure-the-network-interface-for-dhcp"><strong>Configure the network interface for DHCP</strong></a></li>
+<li><a href="#specify-the-dhcp-network-interface-in-site-table"><strong>Specify the dhcp network interface in site table</strong></a></li>
+<li><a href="#generate-dhcp-configuration-file"><strong>Generate dhcp configuration file</strong></a></li>
+<li><a href="#power-on-all-the-frames-and-cecs"><strong>Power on all the frames and CECs</strong></a></li>
+</ul></li>
+<li><a href="#create-node-definitions-for-the-hardware-components"><strong>Create node definitions for the hardware components</strong></a></li>
+<li><a href="#update-the-node-definitions-with-vpd-and-ppc-information"><strong>Update the node definitions with vpd and ppc information</strong></a><ul>
+<li><a href="#discover-hmcsframececs-and-define-them-in-xcat-db"><strong>Discover HMCs/frame/CECs, and define them in xCAT DB</strong></a></li>
+<li><a href="#update-xcat-database-directly-with-lsslp"><strong>Update xCAT database directly with lsslp</strong></a></li>
+</ul></li>
+<li><a href="#make-the-dynamic-ip-addresses-permanent"><strong>Make the dynamic IP addresses permanent</strong></a></li>
+</ul></li>
+<li><a href="#define-the-hardware-control-point-for-the-framescecs."><strong>Define the hardware control point for the Frames/CECs.</strong></a></li>
+<li><a href="#make-connections-from-framescecs-to-hmc"><strong>Make connections from Frames/CECs to HMC</strong></a></li>
+<li><a href="#define-the-compute-nodes">Define the Compute Nodes</a></li>
+<li><a href="#discover-the-lpars-managed-by-hmc-using-rscan">Discover the LPARs managed by HMC using rscan</a></li>
+<li><a href="#define-xcat-node-using-the-stanza-file">Define xCAT node using the stanza file</a></li>
+<li><a href="#define-xcat-nodes-using-xcatsetup">Define xCAT nodes using xcatsetup</a></li>
+<li><a href="#hw-discovery-limitations"><strong>HW Discovery Limitations</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#energy-management"><strong>Energy Management</strong></a></li>
+<li><a href="#query-power-information"><strong>Query power information</strong></a></li>
+<li><a href="#power-saving"><strong>Power saving</strong></a></li>
+<li><a href="#prerequisite"><strong>Prerequisite</strong></a></li>
+<li><a href="#supported-hardware"><strong>Supported hardware</strong></a></li>
+<li><a href="#appendix-system-p-hardware-discovery-directly-from-xcat-mn">Appendix: System P hardware discovery Directly from xCAT MN</a></li>
+<li><a href="#prerequisites"><strong>Prerequisites</strong></a></li>
+<li><a href="#-system-p-hardware-and-hmc"><em>* System P Hardware and HMC</em>*</a>
+<ul>
+<li><a href="#setting-up-the-hmc-network-for-use-by-xcat"><strong>Setting up the HMC network for use by xCAT</strong></a></li>
+<li><a href="#cleanup-bpafsp-ips-service-network-for-hmc-environment"><strong>Cleanup BPA/FSP IPs Service Network for HMC environment</strong></a></li>
+</ul></li>
+<li><a href="#xcat-db-setup-with-hw-discovery"><strong>xCAT DB setup with HW Discovery</strong></a>
+<ul>
+<li><a href="#setup-dhcp-server"><strong>Setup DHCP server</strong></a></li>
+<li><a href="#update-networks-table"><strong>Update networks table</strong></a></li>
+<li><a href="#stop-bootp-and-initialize-dhcp-aix-only"><strong>Stop bootp and initialize DHCP (AIX only)</strong></a></li>
+<li><a href="#configure-the-network-interface-for-dhcp"><strong>Configure the network interface for DHCP</strong></a></li>
+<li><a href="#specify-the-dhcp-network-interface-in-site-table"><strong>Specify the dhcp network interface in site table</strong></a></li>
+<li><a href="#generate-dhcp-configuration-file"><strong>Generate dhcp configuration file</strong></a></li>
+<li><a href="#power-on-all-the-frames-and-cecs"><strong>Power on all the frames and CECs</strong></a></li>
+<li><a href="#create-node-definitions-for-the-hardware-components"><strong>Create node definitions for the hardware components</strong></a></li>
+<li><a href="#update-the-node-definitions-with-vpd-and-ppc-information"><strong>Update the node definitions with vpd and ppc information</strong></a></li>
+<li><a href="#discover-hmcsframececs-and-define-them-in-xcat-db"><strong>Discover HMCs/frame/CECs, and define them in xCAT DB</strong></a></li>
+<li><a href="#update-xcat-database-directly-with-lsslp"><strong>Update xCAT database directly with lsslp</strong></a></li>
+<li><a href="#make-the-dynamic-ip-addresses-permanent"><strong>Make the dynamic IP addresses permanent</strong></a></li>
+</ul></li>
+<li><a href="#define-the-hardware-control-point-for-the-framescecs"><strong>Define the hardware control point for the Frames/CECs.</strong></a></li>
+<li><a href="#make-connections-from-framescecs-to-hmc"><strong>Make connections from Frames/CECs to HMC</strong></a></li>
+<li><a href="#define-the-compute-nodes">Define the Compute Nodes</a></li>
+<li><a href="#discover-the-lpars-managed-by-hmc-using-rscan">Discover the LPARs managed by HMC using rscan</a></li>
+<li><a href="#define-xcat-node-using-the-stanza-file">Define xCAT node using the stanza file</a></li>
+<li><a href="#define-xcat-nodes-using-xcatsetup">Define xCAT nodes using xcatsetup</a></li>
+<li><a href="#hw-discovery-limitations"><strong>HW Discovery Limitations</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="energy-management"><a href="#TOC"><strong>Energy Management</strong></a></h2>
+<p>xCAT delivered a renergy command to manage the energy related functions for System p hardware. Basically, renergy command supports to query the power consumption, power capping, temperature, CPU frequency of hardware and set the status to enable/disable the power saving, power capping.</p>
+<p>The renergy command can only operate against CEC or fsp objects. For general attributes, the CEC objects can be managed by HMC or direct managed through fsp. But for the FFO functions, only the direct fsp managed CEC/fsp can be accepted.</p>
+<h3 id="query-power-information"><a href="#TOC"><strong>Query power information</strong></a></h3>
+<p>Power consumption: Query the average AC and DC consumption for a CEC. For certain type of CEC, the AC value is getting for the whole frame.</p>
+<ul>
+<li>Power capping: Query the capping value which can be set to a CEC and the current capping value as well.</li>
+</ul>
+<pre><code>    renergy CEC1 cappingstatus cappingmaxmin cappingvalue cappingsoftmin</code></pre>
+<ul>
+<li>Temperature of the CEC: Get the ambient and exhaust temperature of a CEC.</li>
+</ul>
+<pre><code>    renergy CEC1 ambienttemp exhausttemp</code></pre>
+<ul>
+<li>CPU frequency: Get the CPU frequency of a CEC.</li>
+</ul>
+<pre><code>    renergy CEC1 CPUspeed</code></pre>
+<ul>
+<li>Power saving status: Get the power saving status for static, dynamic and FFO (fixed frequency override)</li>
+</ul>
+<pre><code>    renergy CEC1 savingstatus dsavingstatus fsavingstatus</code></pre>
+<h3 id="power-saving"><a href="#TOC"><strong>Power saving</strong></a></h3>
+<ul>
+<li>Static power saving</li>
+</ul>
+<p>If turning on the static power saving, the processor frequency and voltage will be dropped to a fixed value to save energy.</p>
+<pre><code>    renergy CEC1 savingstatus=on</code></pre>
+<ul>
+<li>Dynamic power saving</li>
+</ul>
+<p>If turning on the dynamic power saving, the processor frequency and voltage will be dropped dynamically based on the core utilization. It supports two modes for turn on state: on-norm - means normal, the processor frequency cannot exceed the nominal value; on-maxp - means maximum performance, the processor frequency can exceed the nominal value.</p>
+<pre><code>    renergy CEC1 dsavingstatus=on-norm</code></pre>
+<ul>
+<li>Fixed frequency power saving (FFO)</li>
+</ul>
+<p>Set the CPU frequency to a fixed value to save the power consumption.</p>
+<pre><code>    renergy CEC1 fsavingstatus=on</code></pre>
+<ul>
+<li>Power capping</li>
+</ul>
+<p>Set the maximum power consumption for a CEC.</p>
+<pre><code>    renergy CEC1 cappingstatus=on
+    renergy CEC1 cappingwatt=2500</code></pre>
+<h3 id="prerequisite"><a href="#TOC"><strong>Prerequisite</strong></a></h3>
+<p>For the System p, the renergy command depends on the Energy Management Plug-in xCAT-pEnergy to communicate with server. xCAT-pEnergy can be downloaded from the IBM web site: http://www.ibm.com/support/fixcentral/. (Other Software -&gt; EM)</p>
+<pre><code>    Product Group:      Power
+    Product:            Cluster Software
+    Cluster Software:   System p Energy Management plug-in for xCAT (EM)</code></pre>
+<h3 id="supported-hardware"><a href="#TOC"><strong>Supported hardware</strong></a></h3>
+<pre><code>8203-E4A, 8204-E8A, 9125-F2A, 8233-E8B, 8236-E8C, 9125-F2C</code></pre>
+<p>Note: Not all the attributes are available for every type of hardware, refer to the man page of renergy for the support list for each hardware type.</p>
+<h2 id="appendix-system-p-hardware-discovery-directly-from-xcat-mn"><a href="#TOC">Appendix: System P hardware discovery Directly from xCAT MN</a></h2>
+<p>Note: this section is only recommended for very large clusters. For most clusters it is much simpler to follow <a href="XCAT_System_p_Hardware_Management/#system-p-setup-with-hmc-discovery">XCAT_System_p_Hardware_Management/#system-p-setup-with-hmc-discovery</a>.</p>
+<p>This chapter will introduce how the xCAT MN can discover HMCs, System P frames with their BPAs, and CECs with their FSPs working with xCAT lsslp command. The System P hardware will be discovered on the xCAT service network, and then added to xCAT database as node attributes.</p>
+<h3 id="prerequisites"><a href="#TOC"><strong>Prerequisites</strong></a></h3>
+<p>Before performing hardware discovery, users should confirm the following database setup:</p>
+<pre><code>  tabdump site table</code></pre>
+<p>Make sure the following attributes in <a href="http://xcat.sourceforge.net/man5/site.5.html">site</a> table are set to match your xCAT cluster site environment:</p>
+<pre><code>       domain
+       nameservers
+       ntpservers
+       dhcpinterfaces
+</code></pre>
+<ul>
+<li><strong>Add the default account for hmc</strong></li>
+</ul>
+<pre><code>    chtab key=hmc passwd.username=hscroot passwd.password=abc123</code></pre>
+<p>Note: The username and password for xCAT to access an HMC can also be assigned directly to the HMC node object using the mkdef or chdef commands. This assignment is useful when a specific HMC has a username and/or password that is different from the default one specified in the passwd table. For example, to create an HMC node object and set a unique username or password for it:</p>
+<pre><code>    mkdef -t node -o hmc1 groups=hmc,all nodetype=ppc hwtype=hmc mgt=hmc username=hscroot password=abc1234</code></pre>
+<p>or to change it if the HMC definition already exists:</p>
+<pre><code>    chdef -t node -o hmc1 username=hscroot password=abc1234</code></pre>
+<ul>
+<li><strong>Network configuration</strong></li>
+</ul>
+<p>The xCAT Management Node needs to be properly connected to the xCAT service network which is used with all HMCs, System P frames and CECs being used in the xCAT cluster. This service network should be located on a private subnet to allow the xCAT MN DHCP server to communicate with HMCs, BPAs (frame), and FSPs (CECs) in your cluster.</p>
+<p>In a larger cluster where Service Nodes are being used for hardware management and OS deployment, then these Service Nodes also need to be connected to the private service network to communicate to each frame BPA and CEC FSP.</p>
+<h3 id="system-p-hardware-and-hmc"><a href="#TOC"><em>* System P Hardware and HMC</em>*</a></h3>
+<p>The hardware management function with HMC connection is currently supported for System P hardware (P5,P6,P7) and xCAT 2.3.4 or later releases.</p>
+<p>HMCs should be configured with static ip addresses working in the HW service VLAN, so that they can communicate with xCAT MN. Because the xCAT MN runs the DHCP server on the service VLAN, the DHCP service on the HMCs should be turned off prior to performing the xCAT HW discovery function. (By default, the DHCP service is disabled for all network interfaces on HMC.)</p>
+<p>The DHCP service can be run from different server that is connected to the xCAT service VLAN, instead of the xCAT MN. In this case, users need to configure the DHCP service manually on the DHCP server, and skip the step &quot;Setup DHCP service on MN&quot; .</p>
+<h4 id="setting-up-the-hmc-network-for-use-by-xcat"><a href="#TOC"><strong>Setting up the HMC network for use by xCAT</strong></a></h4>
+<p>The following are minimal steps required to Setup the HMC network for Static IP,and enable SLP and SSH ports working with HMC GUI. Reference the HMC website and documentation for more details.</p>
+<ul>
+<li>Open the HMC GUI, Select <strong>HMC Management</strong>, then <strong>Change Network Settings</strong>.</li>
+<li>Select <strong>Customize Network Configuration</strong>, and then** LAN Adapters **.</li>
+<li>Select **Ethernet interface **configured on the service network.</li>
+<li>Click on the **Details **button.</li>
+<li>Select <strong>Basic Settings</strong>, Click on <strong>Open</strong>, and <strong>Specify IP address.</strong></li>
+<li>Fill in <strong>IP address</strong>, <strong>Netmask</strong>for HMC static IP on the xCAT service network.</li>
+<li>Make sure that DHCP Server box is not selected and is blank.</li>
+<li>Select on <strong>Firewall Settings</strong>, Click on **SLP, Secure Shell, **in the upper window.</li>
+<li>(You may also want to enable other HMC Firewall settings)</li>
+<li>Click on the **Allow incoming **button for each required setting.</li>
+<li>Make sure you Select OK at the bottom of the window to save your updates.</li>
+<li>Reboot the HMC, and then make sure Network changes are properly working.</li>
+</ul>
+<p>The Frame and CEC should be configured to use dynamic IPs by default, so that the DHCP server can properly assign hardware IP addresses in the xCAT service VLAN. (If the administrator wants to use static ip addresses with the BPA/FSP, they must use the proper service VLAN subnet address range specified by the DHCP server.)</p>
+<h4 id="cleanup-bpafsp-ips-service-network-for-hmc-environment"><a href="#TOC"><strong>Cleanup BPA/FSP IPs Service Network for HMC environment</strong></a></h4>
+<p>The xCAT administrator needs to make sure that BPA/FSP ip addresses and server node names are planned out and are properly defined when working with the xCAT Database, and the DHCP environment. There should be no issues, if this is a new xCAT System P cluster installation, where the frames and CECs are being specified in the xCAT database and HMC for the first time.</p>
+<p>For existing xCAT 2.5 clusters setup with a HMC DHCP server environment where BPA/FSPs are already acknowledged by HMC and xCAT DB, it is important that they use the same existing BPA/FSP network ip addresses and server node names. This includes setting up the DHCP server dynamic address ranges to match the current subnets used by the BPA/FSPs.</p>
+<p>If the service network requires changes to the BPA/FSP ip addresses, the administrator should plan to cleanup the current BPA/FSP environment. It includes doing cleanup for both the HMC and the xCAT Database for any IP addresses and server node name changes.</p>
+<p>For the HMC, the administrator should plan to remove the existing frames and servers that will require new HW IP addresses or server hostnames working in the xCAT service VLAN. This will allow the xCAT mkhwconn command to reinitialize the frame and CECs using the xCAT DB information to make new HW connections to the HMC.</p>
+<p>For the xCAT Management Node (MN), the administrator should review the xCAT database using lsdef and tabdump commands to check for any existing HMC/frame/BPA/CEC/FSP node objects that require updates. The xCAT chdef command can be used to modify server node attributes. The rmdef command can be used to remove the HMC/frame/BPA/CEC/FSP node objects to get to a clean state. It is important that the xCAT administrator also clean up Domain Name Service (DNS) and the /etc/hosts file make sure the HMC/frame/Server IP addresses and host names are matching the proper settings required for their xCAT cluster.</p>
+<h3 id="xcat-db-setup-with-hw-discovery"><a href="#TOC"><strong>xCAT DB setup with HW Discovery</strong></a></h3>
+<p>This section describes the xCAT DB tables and commands used to work with xCAT HW discovery. It will properly define the xCAT support requirements for the HW service network, DHCP server, and how ip addresses are defined for the BPAs and FSPs.</p>
+<h4 id="setup-dhcp-server"><a href="#TOC"><strong>Setup DHCP server</strong></a></h4>
+<h5 id="update-networks-table"><a href="#TOC"><strong>Update networks table</strong></a></h5>
+<p>All the FSPs and BPAs need to receive their dynamic ip addresses from the DHCP server. The first step is to create an xCAT network object in the xCAT DB using with <a href="http://xcat.sourceforge.net/man1/mkdef.1.html">mkdef</a> command for the service VLAN used by xCAT cluster.</p>
+<p>Here is an example mkdef stanza for creating a network object:</p>
+<pre><code>    vlan1:
+        objtype=network
+        dhcpserver=192.168.200.205
+        gateway=192.168.200.205
+        mask=255.255.255.0
+        mgtifname=en0
+        net=192.168.200.0
+        dynamicrange=192.168.200.1-192.168.200.224</code></pre>
+<p>In this example, the xCAT MN connects to the service vlan1 on network interface name en0. The &quot;192.168.200.1-192.168.200.224&quot; field indicates the dynamic ip range that is used by DHCP to give dynamic IP addresses to the BPA/FSPs on the service network. The IP address 192.168.200.205 is the DHCP server, which is also the xCAT MN.</p>
+<p>The xCAT command <strong>makenetworks</strong> is executed on the MN when xCAT is install and populates the xCAT networks table, but this command will not specify the dynamic range field. Use the following lsdef command to see if an entry for the service network has already been created:</p>
+<pre><code>    lsdef -t network -l</code></pre>
+<p>If so, then you only need to set the dynamicrange attribute in the service network object using the xCAT <a href="http://xcat.sourceforge.net/man1/chdef.1.html">chdef</a> command.</p>
+<h5 id="stop-bootp-and-initialize-dhcp-aix-only"><a href="#TOC"><strong>Stop bootp and initialize DHCP (AIX only)</strong></a></h5>
+<p>For AIX clusters, there is a bootp service daemon on the xCAT MN that is used by default for AIX node installations. If the DHCP server for the service network is the xCAT management node, you will need to disable the bootp service and enable dhcpsd in rc.tcpip so that the dhcp service will start during system boot up.</p>
+<p>Stop bootp from rebootting by commenting out the bootps line in /etc/inetd.conf file:</p>
+<pre><code>    #bootps dgram udp wait root /usr/sbin/bootpd bootpd /etc/bootptab</code></pre>
+<p>Restart the inetd subsystem:</p>
+<pre><code>     refresh -s inetd</code></pre>
+<p>Stop bootp deamon:</p>
+<pre><code>    ps -ef | grep bootp
+    kill the bootp process</code></pre>
+<p>Start up the DHCP Server</p>
+<pre><code>    start /usr/sbin/dhcpsd &quot;$src_running&quot;</code></pre>
+<p>Stop and restart the tcpip group</p>
+<pre><code>    stopsrc -g tcpip
+    startsrc -g tcpip</code></pre>
+<h5 id="configure-the-network-interface-for-dhcp"><a href="#TOC"><strong>Configure the network interface for DHCP</strong></a></h5>
+<p>It is necessary to configure a static IP address for each network interface that is used by DHCP on the xCAT Management Node to communicate on the service networks. This is necessary so that the DHCP server can provide service automatically after a reboot.</p>
+<p>The following examples use eth0 as the DHCP network interface:</p>
+<ul>
+<li>For RHEL, the network configuration is in a file named like /etc/sysconfig/network-scripts/ifcfg-eth0:</li>
+</ul>
+<pre><code>    DEVICE=eth0
+    BOOTPROTO=static
+    HWADDR=00:14:5E:5F:20:90
+    IPADDR=192.168.200.205
+    NETMASK=255.255.255.0
+    ONBOOT=yes</code></pre>
+<ul>
+<li>For SLES, the network configuration is in a file named like /etc/sysconfig/network/ifcfg-eth0:</li>
+</ul>
+<pre><code>    DEVICE=eth0
+    BOOTPROTO=static
+    HWADDR=00:14:5E:5F:20:90
+    IPADDR=192.168.200.205
+    NETMASK=255.255.255.0
+    STARTMODE=onboot</code></pre>
+<ul>
+<li>For AIX Clusters, issue the following command to define the static IP address for the network interface:</li>
+</ul>
+<pre><code>    mktcpip -a 192.168.200.205 -i en0 -m 255.255.255.0</code></pre>
+<h5 id="specify-the-dhcp-network-interface-in-site-table"><a href="#TOC"><strong>Specify the dhcp network interface in site table</strong></a></h5>
+<p>In the <a href="http://xcat.sourceforge.net/man5/site.5.html">site</a> table, the attribute dhcpinterfaces should be set to the network interfaces being used for hardware discovery. Assuming DHCP will be used for node installations, the network interface on the compute network should also be included here, but can be added at a later date.</p>
+<pre><code>    chdef -t site clustersite dhcpinterfaces=en0</code></pre>
+<h5 id="generate-dhcp-configuration-file"><a href="#TOC"><strong>Generate dhcp configuration file</strong></a></h5>
+<p>The xCAT command <a href="http://xcat.sourceforge.net/man8/makedhcp.8.html">makedhcp</a> can be used with the -n flag to create the dhcp service configuration file based on attributes found in the xCAT site and networks tables. In this configuration file, the dynamic address range IP pool is created based on the field dynamicrange in networks table.</p>
+<pre><code>    makedhcp -n</code></pre>
+<p>If there are no definitions listed in the networks table and dhcpinterfaces is blank, the makedhcp command will try to generate a DHCP service for all active subnets found on xCAT MN, even if there are no dynamic IP ranges specified. Verify the DHCP configuration files on the xCAT MN to ensure that they contain only the networks you want.</p>
+<pre><code>    cat /etc/dhcpd.conf   # (Linux)
+    cat /etc/dhcpsd.cnf   # (AIX)</code></pre>
+<h5 id="power-on-all-the-frames-and-cecs"><a href="#TOC"><strong>Power on all the frames and CECs</strong></a></h5>
+<p>After physical installation and checkout of the Frames/CECs has been completed, power them on. All the FSPs and BPAs should get dynamic IP addresses from the DHCP server.</p>
+<p><strong>Note:</strong> If the frame was already powered on when dhcp was configured/started, you will have to restart the slp daemon on <strong>each fsp</strong> before running lsslp:</p>
+<pre><code>    $ killall slpd
+    $ netsSlp</code></pre>
+<h4 id="create-node-definitions-for-the-hardware-components"><a href="#TOC"><strong>Create node definitions for the hardware components</strong></a></h4>
+<p>Create skeleton definitions for the hardware components. They will be used by the lsslp command.</p>
+<pre><code>    mkdef frame01-frame16 groups=&quot;all,frame&quot; hcp=hmc
+    mkdef f[01-16]cec[01-12] groups=&quot;all,cec&quot; hcp=hmc
+    mkdef f[01-16]fsp[01-12] groups=&quot;all,fsp&quot;    # do we really need to create the fsps???  Won&#39;t lsslp do that?
+</code></pre>
+<h4 id="update-the-node-definitions-with-vpd-and-ppc-information"><a href="#TOC"><strong>Update the node definitions with vpd and ppc information</strong></a></h4>
+<p>Before doing the full lsslp discovery, you must specify a few vpd and ppc attributes in the skeleton definitions so that lsslp can associate the hardware components discovered on the network with the definitions in the xCAT database.</p>
+<p>For the high end servers such as POWER 595/575 that exist in 24 inch frames, you only need to specify the Frame MTMS information, since the CECs (FSPs) will be automatically located by the BPA. For the System P low end servers that exist in 19 inch frames such as POWER 520, the CEC MTMS information must also be specified. To specify the VPD information, we will use <a href="http://xcat.sourceforge.net/man1/lsslp.1.html">lsslp</a> to help us create a stanza file:</p>
+<pre><code>    lsslp -m -s FRAME -z -i 192.168.200.205 &gt; /tmp/frame.stanza
+    lsslp -m -s CEC -z -i 192.168.200.205 &gt; /tmp/cec.stanza     # only needed for low-end servers
+</code></pre>
+<p>For high end servers environment, the &quot;vpd&quot; table needs to be updated to include the Frame MTMS information, and &quot;ppc&quot; table needs to be updated to include the CEC's parent which is the Frame node that is controlling it.</p>
+<p>For the low end servers environment, the &quot;vpd&quot; table needs to be updated to only include the CEC MTMS information.</p>
+<p>After collecting the Frame MTMS information for high end servers and CEC MTMS information for low end servers, and assign the proper nodenames in the stanza file, issue chdef to write them into xCAT DB.</p>
+<pre><code>    cat /stanza/file/Framepath &gt; chdef -z</code></pre>
+<p>or</p>
+<pre><code>    cat /stanza/file/CECpath &gt; chdef -z</code></pre>
+<p>The vpd table is looks like the following after writing the BPA/FSP MTMS information into xCAT DB.</p>
+<p>For high end servers:</p>
+<pre><code>    #node,serial,mtm,side,asset,comments,disable
+    &quot;frame1&quot;,&quot;99200G1&quot;,&quot;9A00-100&quot;,,,,
+    ... ...
+    &quot;frame16&quot;,&quot;99410D1&quot;,&quot;9A00-100&quot;,,,,
+</code></pre>
+<p>Note: The frames' MTMS information can be obtained from the BPA stanza file.</p>
+<p>For low end servers:</p>
+<pre><code>    #node,serial,mtm,side,asset,comments,disable
+    &quot;f1c1&quot;,&quot;100538P&quot;,&quot;8233-E8B&quot;,,,,
+    ... ...
+    &quot;f16c16&quot;,&quot;100496P&quot;,&quot;8233-E8B&quot;,,,,</code></pre>
+<p>For System P low end servers, the FSP MTMS information is found from the FSP stanza file that was created by lsslp command.</p>
+<ul>
+<li>Setting up the PPC table</li>
+</ul>
+<p>For high end CECs working with BPA(frame), the xCAT &quot;ppc&quot; table also needs to be updated to include the &quot;cage&quot; location information, the frame &quot;parent&quot; information for each CEC, and &quot;nodetype&quot; to indicate the hardware type for Frame and CECs. For low end CECs, the &quot;ppc&quot; table needs to be updated to include the &quot;nodetype&quot; attribute for CECs. The following command can help to write the &quot;cage id&quot; into ppc table:</p>
+<p>High end servers:</p>
+<pre><code>    chdef frame1 nodetype=frame
+    .
+    chdef frame16 nodetype=frame
+    chdef f1c1 id=1 parent=frame1 nodetype=cec
+    chdef f1c2 id=2 parent=frame1 nodetype=cec
+    .
+    chdef f16c2 id=2 parent=frame16 nodetype=cec</code></pre>
+<p>Low end servers:</p>
+<pre><code>    chdef f1c1 nodetype=cec
+    .
+    chdef f16c2 nodetype=cec</code></pre>
+<p>The ppc table will looks like:</p>
+<pre><code>    #node,hcp,id,pprofile,parent,supernode,comments,disable
+    &quot;f1c1&quot;,,&quot;1&quot;,,&quot;frame1a&quot;,,,
+    &quot;f1c2&quot;,,&quot;2&quot;,,&quot;frame1a&quot;,,,
+          .
+    &quot;f16c1&quot;,,&quot;1&quot;,,&quot;frame16a&quot;,,,
+    &quot;f16c2&quot;,,&quot;2&quot;,,&quot;frame16a&quot;,,,</code></pre>
+<h5 id="discover-hmcsframececs-and-define-them-in-xcat-db"><a href="#TOC"><strong>Discover HMCs/frame/CECs, and define them in xCAT DB</strong></a></h5>
+<p>The xCAT command lsslp is used to discovery the HMC/frame/CECs, to reference the hardware and network information from the DHCP server . It can then write the discovered information into xCAT DB . It can generate output in different format, including RAW, XML and stanza format. We recommend working with the -z flag to create stanza files, so the administrator can review the HW data prior to placing in the xCAT DB. The lsslp command does support the -w flag which can directly update the HW discovery data directly into the xCAT DB if the administrator does not need to make any changes.</p>
+<p>See man page of lsslp for details.</p>
+<ul>
+<li><strong>Use stanza file</strong></li>
+</ul>
+<p>Note: If you work with xCAT Direct FSP Management, you still need to discover the HMC below and make the connections between HMC and the hardware. The HMC will always be used for Service Focal Point an for Srvice Repair and Verify procedures. You always need to discover the Frame and CECs, and make their connections to xCAT management node or service node.</p>
+<p>Issue lsslp to locate the HMC information and write into a HMC stanza file. You will need to execute the -m (multicast) flag to reference later supported HMC V7R35x/V7R71 levels.</p>
+<pre><code>    lsslp -m -s HMC -z -i 192.168.200.205 &gt; /hmc/stanza/file</code></pre>
+<p>Review the HMC stanza file and make modifications if necessary.</p>
+<p>You will need to include the <strong>username</strong> and <strong>password</strong> attributes being used by the target HMC node. Make sure that the HMC host name and ip address is resolvable in the xCAT cluster name resolution (/etc/hosts, DNS).</p>
+<p>Write the HMC stanza information into xCAT DB with xCAT command mkdef.</p>
+<pre><code>    cat /hmc/stanza/file | mkdef -z</code></pre>
+<p>Issue lsslp command to reference the Frame information and write into the Frame stanza file .</p>
+<pre><code>    lsslp -s BPA -z -i 192.168.200.205 &gt; /frame/stanza/file</code></pre>
+<p>Review the frame stanza file and make modifications if necessary. You may want to update the frame server hostnames and/or BPA ip addresses to match your planned xCAT configuration.</p>
+<p>Write the Frame stanza information into xCAT DB with xCAT command mkdef</p>
+<pre><code>    cat /frame/stanza/file | mkdef -z</code></pre>
+<p>Issue lsslp to get CEC information and write into the CEC stanza file.</p>
+<pre><code>    lsslp -s FSP -z -i 192.168.200.205 &gt; /CEC/stanza/file</code></pre>
+<p>Review the CEC stanza file and make modifications if necessary. You may want to update the CEC hostnames and/or FSP ip addresses to match your planned xCAT configuration.</p>
+<p>Write the CEC stanza information into xCAT DB with xCAT command mkdef.</p>
+<pre><code>    cat /CEC/stanza/file | mkdef -z</code></pre>
+<h5 id="update-xcat-database-directly-with-lsslp"><a href="#TOC"><strong>Update xCAT database directly with lsslp</strong></a></h5>
+<p>You should only write directly into the xCAT DB if you are certain that the BPA/FSP server data specified by lsslp command is correct. This is used by experienced xCAT administrators, or if they are adding new System P servers into an existing xCAT cluster. The lsslp -w flag will update existing xCAT DB data, if the new HW discovery finds any BPA/FSP node contentions. The lsslp -n flag is used to locate only new found System P BPA/FSP servers during HW discovery. It can work with -z stanza, or the -w flag, but will only reference or add new BPA/FSP servers into the xCAT DB. The xCAT administrator always has the option to use the chdef command to add or modify attributes to the HMC/BPA/FSP node objects.</p>
+<h4 id="make-the-dynamic-ip-addresses-permanent"><a href="#TOC"><strong>Make the dynamic IP addresses permanent</strong></a></h4>
+<p>When the FSPs and BPAs are powered up for the first time, the MAC addresses for the FSPs and BPAs are not known by the DHCP server or the admin. We can only work a dynamic ip range in DHCP configuration file, so each FSP or BPA will get an dynamic ip address. The random ip address for each FSP or BPA could change when the DHCP client on FSP or BPA restarts. We recommend using a large enough dynamic ip range to avoid the DHCP ip addresses reuse. Be aware that using dynamic ip addresses will increase the maintenance effort, because you can not guarantee BPA/FSP server ip address. Using dynamic DHCP ip addresses opens the possibility that FSPs/BPAs ip addresses may be changed during the FSPs/BPAs server reboot. The FSPs/BPAs ip addresses changing will result in HMC and xCAT DFM connection being lost, where you have to do some administrator steps to recover. The dynamic DHCP ip addresses solution should be able to work well for most of the scenarios when the proper dynamic range is used on the Cluster service network.</p>
+<p>There is a way provided by xCAT to make the dynamic IP address to be permanent to avoid the above issue. If the DHCP client MAC address and ip address mapping is specified in the DHCP AIX configuration file /etc/dhcpsd.cnf, RHEL lease file /var/lib/dhcpd/dhcpd.leases or SLES lease file /var/lib/dhcp/db/dhcp.leases, the BPA/FSP will consistently receive the same ip address from the DHCP server. The BPA/FSPs' IP address will not be changed during the BPA/FSPs' reboot.</p>
+<p>Issue the makedhcp -a command to write the dynamic ip addresses, server host names, and MAC address of the BPA and FSP in the xCAT DB into the DHCP AIX configuration file/etc/dhcpsd.cnf, RHEL lease file /var/lib/dhcpd/dhcpd.leases, SLESlease file /var/lib/dhcp/db/dhcp.leases.. See more details in man page of makedhcp:</p>
+<pre><code>    makedhcp -a</code></pre>
+<p>You can also execute lsslp command with --makedhcp option to update the DHCP configuration with the dynamic ip address, server name and MAC address of BPA/FSP. This will use the information from xCAT DB and update the DHCP AIX configuration file /etc/db_file.cr, RHEL lease file /var/lib/dhcpd/dhcpd.leases, or SLES lease file /var/lib/dhcp/db/dhcp.leases also.</p>
+<h3 id="define-the-hardware-control-point-for-the-framescecs."><a href="#TOC"><strong>Define the hardware control point for the Frames/CECs.</strong></a></h3>
+<p>The following command will create an xCAT node definition for an HMC with a host name of hmc1. The groups, nodetype, mgt, username, and password attributes will be set.</p>
+<pre><code>    mkdef -t node -o hmc1 groups=hmc,all nodetype=ppc hwtype=hmc mgt=hmc username=hscroot password=abc123</code></pre>
+<p>to change and add new groups:</p>
+<pre><code>    chdef -t node -o hmc1 groups=hmc,rack1,all</code></pre>
+<p>to verify your data:</p>
+<pre><code>    lsdef -l hmc1</code></pre>
+<p>If xCAT Management Node is in the same service network with HMC, you will be able to discover the HMC and create an xCAT node definition for the HMC automatically.</p>
+<pre><code>    lsslp -w -s HMC</code></pre>
+<p>To check for the hmc name added to the nodelist:</p>
+<pre><code>    tabdump nodelist</code></pre>
+<p>The above xCAT command lsslp discovers and writes the HMCs into xCAT database, but we still need to set HMCs' username and password.</p>
+<pre><code>    chdef -t node -o &lt;hmcname from lsslp&gt; username=hscroot password=abc123</code></pre>
+<h3 id="make-connections-from-framescecs-to-hmc"><a href="#TOC"><strong>Make connections from Frames/CECs to HMC</strong></a></h3>
+<p>Change the hcp and mgt of Frames/CECs</p>
+<pre><code>    chdef frame hcp=hmc1 mgt=hmc</code></pre>
+<p>Have HMC establish connections to all of the frames:</p>
+<pre><code>    mkhwconn frame -t</code></pre>
+<p>Verify the connections were made successfully:</p>
+<pre><code>    lshwconn frame
+    frame14: connected
+    frame14: connected</code></pre>
+<p>If the BPA passwords are still the factory defaults, you must change them before running any other commands to them:</p>
+<pre><code>    rspconfig frame general_passwd=general,&lt;newpd&gt;
+    rspconfig frame admin_passwd=admin,&lt;newpd&gt;
+    rspconfig frame HMC_passwd=,&lt;newpd&gt;</code></pre>
+<h3 id="define-the-compute-nodes"><a href="#TOC">Define the Compute Nodes</a></h3>
+<p>The definition of a node is stored in several tables of the xCAT database.</p>
+<p>You can use <strong>rscan</strong> command to discover the HCP to get the nodes that managed by this HCP. The discovered nodes can be stored into a stanza file. Then edit the stanza file to keep the nodes which you want to create and use the mkdef command to create the nodes definition.</p>
+<h3 id="discover-the-lpars-managed-by-hmc-using-rscan"><a href="#TOC">Discover the LPARs managed by HMC using rscan</a></h3>
+<p>Run the <strong>rscan</strong> command to gather the LPAR information. This command can be used to display the LPAR information in several formats and can also write the LPAR information directly to the xCAT database. In this example we will use the &quot;-z&quot; option to create a stanza file that contains the information gathered by <strong>rscan</strong> as well as some default values that could be used for the node definitions.</p>
+<p>To write the stanza format output of <strong>rscan</strong> to a file called &quot;node.stanza&quot; run the following command. We are assuming, for our example ,that the hmc name returned from lsslp was hmc1.</p>
+<pre><code>    rscan -z hmc1 &gt; node.stanza</code></pre>
+<p>This file can then be checked and modified as needed. For example you may need to add a different name for the node definition or add additional attributes and values.</p>
+<p><strong>Note''</strong>: The stanza file will contain stanzas for things other than the LPARs. This information must also be defined in the xCAT database. ''The stanza will repeat the same bpa'<em>* information for multiple fsp(s). '</em>*It is not necessary to modify the non-LPAR stanzas in any way.</p>
+<p>The stanza file will look something like the following.</p>
+<pre><code>    Server-9117-MMA-SN10F6F3D:
+    objtype=node
+    nodetype=fsp
+    id=5
+    model=9118-575
+    serial=02013EB
+    hcp=hmc01
+    pprofile=
+    parent=Server-9458-10099201WM_A
+    groups=fsp,all
+    mgt=hmc
+    pnode1:
+    objtype=node
+    nodetype=lpar,osi
+    id=9
+    hcp=hmc1
+    pprofile=lpar9
+    parent=Server-9117-MMA-SN10F6F3D
+    groups=lpar,all
+    mgt=hmc
+    cons=hmc
+    pnode2:
+    objtype=node
+    nodetype=lpar,osi
+    id=7
+    hcp=hmc1
+    pprofile=lpar6
+    parent=Server-9117-MMA-SN10F6F3D
+    groups=lpar,all
+    mgt=hmc
+    cons=hmc</code></pre>
+<p><strong>Note''</strong>: The ''<strong>rscan''</strong> command supports an option ( -w) to automatically create node definitions in the xCAT database. To do this the LPAR name gathered by ''<strong>rscan''</strong> is used as the node ''name and the command sets several default values. If you use the -w option, make sure the LPAR name you defined will be the name you want used as your node name.</p>
+<p>For a node which was defined correctly before, you can use the following commands to export the definition into the node.stanza, then edit the node.stanza file and then update the database with changes.</p>
+<pre><code>    lsdef -z  nodename &gt; node.stanza
+    cat node.stanza | chdef -z </code></pre>
+<h3 id="define-xcat-node-using-the-stanza-file"><a href="#TOC">Define xCAT node using the stanza file</a></h3>
+<p>The information gathered by the **rscan **command with the -z options creates a stanza format and also can be used to create xCAT node definitions by running the following command:</p>
+<pre><code>    
+    cat node.stanza | mkdef -z</code></pre>
+<p>Verify the data:</p>
+<pre><code>    lsdef -t node -l all</code></pre>
+<h3 id="define-xcat-nodes-using-xcatsetup"><a href="#TOC">Define xCAT nodes using xcatsetup</a></h3>
+<p>For P7/IH, Create Cluster Config File - The customer creates an hw/cluster configuration data file that contains the info enumerated below. The purpose of this file is for the customer to describe how all the discovered hw components should be logically arranged, ordered, and configured. This is because, during the discovery phase (step 5), we will 1st SLP discover all of the raw hw components (HMCs, BPAs, FSPs) on the service network. But this only gives us basic info about each component (MTMS, MAC, etc). We don't know the physical arrangement of the components, and we don't know the IP/hostnames the customer wants for each one. Therefore, the customer below provides that info. You can think of this as a cluster plan or blueprint - used to automate the configuration of the system and used to verify the cluster configuration. The cluster config file also allows the customer to provide some basic info about the other HPC products so that a basic set up of them can be accomplished throughout the cluster. The format of the file will be typical stanza file format. See the cluster config file mini-design, <a href="Cluster_config_file">Cluster_config_file</a>, for more details and the xcatsetup man page [<a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">http://xcat.sourceforge.net/man8/xcatsetup.8.html...</a>] for the exact format and keywords in the files.</p>
+<pre><code>    xcatsetup &lt;cluster_config_file&gt;</code></pre>
+<h3 id="hw-discovery-limitations"><a href="#TOC"><strong>HW Discovery Limitations</strong></a></h3>
+<p>The following are limitations of HW discovery working with xCAT 2.4 +</p>
+<ul>
+<li>In a cluster that contains a large number of P5 IH machines, the <strong>lsslp</strong> command may not be able to discover all machines. You can reduce this scaling issue with lsslp by using the -t (retry times) and -c (timeout value) flags . For an example:</li>
+</ul>
+<pre><code>    lsslp -s FSP -i 192.168.200.205 -t 5 -c 3000,3000,3000,3000,3000</code></pre>
+<p>See lsslp man page for the details.</p>
+<ul>
+<li><p>For HMC with V7R350 and V7R340 release, we had experienced some HMC discovery issues &quot;lsslp -m&quot; in different layer2/layer3 ethernet switch environments. In this case, the xCAT admin may have to manually create the HMC node objects using xCAT command <strong>mkdef</strong>.</p></li>
+<li><p>If you run xCAT command lsslp with flag &quot;-w&quot; to auto discover BPA/FSP and create BPA/FSP nodes in xCAT DB, there are some types of Frame/CEC that cannot resolve the user-defined BPA/FSP system names to xCAT. This is because the node name created by lsslp is not consistent as the system name that is known by HMC. This limitation will not block most functions of xCAT. If system admins want to sync the user-defined system names used by the HMC to xCAT DB, run rscan with -u option to update the FSP/BPA node names in the xCAT database. The rscan -u command should only be executed after the running of the mkhwconn command.</p></li>
+</ul>
+</body>
+</html>

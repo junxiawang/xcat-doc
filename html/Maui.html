@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p>Maui Installation</p>
+<p>If you need torque installation help, check out section 12 in the cookbook.</p>
+<p><strong>Download Maui</strong></p>
+<p>Go to http://clusterresources.com, create an account and download here:<br />http://www.clusterresources.com/product/maui/index.php?<br />Put the tarball in /tmp</p>
+<p><strong>Configure and Build</strong></p>
+<pre><code>**tar zxvf maui-3.2.6p20.tar.gz
+cd maui-3.2.6p20
+# If you set torque up as specified in xCAT docs, you&#39;ll need to create some links:
+cd /opt/torque
+ln -s x86_64/bin .
+ln -s x86_64/lib .
+ln -s x86_64/sbin .
+export PATH=$PATH:/opt/torque/x86_64/bin/
+./configure --prefix=/opt/maui --with-pbs=/opt/torque/
+make -j8
+make install
+cp /opt/xcat/share/xcat/netboot/add-on/torque/moab /etc/init.d/maui
+# Edit /etc/init.d/maui so that all MOAB is MAUI and all moab becomes maui
+service start maui
+chkconfig --level 345 maui on
+# edit /etc/profile.d/maui so that it says:
+export PATH=$PATH:/opt/maui/bin
+source /etc/profile.d/maui
+# edit /usr/local/maui/maui.cfg
+Change: RMCFG[&amp;lt;YOURHOSTNAME&amp;gt;] TYPE=PBS@...@ to:
+RMCFG[&amp;lt;YOURHOSTNAME&amp;gt;] TYPE=PBS
+service maui restart</code></pre>
+<p>Now run:</p>
+<pre><code>showq</code></pre>
+<p>You should see all of the processors.<br />Next try running a job to make sure that maui picks it up.<br />QED</p>
+</body>
+</html>

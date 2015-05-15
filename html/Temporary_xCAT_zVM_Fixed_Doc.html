@@ -1,0 +1,787 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#document-abstract">Document Abstract</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#support-on-zvm-and-linux-on-system-z">Support on z/VM and Linux on System z</a></li>
+<li><a href="#design-architecture">Design Architecture</a></li>
+<li><a href="#prerequisite">Prerequisite</a><ul>
+<li><a href="#xcat-management-node">xCAT Management Node</a></li>
+<li><a href="#system-z-hardware-control-point">System z Hardware Control Point</a></li>
+</ul></li>
+<li><a href="#planning">Planning</a></li>
+<li><a href="#installation-of-xcat">Installation of xCAT</a><ul>
+<li><a href="#red-hat-enterprise-linux">Red Hat Enterprise Linux</a></li>
+<li><a href="#suse-linux-enterprise-server">SUSE Linux Enterprise Server</a></li>
+<li><a href="#finalizing-installation">Finalizing Installation</a></li>
+</ul></li>
+<li><a href="#installation-of-xcat-ui">Installation of xCAT UI</a><ul>
+<li><a href="#red-hat-enterprise-linux-1">Red Hat Enterprise Linux</a></li>
+<li><a href="#suse-linux-enterprise-server-1">SUSE Linux Enterprise Server</a></li>
+<li><a href="#ssl-configuration">SSL Configuration</a><ul>
+<li><a href="#red-hat-enterprise-linux-2">Red Hat Enterprise Linux</a></li>
+<li><a href="#suse-linux-enterprise-server-2">SUSE Linux Enterprise Server</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#installation-of-zhcp">Installation of zHCP</a><ul>
+<li><a href="#configuring-zvm-smapi-and-dirmaint">Configuring z/VM, SMAPI, and DirMaint</a></li>
+<li><a href="#configuring-zhcp">Configuring zHCP</a></li>
+</ul></li>
+<li><a href="#initializing-database">Initializing Database</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#document-abstract">Document Abstract</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#support-on-zvm-and-linux-on-system-z">Support on z/VM and Linux on System z</a></li>
+<li><a href="#design-architecture">Design Architecture</a></li>
+<li><a href="#prerequisite">Prerequisite</a></li>
+<li><a href="#xcat-management-node">xCAT Management Node</a></li>
+<li><a href="#system-z-hardware-control-point">System z Hardware Control Point</a></li>
+<li><a href="#planning">Planning</a></li>
+<li><a href="#installation-of-xcat">Installation of xCAT</a></li>
+<li><a href="#red-hat-enterprise-linux">Red Hat Enterprise Linux</a></li>
+<li><a href="#suse-linux-enterprise-server">SUSE Linux Enterprise Server</a></li>
+<li><a href="#finalizing-installation">Finalizing Installation</a></li>
+<li><a href="#installation-of-xcat-ui">Installation of xCAT UI</a></li>
+<li><a href="#red-hat-enterprise-linux-1">Red Hat Enterprise Linux</a></li>
+<li><a href="#suse-linux-enterprise-server-1">SUSE Linux Enterprise Server</a></li>
+<li><a href="#ssl-configuration">SSL Configuration</a>
+<ul>
+<li><a href="#red-hat-enterprise-linux-2">Red Hat Enterprise Linux</a></li>
+<li><a href="#suse-linux-enterprise-server-2">SUSE Linux Enterprise Server</a></li>
+</ul></li>
+<li><a href="#installation-of-zhcp">Installation of zHCP</a></li>
+<li><a href="#configuring-zvm-smapi-and-dirmaint">Configuring z/VM, SMAPI, and DirMaint</a></li>
+<li><a href="#configuring-zhcp">Configuring zHCP</a></li>
+<li><a href="#initializing-database">Initializing Database</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>[[img src=Official-xcat-doc.png]]</p>
+<h2 id="document-abstract"><a href="#TOC">Document Abstract</a></h2>
+<p>This document provides an overview and an installation guide for xCAT on z/VM and Linux on System z. For technical support, please post your question(s) on the <a href="https://lists.sourceforge.net/lists/listinfo/xcat-user">mailing-list</a>.</p>
+<h2 id="terminology"><a href="#TOC">Terminology</a></h2>
+<p>This section outlines the terminology used within this document.</p>
+<ul>
+<li><strong>DirMaint</strong>: CMS application that helps manage an installation's VM directory.</li>
+<li><strong>Ganglia</strong>: <em>&quot;Ganglia consists of two unique daemons (gmond and gmetad), a PHP-based web frontend and a few other small utility programs. Gmond is a multi-threaded daemon which runs on each cluster node you want to monitor. Gmetad is the daemon that monitors the other nodes by periodically polling them, parsing the collected XML, and saving all the numeric, volatile metrics to the round-robin databases.&quot;</em> - Ganglia Development Team</li>
+<li><strong>Life cycle</strong>: A collection of tasks that include: power on/off of a virtual server, and create/edit/delete of a virtual server.</li>
+<li><strong>SMAPI</strong>: The Systems Management APIs simplify the task of managing many virtual images running under a single z/VM image.</li>
+<li><strong>Virtual server</strong>: A server composed of virtualized resources. An operating system can be installed on a virtual server.</li>
+<li><strong>VMCP</strong>: Linux module that allows execution of CP commands.</li>
+<li>CP: <em>&quot;The Control Program (CP) is the operating system that underlies all of z/VM. It is responsible for virtualizing your z/Series machine's real hardware, and allowing many virtual machines to simultaneously share the hardware resource.&quot;</em> - IBM</li>
+<li><strong>xCAT</strong>: xCAT (Extreme Cloud Administration Tool) is a toolkit that provides support for the deployment and administration of large cloud environments.</li>
+<li><strong>zHCP</strong>: zHCP (System z Hardware control point) is a Linux virtual server that interfaces with SMAPI and CP and manages other virtual servers on z/VM.</li>
+<li><strong>AutoYaST</strong>: <em>&quot;AutoYaST is a system for installing one or more SUSE Linux systems automatically and without user intervention. AutoYaST installations are performed using an autoyast profile with installation and configuration data.&quot;</em> -SUSE</li>
+<li><strong>Kickstart</strong>: <em>&quot;Automated installation for Red Hat. It uses a file containing the answers to all the questions that would normally be asked during a typical Red Hat Linux installation.&quot;</em> -Red Hat</li>
+</ul>
+<h2 id="support-on-zvm-and-linux-on-system-z"><a href="#TOC">Support on z/VM and Linux on System z</a></h2>
+<p>This section provides a list of supported functionalities on xCAT for z/VM and Linux on System z.</p>
+<ol style="list-style-type: decimal">
+<li>Lifecycle Management
+<ul>
+<li>Power on/off VM</li>
+<li>Create/edit/delete VM</li>
+<li>Migrate VM between any z/VM in an SSI cluster (only in z/VM 6.2)</li>
+</ul></li>
+<li>Inventory
+<ul>
+<li>Software and hardware inventory of VM or z/VM system</li>
+<li>Resource (e.g. disks, networks) inventory of z/VM system</li>
+</ul></li>
+<li>Image Management
+<ul>
+<li>Cloning VM</li>
+<li>Vanilla installation of Linux via Autoyast or Kickstart</li>
+<li>Provisioning diskless VM via NFS read-only root filesystem</li>
+</ul></li>
+<li>Network Management
+<ul>
+<li>Supports Layer 2 and 3 network switching for QDIO GLAN/VSWITCH and Hipersockets GLAN</li>
+<li>Create/edit/delete QDIO GLAN/VSWITCH and Hipersockets GLAN</li>
+<li>Add/delete virtual network devices to VM</li>
+</ul></li>
+<li>Storage Management
+<ul>
+<li>Manage ECKD/FBAnative SCSI disks within a disk pool</li>
+<li>Add/remove ECKD/FBA/native SCSI disks from VM</li>
+<li>Attach or detach ECKD/FBA/native SCSI disks to a z/VM system</li>
+</ul></li>
+<li>OS Management
+<ul>
+<li>Upgrading Linux OS</li>
+<li>Add/update/remove software packages on OS</li>
+<li>Basic xCAT functionalities, e.g. remote shell, post-scripts, rsync, etc.</li>
+</ul></li>
+<li>Monitoring
+<ul>
+<li>Linux monitoring using Ganglia</li>
+</ul></li>
+<li>Others
+<ul>
+<li>Full command line interface support</li>
+<li>Web user interface support</li>
+<li>Self-service portal to provision VM on demand</li>
+</ul></li>
+</ol>
+<h2 id="design-architecture"><a href="#TOC">Design Architecture</a></h2>
+<p>This section provides an architectural overview of xCAT on z/VM and Linux on System z.</p>
+<p>[[img src=Architecture.png]] <strong>Figure 1</strong>. Shows the layout of xCAT on System z.</p>
+<p>xCAT can be used to manage virtual servers spanning across multiple z/VM partitions. The xCAT management node (MN) runs on any Linux virtual server. It manages each z/VM partition using a System z hardware control point (zHCP) running on a privileged Linux virtual server. The zHCP interfaces with z/VM systems management API (SMAPI), directory manager (DirMaint), and control program layer (CP) to manage the z/VM partition. It utilizes a C socket interface to communicate with the SMAPI layer and VMCP Linux module to communicate with the CP layer.</p>
+<h2 id="prerequisite"><a href="#TOC">Prerequisite</a></h2>
+<p>This section details what is required before you setup xCAT on z/VM and Linux on System z.</p>
+<p>[[img src=Environment.jpg]] <strong>Figure 1.</strong> Sample environment</p>
+<p>Before you can install xCAT, there are a couple of prerequisites. You need to have two virtual machines (one VM for the xCAT MN and the other for the zHCP) running Linux. You can optionally use one virtual machine (used as both the xCAT MN and zHCP). However, you need at least one zHCP per z/VM system.</p>
+<p>Both the xCAT MN and zHCP are linked to LNXMAINT, which contains files used by both CMS and Linux. LNXMAINT is a user that you create (if one is not already present).</p>
+<p>LNXMAINT has the following directory entry:</p>
+<pre><code>USER LNXMAINT PWD 64M 128M BEG
+INCLUDE TCPCMSU
+LINK TCPMAINT 0592 0592 RR
+MDISK 0191 3390 1 20 EM6340 MR
+MDISK 0192 3390 1 279 EM6341 MR</code></pre>
+<p>It is recommended that you have the following PROFILE EXEC on LNXMAINT 192 disk (which is linked to all virtual servers on the z/VM partition).</p>
+<pre><code>/* PROFILE EXEC for Linux virtual servers */
+&#39;CP SET RUN ON&#39;
+&#39;CP SET PF11 RETRIEVE FORWARD&#39;
+&#39;CP SET PF12 RETRIEVE&#39;
+&#39;ACC 592 C&#39;
+&#39;PIPE CP QUERY&#39; userid() &#39;| var user&#39;
+parse value user with id . dsc .
+if (dsc = &#39;DSC&#39;) then /* User is disconnected */
+    &#39;CP IPL 100&#39;
+else /* User is interactive -&amp;gt; prompt */
+do
+    say &#39;Do you want to IPL Linux from minidisk 100? y/n&#39;
+    parse upper pull answer .
+    if (answer = &#39;Y&#39;) then &#39;CP IPL 100&#39;
+end /* else */</code></pre>
+<p>This statement in the PROFILE EXEC enables each virtual machine to IPL 100 upon startup.</p>
+<p>For more information on how to setup z/VM, refer to <a href="http://www.redbooks.ibm.com/abstracts/sg247931.html?Open">Virtualization Cookbook for SLES 11 SP1</a> or <a href="http://www.redbooks.ibm.com/abstracts/sg247932.html">Virtualization Cookbook for RHEL 6.0 on z/VM</a>.</p>
+<h3 id="xcat-management-node"><a href="#TOC">xCAT Management Node</a></h3>
+<p>In our development environment, the xCAT MN has the following directory entry:</p>
+<pre><code>USER LNX1 PWD 1G 2G G
+INCLUDE LNXDFLT
+COMMAND SET VSWITCH VSW2 GRANT LNX1
+MDISK 0100 3390 0001 10016 EMC21A MR
+MDISK 0101 3390 0001 10016 EMC21C MR
+MDISK 0102 3390 0001 10016 EMC28B MR</code></pre>
+<p>where the user profile, LNXDFLT, contains:</p>
+<pre><code>PROFILE LNXDFLT
+CPU 00 BASE
+CPU 01
+IPL CMS
+MACHINE ESA 4
+CONSOLE 0009 3215 T
+NICDEF 0800 TYPE QDIO LAN SYSTEM VSW2
+SPOOL 000C 2540 READER *
+SPOOL 000D 2540 PUNCH A
+SPOOL 000E 1403 A
+LINK MAINT 0190 0190 RR
+LINK MAINT 019E 019E RR
+LINK LNXMAINT 0192 0191 RR</code></pre>
+<p>To install Linux onto this virtual server, we used the following parm file:</p>
+<pre><code>ramdisk_size=65536 root=/dev/ram1 ro init=/linuxrc TERM=dumb        
+HostIP=10.1.100.1 Hostname=gpok1.endicott.ibm.com          
+Gateway=10.1.100.1 Netmask=255.255.255.0                       
+Broadcast=10.1.100.255 Layer2=1 OSAHWaddr=02:00:06:FF:FF:FF     
+ReadChannel=0.0.0800  WriteChannel=0.0.0801  DataChannel=0.0.0802
+Nameserver=10.1.100.1                                          
+portname=FOOBAR                                                     
+portno=0                                                            
+Install=nfs://10.1.100.254/install/SLES-11-SP1-DVD-s390x-GMC3-DVD1.iso
+UseVNC=1 VNCPassword=12345678                                       
+InstNetDev=osa OsaInterface=qdio OsaMedium=eth Manual=0</code></pre>
+<p>It is recommended that you use LVM for the install directory (/install), so you are not constrained by disk size. In our development environment, we allocated 4GB to the root filesystem (/) and the rest (17GB) into an LVM partition for /install. The xCAT MN is connected to NICDEF 0800 which uses VSW2, a layer 2 VSWITCH. If you plan to have your virtual machines use DHCP, each virtual server must be connected to a layer 2 VSWITCH. It is recommended that you create a layer 2 VSWITCH, which will allow virtual machines to communicate across LPARs and CECs.</p>
+<p>The xCAT MN can run on any Linux distribution, SLES or RHEL. In our development environment, the xCAT MN was setup on SLES 11 SP1 with Server Base, Gnome, and X Windows packages installed. You need Gnome desktop in order to use VNC viewer.</p>
+<h3 id="system-z-hardware-control-point"><a href="#TOC">System z Hardware Control Point</a></h3>
+<p>In our development environment, the zHCP has the following directory entry:</p>
+<pre><code>USER LNX2 PWD 512M 1G ABCDG
+COMMAND SET VSWITCH VSW2 GRANT LNX2
+CPU 00 BASE
+CPU 01
+IPL CMS
+MACHINE ESA 4
+OPTION LNKNOPAS
+CONSOLE 0009 3215 T
+NICDEF 0800 TYPE QDIO LAN SYSTEM VSW2
+SPOOL 000C 2540 READER *
+SPOOL 000D 2540 PUNCH A
+SPOOL 000E 1403 A
+LINK MAINT 0190 0190 RR
+LINK MAINT 019E 019E RR
+LINK LNXMAINT 0192 0191 RR
+MDISK 0100 3390 1 10016 EMC278</code></pre>
+<p>To install Linux onto this virtual server, we used the following parm file:</p>
+<pre><code>ramdisk_size=65536 root=/dev/ram1 ro init=/linuxrc TERM=dumb        
+HostIP=10.1.100.2 Hostname=gpok1.endicott.ibm.com             
+Gateway=10.1.100.2 Netmask=255.255.255.0                         
+Broadcast=10.1.100.255 Layer2=1 OSAHWaddr=02:00:06:FF:FF:FE       
+ReadChannel=0.0.0800  WriteChannel=0.0.0801  DataChannel=0.0.0802 
+Nameserver=10.1.100.1                                             
+portname=FOOBAR                                                     
+portno=0                                                            
+Install=nfs://10.1.100.1/install/SLES-10-SP3-DVD-s390x-DVD1.iso
+UseVNC=1 VNCPassword=12345678                                       
+InstNetDev=osa OsaInterface=qdio OsaMedium=eth Manual=0</code></pre>
+<p>It is recommended that you mount the root filesystem (/) onto MDISK 0100. You do not need 10016 cylinders allocated to the zHCP, but you do need enough for small Linux operating system. The zHCP is connected to NICDEF 0800 which uses VSW2, a layer 2 VSWITCH. The NICDEF must be specified in the directory entry and not in a profile. The zHCP has A, B, C, D, and G privileges. It needs class A privilege to use the FORCE command, class B privilege to use the ATTACH and FLASHCOPY command (if permitted), class C privilege to use the SEND command, and class D privilege to use the PURGE command.</p>
+<p>Since there are only a few privileged CP commands needed by the zHCP, it is possible to create a custom privilege class, instead of using ABCDG privilege classes. It is recommended that you create a custom privilege class (e.g. X) in order to mitigate possible threats to the z/VM system managed by the zHCP. See Section 9 [XCAT_zVM] for more info.</p>
+<p>The zHCP can run on any Linux distribution, SLES or RHEL. In our development environment, the zHCP was setup on SLES 10 SP3 with Server Base package installed.</p>
+<h2 id="planning"><a href="#TOC">Planning</a></h2>
+<p>This section helps you plan the layout of the xCAT cloud environment.</p>
+<p>You can find the configuration we used in our development environment below in the table. You should plan out how your cloud environment would be configured based on the examples given.</p>
+<ul>
+<li><strong>Network:</strong>
+<ul>
+<li>Gateway: 10.1.100.1</li>
+<li>Netmask: 255.255.255.0</li>
+<li>IP range: 10.1.100.1-10.1.100.254</li>
+<li>Hostname range: gpok1-gpok254</li>
+<li>Broadcast: 10.1.100.255</li>
+<li>Nameserver: 10.1.100.1</li>
+</ul></li>
+<li><strong>FTP server containing Linux ISOs:</strong>
+<ul>
+<li>IP: 10.1.100.254</li>
+</ul></li>
+<li><strong>xCAT management node:</strong>
+<ul>
+<li>Hostname: gpok1.endicott.ibm.com</li>
+<li>IP: 10.1.100.1</li>
+<li>UserID: LNX1</li>
+</ul></li>
+<li><strong>Hardware control point(s):</strong>
+<ul>
+<li>Hostname: gpok2.endicott.ibm.com</li>
+<li>IP: 10.1.100.2</li>
+<li>UserID: LNX2</li>
+<li>LPAR: POKDEV61</li>
+<li>Network: VSW2 (layer 2 VSWITCH)</li>
+</ul></li>
+</ul>
+<h2 id="installation-of-xcat"><a href="#TOC">Installation of xCAT</a></h2>
+<p>This section details how to install the xCAT management node.</p>
+<h3 id="red-hat-enterprise-linux"><a href="#TOC">Red Hat Enterprise Linux</a></h3>
+<p>If you have a Red Hat Linux, follow the instructions below.</p>
+<ol style="list-style-type: decimal">
+<li>Logon as root using a Putty terminal</li>
+<li><p>Disable SELinux</p>
+<pre><code># echo 0 &amp;gt; /selinux/enforce</code></pre></li>
+</ol>
+<p>The command above will switch off enforcement temporarily, until you reboot the system.<br />To make it permanent, edit /etc/selinux/config and change SELINUX=enforcing to SELINUX=permissive.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Add the RHEL repository to yum
+<ul>
+<li><p>Create a repository file</p>
+<pre><code># touch /etc/yum.repos.d/rhel-dvd.repo</code></pre></li>
+<li><p>Insert the following into the repository file rhel-dvd.repo</p>
+<pre><code>[rhel-dvd]
+name=RHEL DVD
+baseurl=ftp://xxx-ftp-path
+enabled=1
+gpgcheck=1</code></pre></li>
+</ul></li>
+</ol>
+<p>where xxx-ftp-path is the FTP path to the RHEL DVD. For example:</p>
+<pre><code>        [rhel-dvd]
+        name=RHEL DVD
+        baseurl=ftp://10.1.100.254/rhel6.2/s390x/Server
+        enabled=1
+        gpgcheck=1
+
+
+* Download the `RPM-GPG-KEY-redhat-release` from the FTP server (e.g. [ftp://10.1.100.254/rhel6.2/s390x/)](ftp://10.1.100.254/rhel6.2/s390x/) onto this node.
+* Import the key 
+
+        # rpm --import RPM-GPG-KEY-redhat-release</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li><p>Make an xcat directory under /root</p>
+<pre><code># mkdir /root/xcat</code></pre></li>
+<li>Download the latest xCAT tarballs, xcat-core-xxx.tar.bz2 and xcat-dep-xxx.tar.bz2 (where xxx is the release and version number) from &lt;https://sourceforge.net/p/xcat/wiki/Download_xCAT/&gt; onto /root/xcat</li>
+<li><p>Extract the contents of each tarball</p>
+<pre><code># cd /root/xcat
+# tar jxf xcat-core-xxx.tar.bz2
+# tar jxf xcat-dep-xxx.tar.bz2</code></pre></li>
+<li><p>Create a yum repositories for xCAT<br />If you have Red Hat Enterprise Linux 5:</p>
+<pre><code># /root/xcat/xcat-dep/rh5/s390x/mklocalrepo.sh
+# /root/xcat/xcat-core/mklocalrepo.sh</code></pre></li>
+</ol>
+<p>If you have Red Hat Enterprise Linux 6:</p>
+<pre><code>    # /root/xcat/xcat-dep/rh6/s390x/mklocalrepo.sh
+    # /root/xcat/xcat-core/mklocalrepo.sh</code></pre>
+<ol start="8" style="list-style-type: decimal">
+<li><p>Use <code>yum</code> to install xCAT</p>
+<pre><code># yum clean metadata
+# yum install xCAT</code></pre></li>
+</ol>
+<p>Ignore the warning messages (if any) about the keys and accept them.</p>
+<h3 id="suse-linux-enterprise-server"><a href="#TOC">SUSE Linux Enterprise Server</a></h3>
+<p>If you have a SUSE Linux, follow the instructions below.</p>
+<ol style="list-style-type: decimal">
+<li>Logon as root using a Putty terminal</li>
+<li><p>Install the DHCP server through yast (if not already)</p>
+<pre><code># zypper install dhcp-server</code></pre></li>
+<li><p>Make an xcat directory under /root</p>
+<pre><code># mkdir /root/xcat</code></pre></li>
+<li>Download the latest xCAT tarballs, xcat-core-xxx.tar.bz2 and xcat-dep-xxx.tar.bz2 (where xxx is the version number) from &lt;https://sourceforge.net/p/xcat/wiki/Download_xCAT/&gt; onto /root/xcat</li>
+<li><p>Extract the contents of each tarball</p>
+<pre><code># cd /root/xcat
+# tar jxf xcat-core-xxx.tar.bz2
+# tar jxf xcat-dep-xxx.tar.bz2</code></pre></li>
+<li>Add the xCAT repositories to zypper
+<ul>
+<li><p>If you have SUSE Linux Enterprise Server 10:</p>
+<pre><code># zypper sa file:///root/xcat/xcat-dep/sles10/s390x xCAT-dep
+# zypper sa file:///root/xcat/xcat-core xcat-core</code></pre></li>
+<li><p>If you have SUSE Linux Enterprise Server 11:</p>
+<pre><code># zypper ar file:///root/xcat/xcat-dep/sles11/s390x xCAT-dep
+# zypper ar file:///root/xcat/xcat-core xcat-core</code></pre></li>
+</ul></li>
+</ol>
+<p>Ignore the warning messages (if any) about the keys and accept them.</p>
+<ol start="7" style="list-style-type: decimal">
+<li><p>Use zypper to install xCAT</p>
+<pre><code># zypper install xCAT</code></pre></li>
+</ol>
+<h3 id="finalizing-installation"><a href="#TOC">Finalizing Installation</a></h3>
+<p>Continue with the following steps once you completed installing xCAT:</p>
+<ol style="list-style-type: decimal">
+<li><p>Add the xCAT commands to path</p>
+<pre><code># source /etc/profile.d/xcat.sh</code></pre></li>
+<li><p>Check if the database is initialize</p>
+<pre><code># tabdump site</code></pre></li>
+</ol>
+<p>The output should look similar to the following:</p>
+<pre><code>    #key,value,comments,disable
+    &quot;blademaxp&quot;,&quot;64&quot;,,
+    &quot;domain&quot;,&quot;endicott.ibm.com&quot;,,
+    &quot;fsptimeout&quot;,&quot;0&quot;,,
+    &quot;installdir&quot;,&quot;/install&quot;,,
+    &quot;ipmimaxp&quot;,&quot;64&quot;,,
+    &quot;ipmiretries&quot;,&quot;3&quot;,,
+    &quot;ipmitimeout&quot;,&quot;2&quot;,,
+    &quot;consoleondemand&quot;,&quot;no&quot;,,
+    &quot;master&quot;,&quot;10.1.100.1&quot;,,
+    &quot;maxssh&quot;,&quot;8&quot;,,
+    &quot;ppcmaxp&quot;,&quot;64&quot;,,
+    &quot;ppcretry&quot;,&quot;3&quot;,,
+    &quot;ppctimeout&quot;,&quot;0&quot;,,
+    &quot;rsh&quot;,&quot;/usr/bin/ssh&quot;,,
+    &quot;rcp&quot;,&quot;/usr/bin/scp&quot;,,
+    &quot;sharedtftp&quot;,&quot;0&quot;,,
+    &quot;SNsyncfiledir&quot;,&quot;/var/xcat/syncfiles&quot;,,
+    &quot;tftpdir&quot;,&quot;/tftpboot&quot;,,
+    &quot;xcatdport&quot;,&quot;3001&quot;,,
+    &quot;xcatiport&quot;,&quot;3002&quot;,,
+    &quot;xcatconfdir&quot;,&quot;/etc/xcat&quot;,,
+    &quot;timezone&quot;,&quot;US/Eastern&quot;,,
+    &quot;nameservers&quot;,&quot;10.1.100.1&quot;,,</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Setup an FTP server on the xCAT MN to contain Linux distributions
+<ul>
+<li>Download the desire Linux ISO into /install</li>
+<li><p>Go into /install directory</p>
+<pre><code># cd /install</code></pre></li>
+<li><p>Extract the ISO into the xCAT install tree /install</p>
+<pre><code># copycds -n xxx -a s390x /install/yyy.iso</code></pre></li>
+</ul></li>
+</ol>
+<p>where xxx is the distribution name and yyy is the ISO name.</p>
+<p>For example, if you have a SUSE Linux Enterprise Server 10 SP3 ISO:</p>
+<pre><code>        # copycds -n sles10sp3 -a s390x /install/SLES-10-SP3-DVD-s390x-DVD1.iso
+        Copying media to /install/sles11sp1/s390x/1
+        Media copy operation successful</code></pre>
+<p>or if you have a Red Hat Enterprise Linux 5.4 ISO:</p>
+<pre><code>        # copycds -n rhel5.4 -a s390x /install/RHEL5.4-Server-20090819.0-s390x-DVD.iso
+        Copying media to /install/rhel5.4/s390x
+        Media copy operation successful
+
+
+* Remove the ISO from /install since we do not need the ISO any longer, and it consumes disk space 
+
+        # rm /install/SLES-10-SP3-DVD-s390x-DVD1.iso</code></pre>
+<h2 id="installation-of-xcat-ui"><a href="#TOC">Installation of xCAT UI</a></h2>
+<p>This section details the installation of the xCAT UI. The xCAT UI is supported on Google Chrome and Mozilla Firefox. It is not fully supported on Microsoft Internet Explorer.</p>
+<h3 id="red-hat-enterprise-linux-1"><a href="#TOC">Red Hat Enterprise Linux</a></h3>
+<p>If you have a Red Hat Linux, follow the instructions below.</p>
+<ol style="list-style-type: decimal">
+<li><p>Use yum to install the following packages (accept the dependencies)</p>
+<pre><code># yum install php httpd mod_ssl</code></pre></li>
+<li><p>Allow httpd to make network connections (if SELinux is enabled)</p>
+<pre><code># /usr/sbin/setsebool httpd_can_network_connect=1</code></pre></li>
+<li><p>Install the xCAT-UI</p>
+<pre><code># yum install xCAT-UI</code></pre></li>
+</ol>
+<h3 id="suse-linux-enterprise-server-1"><a href="#TOC">SUSE Linux Enterprise Server</a></h3>
+<p>If you have a SUSE Linux, follow the instructions below.</p>
+<ol style="list-style-type: decimal">
+<li><p>Use zypper to install the following packages (accept the dependencies)</p>
+<pre><code># zypper in php5-openssl apache2 apache2-mod_php5</code></pre></li>
+<li><p>Install the xCAT-UI (accept the dependencies)</p>
+<pre><code># zypper in xCAT-UI</code></pre></li>
+</ol>
+<h3 id="ssl-configuration"><a href="#TOC">SSL Configuration</a></h3>
+<p>This section details the configuration of SSL on the xCAT server. SSL stands for Secure Socket Layer, which is a security protocol for communications over networks.</p>
+<h4 id="red-hat-enterprise-linux-2"><a href="#TOC">Red Hat Enterprise Linux</a></h4>
+<p>No actions required. SSL should be configured by default.</p>
+<h4 id="suse-linux-enterprise-server-2"><a href="#TOC">SUSE Linux Enterprise Server</a></h4>
+<p>If you have a SUSE Linux, follow the instructions below. You can find the following instructions from &lt;http://en.opensuse.org/Apache_Howto_SSL&gt;.</p>
+<ol style="list-style-type: decimal">
+<li><p>Apache should be set to start with SSL. Verify with the following command</p>
+<pre><code># a2enmod ssl
+ &quot;ssl&quot; already present</code></pre></li>
+<li><p>Make sure that SSL is active</p>
+<pre><code># a2enflag SSL</code></pre></li>
+<li><p>Create self signed keys</p>
+<pre><code># gensslcert</code></pre></li>
+<li><p>Copy <code>/etc/apache2/vhosts.d/vhost-ssl.template</code> to <code>/etc/apache2/vhosts.d/vhost-ssl.conf</code></p>
+<pre><code># cp /etc/apache2/vhosts.d/vhost-ssl.template /etc/apache2/vhosts.d/vhost-ssl.conf</code></pre></li>
+<li><p>For the enabled modules, server flags, generated keys and vhosts to take effect, restart the apache service</p>
+<pre><code># service apache2 restart
+Syntax OK
+Shutting down httpd2 (waiting for all children to terminate)         done
+Starting httpd2 (prefork)</code></pre></li>
+<li><p>Open a browser (Firefox) to the xCAT UI at https://xxx/xcat, where xxx is the host name of the xCAT MN. For example, <a href="https://gpok254.endicott.ibm.com/xcat">https://gpok1.endicott.ibm.com/xcat</a>. You will get a &quot;Untrusted certificate&quot; warning when you first try to access the URL. This is expected because of the use of a self-signed certificate.</p></li>
+</ol>
+<h2 id="installation-of-zhcp"><a href="#TOC">Installation of zHCP</a></h2>
+<p>This section details the installation of the zHCP. Before continuing, note that the user directory entry for the zHCP should be similar to the one below.</p>
+<pre><code>USER LNX2 PWD 512M 1G ABCDG
+COMMAND SET VSWITCH VSW2 GRANT LNX2
+CPU 00 BASE
+CPU 01
+IPL CMS
+MACHINE ESA 4
+OPTION LNKNOPAS
+CONSOLE 0009 3215 T
+NICDEF 0800 TYPE QDIO LAN SYSTEM VSW2
+SPOOL 000C 2540 READER *
+SPOOL 000D 2540 PUNCH A
+SPOOL 000E 1403 A
+LINK MAINT 0190 0190 RR
+LINK MAINT 019D 019D RR
+LINK MAINT 019E 019E RR
+LINK LNXMAINT 0192 0191 RR
+LINK TCPMAINT 0592 0592 RR
+MDISK 0100 3390 1 10016 EMC278</code></pre>
+<p>It is important to include OPTION LNKNOPAS in the user directory entry because it is needed by the zHCP to link to disks of other virtual machines. Also, it is important to note that the zHCP uses one network device (in our development environment, VSWITCH VSW2). It is possible for the zHCP to use more than one network device. However, the network devices must be specified in the directory entry and not in a profile. The zHCP has A, B, C, D, and G privileges. It needs class A privilege to use the FORCE command, class B privilege to use the FLASHCOPY command (if permitted), class C privilege to use the SEND command, and class D privilege to use the PURGE command.</p>
+<p>Since there are only a few privileged CP commands needed by the zHCP, it is possible to create a custom privilege class, instead of using ABCDG privilege classes. It is recommended that you create a custom privilege class (e.g. X) in order to mitigate possible threats to the z/VM system managed by the zHCP. Privilege classes are denoted by the letters A through Z and the numbers 1 through 6. Classes I through Z and numbers 1 through 6 are available to be used in your installation. The user directory entry for the zHCP should be similar to the one below.</p>
+<pre><code>USER LNX2 PWD 512M 1G GX
+COMMAND SET VSWITCH VSW2 GRANT LNX2
+CPU 00 BASE
+CPU 01
+IPL CMS
+MACHINE ESA 4
+OPTION LNKNOPAS
+CONSOLE 0009 3215 T
+NICDEF 0800 TYPE QDIO LAN SYSTEM VSW2
+SPOOL 000C 2540 READER *
+SPOOL 000D 2540 PUNCH A
+SPOOL 000E 1403 A
+LINK MAINT 0190 0190 RR
+LINK MAINT 019D 019D RR
+LINK MAINT 019E 019E RR
+LINK LNXMAINT 0192 0191 RR
+LINK TCPMAINT 0592 0592 RR
+MDISK 0100 3390 1 10016 EMC278</code></pre>
+<h3 id="configuring-zvm-smapi-and-dirmaint"><a href="#TOC">Configuring z/VM, SMAPI, and DirMaint</a></h3>
+<p>Perform the following steps to prepare a Linux virtual server for installation of the System z Hardware Control Point (zHCP)</p>
+<ol style="list-style-type: decimal">
+<li>If you plan on using a custom privilege class, modify the z/VM system configuration file. The SYSTEM CONFIG file contains the primary system definitions used when CP is booted (IPLed).
+<ul>
+<li>Open a 3270 console, logon MAINT, and issue the following commands</li>
+<li><p>To edit the SYSTEM CONFIG file, the MAINT CF1 minidisk must be released as a CP disk via the CPRELASE command. The CP disks are queried via the QUERY CPDISK command. Note the MAINT CF1 disk is accessed as CP disk A before it is released but not after.</p>
+<pre><code>==&amp;gt; q cpdisk
+Label Userid Vdev Mode Stat Vol-ID Rdev Type StartLoc EndLoc
+MNTCF1 MAINT 0CF1 A R/O MVA740 A740 CKD 39 158
+MNTCF2 MAINT 0CF2 B R/O MVA740 A740 CKD 159 278
+MNTCF3 MAINT 0CF3 C R/O MVA740 A740 CKD 279 398
+
+==&amp;gt; cprel a
+CPRELEASE request for disk A scheduled.
+HCPZAC6730I CPRELEASE request for disk A completed.
+
+==&amp;gt; q cpdisk
+Label Userid Vdev Mode Stat Vol-ID Rdev Type StartLoc EndLoc
+MNTCF2 MAINT 0CF2 B R/O MVA740 A740 CKD 159 278
+MNTCF3 MAINT 0CF3 C R/O MVA740 A740 CKD 279 398</code></pre></li>
+<li><p>Once it is released you are able to access the MAINT CF1 disk read-write. Use the LINK command with multi-read (MR) parameter and ACCESS command to get read-write access to the minidisk.</p>
+<pre><code>==&amp;gt; link * cf1 cf1 mr
+
+==&amp;gt; acc cf1 f</code></pre></li>
+<li><p>Now the MAINT CF1 disk is accessed read-write as your F disk. First make a backup copy of the vanilla SYSTEM CONFIG file using the COPYFILE command with the OLDDATE parameter so the files timestamp is not modified, then edit the original copy.</p>
+<pre><code>==&amp;gt; copy system config f system conforig f (oldd</code></pre></li>
+<li><p>Edit the SYSTEM CONFIG file</p>
+<pre><code>==&amp;gt; xedit system config f</code></pre></li>
+<li><p>The following commands need to be added to allow the zHCP Linux system to manage virtual machines. A custom privilege class named X is created. If the privilege class is taken, use another letter, such as Z. Privilege classes are denoted by the letters A through Z and the numbers 1 through 6. Classes I through Z and numbers 1 through 6 are available to be used in your installation.</p>
+<pre><code>/********************************************************************/
+/* ZHCP PRIVCLASS SETUP                                             */
+/********************************************************************/
+MODIFY CMD FORCE                   IBMCLASS A PRIVCLASS AX
+MODIFY CMD FLASHCOPY               IBMCLASS B PRIVCLASS BX 
+MODIFY CMD SEND                    IBMCLASS C PRIVCLASS CX
+MODIFY CMD PURGE                   IBMCLASS D PRIVCLASS DX</code></pre></li>
+<li><p>Test your changes with the CPSYNTAX command which is on the MAINT 193 disk. Pay attention to the output. If you get any syntax errors, fix them before proceeding.</p>
+<pre><code>==&amp;gt; acc 193 g
+
+==&amp;gt; cpsyntax system config f
+CONFIGURATION FILE PROCESSING COMPLETE -- NO ERRORS ENCOUNTERED.</code></pre></li>
+<li><p>Release and detach the MAINT CF1 disk with the RELEASE command and DETACH parameter. Then put it back online with the CPACCESS command.</p>
+<pre><code>==&amp;gt; rel f (det
+DASD 0CF1 DETACHED
+
+==&amp;gt; cpacc * cf1 a
+CPACCESS request for mode A scheduled.
+HCPZAC6732I CPACCESS request for MAINT&#39;s 0CF1 in mode A completed.
+
+==&amp;gt; q cpdisk
+Label Userid Vdev Mode Stat Vol-ID Rdev Type StartLoc EndLoc
+MNTCF1 MAINT 0CF1 A R/O MVA740 A740 CKD 39 158
+MNTCF2 MAINT 0CF2 B R/O MVA740 A740 CKD 159 278
+MNTCF3 MAINT 0CF3 C R/O MVA740 A740 CKD 279 398</code></pre></li>
+</ul></li>
+<li>Install and configure SMAPI and DirMaint for each z/VM partition. Refer to (step 1: <em>Configure and start DirMaint</em> and step 2: <em>Configure SMAPI server environment</em>) <a href="http://publib.boulder.ibm.com/infocenter/director/v6r2x/topic/com.ibm.director.install.helps.doc/fqm0_t_installing_z_map_agents.html">Installing the IBM z/VM Manageability Access Point Agent</a>.</li>
+</ol>
+<p><strong>Notes:</strong></p>
+<pre><code>* The directory entries for SMAPI request servers need to be created in z/VM 5.4 and 6.1. The SMAPI request servers are already present in z/VM 6.2. The following is the recommended directory entry for each SMAPI request server (VSMREQIN, VSMREQIU, VSMREQI6, VSMPROXY, VSMREQIM). Note that they do not require special privilege classes. 
+
+
+        USER name name 128M 512M G
+        IPL CMS PARM AUTOCR
+        OPTION DIAG88
+        MACHINE ESA
+        IUCV auth MSGLIMIT 255
+        IUCV *VMEVENT
+        IUCV *SCLP
+        CONSOLE 0009 3215 T
+        NAMESAVE VSMDCSS
+        SPOOL 000C 2540 READER *
+        SPOOL 000D 2540 PUNCH A
+        SPOOL 000E 1403 A
+        LINK MAINT 190 190 RR
+        LINK MAINT 19E 19E RR
+        LINK MAINT 193 193 RR
+        LINK TCPMAINT 591 591 RR
+        LINK TCPMAINT 592 592 RR
+        MDISK 191 3390 2398 025 610RES MR READ WRITE MULTIPLE
+
+        where name and auth are:
+        VSMREQIN, VSMREQI6, along with ANY for the AF_INET/AF_INET6 request server(s)
+        VSMREQIU and ALLOW for the AF_IUCV request server(s)
+        VSMPROXY and ANY for the AF_SCLP request server</code></pre>
+<p>The line <code>IUCV *SCLP</code> is required only for the AF_SCLP request server. Keep in mind that neither request servers nor worker servers can run with multiple CPUs defined. If you are applying service updates to an existing system, you may currently have less than 128M defined in your <code>USER name name</code> statement. IBM recommends that you increase this amount to at least 128M (Note that 512M is the maximum allowed).</p>
+<pre><code>* The following is the recommended directory entry for the worker servers (including VSMGUARD, VSMWORK1, VSMWORK2, and VSMWORK3). Since the worker servers process requests that require various privileges, the worker servers must have all of the privilege classes (A through G). 
+
+
+        USER name name 128M 512M ABCDEFG
+        IPL CMS PARM AUTOCR
+        OPTION DIAG88 MAINTCCW LNKS LNKE
+        MACHINE ESA
+        IUCV ANY MSGLIMIT 255
+        CONSOLE 0009 3215 T
+        NAMESAVE VSMDCSS
+        SPOOL 000C 2540 READER *
+        SPOOL 000D 2540 PUNCH A
+        SPOOL 000E 1403 A
+        LINK MAINT 190 190 RR
+        LINK MAINT 19E 19E RR
+        LINK MAINT 193 193 RR
+        LINK MAINT CF1 CF1 MD
+        LINK MAINT CF2 CF2 MD
+        LINK TCPMAINT 591 591 RR
+        LINK TCPMAINT 592 592 RR
+        MDISK 191 3390 2398 025 610RES MR READ WRITE MULTIPLE
+
+        where name is VSMWORK1, VSMWORK2, or VSMWORK3</code></pre>
+<p>Keep in mind that neither request servers nor worker servers can run with multiple CPUs defined. If you are applying service updates to an existing system, you may currently have less than 128M defined in your <code>USER name name</code> statement. IBM recommends that you increase this amount to at least 128M (Note that 512M is the maximum allowed).</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Grant the zHCP access to DirMaint.
+<ul>
+<li><p>Open a 3270 console, logon MAINT, and issue the following commands, substituting LNX2 used in this example with the user ID of your virtual machine.</p>
+<pre><code>==&amp;gt; DIRM FOR ALL AUTHFOR LNX2 CMDL 140A CMDS ADGHOPS
+DVHXMT1191I Your AUTHFOR request has been sent for processing.
+DVHREQ2288I Your AUTHFOR request for ALL at * has been accepted.
+DVHREQ2289I Your AUTHFOR request for ALL at * has completed; with RC =
+DVHREQ2289I 0.
+
+==&amp;gt; DIRM FOR ALL AUTHFOR LNX2 CMDL 150A CMDS ADGHOPS
+DVHXMT1191I Your AUTHFOR request has been sent for processing.
+DVHREQ2288I Your AUTHFOR request for ALL at * has been accepted.
+DVHREQ2289I Your AUTHFOR request for ALL at * has completed; with RC =
+DVHREQ2289I 0.</code></pre></li>
+<li><p>Change VSMWORK1 AUTHLIST</p>
+<pre><code>==&amp;gt; SET FILEPOOL VMSYS
+
+==&amp;gt; QUERY FILEPOOL CONNECT
+Userid Connected
+VSMWORK1 Yes
+VSMWORK2 Yes
+VSMWORK3 Yes
+VSMREQIN Yes
+VSMREQIU Yes
+VSMPROXY Yes
+MAINT Yes
+
+==&amp;gt; ACCESS VMSYS:VSMWORK1.DATA A (FORCERW
+DMSACR724I VMSYS:VSMWORK1.DATA replaces A (0191)
+
+==&amp;gt; ACCESS VMSYS:VSMWORK1. B (FORCERW
+DMSACR724I VMSYS:VSMWORK1. replaces B (05E5)
+
+==&amp;gt; X VSMWORK1 AUTHLIST B
+00001 DO.NOT.REMOVE
+00002 MAINT ALL
+00003 VSMPROXY ALL
+00004 VSMWORK1 ALL</code></pre></li>
+<li><p>Copy the line where VSMWORK1 is specified by inserting a double quote in the prefix area and pressing enter. Substitute VSMWORK1 with the user ID you wish to have DIRMAINT access (in our case LNX2). The VSMWORK1 AUTHLIST should be similar to the this:</p>
+<pre><code>00001 DO.NOT.REMOVE
+00002 MAINT ALL
+00003 VSMPROXY ALL
+00004 VSMWORK1 ALL
+00005 LNX2 ALL</code></pre></li>
+<li><p>Restart SMAPI</p>
+<pre><code>==&amp;gt; FORCE VSMWORK1
+==&amp;gt; XAUTOLOG VSMWORK1</code></pre></li>
+</ul></li>
+<li><p>Give the virtual machine where you will install the zHCP A, B, C, D, and G class privileges. The zHCP needs class A privilege to use the FORCE command, class B privilege to use the FLASHCOPY command (if available), class C privilege to use the SEND command, and class D privilege to use the PURGE command. If you are using a custom user class, give the virtual server the custom privilege class (e.g. X) in place of these classes. In order for the zHCP to have these class privileges, you must open a 3270 console, logon to MAINT after the user has been created, and issue:</p>
+<pre><code>==&amp;gt; DIRM FORUSER LNX2 CLASS ABCDG</code></pre></li>
+<li><p>Log off MAINT</p>
+<pre><code>==&amp;gt; LOGOFF</code></pre></li>
+</ol>
+<h3 id="configuring-zhcp"><a href="#TOC">Configuring zHCP</a></h3>
+<p><strong>Warning</strong> The NICDEF statements for the zHCP must be contained in the directory entry and not in a profile.</p>
+<ol style="list-style-type: decimal">
+<li>Logon to the xCAT MN as root using a Putty terminal</li>
+<li><p>Go into the directory where you extracted the xcat-dep tarball, e.g. /root/xcat. Send the zHCP RPM (zhcp-2.0-1.s390x.rpm) located in /root/xcat/xcat-dep/&lt;os&gt;/s390x to the zHCP, where &lt;os&gt; is the operating system installed on the zHCP. For example,</p>
+<pre><code># scp /root/xcat/xcat-dep/sles10/s390x/zhcp-2.0-1.s390x.rpm root@10.1.100.2:</code></pre></li>
+<li>Exit the Putty session to the xCAT MN</li>
+<li>Logon to the zHCP Linux as root using a Putty terminal</li>
+<li><p>Load Linux VMCP module (if not already)</p>
+<pre><code># modprobe vmcp</code></pre></li>
+<li>Configure the VMCP module to load every time the system is booted.
+<ul>
+<li><p>If you have Red Hat Enterprise Linux:<br />Create /etc/rc.modules and add the following line to the file:</p>
+<pre><code>modprobe vmcp</code></pre></li>
+</ul></li>
+</ol>
+<p>Set the following permission to the file:</p>
+<pre><code>        chmod +x /etc/rc.modules
+
+* If you have SUSE Linux Enterprise Server:  </code></pre>
+<p>Edit /etc/sysconfig/kernel and add the VMCP module to the MODULES_LOADED_ON_BOOT parameter:</p>
+<pre><code>        MODULES_LOADED_ON_BOOT=&quot;vmcp&quot;</code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li><p>Install the zHCP</p>
+<pre><code># rpm -Uvh zhcp-2.0-1.s390x.rpm</code></pre></li>
+<li><p>xCAT will automatically generate a MAC address for new virtual machines. It uses the USERPREFIX obtained from <code>vmcp query vmlan</code> as the MAC address prefix. If the USERPREFIX is not available, it will default to the MACPREFIX. The MAC address suffix is automatically generated, starting at FFFFF0, called the MACID. As more virtual machines are created, the MACID will be decremented. You can customize where the MACID starts at by echoing the 6 hexadecimal digits into /opt/zhcp/conf/next_macid. xCAT will generate /opt/zhcp/conf/next_macid the first time you create a virtual machine, if one does not exist.</p></li>
+</ol>
+<p>It is important to note that in an SSI cluster, the MACID (/opt/zhcp/conf/next_macid) must be staggered on each zHCP in order to avoid MAC address collision. You could set next_macid to FFFFF0 on zHCP #1, set next_macid to EFFFF0 on zHCP #2, set next_macid to DFFFF0 on zHCP #3, etc.</p>
+<h2 id="initializing-database"><a href="#TOC">Initializing Database</a></h2>
+<p>This section details how to manage z/VM and Linux on System z using xCAT.</p>
+<ol style="list-style-type: decimal">
+<li>Logon the xCAT MN as root using a Putty terminal</li>
+<li><p>Load Linux VMCP module on the xCAT MN (if not already)</p>
+<pre><code># modprobe vmcp</code></pre></li>
+<li><p>If you do not wish to allow nodes to SSH between each other without a password, turn off the feature</p>
+<pre><code># chtab key=sshbetweennodes site.value=&#39;NOGROUPS&#39;</code></pre></li>
+<li><p>Set up the passwd table. This table will contain the default password for new nodes installed through autoyast/kickstart and other methods.</p>
+<pre><code># chtab key=system passwd.username=root passwd.password=xxx</code></pre></li>
+</ol>
+<p>Substitute xxx with the root password.</p>
+<ol start="5" style="list-style-type: decimal">
+<li>If you do not plan to use regular expressions to represent the IP address and hostname, skip to the next step.</li>
+</ol>
+<p>Set up the hosts table (it will be used to setup /etc/hosts). You need to determine the regular expression that represents the nodes that xCAT will manage.</p>
+<pre><code>    # chtab node=xxx hosts.ip=&quot;yyy&quot; hosts.hostnames=&quot;zzz&quot;</code></pre>
+<p>Substitute xxx with the node range, yyy with the regular expression for the IP addresses, and zzz with the regular expression for the hostnames. You could use the following online tool to construct your regular expression: &lt;http://gskinner.com/RegExr/&gt;. Each time a new node is added to xCAT, you will need to run makehosts. You will need to setup the hosts table for each group you create.</p>
+<p>In our development environment, we setup nodes belonging to group=all to have hostnames of gpok1, gpok2, etc. and IP addresses of 10.1.100.1, 10.1.100.2, etc. in /etc/hosts with the following:</p>
+<pre><code>    # chtab node=all hosts.ip=&quot;|gpok(\d+)|10.1.100.(\$1+0)|&quot; hosts.hostnames=&quot;|(.*)|(\$1).endicott.ibm.com|&quot;</code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li>Setup the networks table. You need to set the DHCP, DNS, and FTP server to the IP address of your xCAT MN.</li>
+</ol>
+<p>In our development environment, we setup up the xCAT MN to manage the network 10.1.100.0, which has a netmask of 255.255.255.0, a gateway of 10.1.100.1, and on an ethernet interface eth1. Our DHCP, DNS, and FTP servers are at 10.1.100.1. This is the command that we used:</p>
+<pre><code>    # chtab net=10.1.100.0 networks.mask=255.255.255.0 networks.mgtifname=eth1 networks.gateway=10.1.100.1 networks.dhcpserver=10.1.100.1 networks.tftpserver=10.1.100.1 networks.nameservers=10.1.100.1</code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li>If you do not plan to use DHCP, skip to the next step.</li>
+</ol>
+<p>Define the DHCP interfaces in the site table to limit which network the DHCP server will listen on. In our development environment, we setup eth1 as the interface where we have the DHCP server listening on.</p>
+<pre><code>    # chtab key=dhcpinterfaces site.value=&#39;all|eth1&#39;</code></pre>
+<ol start="8" style="list-style-type: decimal">
+<li><p>Edit the nameserver and master in the site table to point it to the xCAT MN. In our development environment, we setup our nameserver and master to be 10.1.100.1.</p>
+<pre><code># chtab key=nameservers site.value=&#39;10.1.100.1&#39;
+# chtab key=master site.value=&#39;10.1.100.1&#39;</code></pre></li>
+<li>Configure the DHCP server (if you plan to use it)
+<ul>
+<li><p>Add networks into the DHCP configuration</p>
+<pre><code># makedhcp -n</code></pre></li>
+<li><p>Restart DHCP</p>
+<pre><code># service dhcpd restart
+Shutting down DHCP server              done
+Starting DHCP server [chroot]          done</code></pre></li>
+</ul></li>
+<li>Configure the DNS server, for more information see: [Cluster_Name_Resolution]
+<ul>
+<li><p>Restart DNS</p>
+<pre><code># service named restart
+Shutting down name server BIND  waiting for named to shut down (29s) done
+Starting name server BIND                                            done</code></pre></li>
+<li><p>Start DNS on boot</p>
+<pre><code># chkconfig --level 345 named on</code></pre></li>
+</ul></li>
+<li><p>Start by adding the zHCP node into the datatabase (Use the DNS hostname of that node when adding). In our development environment, our zHCP has a hostname of gpok2, a userID of LNX2, and belonged to the group=all. This is the command that we used:</p>
+<pre><code># mkdef -t node -o gpok2 userid=LNX2 hcp=gpok2.endicott.ibm.com mgt=zvm groups=all
+1 object definitions have been created or modified.</code></pre></li>
+</ol>
+<p>Set the node's IP address and hostname (only if a regex is not set for the group)</p>
+<pre><code>    # chtab node=gpok2 hosts.ip=&quot;10.1.100.2&quot; hosts.hostnames=&quot;gpok2.endicott.ibm.com&quot;</code></pre>
+<ol start="12" style="list-style-type: decimal">
+<li><p>Add the z/VM hypervisor definition into the database.</p>
+<pre><code># nodeadd pokdev61 groups=hosts hypervisor.type=zvm nodetype.os=zvm6.1 zvm.hcp=gpok2.endicott.ibm.com mgt=zvm</code></pre></li>
+</ol>
+<p>Here, pokdev61 is the z/VM system name, zvm6.1 is the z/VM version, and gpok2.endicott.ibm.com is the full domain name of the zHCP.</p>
+<ol start="13" style="list-style-type: decimal">
+<li><p>Add more nodes (if any) that you want to manage into the database. For example, if you have a node with a hostname of gpok3 and userID of LNX3 on the same z/VM partition (managed by the zHCP on gpok2), you would use the following command:</p>
+<pre><code># mkdef -t node -o gpok3 userid=LNX3 hcp=gpok2.endicott.ibm.com mgt=zvm groups=all
+1 object definitions have been created or modified.</code></pre></li>
+</ol>
+<p>The node IP address should follow the rule you specified in the hosts table (step 4).</p>
+<p>Set the node's IP address and hostname (only if a regex is not set for the group)</p>
+<pre><code>    # chtab node=gpok3 hosts.ip=&quot;10.1.100.3&quot; hosts.hostnames=&quot;gpok3.endicott.ibm.com&quot;</code></pre>
+<ol start="14" style="list-style-type: decimal">
+<li><p>Update /etc/hosts</p>
+<pre><code># makehosts</code></pre></li>
+<li><p>Update DNS</p>
+<pre><code># makedns
+Handling localhost in /etc/hosts.
+Handling gpok3 in /etc/hosts.
+Getting reverse zones, this may take several minutes in scaling cluster.
+Completed getting reverse zones.
+Updating zones.
+Completed updating zones.
+Updating DNS records, this may take several minutes in scaling cluster.
+Completed updating DNS records.
+DNS setup is completed</code></pre></li>
+<li><p>Setup the SSH keys for the node range that you want to manage</p>
+<pre><code># xdsh xxx -K</code></pre></li>
+</ol>
+<p>Substitute xxx with the node range. For example, if you were to setup the SSH keys for the nodes you added above in steps 10 and 11, you can use:</p>
+<pre><code>    # xdsh all -K
+    Enter the password for the userid: root on the node where the ssh keys 
+    will be updated:
+
+    /usr/bin/ssh setup is complete.
+    return code = 0</code></pre>
+<p>The xdsh command will prompt you for a root password. It is the root password for the node or group you are trying to push the public SSH key to. It is recommended that you put nodes with the same root password into the same group. More importantly, the xdsh command will only work for nodes that are online.</p>
+<ol start="17" style="list-style-type: decimal">
+<li>Start using supported xCAT commands. At this point, you could use the xCAT UI to start managing your virtual servers. However, you should go through the Quick Start Guide [XCAT_zVM] in order to understand the concepts and how the xCAT UI works in the background.</li>
+</ol>
+</body>
+</html>

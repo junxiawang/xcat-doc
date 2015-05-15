@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#first-section">First section</a><ul>
+<li><a href="#common-xcat-features">Common xCAT Features</a></li>
+</ul></li>
+<li><a href="#second-section">Second section</a></li>
+<li><a href="#fifth-section">Fifth section</a></li>
+<li><a href="#linda-test-section">Linda Test Section</a></li>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#another-section">Another Section</a></li>
+</ul></li>
+<li><a href="#discovering-and-defining-new-power-775-hardware">Discovering and Defining New Power 775 Hardware</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#first-section">First section</a></li>
+<li><a href="#common-xcat-features">Common xCAT Features</a></li>
+<li><a href="#second-section">Second section</a></li>
+<li><a href="#fifth-section">Fifth section</a></li>
+<li><a href="#linda-test-section">Linda Test Section</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#another-section">Another Section</a></li>
+<li><a href="#discovering-and-defining-new-power-775-hardware">Discovering and Defining New Power 775 Hardware</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>Note: this documentation is obsolete. xCAT is now on MarkDown wiki, not mediawiki.</p>
+<h2 id="first-section"><a href="#TOC">First section</a></h2>
+<p>c1 c2aaaa c3</p>
+<p>c4 c5 c6</p>
+<p>blah blah</p>
+<p>{{hidden |header=my title |content=my content }}</p>
+<p>blah blah</p>
+<p>{{hidden |header=Title for Collapsible Section |content= These are details that initially should be hidden, but can be shown if the reader is interested</p>
+<ul>
+<li>bullet 1</li>
+<li>bullet 2</li>
+</ul>
+<p>}}</p>
+<p>blah blah</p>
+<h3 id="common-xcat-features"><a href="#TOC">Common xCAT Features</a></h3>
+<p>These features can be used in most xCAT environments.</p>
+<p>This is to test out some mediawiki features.</p>
+<p>This is a simple reference to a section in this doc. See <a href="#fifth-section">#fifth-section</a></p>
+<p>This is a longer ref to the same: <a href="XCAT_Doc_Test_Page#fifth-section">XCAT_Doc_Test_Page#fifth-section</a></p>
+<h2 id="second-section"><a href="#TOC">Second section</a></h2>
+<p>blah blah</p>
+<p>{{:XCAT Doc Test Transcluded Page}}</p>
+<h2 id="fifth-section"><a href="#TOC">Fifth section</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>one</p>
+<p>first command second command</p></li>
+</ol>
+<p>&lt;/ol&gt;</p>
+<pre><code>1. two </code></pre>
+<ol style="list-style-type: decimal">
+<li><p>one</p>
+indented text</li>
+<li>two</li>
+<li><p>one</p>
+<pre><code>single line command</code></pre></li>
+<li>two</li>
+<li>one
+<ul>
+<li>a</li>
+<li>b</li>
+</ul></li>
+<li><p>two</p></li>
+</ol>
+<h2 id="linda-test-section"><a href="#TOC">Linda Test Section</a></h2>
+<p>see my Linda Test Page: <a href="Linda_Test_Page">Linda_Test_Page</a></p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>This cookbook provide</p>
+<h3 id="downloading-and-installing-dfm"><a href="#TOC">Downloading and Installing DFM</a></h3>
+<p>For most operations,the Power 775 is managed directly by xCAT, not using the HMC. This requires the new xCAT Direct FSP Management plugin (xCAT-dfm-*.ppc64.rpm), which is not part of the core xCAT open source, but is available as a free download from IBM. You must download this and install it on your xCAT management node (and possibly on your service nodes, depending on your configuration) before proceeding with this document.</p>
+<p>Download DFM and the pre-requisite hardware server from <a href="http://www-933.ibm.com/support/fixcentral/">Fix Central</a> (need more specific instructions here when it GAs):</p>
+<ul>
+<li>xCAT-fsp RPM</li>
+<li>ISNM-hdwr_svr RPM (linux)</li>
+<li>isnm.hdwr_svr installp package (AIX)</li>
+</ul>
+<p>Once you have downloaded these packages, install the hardware server package, and then install DFM using:</p>
+<h3 id="terminology"><a href="#TOC">Terminology</a></h3>
+<p>The following terms will be used in this document:</p>
+<p><strong>xCAT DFM</strong>: Direct FSP Management is the name that we will use to describe the ability for xCAT software to communicate directly to the System p server's service processor without the use of the HMC for management.</p>
+<p><strong>Frame node</strong>: A node with hwtype set to <em>frame</em> represents a high end System P server 24 inch frame.</p>
+<p><strong>BPA node</strong>: is node with a hwtype set to <em>bpa</em> and it represents one port on one bpa (each BPA has two ports). For xCAT's purposes, the BPA is the service processor that controls the frame. The relationship between Frame node and BPA node from system admin's perspective is that the admin should always use the Frame node definition for the xCAT hardware control commands and xCAT will figure out which BPA nodes and their ip addresses to use for hardware service processor connections.</p>
+<p><strong>CEC node</strong>: A node with attribute hwtype set to <em>cec</em> which represents a System P CEC (i.e. one physical server).</p>
+<p><strong>FSP node</strong>: FSP node is a node with the hwtype set to <em>fsp</em> and represents one port on the FSP. In one CEC with redundant FSPs, there will be two FSPs and each FSP has two ports. There will be four FSP nodes defined by xCAT per server with redundant FSPs. Similar to the relationship between Frame node and BPA node, system admins will always use the CEC node for the hardware control commands. xCAT will automatically use the four FSP node definitions and their attributes for hardware connections.</p>
+<h3 id="another-section"><a href="#TOC">Another Section</a></h3>
+<p>Blah, blah, blah, blah.</p>
+<h2 id="discovering-and-defining-new-power-775-hardware"><a href="#TOC">Discovering and Defining New Power 775 Hardware</a></h2>
+<p>When setting up a new cluster, you can use the xCAT commands <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup</a> and <a href="http://xcat.sourceforge.net/man1/lsslp.1.html">lsslp</a> to specify the proper definition of all of the cluster hardware in the xCAT database, by automatically discovering and defining them. This is optional - you can define all of the hardware in the database by hand, but that can be confusing and error prone.</p>
+</body>
+</html>

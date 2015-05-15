@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#overview-of-cluster-setup-process">Overview of Cluster Setup Process</a></li>
+<li><a href="#distro-specific-steps">Distro-specific Steps</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+</ul></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#configure-ethernet-switches">Configure Ethernet Switches</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#use-xcat-to-configure-services-on-the-management-node">Use xCAT to Configure Services on the Management Node</a><ul>
+<li><a href="#networks-table"><strong>Networks Table</strong></a></li>
+<li><a href="#passwd-table"><strong>passwd Table</strong></a></li>
+<li><a href="#setup-dns">Setup DNS</a></li>
+<li><a href="#setup-conserver">Setup conserver</a></li>
+</ul></li>
+<li><a href="#define-the-fpcs-and-switches">Define the FPCs and Switches</a></li>
+<li><a href="#fpc-discovery-and-configuration">FPC Discovery and Configuration</a><ul>
+<li><a href="#update-the-fpc-firmware-optional">Update the FPC firmware (optional)</a></li>
+</ul></li>
+<li><a href="#node-definition-and-discovery">Node Definition and Discovery</a><ul>
+<li><a href="#declare-a-dynamic-range-of-addresses-for-discovery">Declare a dynamic range of addresses for discovery</a></li>
+<li><a href="#create-the-node-definitions">Create the node definitions</a></li>
+<li><a href="#declare-use-of-sol"><strong>Declare use of SOL</strong></a></li>
+<li><a href="#setup-etchosts-file">Setup /etc/hosts File</a></li>
+<li><a href="#switch-discovery">Switch Discovery</a><ul>
+<li><a href="#switch-related-tables"><strong>Switch-related Tables</strong></a></li>
+</ul></li>
+<li><a href="#monitoring-node-discovery"><strong>Monitoring Node Discovery</strong></a></li>
+<li><a href="#verify-hw-management-configuration">Verify HW Management Configuration</a></li>
+<li><a href="#hw-settings-necessary-for-remote-console">HW Settings Necessary for Remote Console</a></li>
+</ul></li>
+<li><a href="#deploying-nodes">Deploying Nodes</a></li>
+<li><a href="#installing-stateful-nodes">Installing Stateful Nodes</a><ul>
+<li><a href="#begin-installation"><strong>Begin Installation</strong></a></li>
+</ul></li>
+<li><a href="#deploying-stateless-nodes">Deploying Stateless Nodes</a></li>
+<li><a href="#s3-support">S3 support</a></li>
+<li><a href="#where-do-i-go-from-here">Where Do I Go From Here?</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#overview-of-cluster-setup-process">Overview of Cluster Setup Process</a></li>
+<li><a href="#distro-specific-steps">Distro-specific Steps</a></li>
+<li><a href="#command-man-pages-and-database-attribute-descriptions">Command Man Pages and Database Attribute Descriptions</a></li>
+<li><a href="#prepare-the-management-node-for-xcat-installation">Prepare the Management Node for xCAT Installation</a></li>
+<li><a href="#configure-ethernet-switches">Configure Ethernet Switches</a></li>
+<li><a href="#install-xcat-on-the-management-node">Install xCAT on the Management Node</a></li>
+<li><a href="#use-xcat-to-configure-services-on-the-management-node">Use xCAT to Configure Services on the Management Node</a></li>
+<li><a href="#networks-table"><strong>Networks Table</strong></a></li>
+<li><a href="#passwd-table"><strong>passwd Table</strong></a></li>
+<li><a href="#setup-dns">Setup DNS</a></li>
+<li><a href="#setup-conserver">Setup conserver</a></li>
+<li><a href="#define-the-fpcs-and-switches">Define the FPCs and Switches</a></li>
+<li><a href="#fpc-discovery-and-configuration">FPC Discovery and Configuration</a></li>
+<li><a href="#update-the-fpc-firmware-optional">Update the FPC firmware (optional)</a></li>
+<li><a href="#node-definition-and-discovery">Node Definition and Discovery</a></li>
+<li><a href="#declare-a-dynamic-range-of-addresses-for-discovery">Declare a dynamic range of addresses for discovery</a></li>
+<li><a href="#create-the-node-definitions">Create the node definitions</a></li>
+<li><a href="#declare-use-of-sol"><strong>Declare use of SOL</strong></a></li>
+<li><a href="#setup-etchosts-file">Setup /etc/hosts File</a></li>
+<li><a href="#switch-discovery">Switch Discovery</a>
+<ul>
+<li><a href="#switch-related-tables"><strong>Switch-related Tables</strong></a></li>
+</ul></li>
+<li><a href="#monitoring-node-discovery"><strong>Monitoring Node Discovery</strong></a></li>
+<li><a href="#verify--hw-management-configuration">Verify HW Management Configuration</a></li>
+<li><a href="#hw-settings-necessary-for-remote-console">HW Settings Necessary for Remote Console</a></li>
+<li><a href="#deploying-nodes">Deploying Nodes</a></li>
+<li><a href="#installing-stateful-nodes">Installing Stateful Nodes</a></li>
+<li><a href="#begin-installation"><strong>Begin Installation</strong></a></li>
+<li><a href="#deploying-stateless-nodes">Deploying Stateless Nodes</a></li>
+<li><a href="#s3-support">S3 support</a></li>
+<li><a href="#where-do-i-go-from-here">Where Do I Go From Here?</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p>This document describes the steps necessary to quickly set up a cluster with IBM NeXtScale servers.</p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<p>IBM NeXtScale combines networking, storage, and compute nodes in a single offering. It's consist of an IBM NeXtScale Chassis, one Fan Power Controller and compute nodes. The compute nodes include the IBM NeXtScale nx360 M4 servers.</p>
+<h3 id="terminology"><a href="#TOC">Terminology</a></h3>
+<p>The following terms will be used in this document:</p>
+<ul>
+<li><strong>MN</strong> - the xCAT management node.</li>
+<li><strong>Fan Power Controller (FPC)</strong> - The FPC is installed in the rear of the chassis and connected by ethernet to the MN. The FPC is used to list power and fan settings as well as logically reseat the NeXtScale servers.</li>
+<li><strong>Blade</strong> - the NeXtScale compute nodes within the chassis.</li>
+<li><strong>IMM</strong> - the Integrated Management Module in each node that is use to control the node hardware out-of-band. Also known as the BMC (Baseboard Management Controller).</li>
+<li><strong>Switch Modules</strong> - the ethernet and IB switches within the chassis.</li>
+</ul>
+<h3 id="overview-of-cluster-setup-process"><a href="#TOC">Overview of Cluster Setup Process</a></h3>
+<p>Here is a summary of the steps required to set up the cluster and what this document will take you through:</p>
+<ol style="list-style-type: decimal">
+<li>Prepare the management node - doing these things before installing the xCAT software helps the process to go more smoothly.</li>
+<li>Install the xCAT software on the management node.</li>
+<li>Configure some cluster wide information</li>
+<li>Define a little bit of information in the xCAT database about the ethernet switches and nodes - this is necessary to detect the node in the discovery process.</li>
+<li>Have xCAT configure and start several network daemons - this is necessary for both node discovery and node installation.</li>
+<li>Discovery the nodes - during this phase, xCAT configures the FPCs and BMC's and collects many attributes about each node and stores them in the database.</li>
+<li>Set up the OS images and install the nodes.</li>
+</ol>
+<h3 id="distro-specific-steps"><a href="#TOC">Distro-specific Steps</a></h3>
+<ul>
+<li>[RH] indicates that step only needs to be done for RHEL and Red Hat based distros (CentOS, Scientific Linux, and in most cases Fedora).</li>
+<li>[SLES] indicates that step only needs to be done for SLES.</li>
+</ul>
+<h3 id="command-man-pages-and-database-attribute-descriptions"><a href="#TOC">Command Man Pages and Database Attribute Descriptions</a></h3>
+<ul>
+<li>All of the commands used in this document are described in the <a href="http://xcat.sourceforge.net/man1/xcat.1.html">xCAT man pages</a>.</li>
+<li>All of the database attributes referred to in this document are described in the <a href="http://xcat.sourceforge.net/man5/xcatdb.5.html">xCAT database object and table descriptions</a>.</li>
+</ul>
+<h2 id="prepare-the-management-node-for-xcat-installation"><a href="#TOC">Prepare the Management Node for xCAT Installation</a></h2>
+<p><a href="Prepare_the_Management_Node_for_xCAT_Installation">Prepare_the_Management_Node_for_xCAT_Installation</a></p>
+<h2 id="configure-ethernet-switches"><a href="#TOC">Configure Ethernet Switches</a></h2>
+<p><a href="Configure_ethernet_switches">Configure_ethernet_switches</a></p>
+<h2 id="install-xcat-on-the-management-node"><a href="#TOC">Install xCAT on the Management Node</a></h2>
+<p><a href="Install_xCAT_on_the_Management_Node">Install_xCAT_on_the_Management_Node</a></p>
+<h2 id="use-xcat-to-configure-services-on-the-management-node"><a href="#TOC">Use xCAT to Configure Services on the Management Node</a></h2>
+<h3 id="networks-table"><a href="#TOC"><strong>Networks Table</strong></a></h3>
+<p>All networks in the cluster must be defined in the networks table. When xCAT was installed, it ran makenetworks, which created an entry in this table for each of the networks the management node is connected to. Now is the time to add to the networks table any other networks in the cluster, or update existing networks in the table.</p>
+<p>For a sample Networks Setup, see the following example: <a href="Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-a-network-table-setup-example">Network_Table_Setup_Example</a>.</p>
+<h3 id="passwd-table"><a href="#TOC"><strong>passwd Table</strong></a></h3>
+<p>The password should be set in the passwd table that will be assigned to root when the node is installed. You can modify this table using tabedit. To change the default password for root on the nodes, change the system line. To change the password to be used for the BMCs, change the ipmi line.</p>
+<pre><code>tabedit passwd
+#key,username,password,cryptmethod,comments,disable
+&quot;system&quot;,&quot;root&quot;,&quot;cluster&quot;,,,
+&quot;ipmi&quot;,&quot;USERID&quot;,&quot;PASSW0RD&quot;,,,</code></pre>
+<h3 id="setup-dns"><a href="#TOC">Setup DNS</a></h3>
+<p>To get the hostname/IP pairs copied from /etc/hosts to the DNS on the MN:</p>
+<ul>
+<li>Ensure that /etc/sysconfig/named does not have ROOTDIR set</li>
+<li><p>Set site.forwarders to your site-wide DNS servers that can resolve site or public hostnames. The DNS on the MN will forward any requests it can't answer to these servers.</p>
+<p>chdef -t site forwarders=1.2.3.4,1.2.5.6</p></li>
+<li><p>Edit /etc/resolv.conf to point the MN to its own DNS. (Note: this won't be required in xCAT 2.8 and above, but is an easy way to test that your DNS is configured properly.)</p>
+<p>search cluster nameserver 10.1.0.1</p></li>
+<li><p>Run makedns</p>
+<p>makedns</p></li>
+</ul>
+<p>For more information about name resolution in an xCAT Cluster, see [Cluster_Name_Resolution].</p>
+<h3 id="setup-conserver"><a href="#TOC">Setup conserver</a></h3>
+<pre><code>makeconservercf</code></pre>
+<h2 id="define-the-fpcs-and-switches"><a href="#TOC">Define the FPCs and Switches</a></h2>
+<p>First just add the list of FPCs and the groups they belong to:</p>
+<pre><code>nodeadd fpc[01-15] groups=fpc,all</code></pre>
+<p>Now define attributes that are the same for all FPCs. These can be defined at the group level. For a description of the attribute names, see the <a href="http://xcat.sourceforge.net/man7/node.7.html">node object definition</a>.</p>
+<pre><code>chdef -t group fpc mgt=ipmi bmcpassword=PASSW0RD bmcusername=USERID cons=ipmi mgt=ipmi nodetype=fpc</code></pre>
+<p>Next define the attributes that vary for each FPC. There are 2 different ways to do this. Assuming your naming conventions follow a regular pattern, the fastest way to do this is use regular expressions at the group level:</p>
+<pre><code>chdef -t group fpc  bmc=&#39;|(.*)|($1)|&#39; ip=&#39;|fpc(\d+)|10.0.50.($1+0)|&#39;</code></pre>
+<p>Note: The Flow for FPC IP addressing is 1) initially each FPC has a default IP address of 192.168.0.100, as of 2.8.6 you can input the default ip address with --ip flag on configfpc.<br />2) You run a new command &quot;configfpc&quot; to discover each FPC 3) configfpc will change each discovered FPC default IP address to the permanent static IP address which is specified here as the ip attribute.</p>
+<p>This chdef might look confusing at first, but once you parse it, it's not too bad. The regular expression syntax in xcat database attribute values follows the form:</p>
+<pre><code>|pattern-to-match-on-the-nodename|value-to-give-the-attribute|</code></pre>
+<p>You use parentheses to indicate what should be matched on the left side and substituted on the right side. So for example, the bmc attribute above is:</p>
+<pre><code>|(.*)|($1)|</code></pre>
+<p>This means match the entire nodename (.*) and substitute it as the value for mpa. This is what we want because for FPCs the mpa attribute should be set to itself.</p>
+<p>For the ip attribute above, it is:</p>
+<pre><code>|fpc(\d+)|10.0.50.($1+0)|</code></pre>
+<p>This means match the number part of the node name and use it as the last part of the IP address. (Adding 0 to the value just converts it from a string to a number to get rid of any leading zeros, i.e. change 09 to 9.) So for fpc07, the ip attribute will be 10.0.50.7.</p>
+<p>For more information on xCAT's database regular expressions, see http://xcat.sourceforge.net/man5/xcatdb.5.html . To verify that the regular expressions are producing what you want, run lsdef for a node and confirm that the values are correct.</p>
+<p>If you don't want to use regular expressions, you can create a stanza file containing the node attribute values:</p>
+<pre><code>fpc01:
+  bmc=fpc01
+  ip=10.0.50.1
+fpc02:
+  bmc=fpc02
+  ip=10.0.50.2
+...</code></pre>
+<p>Then pipe this into chdef:</p>
+<pre><code>    cat &lt;stanzafile&gt; | chdef -z</code></pre>
+<p>When you are done defining the FPCs, listing one should look like this:</p>
+<pre><code># lsdef fpc07
+Object name: feihu-fpc
+   bmc=fpc07
+   bmcpassword=PASSW0RD
+   bmcusername=USERID
+   groups=fpc
+   mgt=ipmi
+   ip=10.0.50.7
+   postbootscripts=otherpkgs
+   postscripts=syslog,remoteshell,syncfiles</code></pre>
+<h2 id="fpc-discovery-and-configuration"><a href="#TOC">FPC Discovery and Configuration</a></h2>
+<p>In this section you will perform the FPC discovery and configuration of for the FPC.</p>
+<p>During the FPC discovery process all FPCs are discovered using the xCAT <strong>configfpc</strong> command.</p>
+<p>In large clusters the <strong>configfpc</strong> automated method for discovering is used to map each FPC MAC to the FPC port defined in the Ethernet switch SNMP data from which each chassis FPC is connected.</p>
+<p>To use this method the xCAT switch and switches tables must be configured. The xCAT switch table will need to be updated with the switch port that each FPC is connected. The xCAT switches table must contain the SNMP access information.</p>
+<p>Add the FPC switch/port information to the switch table.</p>
+<pre><code># tabdump switch
+#node,switch,port,vlan,interface,comments,disable
+&quot;fpc01&quot;,&quot;switch&quot;,&quot;0/1&quot;,,,,
+&quot;fpc02&quot;,&quot;switch&quot;,&quot;0/2&quot;,,,,</code></pre>
+<p>where: node is the fpc node object name switch is the hostname of the switch port is the switch port id. Note that xCAT does not need the complete port name. Preceding non numeric characters are ignored.</p>
+<p>If you configured your switches to use SNMP V3, then you need to define several attributes in the switches table. Assuming all of your switches use the same values, you can set these attributes at the group level:</p>
+<pre><code>tabch switch=switch switches.snmpversion=3 switches.username=xcatadmin switches.password=passw0rd switches.auth=SHA
+
+
+# tabdump switches
+#switch,snmpversion,username,password,privacy,auth,linkports,sshusername,sshpassword,switchtype,comments,disable
+&quot;switch&quot;,&quot;3&quot;,&quot;xcatadmin&quot;,&quot;passw0rd&quot;,,&quot;SHA&quot;,,,,,,</code></pre>
+<p>Note: It might also be necessary to allow authentication at the VLAN level</p>
+<pre><code>snmp-server group xcatadmin v3 auth context vlan-230</code></pre>
+<p>Discover and configure each the xCAT FPC node.</p>
+<pre><code>configfpc -i eth0
+
+
+Found FPC with default IP 192.168.0.100 and MAC 6c:ae:8b:08:20:35
+Configured FPC with MAC 6c:ae:8b:08:20:35 as fpc01 (10.1.147.170)
+Verified the FPC with MAC 6c:ae:8b:08:20:35 is responding to the new IP 10.1.147.170 as node fpc01
+There are no more FPCs with the default IP address to process</code></pre>
+<p>Check the internet IP parameters values to make sure they were enabled properly on each FPC.</p>
+<pre><code>rspconfig cmm01 netmask gateway ip 
+
+fpc: BMC Netmask: 255.255.0.0
+fpc: BMC Gateway: 10.1.1.171
+fpc: BMC IP: 10.1.147.170</code></pre>
+<h3 id="update-the-fpc-firmware-optional"><a href="#TOC">Update the FPC firmware (optional)</a></h3>
+<p>This section specifies how to update the FPC firmware. You can run the xCAT &quot;rinv fpc01 firmware&quot; command to list the fpc firmware level.</p>
+<pre><code>rinv  fpc01 firmware
+
+
+fpc01: BMC Firmware: 2.01</code></pre>
+<p>The FPC firmware can be updated by running the rflash command and providing the FPC node name and the location of the file preceded by &quot;http://&quot; and the IP address of the xCAT MN interface which is on the same VLAN as the FPC.</p>
+<p>Once the firmware is unzipped and the ibm_fw_fpc_&lt;fw level&gt;.rom file is placed in the /install/firmware directory, or another directory within /install on the xCAT MN, you can use the rflash command to update the firmware on one chassis at a time or on all chassis managed by xCAT MN.</p>
+<p>The format of the rflash command is:</p>
+<pre><code>rflash fpc01 http://10.1.147.171/install/firmware/ibm_fw_fpc_fhet17a-2.02_anyos_noarch.rom</code></pre>
+<p>Note: The firmware file ibm_fw_fpc_fhet17a-2.02_anyos_noarch.rom was downloaded to the /install/firmware directory in this example.</p>
+<p>You can run the xCAT &quot;rinv fpc01 firmware&quot; command to list the new fpc01 firmware.</p>
+<pre><code> rinv  fpc01 firmware
+
+
+fpc01: BMC Firmware: 2.02</code></pre>
+<h2 id="node-definition-and-discovery"><a href="#TOC">Node Definition and Discovery</a></h2>
+<h3 id="declare-a-dynamic-range-of-addresses-for-discovery"><a href="#TOC">Declare a dynamic range of addresses for discovery</a></h3>
+<p>If you want to run a discovery process, a dynamic range must be defined in the networks table. It's used for the nodes to get an IP address before xCAT knows their MAC addresses.</p>
+<p>In this case, we'll designate 172.20.255.1-172.20.255.254 as a dynamic range:</p>
+<pre><code>    chdef -t network 172_16_0_0-255_240_0_0 dynamicrange=172.20.255.1-172.20.255.254</code></pre>
+<h3 id="create-the-node-definitions"><a href="#TOC">Create the node definitions</a></h3>
+<p>Now you can define the NeXtScale node definitions:</p>
+<pre><code>    nodeadd n[001-167] groups=ipmi,compute,all bmc=70.1.147.173 bmcpassword=PASSW0RD bmcusername=USERID cons=ipmi ip=70.1.147.163 mgt=ipmi </code></pre>
+<p>To change the list of nodes you just defined to a shared BMC port:</p>
+<pre><code>    chdef -t group -o ipmi bmcport=&quot;0&quot;</code></pre>
+<p>If the BMCs are configured in shared mode, then this network can be combined with the management network. The bmcport attribute is used by bmcsetup in discovery to configure the BMC port. The bmcport values are &quot;0&quot;=shared, &quot;1&quot;=dedicated, or blank to leave the BMC port unchanged.</p>
+<p>To see the list of nodes you just defined:</p>
+<pre><code>    nodels</code></pre>
+<p>To see all of the attributes that the combination of the templates and your nodelist have defined for a few sample nodes:</p>
+<pre><code>    lsdef n100,n101,n104</code></pre>
+<p>This is the easiest way to verify that the regular expressions in the templates are giving you attribute values you are happy with. (Or, if you modified the regular expressions, that you did it correctly.)</p>
+<h3 id="declare-use-of-sol"><a href="#TOC"><strong>Declare use of SOL</strong></a></h3>
+<p>If not using a terminal server, SOL is recommended, but not required to be configured. To instruct xCAT to configure SOL in installed operating systems on NeXtScale systems:</p>
+<pre><code>    chdef -t group -o compute serialport=0 serialspeed=115200 serialflow=hard</code></pre>
+<h3 id="setup-etchosts-file"><a href="#TOC">Setup /etc/hosts File</a></h3>
+<p>Since the map between the xCAT node names and IP addresses have been added in the xCAT database, you can run the <a href="http://xcat.sourceforge.net/man8/makehosts.8.html">makehosts</a> xCAT command to create the /etc/hosts file from the xCAT database. (You can skip this step if you are creating /etc/hosts manually.)</p>
+<pre><code>    makehosts switch,blade,cmm</code></pre>
+<p>Verify the entries have been created in the file /etc/hosts.</p>
+<p>Add the node ip mapping to the DNS.</p>
+<pre><code>    makedns</code></pre>
+<h3 id="switch-discovery"><a href="#TOC">Switch Discovery</a></h3>
+<p>This method of discovery assumes that you have the nodes plugged into your ethernet switches in an orderly fashion. So we use each nodes switch port number to determine where it is physically located in the racks and therefore what node name it should be given.</p>
+<p>To use this discovery method, you must have already configured the switches as described in <a href="XCAT_NeXtScale_Clusters/#configure_ethernet_switches">Configure_Ethernet_Switches</a>.</p>
+<h4 id="switch-related-tables"><a href="#TOC"><strong>Switch-related Tables</strong></a></h4>
+<p>The table templates already put group-oriented regular expression entries in the switch table. Use lsdef for a sample node to see if the switch and switchport attributes are correct. If not, use chdef or tabedit to change the values.</p>
+<p>If you configured your switches to use SNMP V3, then you need to define several attributes in the switches table. Assuming all of your switches use the same values, you can set these attributes at the group level:</p>
+<pre><code>    tabch switch=switch switches.snmpversion=3 switches.username=xcat switches.password=passw0rd switches.auth=sha
+</code></pre>
+<p>To initiate any discover walk over to systems and <strong>hit the power buttons</strong>. For the switch you can power on all of the nodes at the same time.</p>
+<p>On the MN watch nodes being discovered by:</p>
+<pre><code>    tail -f /var/log/messages</code></pre>
+<p>Look for the dhcp requests, the xCAT discovery requests, and the &quot;&lt;node&gt; has been discovered&quot; messages.</p>
+<p>A quick summary of what is happening during the discovery process is:</p>
+<ul>
+<li>the nodes request a DHCP IP address and PXE boot instructions</li>
+<li>the DHCP server on the MN responds with a dynamic IP address and the xCAT genesis boot kernel</li>
+<li>the genesis boot kernel running on the node sends the MAC and MTMS to xcatd on the MN</li>
+<li>xcatd asks the switches which port this MAC is on so that it can correlate this physical node with the proper node entry in the database. (Switch Discovery only)</li>
+<li>xcatd uses specified node name pool to get the proper node entry. (Sequential Discovery only)
+<ul>
+<li>stores the node's MTMS in the db</li>
+<li>puts the MAC/IP pair in the DHCP configuration</li>
+<li>sends several of the node attributes to the genesis kernel on the node</li>
+</ul></li>
+<li>the genesis kernel configures the BMC with the proper IP address, userid, and password, and then just drops into a shell</li>
+</ul>
+<p>After a successful discovery process, the following attributes will be added to the database for each node. (You can verify this by running lsdef &lt;node&gt; ):</p>
+<ul>
+<li>mac - the MAC address of the in-band NIC used to manage this node</li>
+<li>mtm - the hardware type (machine-model)</li>
+<li>serial - the hardware serial number</li>
+</ul>
+<p>If you cannot discover the nodes successfully, see the next section [#Manually_Discover_Nodes].</p>
+<p>If at some later time you want to force a re-discover of a node, run:</p>
+<pre><code>    makedhcp -d &lt;noderange&gt;</code></pre>
+<p>and then reboot the node(s).</p>
+<h3 id="monitoring-node-discovery"><a href="#TOC"><strong>Monitoring Node Discovery</strong></a></h3>
+<p>When the bmcsetup process completes on each node (about 5-10 minutes), xCAT genesis will drop into a shell and wait indefinitely (and change the node's currstate attribute to &quot;shell&quot;). You can monitor the progress of the nodes using:</p>
+<pre><code>    watch -d &#39;nodels ipmi chain.currstate|xcoll&#39;</code></pre>
+<p>Before all nodes complete, you will see output like:</p>
+<pre><code>    
+    ###### ========================    
+    
+    n1,n10,n11,n75,n76,n77,n78,n79,n8,n80,n81,n82,n83,n84,n85,n86,n87,n88,n89,n9,n90,n91    
+    
+    ###### ========================    
+    
+    shell    
+    
+    
+    ###### ========================    
+    
+    n31,n32,n33,n34,n35,n36,n37,n38,n39,n4,n40,n41,n42,n43,n44,n45,n46,n47,n48,n49,n5,n50,n51,n52,
+     n53,n54,n55,n56,n57,n58,n59,n6,n60,n61,n62,n63,n64,n65,n66,n67,n68,n69,n7,n70,n71,n72,n73,n74
+    
+    
+    ###### ========================
+    
+    
+    runcmd=bmcsetup</code></pre>
+<p>When all nodes have made it to the shell, xcoll will just show that the whole nodegroup &quot;ipmi&quot; has the output &quot;shell&quot;:</p>
+<pre><code>    
+    ###### ========================
+    
+    
+    ipmi
+    
+    
+    ###### ========================
+    
+    
+    shell</code></pre>
+<p>When the nodes are in the xCAT genesis shell, you can ssh or psh to any of the nodes to check anything you want.</p>
+<h3 id="verify-hw-management-configuration"><a href="#TOC">Verify HW Management Configuration</a></h3>
+<p>At this point, the BMCs should all be configured and ready for hardware management. To verify this:</p>
+<pre><code># rpower ipmi stat | xcoll
+
+
+###### ========================
+
+
+ipmi
+
+
+###### ========================
+
+
+on</code></pre>
+<h3 id="hw-settings-necessary-for-remote-console"><a href="#TOC">HW Settings Necessary for Remote Console</a></h3>
+<p>To get the remote console working for each node, some uEFI hardware settings must have specific values. First check the settings, and if they aren't correct, then set them properly. This can be done via the ASU utility.</p>
+<p>Create a file called asu-show with contents:</p>
+<pre><code>    show DevicesandIOPorts.Com1ActiveAfterBoot
+    show DevicesandIOPorts.SerialPortSharing
+    show DevicesandIOPorts.SerialPortAccessMode
+    show DevicesandIOPorts.RemoteConsole</code></pre>
+<p>And create a file called asu-set with contents:</p>
+<pre><code>    set DevicesandIOPorts.Com1ActiveAfterBoot Enable
+    set DevicesandIOPorts.SerialPortSharing Enable
+    set DevicesandIOPorts.SerialPortAccessMode Dedicated
+    set DevicesandIOPorts.RemoteConsole Enable</code></pre>
+<p>Then use the <a href="http://xcat.sourceforge.net/man1/pasu.1.html">pasu</a> tool to check these settings:</p>
+<pre><code>    pasu -b asu-show ipmi | xcoll    # Or you can check just one node and assume the rest are the same</code></pre>
+<p>If the settings are not correct, then set them:</p>
+<pre><code>    pasu -b asu-set ipmi | xcoll</code></pre>
+<p>For alternate ways to set the ASU settings, see <a href="XCAT_iDataPlex_Advanced_Setup/#using-asu-to-update-cmos-uefi-or-bios-settings-on-the-nodes">Using_ASU_to_Update_CMOS,<em>uEFI,</em>or_BIOS_Settings_on_the_Nodes</a>.</p>
+<p>Now the remote console should work. Verify it on one node by running:</p>
+<pre><code>    rcons &lt;node&gt;</code></pre>
+<p>To verify that you can see the genesis shell prompt (after hitting enter). To exit rcons type: ctrl-shift-E (all together), then &quot;c&quot;, the &quot;.&quot;.</p>
+<p>You are now ready to choose an operating system and deployment method for the nodes....</p>
+<h2 id="deploying-nodes"><a href="#TOC">Deploying Nodes</a></h2>
+<ul>
+<li>In you want to install your nodes as stateful (diskful) nodes, follow the next section<a href="XCAT_NeXtScale_Clusters/#installing-stateful-nodes">Installing_Stateful_Nodes</a>.</li>
+<li>If you want to define one or more stateless (diskless) OS images and boot the nodes with those, see section <a href="XCAT_NeXtScale_Clusters/#deploying-stateless-nodes">Deploying_Stateless_Nodes</a>. This method has the advantage of managing the images in a central place, and having only one image per node type.</li>
+<li>If you want to have nfs-root statelite nodes, see [XCAT_Linux_Statelite]. This has the same advantage of managing the images from a central place. It has the added benefit of using less memory on the node while allowing larger images. But it has the drawback of making the nodes dependent on the management node or service nodes (i.e. if the management/service node goes down, the compute nodes booted from it go down too).</li>
+<li>If you have a very large cluster (more than 500 nodes), at this point you should follow[Setting_Up_a_Linux_Hierarchical_Cluster] to install and configure your service nodes. After that you can return here to install or diskless boot your compute nodes.</li>
+</ul>
+<h2 id="installing-stateful-nodes"><a href="#TOC">Installing Stateful Nodes</a></h2>
+<p><a href="Installing_Stateful_Linux_Nodes">Installing_Stateful_Linux_Nodes</a></p>
+<h3 id="begin-installation"><a href="#TOC"><strong>Begin Installation</strong></a></h3>
+<p>The <a href="http://xcat.sourceforge.net/man8/nodeset.8.html">nodeset</a> command tells xCAT what you want to do next with this node, <a href="http://xcat.sourceforge.net/man1/rsetboot.1.html">rsetboot</a>tells the node hardware to boot from the network for the next boot, and powering on the node using <a href="http://xcat.sourceforge.net/man1/rpower.1.html">rpower</a> starts the installation process:</p>
+<pre><code>nodeset compute osimage=mycomputeimage
+rsetboot compute net
+rpower compute boot</code></pre>
+<p>Tip: when nodeset is run, it processes the kickstart or autoyast template associated with the osimage, plugging in node-specific attributes, and creates a specific kickstart/autoyast file for each node in /install/autoinst. If you need to customize the template, make a copy of the template file that is pointed to by the osimage.template attribute and edit that file (or the files it includes).</p>
+<p><a href="Monitor_Installation">Monitor_Installation</a></p>
+<h2 id="deploying-stateless-nodes"><a href="#TOC">Deploying Stateless Nodes</a></h2>
+<p><a href="Using_Provmethod=osimagename">Using_Provmethod=osimagename</a></p>
+<pre><code>rsetboot compute net
+rpower compute boot</code></pre>
+<h2 id="s3-support"><a href="#TOC">S3 support</a></h2>
+<p>Xcat can support rpower suspend/wake for NeXtScale nodes, but need extra configuration. below are the configuration on redhat.</p>
+<ul>
+<li><p>Install ’acpid’  package on NeXtScale node.</p>
+<p>xdsh &lt;NeXtScaleNode&gt; &quot;yum install -y acpid&quot;</p></li>
+<li><p>Log in NeXtScale node, add two configuration files (suspend and suspend_event)on NeXtScale node.</p>
+<p>/etc/pm/config.d/suspend S2RAM_OPTS=&quot;--force --vbe_save --vbe_post --vbe_mode&quot;</p>
+<p>/etc/acpi/events/suspend_event event=button/sleep.* action=/usr/sbin/pm-suspend</p></li>
+<li><p>enable 'Power.S3Enable'  parameter on NeXtScale node</p>
+<p>[root@xcatmn]# echo &quot;set Power.S3Enable Enable&quot; &gt; power-setting  [root@xcatmn]# pasu -b power-setting feihunode02 ..... feihunode02: Power.S3Enable=Enable .....</p></li>
+</ul>
+<h2 id="where-do-i-go-from-here"><a href="#TOC">Where Do I Go From Here?</a></h2>
+<p>Now that your basic cluster is set up, here are suggestions for additional reading:</p>
+<ul>
+<li>To help configure your networks:
+<ul>
+<li>[Managing_the_Mellanox_Infiniband_Network]</li>
+<li>[Managing_Ethernet_Switches]</li>
+</ul></li>
+<li>To install other HPC products:
+<ul>
+<li>[IBM_HPC_Stack_in_an_xCAT_Cluster]</li>
+</ul></li>
+<li>For on-going management of the cluster:
+<ul>
+<li>[Using_Updatenode]</li>
+<li>[Monitoring_an_xCAT_Cluster]</li>
+</ul></li>
+<li>If you want to create multiple virtual machines in each physical server:
+<ul>
+<li>[XCAT_Virtualization_with_VMWare]</li>
+<li>[XCAT_Virtualization_with_KVM]</li>
+<li>[XCAT_Virtualization_with_RHEV]</li>
+</ul></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-in-2.5.3-since-2.5.2">New Function in 2.5.3 Since 2.5.2</a></li>
+<li><a href="#bugs-fixed-in-2.5.3">Bugs Fixed in 2.5.3</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-in-253-since-252">New Function in 2.5.3 Since 2.5.2</a></li>
+<li><a href="#bugs-fixed-in-253">Bugs Fixed in 2.5.3</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the <a href="XCAT_2.5.2_Release_Notes">2.5.2 release</a>.</p>
+<h2 id="new-function-in-2.5.3-since-2.5.2"><a href="#TOC">New Function in 2.5.3 Since 2.5.2</a></h2>
+<ul>
+<li>A new <a href="http://xcat.sourceforge.net/man5/site.5.html">site attribute</a> &quot;vsftp&quot; to control if the vsftpd daemon will be started automatically when xcatd is started. (The default is 1.)</li>
+<li>Node &quot;os&quot; attribute is now case sensitive to better support Scientific Linux (SL).</li>
+<li>chhypervisor command to allow query and change of an ESXi hypervisor maintenance mode state.</li>
+</ul>
+<h2 id="bugs-fixed-in-2.5.3"><a href="#TOC">Bugs Fixed in 2.5.3</a></h2>
+<ul>
+<li>nodestat no longer hangs on running systems with a service running on port 3001</li>
+<li>The nodeset command now returns non zero value when prescripts fail.</li>
+<li>Fixed the issue for handling variables in the statelite table attributes.</li>
+<li>Fixed the issue that the getpostscript.awk file hangs when &quot;getpostscript&quot; entry is not in the policy table.</li>
+<li>Fixed rinv crashing on orphan VMs in VMware.</li>
+<li>Removed pbstop from xcat 2.5 because of GPL.</li>
+<li>Removed ISRDown condition and ISR_status sensor from RMC monitoring</li>
+<li>Recovery of vms from a dead VMware hypervisor using mkvm/rpower/rmigrate now gets placed correctly on a specific hypervisor if requested.</li>
+<li>Fix rmigrate -f for VMware in the event that the source hypervisor is not currently in vCenter inventory</li>
+<li>Fix genimage to again create ifcfg-ethx file if -i options is used. The removal of this code caused some postscripts to fail which relied on the file.</li>
+</ul>
+<p>For details see the <a href="http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945">Tracker Bugs</a>, or check the subversion commit history for the 2.5 branch.</p>
+<h2 id="known-issues-and-work-arounds"><a href="#TOC">Known Issues and Work Arounds</a></h2>
+<ul>
+<li>NA</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-xen">xCAT &amp; Xen</a><ul>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#terms-used">Terms used</a></li>
+<li><a href="#notes">Notes</a></li>
+</ul></li>
+<li><a href="#installation">Installation</a><ul>
+<li><a href="#install-xen-support-on-the-headnode">Install Xen support <strong>on the Headnode</strong></a></li>
+<li><a href="#install-xen-hypervisor-nodes"><strong>Install Xen Hypervisor nodes</strong></a></li>
+<li><a href="#create-xen-guests">Create Xen Guests</a></li>
+</ul></li>
+<li><a href="#advanced-options">Advanced options</a><ul>
+<li><a href="#create-a-hypervisor-image">Create a Hypervisor Image</a></li>
+<li><a href="#setup-live-migration">Setup Live migration</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-&amp;amp-xen">xCAT &amp; Xen</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#terms-used">Terms used</a></li>
+<li><a href="#notes">Notes</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#install-xen-support-on-the-headnode">Install Xen support <strong>on the Headnode</strong></a></li>
+<li><a href="#install-xen-hypervisor-nodes"><strong>Install Xen Hypervisor nodes</strong></a></li>
+<li><a href="#create-xen-guests">Create Xen Guests</a></li>
+<li><a href="#advanced-options">Advanced options</a></li>
+<li><a href="#create-a-hypervisor-image">Create a Hypervisor Image</a></li>
+<li><a href="#setup-live-migration">Setup Live migration</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<h1 id="xcat-xen"><a href="#TOC">xCAT &amp; Xen</a></h1>
+<p>xCAT can be configured to work with the Xen hypervisor to install and manage virtual compute nodes.</p>
+<h2 id="requirements"><a href="#TOC">Requirements</a></h2>
+<p>OS for Headnode/Compute nodes: Verified to work with: Centos 5.2 64-bit<br />OS for Xen guests: Verified to work with Centos 5.2 32/64-bit, Windows server 2008 32/64-bit<br />xCAT: Version 2.1 - Snapshot from Sept. 4th 2008 or later<br />Headnode: CPU Virtualization technology is not required<br />Compute nodes: CPU Virtualization technology is required<br />Guest storage: This can be a file on the hypervisor, an nfs mounted file, iSCSI drive or similar.</p>
+<h2 id="terms-used"><a href="#TOC">Terms used</a></h2>
+<p>headnode - the xCAT headnode<br />node01 - a compute node<br />xen1 - the name of a Xen guest<br />xen_disk - A Xen virtual hard disk file<br />10.10.10.1 - xCAT server IP address</p>
+<h2 id="notes"><a href="#TOC">Notes</a></h2>
+<p>Be careful when restating Xen. If you have any Xen nodes running, you will zombie the nodes if you do not pause them before restarting the Xen service. To avoid zombies, pause the nodes, restart Xen, and then resume the nodes:</p>
+<pre><code>service xendomains stop
+service xend restart
+service xendomains start</code></pre>
+<h1 id="installation"><a href="#TOC">Installation</a></h1>
+<p>Start with a standard install of the latest 2.1 snapshot</p>
+<h2 id="install-xen-support-on-the-headnode"><a href="#TOC">Install Xen support <strong>on the Headnode</strong></a></h2>
+<ul>
+<li><p>Install the xen-devel, libvirt, libvirt-devel and gcc packages, then install the perl module Sys::Virt</p>
+<p>yum install xen-devel libvirt libvirt-devel gcc cpan install Sys::Virt</p></li>
+<li><p><em>NOTE: To install Sys::Virt, the PKG_CONFIG_PATH environment variable may need to be exported because libvirt.pc may not be in a standard location. (Example: export PKG_CONFIG_PATH=/usr/lib64/pkgconfig)</em></p></li>
+</ul>
+<h2 id="install-xen-hypervisor-nodes"><a href="#TOC"><strong>Install Xen Hypervisor nodes</strong></a></h2>
+<p>Each compute node can be used as a hypervisor node, and may be individually installed or installed from an image. The Xen guests are installed with the rinstall command. If configured for live migration, the guests can be migrated from one compute node to another without being powered down. This section covers the basic task of modifying an already installed compute node to be a hypervisor. To create a hypervisor image, see the &quot;Create a Hypervisor Image&quot; section</p>
+<p><strong>To modify an existing compute node:</strong></p>
+<ul>
+<li>rinstall the compute node</li>
+<li>On the node, install kernel-xen, xen, and uucp</li>
+<li>Edit &quot;/boot/grub/menu.lst&quot; so that the Xen kernel will boot by default - usually this means changing the default boot image to 0</li>
+<li><p>You may want to add an option to specify how much memory the dom0 (compute node) uses for itself. This is an option you can specify in the bootloader with the dom0_mem option. For example, to set the dom0 to use 512 MB of RAM, edit the kernel line to look like this:</p>
+<p>kernel /boot/xen.gz-2.6.18-92.el5 dom0_mem=512M</p></li>
+<li><p>If you don't need live migration, create the directory to store the VM disk files: /vms. Otherwise see the section on Live migration for NFS and iSCSI instructions.</p>
+<p>mkdir /vms</p></li>
+<li><p>Create a 4GB file for the Xen Guest for each virtual hard drive</p>
+<p>dd if=/dev/zero of=/vms/vm_disk bs=1M count=1 seek=4095</p></li>
+<li><p>Reboot the compute node</p></li>
+</ul>
+<h2 id="create-xen-guests"><a href="#TOC">Create Xen Guests</a></h2>
+<p>On the Headnode:</p>
+<ul>
+<li>Add a Xen guest to the xCAT tables by running a command similar to the following:
+<ul>
+<li><em>NOTE: The serialport and serialspeed options will redirect console output to the Xen serial terminal. To use vnc to view the console, leave these options out.</em></li>
+</ul>
+<p>nodeadd xen1 groups=compute,all vm.host=node01 vm.storage=/vms/vm_disk nodehm.mgt=xen nodehm.power=xen nodehm.serialport=0 nodehm.serialspeed=115200 nodetype.os=centos5.2 nodetype.arch=x86 nodetype.profile=compute noderes.netboot=pxe noderes.nfsserver=10.10.10.1 noderes.primarynic=eth0</p></li>
+<li>add the IP address of the Xen guest to /etc/hosts</li>
+<li><p>Power the Xen guest on and off to create it's config file and MAC address. Then create a DHCP entry for it:</p>
+<p>rpower xen1 on rpower xen1 off makedhcp xen1 service dhcpd restart</p></li>
+<li><p>Do an rinstall to install the OS on guest:</p>
+<p>rinstall xen1</p></li>
+</ul>
+<p><strong>Optional:</strong></p>
+<ul>
+<li>To watch the install console by either using makeconservercf xen1 and running &quot;rcons xen1&quot; or directly running: /opt/xcat/share/xcat/cons/xen xen1
+<ul>
+<li><em>NOTE: To exit the console, type ~~. (plus however many ~'s you need for each ssh session you are currently using)</em></li>
+</ul></li>
+<li>To view the Console with vnc:
+<ul>
+<li>Modify Xen to allow vnc connections from anywhere, then restart Xen:</li>
+</ul>
+vi /etc/xen/xend-config-config.sxp (vnc-listen '0.0.0.0') service xend restart</li>
+</ul>
+<p>List the Xen guests:</p>
+<pre><code>ssh node01 xm list
+Name          ID Mem(MiB) VCPUs State   Time(s)
+Domain-0      0     2439     4 r-----   2772.6
+xen1           3      519     1 -b----     33.4
+xen2           7      519     1 -b----     27.0</code></pre>
+<p>ssh to the Headnode with X forwarding, and run vncviewer on the ID listed for the guest</p>
+<pre><code>ssh headnode -Y
+vncviewer node01:3</code></pre>
+<h1 id="advanced-options"><a href="#TOC">Advanced options</a></h1>
+<p>These sections give instructions for settting up the more advanced options of Xen + xCAT such as live migration, and creating a hypervisor image.</p>
+<h2 id="create-a-hypervisor-image"><a href="#TOC">Create a Hypervisor Image</a></h2>
+<ul>
+<li><p>Create the hypervisor template:</p>
+<p>cd /opt/xcat/share/xcat/install/centos/ cp compute.tmpl hyper.tmpl vi hyper.tmpl</p></li>
+<li>At the end of the file, modify the name of the post install script - change it from post.rh to post.hyper.rh</li>
+<li><p>add these lines at the bottom of the document, just before %pre</p>
+<p>kernel-xen xen uucp</p></li>
+<li><p>Modify the post-install script</p>
+<p>cd ../scripts cp post.rh post.hyper.rh vi post.hyper.rh</p></li>
+<li>Add these lines to the bottom of the file (before the exit 0)</li>
+<li><p>To modify to bootloader to load the xen kernel by default:</p>
+<p>sed -i 's/default=[1-9]+/default=0/' /boot/grub/menu.lst</p></li>
+<li><p>To specify the amount of memory the dom0 (compute node) has available, use this line:</p>
+<p>sed -i 's/(kernel.*$)/ dom0_mem=512M/' /boot/grub/menu.lst</p></li>
+<li><p>To setup VNC to listen from anywhere, add these lines:</p>
+<p>XENDCONFIGFILE=/etc/xen/xend-config.sxp HOSTNAME=#TABLE:nodelist:THISNODE:node# sed -e &quot;s/vnc-listen '[0-9]+.[0-9]+.[0-9]+.[0-9]+'/vnc-listen 0.0.0.0/&quot; -i $XENDCONFIGFILE sed -e &quot;s/#[ ]*(vnc-listen/(vnc-listen/&quot; -i $XENDCONFIGFILE</p></li>
+<li><p>To enable migration, add these lines:</p>
+<p>XENDCONFIGFILE=/etc/xen/xend-config.sxp sed -e &quot;s/(xend-relocation-hosts-allow '^/#(xend-relocation-hosts-allow '^/&quot; -i $XENDCONFIGFILE sed -e &quot;s/#[ ]<em>(xend-relocation-server no/(xend-relocation-server yes/&quot; -i $XENDCONFIGFILE sed -e &quot;s/#[ ]</em>(xend-relocation-port 8002)/(xend-relocation-port 8002)/&quot; -i $XENDCONFIGFILE sed -e &quot;s/#[ ]*(xend-relocation-hosts-allow _/(xend-relocation-hosts-allow _/&quot; -i $XENDCONFIGFILE</p></li>
+<li><p>To have the node create it's own virtual disks, add these lines:</p>
+<p>mkdir /vms HOSTNAME=#TABLE:nodelist:THISNODE:node# dd if=/dev/zero of=/vms/<span class="math"><em>H</em><em>O</em><em>S</em><em>T</em><em>N</em><em>A</em><em>M</em><em>E</em> − <em>x</em>1<em>b</em><em>s</em> = 1<em>M</em><em>c</em><em>o</em><em>u</em><em>n</em><em>t</em> = 1<em>s</em><em>e</em><em>e</em><em>k</em> = 4095<em>d</em><em>d</em><em>i</em><em>f</em> =  / <em>d</em><em>e</em><em>v</em> / <em>z</em><em>e</em><em>r</em><em>o</em><em>o</em><em>f</em> =  / <em>v</em><em>m</em><em>s</em> / </span>HOSTNAME-x2 bs=1M count=1 seek=4095 dd if=/dev/zero of=/vms/<span class="math"><em>H</em><em>O</em><em>S</em><em>T</em><em>N</em><em>A</em><em>M</em><em>E</em> − <em>x</em>3<em>b</em><em>s</em> = 1<em>M</em><em>c</em><em>o</em><em>u</em><em>n</em><em>t</em> = 1<em>s</em><em>e</em><em>e</em><em>k</em> = 4095<em>d</em><em>d</em><em>i</em><em>f</em> =  / <em>d</em><em>e</em><em>v</em> / <em>z</em><em>e</em><em>r</em><em>o</em><em>o</em><em>f</em> =  / <em>v</em><em>m</em><em>s</em> / </span>HOSTNAME-x4 bs=1M count=1 seek=4095</p></li>
+<li><p>Or, to have the node mount the /vms directory on the head node, add these lines:</p>
+<p>mkdir /vms echo &quot;headnode:/vms /vms nfs defaults 0 0&quot; &gt;&gt;/etc/fstab</p></li>
+<li><p>Set the profile to hyper in the nodetype tab</p>
+<p>chdef -t group -o node1 profile=hyper</p></li>
+<li><p>Install the compute node</p>
+<p>rinstall node01</p></li>
+</ul>
+<h2 id="setup-live-migration"><a href="#TOC">Setup Live migration</a></h2>
+<p>To use migration for Xen guests, the virtual hard drives must be available on a network share (i.e. nfs or iSCSI). All of these steps can be done manually, or put into the postscripts for the hypervisor image.<br /><strong>To setup NFS:</strong></p>
+<ul>
+<li><p>On the Headnode, edit /etc/exports, and add the following line:</p>
+<p>/vms *(rw,no_root_squash,sync)</p></li>
+<li>Restart the nfs service</li>
+<li><p>Create a virtual hard drive for each Xen guest:</p>
+<p>mkdir /vms dd if=/dev/zero of=/vms/xen_disk1 bs=1M count=1 seek=4095 dd if=/dev/zero of=/vms/xen_disk2 bs=1M count=1 seek=4095 ...</p></li>
+</ul>
+<p><strong>To setup software iSCSI:</strong><br />Setup iscsi targets (server)</p>
+<ul>
+<li>This can be done by xCAT, Jarrod Johnson please document</li>
+<li>openfiler is another option</li>
+</ul>
+<p>Setup iscsi initiators (clients)</p>
+<ul>
+<li>install iscsi-initator-utils</li>
+<li>configure the /etc/iscsi/iscsid.conf file</li>
+<li>service iscsi start</li>
+<li>iscsiadm -m discovery -t st -p (storage server)</li>
+<li>iscsiadm -m node -T (drive name) --login</li>
+</ul>
+<p>Set the vms to use the iSCSI storage devices</p>
+<ul>
+<li>In the storage column of the vm table use the /dev/disk/by-path/(disk) address</li>
+<li>Setup the iSCSI targets on each node that a vm could be migrated to.</li>
+</ul>
+<p>Setup the hypervisor nodes:<br />These steps must be run on each compute node, or be installed to the hypervisor image.</p>
+<ul>
+<li><p>Create the /vms folder, and configure fstab to automount it:</p>
+<p>mkdir /vms echo &quot;headnode:/vms /vms nfs defaults 0 0&quot; &gt;&gt;/etc/fstab</p></li>
+</ul>
+<p>Configure xen to support migration. On all compute nodes, make the following edits to /etc/xen/xend-config.sxp:</p>
+<ul>
+<li>uncomment '#(xend-relocation-server no)' and change no to yes</li>
+<li>uncomment the line: #(xend-relocation-port 8002)</li>
+<li>uncomment the line: #(xend-relocation-hosts-allow '')</li>
+<li>comment out the line: (xend-relocation-hosts-allow '^localhost$ ^localhost\\.localdomain$')</li>
+<li>It may also be helpful to change the vnc-listen parameter to '0.0.0.0'. This options tells vnc to listen on all interfaces, instead of just localhost. It also allows for the same config file to be copied to all nodes.</li>
+<li>save changes, and restart the xend service</li>
+</ul>
+<p>Once the compute(guest) nodes are created, you can migrate a node from one hypervisor to another with the rmigrate command: rmigrate (guest) (destination)</p>
+<pre><code>rmigrate xen1 node02</code></pre>
+<p>Another useful command that utilized the features of rmigrate is revacuate. This command will automatically rmigrate all xen guests off of hypervisor: revacuate (hypervisor)</p>
+<pre><code>revacuate node01</code></pre>
+</body>
+</html>

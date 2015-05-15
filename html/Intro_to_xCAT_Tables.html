@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#a-brief-introduction-to-the-some-commonly-used-xcat-tables">A Brief Introduction to the some commonly used xCAT tables</a><ul>
+<li><a href="#xcat-tables-descriptions"><strong>xCAT Tables Descriptions</strong></a></li>
+<li><a href="#table-commands"><strong>Table commands</strong></a></li>
+</ul></li>
+<li><a href="#common-tables">Common Tables</a><ul>
+<li><a href="#nodelist-table">nodelist Table</a></li>
+<li><a href="#nodehm-table">nodehm Table</a></li>
+<li><a href="#ipmi-table"><strong>ipmi Table</strong></a></li>
+<li><a href="#mpa-table"><strong>mpa Table</strong></a></li>
+<li><a href="#mp-table"><strong>mp Table</strong></a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#networks-table"><strong>networks Table</strong></a></li>
+<li><a href="#noderes-table"><strong>noderes Table</strong></a></li>
+<li><a href="#passwd-table"><strong>passwd Table</strong></a></li>
+<li><a href="#chain-table"><strong>chain Table</strong></a></li>
+<li><a href="#switch-table"><strong>switch Table</strong></a></li>
+<li><a href="#nodetype-table"><strong>nodetype Table</strong></a></li>
+<li><a href="#iscsi-table"><strong>iscsi Table</strong></a></li>
+<li><a href="#prodkey-table"><strong>prodkey Table</strong></a></li>
+</ul></li>
+<li><a href="#summary-1">Summary</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#a-brief-introduction-to-the-some-commonly-used-xcat-tables">A Brief Introduction to the some commonly used xCAT tables</a></li>
+<li><a href="#xcat-tables-descriptions"><strong>xCAT Tables Descriptions</strong></a></li>
+<li><a href="#table-commands"><strong>Table commands</strong></a></li>
+<li><a href="#common-tables">Common Tables</a></li>
+<li><a href="#site-table"><strong>site Table</strong></a></li>
+<li><a href="#nodelist-table">nodelist Table</a></li>
+<li><a href="#nodehm-table">nodehm Table</a></li>
+<li><a href="#ipmi-table"><strong>ipmi Table</strong></a></li>
+<li><a href="#mpa-table"><strong>mpa Table</strong></a></li>
+<li><a href="#mp-table"><strong>mp Table</strong></a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#networks-table"><strong>networks Table</strong></a></li>
+<li><a href="#noderes-table"><strong>noderes Table</strong></a></li>
+<li><a href="#passwd-table"><strong>passwd Table</strong></a></li>
+<li><a href="#chain-table"><strong>chain Table</strong></a></li>
+<li><a href="#switch-table"><strong>switch Table</strong></a></li>
+<li><a href="#nodetype-table"><strong>nodetype Table</strong></a></li>
+<li><a href="#iscsi-table"><strong>iscsi Table</strong></a></li>
+<li><a href="#prodkey-table"><strong>prodkey Table</strong></a></li>
+<li><a href="#summary-1">Summary</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<h2 id="a-brief-introduction-to-the-some-commonly-used-xcat-tables"><a href="#TOC">A Brief Introduction to the some commonly used xCAT tables</a></h2>
+<p>xCAT stores all information about the nodes and subsystems it manages in a database. For the initial xCAT install this database is located in /etc/xcat in sqlite tables. You can also store the tables in MySQL, PostgreSQL or DB2 as well.</p>
+<p>At first glance the number of tables and table entries can be daunting! For example, run the command:</p>
+<pre><code>    tabdump</code></pre>
+<p>And you'll see the list of all the tables. You can run tabdump on any of the tables and it will show you what is contained in there. For most installations you won't need to even fill up half of the tables! And for the tables that you do need, in most cases you'll only need to put one line in the table! So if you don't need them all why all the tables and why so many confusing parameters? xCAT is extreme! Meaning that you have so much flexibility with it you can do amazing things! Also realize that xCAT supports AIX and Linux operating systems. Many of the tables are for AIX, many are for just monitoring, and some are for advanced functions like virtual machines, iSCSI settings, custom boot targets, or specialized switches. In this example of setting up to manage x-Series hosts (e.g. IDataplex), the only tables you'll need to edit are the tables we describe below in [#Common_Tables]</p>
+<h3 id="xcat-tables-descriptions"><a href="#TOC"><strong>xCAT Tables Descriptions</strong></a></h3>
+<p>For a complete list of Tables and their descriptions: http://xcat.sourceforge.net/man5/xcatdb.5.html</p>
+<h3 id="table-commands"><a href="#TOC"><strong>Table commands</strong></a></h3>
+<p>xCAT comes with a rich set of functions for manipulating tables. Tables can be changed via command line or an editor. To show tables we've already seen the tabdump command. But the tabdump command can also describe what each table does. For all tables you can run:</p>
+<pre><code>    tabdump -d &lt;tablename&gt;</code></pre>
+<p>And you'll get the description of all the fields in the table.</p>
+<p>To edit a table you can run the tabedit command:</p>
+<pre><code>    tabedit &lt;tablename&gt;</code></pre>
+<p>By default you'll be placed in a vi editor with the table contents displayed. By writing the file and saving it you then can make changes to the database. But what if vi isn't your bag? Suppose you like nano? Or emacs? Or even open office? xCAT is an equal-editor friendly software. You can simply change the editor to be something else by running:</p>
+<pre><code>    export EDITOR=emacs</code></pre>
+<p>Then you can edit tables with emacs when running tabedit.<br />Another way to edit tables are with the nodech, chtab and chdef commands. These commands come with man pages that show their usage but with these commands you edit tables via the command line as opposed to entering an editor. For example:</p>
+<pre><code>    chtab key=tftpdir site.value=/tftpboot
+    nodech node[1-4] groups,=newgroup
+    chdef -t node -o node01 groups=&quot;all,compute&quot;</code></pre>
+<p>For the extensive list of all the database commands:</p>
+<pre><code>[Listing_and_Modifying_the_Database]</code></pre>
+<p>Now that we know how to edit tables, lets explain what they do. Lets start with the site table.</p>
+<h2 id="common-tables"><a href="#TOC">Common Tables</a></h2>
+<p>Run the following to get the full list</p>
+<pre><code>   tabdump </code></pre>
+<p>~~~~<br /> site nodelist nodehm ipmi mp mpa networks noderes passwd chain switch nodetype mac</p>
+<p>~~~~ ### <strong>site Table</strong></p>
+<p>The site table controls settings that are primarily used for the management node in how xCAT will behave. For example, it specifies the port that the client and server will communicate on, the tftp directory, information for DNS, and most importantly: Who is the master xCAT server? This becomes more important as service nodes are running, because service nodes run xcatd's as well as the master node.</p>
+<p>When you install you get a minimum configuration, similar to the following:</p>
+<pre><code>    #key,value,comments,disable
+    &quot;xcatdport&quot;,&quot;3001&quot;,,
+    &quot;xcatiport&quot;,&quot;3002&quot;,,
+    &quot;tftpdir&quot;,&quot;/tftpboot&quot;,,
+    &quot;master&quot;,&quot;10.0.0.39&quot;,,
+    &quot;domain&quot;,&quot;idplx&quot;,,
+    &quot;installdir&quot;,&quot;/install&quot;,,
+    &quot;timezone&quot;,&quot;America/Los_Angeles&quot;,,
+     &quot;nameservers&quot;,&quot;10.0.0.1&quot;,,
+    &quot;forwarders&quot;,&quot;9.0.2.1&quot;,,
+           .
+           .
+           .</code></pre>
+<p>Most of these settings xCAT setups during the initial install. Notice the top line that begins with the #. That line is necessary for xCAT to feed the parameters back into the database. Don't touch it! If you want to put more settings in, go on right ahead. You can add any attributes that you want to the site table.</p>
+<h3 id="nodelist-table"><a href="#TOC">nodelist Table</a></h3>
+<p>Now that you have some basic parameters for your management node, you need to get all your nodes defined. You can use the xCAT host table to set up an /etc/hosts file, but for us we'll just assume that you put all your host names inside /etc/hosts and that you now just want xCAT to know about them. There are two parameters you must have for each host: The node name and the groups it belongs to.</p>
+<pre><code>node01,&quot;all,compute,rack3&quot;</code></pre>
+<p>You don't need to surround everything by quotes, xCAT will do that for you. But for fields that have commas in them like the groups line does above, you need to wrap the parameter in quotes. After you save it and then view it again you'll see that xCAT has placed quotes around it.</p>
+<p>One last note on this table:</p>
+<p>If your node has an alias, like node01-eth1 then you must not put node01-eth1 in there. Likewise if you have an infiniband adapter, don't put node01-ib0 in the nodelist table. Just put node01.</p>
+<h3 id="nodehm-table"><a href="#TOC">nodehm Table</a></h3>
+<p>After you define your nodes the next step I usually do is try to get control of them. This is done by editing the node hardware management (nodehm) table. Today it is more than likely that your machine is managed by IPMI. So putting one line in this table is usually sufficient for all your nodes. Something like the following will work in most cases:</p>
+<pre><code>#node,power,mgt,cons,termserver,termport,conserver,serialport,serialspeed,serialflow,getmac,comments,disable
+&quot;compute&quot;,,&quot;ipmi&quot;,,,,,&quot;1&quot;,&quot;19200&quot;,&quot;hard&quot;,,,</code></pre>
+<p>Notice how much we left out! But lets describe what we've done. The first entry is the node. Here we have placed the key 'compute'. So every node in the compute group will get these settings. You can use the groups that you defined above in the nodelist table or simply put the node name. The groups works faster and its much easier to change one line than if you put 100 host names.</p>
+<p>We placed the 'ipmi' parameter under the mgt column. By doing this, xCAT assumes that power, remote console and all other functions requiring remote access will be done through ipmi. So you don't even have to fill in all those other fields.</p>
+<p>Finally, we want serial over lan (SoL) to work on this group of machines, so we set the values that will get added to the node during install. These should match the BIOS settings as well so that you can view console redirection. Don't expect that just because you placed these parameters in serial over lan will work right off the bat! You still need to make sure the BIOS is set to redirect and also that you are going out of the right serial port with the right serial speed. For IBM dx360 M2s the serial port should be set to 0. For the IBM dx360 and dx340 it should be set to 1. Isn't that obvious?</p>
+<p>If you had a blade server instead, then you would put 'blade' instead of 'ipmi' in the mgt column.</p>
+<p>So now you should think to yourself logically: Ok, I told xCAT to manage the machines with ipmi, but where does xCAT know to look for ipmi settings such as the password or even what the IP address is of the baseboard management controller that sits on the node itself? Or if we told it it was a blade, then where do we tell it what slot its in or in the case of IBM hardware, what the management module IP address is? Well for that you need to go to the ipmi table for ipmi or the mp &amp; mpa table for blades. Lets start with the ipmi table</p>
+<h3 id="ipmi-table"><a href="#TOC"><strong>ipmi Table</strong></a></h3>
+<p>While all tables are able to use regular expressions, the ipmi table is one of the best places to use it. Before we talk about that, lets mention some of the conventions used in xCAT for host names:<br />- simple names are better than crazy complex names that have positional information in the node. For example, it is common for people to name nodes something like r23u01 for the host name. xCAT makes it so this is not necessary. xCAT has a nodepos table for this information to go in. Therefore, we recommend normal host names like 'n001' or your favorite prefix.<br />- for BMCs we usually prefer &lt;hostname&gt;-bmc</p>
+<p>So, assuming you put all your ipmi nodes into a compute group and you followed the above sugguestion for host names, all you need is:</p>
+<pre><code>#node,bmc,bmcport,username,password,comments,disable
+&quot;compute&quot;,&quot;/\z/-bmc/&quot;,,&quot;USERID&quot;,&quot;PASSW0RD&quot;,,</code></pre>
+<p>This tells you: For every node in the compute group, take its hostname and add -bmc to it, then talk to it with user name: USERID and password PASSW0RD<br />If you have more than one group, other nodes that don't belong to the compute nodegroup, then you can copy that line and change compute to something else, like login or storage or whatever group you defined. If you only have ipmi nodes you do not need to fill out the mp or mpa table. That is used for blades and other devices.</p>
+<h3 id="mpa-table"><a href="#TOC"><strong>mpa Table</strong></a></h3>
+<p>This is where you put the information for a BladeCenter management module. For one blade center management module with hostname mm01, an entry might look like this:</p>
+<pre><code>    #mpa,username,password,comments,disable
+    mm01,USERID,PASSW0RD</code></pre>
+<h3 id="mp-table"><a href="#TOC"><strong>mp Table</strong></a></h3>
+<p>Now that you have the management module defined for blades, you now provide a map of where the blades go in relationship to the management module. For 14 Blades an example may be something like this:</p>
+<pre><code>    
+    b01,mm01,1
+    b02,mm01,2
+    b03,mm01,3
+    b04,mm01,4
+    b05,mm01,5
+    b06,mm01,6
+    b07,mm01,7
+    b08,mm01,8
+    b09,mm01,9
+    b10,mm01,10
+    b11,mm01,11
+    b12,mm01,12
+    b13,mm01,13
+    b14,mm01,14</code></pre>
+<p>14 blades on one management module. Now, You should be able to run commands like rpower and rinv.</p>
+<h3 id="summary"><a href="#TOC">Summary</a></h3>
+<p>So what have we done?<br />- We have defined basic xCAT settings for DHCP, DNS, xcatd, and basic install information with site table<br />- We have defined all the nodes in the nodelist table<br />- We defined how to remotely manage those nodes with either the ipmi table or the mpa &amp; mp tables.</p>
+<p>So what to do next?<br />Now we need to use the automatic discovery process. To do this you need to configure:<br />- networks - to make sure all network settings are correct and to generate dhcp file<br />- noderes - to tell what type of boot the nodes will use ( for example pxe)<br />- passwd - so you have default system information<br />- chain - so you can tell nodes what to do so they boot from discovery, to setup, to install automatically.<br />- switch - so you have a mapping of network switch port to node. This is for automated discovery to map mac addresses to the correct machines.</p>
+<p>From there you will want to install the machines. To do this you need to configure:<br />- nodetype - tells which OS, architecture and install template to use.<br />- iscsi - for nodes that do iSCSI boot you need to tell them where their iSCSI targets are (this is only if you use xCAT iSCSI)<br />- prodkey - for windows installs you need to tell xCAT the key it should use!</p>
+<p>So let's proceed :</p>
+<h3 id="networks-table"><a href="#TOC"><strong>networks Table</strong></a></h3>
+<p>You have to define the networks that your management server is attached to. The important thing here is for automated discovery, uou need to put a dynamic range of IP addresses for the networks that are allowed to discover nodes. A simple example is a machine with one network:</p>
+<pre><code>#netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,nodehostname,comments,disable
+mgmt,&quot;10.0.0.0&quot;,&quot;255.255.0.0&quot;,&quot;eth0&quot;,&quot;10.0.0.1&quot;,&quot;10.0.0.1&quot;,&quot;10.0.0.1&quot;,&quot;10.0.0.1&quot;,,,&quot;10.0.0.208-10.0.0.250&quot;,,,</code></pre>
+<p>The above shows a network that I have arbitrarily named mgmt. The network is 10.0.0.0 and it is a class B network: 255.255.0.0. The management node interface that talks to it is eth0. Then this network's dhcpserver, tftpserver, nameserver, &amp; ntpserver is all the same server: 10.0.0.1, which also happens to be my management server. Finally there is a dynamic range of IP addresses: 10.0.0.208-10.0.0.250. Its pretty small, but enough to discover 43 nodes.</p>
+<h3 id="noderes-table"><a href="#TOC"><strong>noderes Table</strong></a></h3>
+<p>The noderes table defines the resources of the nodes. This includes all of the servers it uses to boot to a usable state and all the types of boot ups it will do. Again this is usually as easy as doing something like:</p>
+<pre><code>#node,servicenode,netboot,tftpserver,nfsserver,monserver,nfsdir,installnic,primarynic,cmdinterface,xcatmaster,current_osimage,next_osimage,nimserver,comments,disable
+compute,,pxe,,,,/install,eth1,eth0,,10.0.0.1,,,,,</code></pre>
+<p>The blanks are assumed by xCAT to be the management server, in this case 10.0.0.1. pxe is what we use for standard pxe boot and iscsiboot.<br />This can get tricky in some cases:<br />1. primary interface for ipmi machines is the one where the BMC is set to. If you want to install over a different nic, go ahead. By default IBM nodes have eth0 as the port with the BMC on it, but if you stick a PCI card that has network adapters on it, that may change.<br />2. In xCAT 1.3 there was a precedence of the top one was used over the first one. That's not true in xCAT2. Just make a node only matches one stanza unless they are disjoint lines. (i.e: one line doesn't have the same fields that another does defined.)</p>
+<h3 id="passwd-table"><a href="#TOC"><strong>passwd Table</strong></a></h3>
+<p>This one is easy. Just put the passwords for the things you'll need:</p>
+<pre><code>    #key,username,password,comments,disable
+    &quot;omapi&quot;,&quot;xcat_key&quot;,&quot;cm9UZUJ5SmRQdHNhUnNKR3lBTHQwTXVBd29vU1Q2QjM=&quot;,,
+    &quot;system&quot;,&quot;root&quot;,&quot;cluster&quot;,,
+    &quot;system&quot;,&quot;Administrator&quot;,&quot;cluster&quot;,,</code></pre>
+<p>The omapi is done by xCAT and that is used to communicate with DHCP. The system 'root' key is the password that will be assigned to root for Linux node installs. The Administrator password is for Windows installs. Most places will be fine with one or the other.</p>
+<h3 id="chain-table"><a href="#TOC"><strong>chain Table</strong></a></h3>
+<p>This table is for chaining initial boot sequences and other advanced chaining rules that we won't go into here. Essentially, you can automatically discover a machine, flash its bios, set its CMOS settings, set the BMC settings, then boot to an operating system after that to run a job and then boot to another operating system after that. The chain table tells the destiny of the node and what to do. Read the xCAT documentation <a href="https://xcat.svn.sourceforge.net/svnroot/xcat/xcat-core/trunk/xCAT-client/share/doc/">here</a>.</p>
+<h3 id="switch-table"><a href="#TOC"><strong>switch Table</strong></a></h3>
+<p>This table is used to map the node to a switch and a port. The reason you have to fill this out is because this is where the autodiscovery happens. A node boots up, xCAT gets signaled, it checks to see if he knows who it is, if he doesn't he queries the switches to see who it is. An example of this table is simply:</p>
+<pre><code>    n001,switch1,1
+    n002,switch1,2
+    ...</code></pre>
+<p>As you can see, this switch configuration has n001 connected to switch1 in port 1. For this automagic to work you need to have snmp enabled on the switches. xCAT expects it to be simple snmp v1 and public community string. If you want something else (snmp v3, or different community string), check out the switches table. (that's different than the <em>switch</em> table we're talking about here)</p>
+<h3 id="nodetype-table"><a href="#TOC"><strong>nodetype Table</strong></a></h3>
+<p>This is the table where you tell the node what to install! Its simple: node name (or group), architecture, operating system, and template for that operating system. Here's an example:</p>
+<pre><code>    #node,os,arch,profile,nodetype,comments,disable
+    &quot;render&quot;,&quot;centos5.3&quot;,&quot;x86_64&quot;,&quot;compute&quot;,,,
+    &quot;workstation&quot;,&quot;win2k8&quot;,&quot;x86_64&quot;,&quot;enterprise.win2k8.x86_64&quot;,,,</code></pre>
+<p>Here my workstation node groups are installing the win2k8 OS with the enterprise.win2k8.x86_64 template and my render nodes are installing CentOS 5.3 with the compute template. Those templates are located in /opt/xcat/share/xcat/install/&lt;windows|centos&gt;/.</p>
+<h3 id="iscsi-table"><a href="#TOC"><strong>iscsi Table</strong></a></h3>
+<p>For machines that boot off an iSCSI target, you can place the information for these targets in the iscsi table:</p>
+<pre><code>&quot;node02&quot;,&quot;10.0.0.99&quot;,&quot;iqn.2001-05.com.equallogic:0-8a0906-71d4c4a01-d6a0000012949a87-mytestvolume&quot;,&quot;1&quot;,,,,,,,,,</code></pre>
+<p>Here my node is booting off an iscsi target we defined on an iSCSI device. xCAT also has the ability to make your management server an iSCSI device!</p>
+<h3 id="prodkey-table"><a href="#TOC"><strong>prodkey Table</strong></a></h3>
+<p>For some operating systems you need a product key to install them. (Windows, VMWare ESX). This is the place to put those keys:</p>
+<pre><code>    #node,product,key,comments,disable
+    #node,product,key,comments,disable
+    &quot;n9999&quot;,&quot;win2k8.enterprise&quot;,&quot;XXXX-XXXXX-XXXXX-XXXXX-XXXXX&quot;,,</code></pre>
+<p>Here, node n9999 has its windows key so that automatic installs can happen and the user doesn't have to enter the windows product key every time.</p>
+<h2 id="summary-1"><a href="#TOC">Summary</a></h2>
+<p>This was a fast tour through <strong>some</strong> of the widely used xCAT tables! For more information on your specific OS and hardware requirements, check the other on-line docs.</p>
+</body>
+</html>

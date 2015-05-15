@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#new-requirements-from-pcm">New Requirements from PCM</a></li>
+<li><a href="#understand-the-new-requirements-in-xcat">Understand the New Requirements in xCAT</a></li>
+</ul></li>
+<li><a href="#outside-interface">Outside Interface</a><ul>
+<li><a href="#generate-the-initrd-for-stateful-osimage-separately">Generate the Initrd for Stateful Osimage Separately</a></li>
+<li><a href="#run-nodeset-to-avoid-initrd-update">Run nodeset to Avoid Initrd Update</a></li>
+</ul></li>
+<li><a href="#implementation">Implementation</a><ul>
+<li><a href="#the-geninitrd-command">The Geninitrd Command</a><ul>
+<li><a href="#how-to-search-the-driver-rpms"><strong>How to Search the Driver RPMs</strong></a></li>
+<li><a href="#how-to-update-the-initrd"><strong>How to Update the Initrd</strong></a></li>
+<li><a href="#how-to-update-the-linux-kernel"><strong>How to Update the Linux Kernel</strong></a></li>
+</ul></li>
+<li><a href="#the-nodeset---noupdateinitrd-flag">The Nodeset --noupdateinitrd Flag</a></li>
+</ul></li>
+<li><a href="#a-work-flow-of-how-to-use-geninitrd-and-nodeset-command-to-avoid-the-initrd-update-for-every-nodeset-run">A Work Flow of How to Use Geninitrd and Nodeset Command to Avoid the Initrd Update for Every Nodeset run</a><ul>
+<li><a href="#customer-adds-a-custom-driver-or-os-update-to-a-stateful-osimage">Customer adds a custom driver or OS update to a stateful osimage</a></li>
+<li><a href="#customer-runs-the-geninitrd-osimage-command-to-update-the-stateful-osimages-kernel-and-initrd-files">Customer runs the &quot;geninitrd &lt;osimage&gt;&quot; command to update the stateful osimage's kernel and initrd files</a></li>
+<li><a href="#customer-runs-the-nodeset-noderange-osimageosimage---noupdateinitrd-command-to-updates-the-boot-files-for-the-nodes-which-are-using-the-updated-stateful-osimage">Customer runs the &quot;nodeset &lt;noderange&gt; osimage=&lt;osimage&gt; --noupdateinitrd&quot; command to updates the boot files for the nodes which are using the updated stateful osimage</a></li>
+</ul></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#new-requirements-from-pcm">New Requirements from PCM</a></li>
+<li><a href="#understand-the-new-requirements-in-xcat">Understand the New Requirements in xCAT</a></li>
+<li><a href="#outside-interface">Outside Interface</a></li>
+<li><a href="#generate-the-initrd-for-stateful-osimage-separately">Generate the Initrd for Stateful Osimage Separately</a></li>
+<li><a href="#run-nodeset-to-avoid-initrd-update">Run nodeset to Avoid Initrd Update</a></li>
+<li><a href="#implementation">Implementation</a></li>
+<li><a href="#the-geninitrd-command">The Geninitrd Command</a>
+<ul>
+<li><a href="#how-to-search-the-driver-rpms"><strong>How to Search the Driver RPMs</strong></a></li>
+<li><a href="#how-to-update-the-initrd"><strong>How to Update the Initrd</strong></a></li>
+<li><a href="#how-to-update-the-linux-kernel"><strong>How to Update the Linux Kernel</strong></a></li>
+</ul></li>
+<li><a href="#the-nodeset---noupdateinitrd-flag">The Nodeset --noupdateinitrd Flag</a></li>
+<li><a href="#a-work-flow-of-how-to-use-geninitrd-and-nodeset-command-to-avoid-the-initrd-update-for-every-nodeset-run">A Work Flow of How to Use Geninitrd and Nodeset Command to Avoid the Initrd Update for Every Nodeset run</a></li>
+<li><a href="#customer-adds-a-custom-driver-or-os-update-to-a-stateful-osimage">Customer adds a custom driver or OS update to a stateful osimage</a></li>
+<li><a href="#customer-runs-the-geninitrd-&amp;ltosimage&amp;gt-command-to-update-the-stateful-osimages-kernel-and-initrd-files">Customer runs the &quot;geninitrd &lt;osimage&gt;&quot; command to update the stateful osimage's kernel and initrd files</a></li>
+<li><a href="#customer-runs-the-nodeset-&amp;ltnoderange&amp;gt-osimage&amp;ltosimage&amp;gt-%5C--noupdateinitrd-command-to-updates-the-boot-files-for-the-nodes-which-are-using-the-updated-stateful-osimage">Customer runs the &quot;nodeset &lt;noderange&gt; osimage=&lt;osimage&gt; --noupdateinitrd&quot; command to updates the boot files for the nodes which are using the updated stateful osimage</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>Currently, xCAT supports to hack the initrd for stateful osimage that loading additional drivers from rpm packages. The usage procedure is:</p>
+<ol style="list-style-type: decimal">
+<li>Set the rpm path to driverupdatesrc attribute for the osimage &lt;osimg1&gt;;</li>
+<li>Set the name drivers to netdrivers attribute for the osimage &lt;osimg1&gt;.</li>
+<li>Run 'nodeset osimage=osimg1' command, the drivers from driverupdatesrc will be injected to initrd of the &lt;osimg1&gt;.</li>
+</ol>
+<h3 id="new-requirements-from-pcm"><a href="#TOC">New Requirements from PCM</a></h3>
+<ul>
+<li>De-couple initrd build process from nodeset (for stateful nodes)</li>
+</ul>
+<p>When nodeset updates the initrd for stateful nodes with third-party kernel drivers, nodeset takes 50-60 sec to run. The longer running time will affect the performance of some PCM operations that depend on nodeset (like node discovery, node import, node reinstall, etc.). Is it possible to de-couple the initrd build process from nodeset?</p>
+<ul>
+<li>Rebuild initrd with updated kernel drivers (for stateful nodes)</li>
+</ul>
+<p>If we define an &quot;osdistroupdate&quot; object which has an updated kernel package, link the &quot;osdistroupdate&quot; to a stateful osimage, and then run nodeset on the nodes in the stateful osimage, the nodeset cmd copies the boot initrd from the base OS distro to /tftpboot/xcat/osimage/&lt;osimage&gt;. We would like nodeset to rebuild the boot initrd with the drivers from the updated kernel package.</p>
+<h3 id="understand-the-new-requirements-in-xcat"><a href="#TOC">Understand the New Requirements in xCAT</a></h3>
+<ul>
+<li>The hacking of initrd should not be run every time, since it affects the performance of nodeset (runing once is enough). A new command 'geninitrd' will be added to regenerate (hack) the initrd for an osimage. And a flag '--noupdateinitrd' will be added to nodeset command to avoid the initrd update. If no '--noupdateinitrd' flag is specified for nodeset command, it will work as before.</li>
+<li>The paths (osdistroupdate.dirpath) of update distro which set in the osupdatename attribute of osimage will be searched to get the drivers for initrd update. If the updated Linux kernel is included in the update distro, the new <strong>Linux kernel</strong> should also be used to replace the original kernel of the osimage.</li>
+</ul>
+<h2 id="outside-interface"><a href="#TOC">Outside Interface</a></h2>
+<h3 id="generate-the-initrd-for-stateful-osimage-separately"><a href="#TOC">Generate the Initrd for Stateful Osimage Separately</a></h3>
+<p>A new command 'geninitrd' is added to regenerate initrd for stateful osimage.</p>
+<pre><code>geninitrd &amp;lt;osimage&amp;gt;</code></pre>
+<p>The updated driver names are specified in osimage.netdrivers. The value could be comma separated driver names or key word 'allupdate' that update all the drivers from driver rpms.</p>
+<p>The search paths for driver rpms include: osimage.driverupdatesrc, (osimage.osupdatename + osdistroupdate.dirpath). The drivers in osimage.driverupdatesrc has higher priority. If there are multiple osdistroupdate in the osimage.osupdatename, the drivers in the later one has the higher priority.</p>
+<h3 id="run-nodeset-to-avoid-initrd-update"><a href="#TOC">Run nodeset to Avoid Initrd Update</a></h3>
+<p>A new flag '--noupdateinitrd' is added for nodeset command to avoid the initrd update.</p>
+<pre><code>nodeset &amp;lt;noderange&amp;gt; osimage=&amp;lt;osimage&amp;gt; --noupdateinitrd</code></pre>
+<p>If <strong>--noupdateinitrd</strong> is specified, the nodeset will avoid the initrd and kernel copying from osimage repo like /install/rhels6.3/x86_64/ to /tftpboot/xcat/osimage/rhels6.3-x86_64-install-compute/</p>
+<h2 id="implementation"><a href="#TOC">Implementation</a></h2>
+<h3 id="the-geninitrd-command"><a href="#TOC">The Geninitrd Command</a></h3>
+<p>A new plugin 'geninitrd.pm' will be added to handle the 'geninitrd' command. In the geninitrd::preprocess_request(), if 'sharedtftp' is not set to yes or 1, the command request will be dispatched to all the service node. In the process_request(), the osimage information will be gotten from tables to know what's the os distro (rh, sles ...), then call the insert_dd() function in the anaconda.pm or sles.pm according to the distro type to update the initrd.</p>
+<h4 id="how-to-search-the-driver-rpms"><a href="#TOC"><strong>How to Search the Driver RPMs</strong></a></h4>
+<p>The os update distro is defined as xCAT obj type 'osdistroupdate', it can be set to the attribute 'osupdatename' of osimage to specify the update distro list.</p>
+<p>If set the 'osimg1-&gt;osupdatename = osup1,osup2' (refer to osimage table), that means osup1 and osup2 are two os update distros with type 'osdistroupdate'. And if osup1-&gt;dirpath = /osup1/, and osup2-&gt;dirpath = /osup2/ (refer to table osdistroupdate), that means if run 'geninitrd', the paths '/osup1' and '/osup2' will be searched to get the rpm packages which name match the format 'kernerl-*.rpm'.</p>
+<p>Plus the original search path 'linuximage.driverupdatesrc', there will be two places to search the rpms for update to date drivers. The drivers in 'linuximage.driverupdatesrc' will have high priority. That means the rpm search order will be: osup1, osup2, osupX..., driverupdatesrc. If the drivers file for certain driver exists in the rpm which in the later search path, it will replace the previous one.</p>
+<p>e.g. for driver bnx2.ko, if it existed in osup1, osup2 and driverupdatesrc, the one in driverupdatesrc will be used.</p>
+<h4 id="how-to-update-the-initrd"><a href="#TOC"><strong>How to Update the Initrd</strong></a></h4>
+<p>The original initrd will be copied from e.g. /install/rhels6.3/x86_64/ to /tftpboot/xcat/osimage/rhels6.3-x86_64-install-compute/ first and inject the drivers from the driver rpms base on the value of osimage.netdrivers.</p>
+<ul>
+<li>If the value of osimage.netdrivers is comma separated driver names, drivers in the list will be injected to initrd.</li>
+<li>If the value of osimage.netdrivers is key word 'allupdate', all the drivers from driver rpms will be injected to initrd.</li>
+</ul>
+<h4 id="how-to-update-the-linux-kernel"><a href="#TOC"><strong>How to Update the Linux Kernel</strong></a></h4>
+<p>The latest Linux kernel in the kernel-*.rpm from update distro will be searched and copied to the /tftpboot/xcat/osimage/&lt;osimage name&gt;/ when running the geninitrd command against an osimage.</p>
+<p>Code will not compare that which Linux kernel is the latest one if there are multiple os update distros in osimage.osupdatename. The kernel in the last one which listed in the osimage.osupdatename will be copied to /tftpboot/xcat/osimage/rhels6.3-x86_64-install-compute/ and used as the latest kernel for initrd.</p>
+<p>e.g. if osimg1-&gt;osupdatename = osup1,osup2, the kernel from osup2 will be used.</p>
+<h3 id="the-nodeset---noupdateinitrd-flag"><a href="#TOC">The Nodeset --noupdateinitrd Flag</a></h3>
+<p>The <strong>--noupdateinitrd</strong> argument will be passed from netboot method plugin like xnba.pm to destiny.pm and then passed to anaconda.pm or sles.pm. In the anaconda.pm and sles.pm, if <strong>--noupdateinitrd</strong> is specified, nodeset will avoid the initrd and kernel copying from /install/rhels6.3/x86_64/ to /tftpboot/xcat/osimage/rhels6.3-x86_64-install-compute/</p>
+<h2 id="a-work-flow-of-how-to-use-geninitrd-and-nodeset-command-to-avoid-the-initrd-update-for-every-nodeset-run"><a href="#TOC">A Work Flow of How to Use Geninitrd and Nodeset Command to Avoid the Initrd Update for Every Nodeset run</a></h2>
+<h3 id="customer-adds-a-custom-driver-or-os-update-to-a-stateful-osimage"><a href="#TOC">Customer adds a custom driver or OS update to a stateful osimage</a></h3>
+<pre><code>The custom driver is defined using osimage.netdrivers 
+The driver rpm is defined using osimage.driverupdatesrc attributes. 
+The OS update is defined using osimage.osupdatename + osdistroupdate.dirpath attributes. </code></pre>
+<h3 id="customer-runs-the-geninitrd-osimage-command-to-update-the-stateful-osimages-kernel-and-initrd-files"><a href="#TOC">Customer runs the &quot;geninitrd &lt;osimage&gt;&quot; command to update the stateful osimage's kernel and initrd files</a></h3>
+<ul>
+<li>The kernel file is updated by geninitrd as follows:</li>
+</ul>
+<p>If the osimage has an OS update, and that update has a new kernel package, then the vmlinuz file from the new kernel package is copied to /tftpboot/xcat/osimages/&lt;osimages&gt;</p>
+<p>If the osimage does not have an OS update, then the vmlinuz file from the original OS distro (e.g., /install/rhels6.3/x86_64) is copied to /tftpboot/xcat/osimages/&lt;osimages&gt;</p>
+<ul>
+<li>The initrd file is updated by geninitrd as follows:</li>
+</ul>
+<p>If the osimage has an OS update, or custom driver defined, the initrd is re-built and copied to /tftpboot/xcat/osimages/&lt;osimage&gt;</p>
+<p>If the osimage does not have an OS update nor a custom driver defined, then the initrd file from the original OS distro (e.g., /install/rhels6.3/x86_64) is copied to /tftpboot/xcat/osimages/&lt;osimages&gt;</p>
+<h3 id="customer-runs-the-nodeset-noderange-osimageosimage---noupdateinitrd-command-to-updates-the-boot-files-for-the-nodes-which-are-using-the-updated-stateful-osimage"><a href="#TOC">Customer runs the &quot;nodeset &lt;noderange&gt; osimage=&lt;osimage&gt; --noupdateinitrd&quot; command to updates the boot files for the nodes which are using the updated stateful osimage</a></h3>
+<p>The &quot;--noupdateinitrd&quot; flag will prevent nodeset from overwriting the existing vmlinuz and initrd files in /tftpboot/xcat/osimages/&lt;osimages&gt;</p>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>:</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: add a new command geninitrd</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

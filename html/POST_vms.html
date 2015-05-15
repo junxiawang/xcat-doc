@@ -1,0 +1,23 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Create a VM from scratch or by cloning an existing VM.</p>
+<p>Required Parameters:<br />nodeRange - The nodeRange</p>
+<p>Flags:<br />verbose - Verbose output</p>
+<p>Cloning uses the following params:<br />clone - Clone an existing VM<br />target - The master to copy a single VM state to<br />source - The master to base the clone on</p>
+<p>&lt;s&gt;Cloning required flags:<br />clone - indicates the vms will be created by cloning</p>
+<p>Cloning optional flags:<br />detached - Explicitly request that the noderange be untethered from any masters<br />force - Force the cloning of a powered on VM&lt;/s&gt;</p>
+<p>Creating a VM uses the following params:<br />cec - The CEC(FSP) name for the destination<br />startId - The starting numeric id of the new partitions<br />source - The partition name of the source<br />profile - The file that contains the profiles for the source partitions</p>
+<p>Creation flags:<br />full - Create a full system partition for each CEC</p>
+<p>Examples:</p>
+<pre><code>POST https://myserver/xcatws/vms/n1-n4</code></pre>
+<p>with data:</p>
+<p>[&quot;startId=5&quot;, &quot;source=lpar4&quot;, &quot;verbose&quot;]</p>
+</body>
+</html>

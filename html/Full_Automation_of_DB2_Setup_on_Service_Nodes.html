@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">1. Overview</a></li>
+<li><a href="#documentation">2. Documentation</a></li>
+<li><a href="#design">3. Design</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#1%5C-overview">1. Overview</a></li>
+<li><a href="#2%5C-documentation">2. Documentation</a></li>
+<li><a href="#3%5C-design">3. Design</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="overview"><a href="#TOC">1. Overview</a></h2>
+<p>xCAT must provide an automatic install and setup process for bringing up DB2 on the Linux and AIX Service Nodes (SN) during the service node install, so that it is configured to access the DB2 database running on the Management Node when the SN installation is complete.</p>
+<h2 id="documentation"><a href="#TOC">2. Documentation</a></h2>
+<p>The following documentation will be modified to describe this process:</p>
+<p>[Setting_Up_DB2_as_the_xCAT_DB]</p>
+<h2 id="design"><a href="#TOC">3. Design</a></h2>
+<p>To setup DB2 on the Service Nodes:</p>
+<p>1. The DB2 code must be installed from the db2 tarball</p>
+<p>2. The perl-DBD-DB2 rpm must be installed from the xCAT deps package. Should be automatic.</p>
+<p>3. The Service Node must be setup as a DB2 Client, using the db2sqlsetup script</p>
+<p>To do this the following process will be followed:</p>
+<p>The DB2 tarball will be extracted into a read/mountable directory on either the Management Node or some server that can be mounted by the Service Node after it is installed. The location will be put in a new site attribute called db2installloc. For example,</p>
+<p>site.db2installloc = /mntdb2 , if on the Management Node</p>
+<p>site.db2installloc = servername:/mntdb2 , if on some other server</p>
+<p>In ether case, the db2 code will be extracted and placed in /mntdb2</p>
+<p>The /mntdb2 directory will look something like this, where ese is the directory containing all the db2 install code.</p>
+<p>ls /mntdb2</p>
+<p>ese</p>
+<p>For Linux, the appropriate vaccpp rte rpm tarball must be installed on the SN as it was done on the MN. This can either be done by adding to the image (diskless) or into the otherpkgs setup for the service node install.</p>
+<p>http://www-01.ibm.com/support/docview.wss?uid=swg24023990</p>
+<p>vacpp.rte.90.rhel5.jun2009.update.tar.gz</p>
+<p>Finally, a new db2install postscript is to be written, and must be added to the postscripts table, before the servicenode postscript. Also an odbcsetup postscript can be added to set up the ODBC for DB2 applications accessing DB2 using C or C++ like LoadLeveler. It is not required for xCAT which only uses the Perl interface.</p>
+<p>tabdump postscripts</p>
+<p>node,postscripts,postbootscripts,comments,disable</p>
+<p>&quot;xcatdefaults&quot;,&quot;syslog,aixremoteshell,syncfiles&quot;,,,</p>
+<p>&quot;service&quot;,&quot;db2install,servicenode,odbcsetup&quot;,,,</p>
+</body>
+</html>

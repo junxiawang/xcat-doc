@@ -1,0 +1,390 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#aix-overview">AIX overview</a></li>
+<li><a href="#flex-overview">Flex overview</a></li>
+<li><a href="#terminology">Terminology</a></li>
+</ul></li>
+<li><a href="#switching-databases">Switching databases</a></li>
+<li><a href="#setup-for-a-flex-blade-cluster">Setup for a Flex blade cluster</a><ul>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#hardware-discovery">Hardware Discovery</a><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#preparation-for-the-discovery">Preparation for the discovery</a></li>
+<li><a href="#discovery-the-cmm-by-the-lsslp-command">Discovery the cmm by the lsslp command</a></li>
+</ul></li>
+<li><a href="#configure-the-cmm">Configure the cmm</a></li>
+<li><a href="#update-the-cmm-firmware-optional">Update the CMM firmware (optional)</a></li>
+<li><a href="#cmm-security-and-password-expiration">CMM Security and Password Expiration</a></li>
+</ul></li>
+<li><a href="#defining-networks">Defining networks</a></li>
+<li><a href="#defining-blade-nodes">Defining blade nodes</a><ul>
+<li><a href="#creating-blade-node-definitions">Creating blade node definitions</a><ul>
+<li><a href="#create-object-definition-of-blade-server-in-the-database-first-and-run-rscan--u-to-discovery">Create object definition of blade server in the Database first and run rscan -u to Discovery</a><ul>
+<li><a href="#define-the-blade-server-node-definitions">Define the blade server node definitions</a></li>
+<li><a href="#run-rscan--u-to-discover-all-the-compute-node-servers.">Run rscan -u to discover all the compute node servers.</a></li>
+</ul></li>
+<li><a href="#create-object-definition-of-blade-server-by-discovery-directly">Create object definition of blade server by discovery directly</a></li>
+</ul></li>
+<li><a href="#set-the-network-configuration-for-the-fsp">Set the network configuration for the fsp</a></li>
+<li><a href="#modify-blade-server-device-names">Modify blade server device names</a></li>
+</ul></li>
+<li><a href="#create-the-hardware-server-connection-for-the-blades-fsps">Create the hardware server connection for the blades' FSPs</a><ul>
+<li><a href="#update-the-fsp-firmware-optional">Update the FSP firmware (optional)</a></li>
+</ul></li>
+<li><a href="#get-the-mac-addresses-for-the-nodes">Get the MAC addresses for the nodes</a><ul>
+<li><a href="#set-the-getmac-attribute-to-blade">Set the 'getmac' attribute to 'blade'</a></li>
+<li><a href="#run-the-getmacs-command-to-display-all-the-macs">run the getmacs command to display all the macs</a></li>
+<li><a href="#set-the-installnic-attribute">Set the 'installnic' attribute</a></li>
+<li><a href="#setup-etc-hosts">Setup etc hosts</a></li>
+<li><a href="#using-node-groups">Using Node Groups</a></li>
+<li><a href="#aix-servicenodes">AIX Servicenodes</a></li>
+<li><a href="#installing-aix-diskfull-nodes">Installing AIX Diskfull nodes</a></li>
+</ul></li>
+<li><a href="#booting-flex-blade-nodes">Booting Flex blade nodes</a><ul>
+<li><a href="#make-sure-the-blades-are-in-the-on-state">Make sure the blades are in the &quot;on&quot; state</a></li>
+<li><a href="#using-a-remote-console">Using a remote console</a><ul>
+<li><a href="#make-sure-the-sol-on-the-cmm-has-been-disabled">Make sure the SOL on the CMM has been disabled</a></li>
+<li><a href="#update-the-conserver-configuration">Update the conserver configuration</a></li>
+<li><a href="#check-rcons-function">Check rcons function</a></li>
+</ul></li>
+<li><a href="#set-the-bootlist-on-the-node">set the bootlist on the node</a></li>
+<li><a href="#initiate-a-network-boot-of-the-nodes">Initiate a network boot of the nodes</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#aix-overview">AIX overview</a></li>
+<li><a href="#flex-overview">Flex overview</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#switching-databases">Switching databases</a></li>
+<li><a href="#setup-for-a-flex-blade-cluster">Setup for a Flex blade cluster</a></li>
+<li><a href="#downloading-and-installing-dfm">Downloading and Installing DFM</a></li>
+<li><a href="#hardware-discovery">Hardware Discovery</a>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#preparation-for-the-discovery">Preparation for the discovery</a></li>
+<li><a href="#discovery-the-cmm-by-the-lsslp-command">Discovery the cmm by the lsslp command</a></li>
+</ul></li>
+<li><a href="#configure-the-cmm">Configure the cmm</a></li>
+<li><a href="#update-the-cmm-firmware-optional">Update the CMM firmware (optional)</a></li>
+<li><a href="#cmm-security-and-password-expiration">CMM Security and Password Expiration</a></li>
+<li><a href="#defining-networks">Defining networks</a></li>
+<li><a href="#defining-blade-nodes">Defining blade nodes</a></li>
+<li><a href="#creating-blade-node-definitions">Creating blade node definitions</a>
+<ul>
+<li><a href="#create-object-definition-of-blade-server-in-the-database-first-and-run-rscan--u-to-discovery">Create object definition of blade server in the Database first and run rscan -u to Discovery</a></li>
+<li><a href="#define-the-blade-server-node-definitions">Define the blade server node definitions</a></li>
+<li><a href="#run-rscan--u-to-discover-all-the-compute-node-servers">Run rscan -u to discover all the compute node servers.</a></li>
+<li><a href="#create-object-definition-of-blade-server-by-discovery-directly">Create object definition of blade server by discovery directly</a></li>
+</ul></li>
+<li><a href="#set-the-network-configuration-for-the-fsp">Set the network configuration for the fsp</a></li>
+<li><a href="#modify-blade-server-device-names">Modify blade server device names</a></li>
+<li><a href="#create-the-hardware-server-connection-for-the-blades-fsps">Create the hardware server connection for the blades' FSPs</a></li>
+<li><a href="#update-the-fsp-firmware-optional">Update the FSP firmware (optional)</a></li>
+<li><a href="#get-the-mac-addresses-for-the-nodes">Get the MAC addresses for the nodes</a></li>
+<li><a href="#set-the-getmac-attribute-to-blade">Set the 'getmac' attribute to 'blade'</a></li>
+<li><a href="#run-the-getmacs-command-to-display-all-the-macs">run the getmacs command to display all the macs</a></li>
+<li><a href="#set-the-installnic-attribute">Set the 'installnic' attribute</a></li>
+<li><a href="#setup-etc-hosts">Setup etc hosts</a></li>
+<li><a href="#using-node-groups">Using Node Groups</a></li>
+<li><a href="#aix-servicenodes">AIX Servicenodes</a></li>
+<li><a href="#installing-aix-diskfull-nodes">Installing AIX Diskfull nodes</a></li>
+<li><a href="#booting-flex-blade-nodes">Booting Flex blade nodes</a></li>
+<li><a href="#make-sure-the-blades-are-in-the-on-state">Make sure the blades are in the &quot;on&quot; state</a></li>
+<li><a href="#using-a-remote-console">Using a remote console</a>
+<ul>
+<li><a href="#make-sure-the-sol-on-the-cmm-has-been-disabled">Make sure the SOL on the CMM has been disabled</a></li>
+<li><a href="#update-the-conserver-configuration">Update the conserver configuration</a></li>
+<li><a href="#check-rcons-function">Check rcons function</a></li>
+</ul></li>
+<li><a href="#set-the-bootlist-on-the-node">set the bootlist on the node</a></li>
+<li><a href="#initiate-a-network-boot-of-the-nodes">Initiate a network boot of the nodes</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p><strong>=============== NOTICE ====================</strong></p>
+<p>This is work in progress. It is not ready to be used or reviewed!!!!!!</p>
+<p>============================================****</p>
+<h2 id="introduction"><a href="#TOC">Introduction</a></h2>
+<h3 id="aix-overview"><a href="#TOC">AIX overview</a></h3>
+<p><a href="aix_overview">aix_overview</a></p>
+<h3 id="flex-overview"><a href="#TOC">Flex overview</a></h3>
+<p>IBM Flex combines networking, storage and servers in a single offering. It's consist of an IBM Flex Chassis, one or two Chassis Management Modules(CMM) and Power 7 and x86 compute node servers. The type of the management module for IBM Flex is 'cmm', and the blade servers include the IBM Flex System™ p260, p460, and 24L Power 7 servers as well as the IBM Flex System™ x240 Compute Node which is an x86 Intel-processor based server. <strong>In this document only the management of POWER 7 blade server will be covered.</strong></p>
+<p>IBM Flex System™ p260, p460, and 24L Power 7 server hardware management: Generally, xCAT uses the management type 'blade' to manage the blade center and blade server (The management work is done through the management module). For IBM Flex xCAT will use a management type of 'fsp' to management the POWER 7 blade servers(The management work is done through the xCAT DFM (Direct FSP Management)). For xCAT IBM Flex Power 7 servers, the management approach will be the mix of 'blade' and 'fsp'. Most of the discovery work will be done through CMM and most of the hardware management work will be done through blade's FSP directly</p>
+<h3 id="terminology"><a href="#TOC">Terminology</a></h3>
+<p>The following terms will be used in this document:</p>
+<ul>
+<li><strong>Direct FSP Management(DFM)</strong> - This is the name that we will use to describe the ability for xCAT software to communicate directly to the IBM FLex Power pblade's service processor without the use of the HMC for management.</li>
+<li><strong>Chassis Management Module(CMM)</strong> - This term is used to reflect the pair of management modules installed in the rear of the chassis which have an Ethernet connection. The CMM is used to discover the servers within the chassis and for some data collection regarding the servers and chassis.</li>
+<li><strong>blade node</strong> - Blade node refers to a node with the hwtype set to <em>blade</em> and represents the whole blade server. The hcp attribute of the blade is set to the FSP's IP.</li>
+<li><strong>standalone</strong> - An AIX node that has it's operating system installed on a local disk.</li>
+<li><strong>rte</strong> - A network installation method supported by NIM that uses a NIM lpp_source resource to install a standalone node.</li>
+<li><strong>mksysb</strong>- A network installation method supported by NIM that uses a system backup of one node (mksysb image) to install other standalone cluster nodes.</li>
+<li><strong>diskful</strong>- For AIX systems this means that the node has local disk storage that is used for the operating system. (A standalone node.) Diskfull AIX nodes are typically installed using the NIM <strong>rte</strong> or <strong>mksysb</strong> install methods.</li>
+<li><strong>diskless</strong>- The operating system is not stored on local disk. For AIX systems this means the file systems are mounted from a NIM server.</li>
+</ul>
+<h2 id="switching-databases"><a href="#TOC">Switching databases</a></h2>
+<p><a href="Switching%20Databases">Switching Databases</a></p>
+<h2 id="setup-for-a-flex-blade-cluster"><a href="#TOC">Setup for a Flex blade cluster</a></h2>
+<h3 id="downloading-and-installing-dfm"><a href="#TOC">Downloading and Installing DFM</a></h3>
+<p><strong>TBD</strong></p>
+<p>This requires the new xCAT Direct FSP Management(dfm) plugin and hardware server(hdwr_svr) plugin, which are not part of the core xCAT open source, but are available as a free download from IBM. You must download this and install them on your xCAT management node (and possibly on your service nodes, depending on your configuration) before proceeding with this document.</p>
+<p>Download xCAT-dfm RPM: http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ClusterSoftware&amp;product=ibm/Other+software/IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all</p>
+<p>Download ISNM-hdwr_svr RPM: http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=ibm~ClusterSoftware&amp;product=ibm/Other+software/IBM+High+Performance+Computing+%28HPC%29+Hardware+Server&amp;release=All&amp;platform=All&amp;function=all</p>
+<p>Download the suitable dfm and hdwr_svr packages for different OSes. Once you have downloaded these packages, install the hardware server package first, and then install DFM.</p>
+<p>rhels:</p>
+<p>If you have been following the xCAT documentation, you should already have the yum repositories set up to pull in whatever xCAT dependencies and distro RPMs are needed (libstdc++.ppc, libgcc.ppc, openssl.ppc, etc.).</p>
+<pre><code>yum install xCAT-dfm-*.ppc64.rpm ISNM-hdwr_svr-*.ppc64.rpm</code></pre>
+<h3 id="hardware-discovery"><a href="#TOC">Hardware Discovery</a></h3>
+<h4 id="overview"><a href="#TOC">Overview</a></h4>
+<p>The discovery procedure is used to simplify the cluster environment setup for the administrator especially for the cluster with thousands of nodes. Administrator needs to connect the ethernet and provide the power before the discovery process is started. Firstly, discover the CMM and configure the cmm node , then discover and configure the blade server/fsp.</p>
+<h4 id="preparation-for-the-discovery"><a href="#TOC">Preparation for the discovery</a></h4>
+<p>1. The Ethernet interface of CMM and xCAT management node have been connected to the service VLAN so that xCAT management node can connect to the hardware to do the hardware discovery and management work.</p>
+<p>2. Configure a dhcp dynamic range for the CMM and FSPs to get the temporary IP to finished the hardware discovery. In this example, the 10.0.0.0/16 will be used as the service vlan, and the 10.0.200.0/24 will be used as the temporary network for the discovery of cmm.</p>
+<p>Note: As part of RH6.2, the dhcpd daemon will require the &quot;dhcpd&quot; user to be added to the &quot;/etc/passwd file&quot; . The dhcpd user should be added automatically when the dhcp.ppc64 rpm is installed. If you need to add it by hand, run: adduser -s /sbin/nologin -d / dhcpd</p>
+<pre><code>chdef -t network 10_0_0_0-255_255_0_0 dynamicrange=10.0.200.1-10.0.200.200
+makedhcp -n
+service dhcpd restart               # linux
+startsrc -s dhcpsd                  # AIX</code></pre>
+<h4 id="discovery-the-cmm-by-the-lsslp-command"><a href="#TOC">Discovery the cmm by the lsslp command</a></h4>
+<p>1. Power on all of the chassis. This will cause the CMMs to get the temporary DHCP IP from the xCAT management node. 2. Run the lsslp to discover the CMMs:</p>
+<pre><code>lsslp -m -z -s CMM &amp;gt; /tmp/cmm.stanza</code></pre>
+<p>3. Edit the stanza file to give the meaningful node name for the cmms (The mpa attribute should have the same value with the name). Simply the names can be set as cmm01 to cmm99. These CMM node names will require name resolution (added to /etc/host). 4. Define the CMMs to the xCAT database:</p>
+<pre><code>cat /tmp/cmm.stanza | mkdef -z</code></pre>
+<p>5. Define the static IP for all the cmms</p>
+<pre><code>chdef -t group cmm ip=&#39;|cmm(\d+)|10.0.100.($1+0)|&#39;</code></pre>
+<p>6. Add the CMM node names into the /etc/hosts, and dns resolution if being used for name resolution.</p>
+<pre><code>makehosts cmm
+makedns cmm</code></pre>
+<h3 id="configure-the-cmm"><a href="#TOC">Configure the cmm</a></h3>
+<p>1. If the user want to change the password for USERID to another one, the following command can be used:</p>
+<pre><code>rspconfig cmm USERID=&amp;lt;new_passwd&amp;gt;</code></pre>
+<p>2. Initialize the network configuration for cmms. The static IP will be configured to the cmm.</p>
+<pre><code>rspconfig cmm initnetwork=*</code></pre>
+<p>3. Enable the ssh,snmp for all the cmms</p>
+<p>Notes: Once you reset or restart the CMM, also run this command to avoid &quot;Unsupported security level&quot; issue:</p>
+<pre><code>rspconfig cmm sshcfg=enable snmpcfg=enable</code></pre>
+<h3 id="update-the-cmm-firmware-optional"><a href="#TOC">Update the CMM firmware (optional)</a></h3>
+<p>The CMM firmware can be updated by loading the new <strong>cmefs.uxp</strong> firmware file using the CMM <strong>update</strong> command working with the http or tftp interface. Since the AIX xCAT MN does not usually support http, we have provided CMM update instructions working with tftp. The administrator needs to download firmware from IBM Fix Central. The compressed tar file will need to be uncompressed and unzipped to extract the firmware update files. You need to place the cmefs.uxp file in the /tftpboot directory on the xCAT MN for CMM update to work properly.</p>
+<p>Once the firmware is unzipped and the cmefs.uxp is placed in the /tftpboot directory on the xCAT MN you can use the CMM <strong>update</strong> command to update the firmware on one chassis at a time or on all chassis managed by xCAT MN. More details on the CMM update command can be found at: http://publib.boulder.ibm.com/infocenter/flexsys/information/index.jsp?topic=%2Fcom.ibm.acc.cmm.doc%2Fcli_command_update.html</p>
+<p>The format of the update command is: flash (-u) the CMM firmware file and reboot (-r) afterwards</p>
+<pre><code>update -T system:mm[1] -r -u tftp://&amp;lt;server&amp;gt;/&amp;lt;update file&amp;gt;</code></pre>
+<p>flash (-u), show progress (-v), and reboot (-r) afterwards</p>
+<pre><code>update -T system:mm[1] -v -r -u tftp://&amp;lt;server&amp;gt;/&amp;lt;update file&amp;gt;</code></pre>
+<p>Note: Make sure the CMM firmware file cmefs.uxp is placed in /tftpboot directory on xCAT MN. The tftp interface from the CMM will reference the /tftpboot as the default location.</p>
+<p>To update firmware and restart a single CMM cmm01 from xCAT MN 70.0.0.1 use:</p>
+<pre><code>ssh USERID@cmm01 update -T system:mm[1] -v  -r -u tftp://70.0.0.1/cmefs.uxp</code></pre>
+<p>If unprompted password is setup on all CMMs then you can use xCAT psh to update all CMMs in the cluster at once.</p>
+<pre><code>psh cmm  -l USERID update -T system:mm[1] -v -u tftp://70.0.0.1/cmefs.uxp</code></pre>
+<p>If you are experiencing a &quot;Unsupported security level&quot; message after the CMM firmware was updated then you should run the following command to overcome this issue.</p>
+<pre><code>rspconfig cmm sshcfg=enable snmpcfg=enable</code></pre>
+<h3 id="cmm-security-and-password-expiration"><a href="#TOC">CMM Security and Password Expiration</a></h3>
+<p>The default security setting for the CMM is secure. This setting will require that the CMM user USERID password be changed within 90 days by default. You can change the password expiration date with the CMM accseccfg command. The following are examples of changing the expiration date.</p>
+<p>Change the password expiration date to 300 days:</p>
+<pre><code> accseccfg -pe 300 -T mm[1]</code></pre>
+<p>Change the expiration date to not expire:</p>
+<pre><code> accseccfg -pe 0 -T mm[1]</code></pre>
+<p>More details on the CMM accseccfg command can be found at: http://publib.boulder.ibm.com/infocenter/flexsys/information/index.jsp?topic=%2Fcom.ibm.acc.cmm.doc%2Fcli_command_accseccfg.html</p>
+<p>If the CMM user USERID password has expired and you are getting message stating that it is expired you can use the xCAT rspconfig command to change the password to a new password.</p>
+<pre><code> rspconfig cmm01 USERID=Passw0rd1</code></pre>
+<h2 id="defining-networks"><a href="#TOC">Defining networks</a></h2>
+<p><a href="Defining%20Networks">Defining Networks</a></p>
+<h2 id="defining-blade-nodes"><a href="#TOC">Defining blade nodes</a></h2>
+<h3 id="creating-blade-node-definitions"><a href="#TOC">Creating blade node definitions</a></h3>
+<p>The blade server definition can be created in two different ways:</p>
+<ul>
+<li>Create object definition of blade server in the Database first and run rscan -u to Discovery</li>
+<li>Create object definition of blade server by discovery directly</li>
+</ul>
+<h4 id="create-object-definition-of-blade-server-in-the-database-first-and-run-rscan--u-to-discovery"><a href="#TOC">Create object definition of blade server in the Database first and run rscan -u to Discovery</a></h4>
+<p>This implementation should only be used when there are uniformed blade configurations working in the chassis. If there are mixtures of single and double wide blades in the chassis, the admin will need to remove unused blade node objects.</p>
+<h5 id="define-the-blade-server-node-definitions"><a href="#TOC">Define the blade server node definitions</a></h5>
+<p>The attribute 'mpa' should be set to the node name of cmm. The attribute 'slotid' should be set to the physical slot id of the blade. The attribute 'hcp' should be set to the IP that admin try to assign to the fsp of the blade.</p>
+<pre><code>mkdef cmm[01-02]node[01-14] groups=all,blade mgt=fsp cons=fsp chdef -t group blade mpa=&#39;|cmm(\d+)node(\d+)|cmm($1)|
+&#39;slotid=&#39;|cmm(\d+)node(\d+)|($2+0)|&#39; hcp=&#39;|cmm(\d+)node(\d+)|10.0.($1+0).($2+0)|&#39; mgt=fsp
+
+[root@c870f3ap01 ~]# nodels blade
+cmm01node01
+cmm01node03
+cmm01node05
+cmm01node07
+cmm01node09
+cmm01node10
+cmm01node11
+[root@c870f3ap01 ~]# lsdef cmm01node01
+Object name: cmm01node01
+cons=fsp
+groups=blade,all
+hcp=12.0.0.32
+hwtype=blade
+id=1
+mgt=fsp
+mpa=cmm01
+mtm=789542X
+nodetype=ppc,osi
+parent=cmm01
+postbootscripts=otherpkgs
+postscripts=syslog,remoteshell,syncfiles
+serial=10F752A
+slotid=1
+[root@c870f3ap01 ~]#</code></pre>
+<h5 id="run-rscan--u-to-discover-all-the-compute-node-servers."><a href="#TOC">Run rscan -u to discover all the compute node servers.</a></h5>
+<p>The 'rscan -u' will match the xCAT nodes which have been defined in the xCAT database and update them instead of create a new one. It will also provide an error message that specifies if the blade node object is not found in the xCAT database. This type of error should happen when there is a configuration where the chassis contains both single wide and double wide blade configurations. The admin can execute the rmdef command for any unused blade node objects.</p>
+<pre><code>rscan cmm -u
+
+
+If there are a mixture of single and double wide blade in the chassis, the admin should remove the unused blade objects from the xCAT DB.
+
+
+rmdef  &amp;lt;cmmxxnodeyy&amp;gt;</code></pre>
+<h4 id="create-object-definition-of-blade-server-by-discovery-directly"><a href="#TOC">Create object definition of blade server by discovery directly</a></h4>
+<p>The rscan command reads the actual configuration of blade server in the CMM and creates node definitions in the xCAT database to reflect them. Run the rscan command against all of the CMMs to create a stanza file for the definitions of all the compute node servers.</p>
+<pre><code>rscan cmm -z &amp;gt;nodes.stanza</code></pre>
+<p>The Power 7 compute node stanza file is like this:</p>
+<pre><code>SN#YL10JH184084:
+       objtype=node
+       nodetype=ppc,osi
+       slotid=1
+       id=1
+       mtm=789542X
+       serial=10F69BA
+       mpa=flexcmm01
+       parent=flexcmm01
+       hcp=70.0.0.41
+       groups=blade,all
+       mgt=fsp
+       cons=fsp
+       hwtype=blade
+SN#Y110UF18P003:
+       objtype=node
+       nodetype=ppc,osi
+       slotid=3
+       id=1
+       mtm=789522X
+       serial=10F75AA
+       mpa=flexcmm01
+       parent=flexcmm01
+       hcp=70.0.0.22
+       groups=blade,all
+       mgt=fsp
+       cons=fsp
+       hwtype=blade</code></pre>
+<p>In a stanza file, the user can get the blade server with the attributes hcp (fsp of the blade), mtm, serial and id attributions. For the stanza file above, the node SN#YL10JH184084 is a pblade(nodetype=ppc,hwtype=blade,mpa=cmm01). In order to easily access or operate those compute node servers, the user can edit the stanza file and give the node the name user want them to be for definition of each compute node server.</p>
+<p>For Power 7 compute nodes the administrator will change the object name and hcp attribute for the IP of fsp. For example, the user can modify the definition of SN#YL10JH184084 as followings:</p>
+<pre><code>cmm01node01:
+   objtype=node
+   cons=fsp
+   groups=blade,all
+   hcp=70.0.0.41
+   hwtype=blade
+   slotid=3
+   id=1
+   mgt=fsp
+   mpa=cmm01
+   mtm=789542X
+   nodetype=ppc,osi
+   parent=flexcmm01
+   serial=10F69BA
+   slotid=1</code></pre>
+<p>Then create the definitions in the database:</p>
+<pre><code>cat nodes.stanza | mkdef -z</code></pre>
+<h3 id="set-the-network-configuration-for-the-fsp"><a href="#TOC">Set the network configuration for the fsp</a></h3>
+<pre><code>rspconfig blade network=*</code></pre>
+<h3 id="modify-blade-server-device-names"><a href="#TOC">Modify blade server device names</a></h3>
+<p>In order to conveniently manage the blade servers, the customer may wan to have a cleaner name for the blade node. The following command can be used to modify a blade device name.</p>
+<pre><code>rspconfig singlenode textid=&quot;cmm01node01&quot;</code></pre>
+<p>The following command can be used to change a group of blade device name to the node names that are defined in xCAT DB.</p>
+<pre><code>rspconfig blade textid=*</code></pre>
+<h2 id="create-the-hardware-server-connection-for-the-blades-fsps"><a href="#TOC">Create the hardware server connection for the blades' FSPs</a></h2>
+<p>1. Add the blade's fsp connections for the DFM management:</p>
+<pre><code>mkhwconn blade -t</code></pre>
+<p>2. check the connections are LINE_UP:</p>
+<pre><code>lshwconn blade</code></pre>
+<p>3. make sure the blade server powered on</p>
+<pre><code>rpower blade state 
+rpower blade on</code></pre>
+<h3 id="update-the-fsp-firmware-optional"><a href="#TOC">Update the FSP firmware (optional)</a></h3>
+<p>This is accomplished by using the rflash xCAT command from the xCAT Management node. The admin should download the supported GFW from the IBM Fix central website, and place it in a directory that is available to be read by the xCAT Management node.</p>
+<p>1. Use rinv command to get the current firmware levels of the blades' FSPs:</p>
+<p>rinv bladenoderange firm</p>
+<pre><code>(output to be added here)</code></pre>
+<p>2.Use the rflash command to update the firmware levels for the blades' FSPs. Then validate that the new firmware is loaded:</p>
+<p>For firmware disruptive update, you should make sure the blade in power off state firstly.</p>
+<pre><code> rpower bladenoderange off</code></pre>
+<p>And then use rflash to do the update:</p>
+<pre><code>rflash bladenoderange -p &amp;lt;directory&amp;gt; --activate disruptive
+
+(output to be added here) 
+
+
+rinv bladenoderange firm</code></pre>
+<p>3. Verify that the blades are healthy and power on the blades:</p>
+<pre><code>rpower bladenoderange state
+rvitals bladenoderange lcds
+rpower bladenoderange on</code></pre>
+<h2 id="get-the-mac-addresses-for-the-nodes"><a href="#TOC">Get the MAC addresses for the nodes</a></h2>
+<p>IBM Flex POWER 7 blades support getting the mac address through the CMM.</p>
+<h3 id="set-the-getmac-attribute-to-blade"><a href="#TOC">Set the 'getmac' attribute to 'blade'</a></h3>
+<pre><code>chdef cmm01node01 getmac=blade</code></pre>
+<p><strong>Note</strong>: Since the Firmware is not stable at present, the following 2 steps are recommended to get the mac address for the specified interface.</p>
+<h3 id="run-the-getmacs-command-to-display-all-the-macs"><a href="#TOC">run the getmacs command to display all the macs</a></h3>
+<pre><code>getmacs cmm01node01 -d</code></pre>
+<h3 id="set-the-installnic-attribute"><a href="#TOC">Set the 'installnic' attribute</a></h3>
+<p>Set the 'installnic' attribute to specify the mac address for which interface will be collected. The admin shall exactly know witch interface is connected.</p>
+<p><strong>Note</strong>: If 4 mac addresses are gotten, they all are the mac addresses of the blade. The x can start from 0(map to the eth0 of the blade) to 3. If 5 mac addresses are gotten, the 1st mac address must be the mac address of the blade's FSP, so the x will start from 1(map to the eth0 of the blade) to 4.</p>
+<pre><code>chdef cmm01node01 installnic=enx
+
+
+getmacs cmm01node01</code></pre>
+<h3 id="setup-etc-hosts"><a href="#TOC">Setup etc hosts</a></h3>
+<p><a href="setup_hosts">setup_hosts</a></p>
+<h3 id="using-node-groups"><a href="#TOC">Using Node Groups</a></h3>
+<p><a href="Node_Group_Support">Node_Group_Support</a></p>
+<h3 id="aix-servicenodes"><a href="#TOC">AIX Servicenodes</a></h3>
+<p><a href="Using_AIX_service_nodes">Using_AIX_service_nodes</a></p>
+<h3 id="installing-aix-diskfull-nodes"><a href="#TOC">Installing AIX Diskfull nodes</a></h3>
+<p>[XCAT_AIX_RTE_Diskfull_Nodes]</p>
+<h2 id="booting-flex-blade-nodes"><a href="#TOC">Booting Flex blade nodes</a></h2>
+<h3 id="make-sure-the-blades-are-in-the-on-state"><a href="#TOC">Make sure the blades are in the &quot;on&quot; state</a></h3>
+<p>To check the state you can run:</p>
+<pre><code>rpower bladenoderange stat  </code></pre>
+<p>If node is off then run:</p>
+<pre><code>rpower bladenoderange on</code></pre>
+<h3 id="using-a-remote-console"><a href="#TOC">Using a remote console</a></h3>
+<h4 id="make-sure-the-sol-on-the-cmm-has-been-disabled"><a href="#TOC">Make sure the SOL on the CMM has been disabled</a></h4>
+<p>Run the following commands:</p>
+<pre><code>rspconfig cmm solcfg
+rspconfig cmm solcfg=disable</code></pre>
+<h4 id="update-the-conserver-configuration"><a href="#TOC">Update the conserver configuration</a></h4>
+<p>Run the following commands, you will need to run these commands anytime you add nodes to the cluster.</p>
+<pre><code>makeconservercf 
+stopsrc -s conserver 
+startsrc -s conserver</code></pre>
+<h4 id="check-rcons-function"><a href="#TOC">Check rcons function</a></h4>
+<p>Run the <strong>rcons</strong> command to check if it is functioning properly.</p>
+<pre><code>rcons onebladenode</code></pre>
+<p>If the blade is in the &quot;off&quot; state, it will specify &quot;Destination BLADE is in POWER OFF state, Please power it on and wait.&quot;. If this is the case then you need to change the blade tothe &quot;on&quot; state.</p>
+<pre><code>rpower onebladenode on</code></pre>
+<h3 id="set-the-bootlist-on-the-node"><a href="#TOC">set the bootlist on the node</a></h3>
+<p>Use the xCAT <strong>rbootseq</strong> command to set the boot device on the nodes.</p>
+<pre><code>rbootseq bladenoderange net</code></pre>
+<h3 id="initiate-a-network-boot-of-the-nodes"><a href="#TOC">Initiate a network boot of the nodes</a></h3>
+<p>Use the <strong>rpower</strong> command to initiate a network boot of the node.</p>
+<pre><code>rpower bladenoderange cycle</code></pre>
+</body>
+</html>

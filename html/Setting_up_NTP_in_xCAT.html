@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#using-ntp">Using NTP</a><ul>
+<li><a href="#using-xcat-management-node-as-the-ntp-server">Using xCAT management node as the NTP server</a></li>
+<li><a href="#using-the-ntp-server-outside-of-xcat-cluster">Using the NTP server outside of xCAT cluster</a></li>
+</ul></li>
+<li><a href="#implementation-hints">Implementation hints</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#using-ntp">Using NTP</a></li>
+<li><a href="#using-xcat-management-node-as-the-ntp-server">Using xCAT management node as the NTP server</a></li>
+<li><a href="#using-the-ntp-server-outside-of-xcat-cluster">Using the NTP server outside of xCAT cluster</a></li>
+<li><a href="#implementation-hints">Implementation hints</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>The Network Time Protocol (<strong>NTP</strong>) is widely used to synchronize a computer to Internet time servers or other sources, it's very useful in the cluster environment to keep all the cluster nodes with time synchronization. This documentation addresses how to set up NTP in xCAT cluster, for more information about NTP visit <a href="http://www.ntp.org/">Home of the Network Time protocol</a>.</p>
+<p><strong>Note</strong> the setupntp attribute in the servicenode table is not used. You must use the setupntp postscripts to set up NTP on the service nodes and cluster nodes.</p>
+<p><strong>Note</strong> before using setupntp postscript, make sure the NTP server is configured and started correctly on the management node manually. It may take about 5 minutes for the NTP server to synchronize time to local clock or other sources.</p>
+<p>Here is the simple samples for /etc/ntp.conf, you may adjust the options based on your specific requirement.</p>
+<p>On AIX:</p>
+<pre><code>/etc/ntp.conf: </code></pre>
+<pre><code>    driftfile /etc/ntp.drift
+    tracefile /etc/ntp.trace
+    disable auth
+    broadcastclient
+    restrict 127.0.0.1
+    server  127.127.1.0     # local clock
+    fudge   127.127.1.0 stratum 10</code></pre>
+<pre><code>restart service: </code></pre>
+<pre><code>    stopsrc -s xntpd
+    startsrc -s xntpd</code></pre>
+<p>On Linux:</p>
+<pre><code>/etc/ntp.conf </code></pre>
+<pre><code>    driftfile /var/lib/ntp/drift
+    disable auth
+    restrict 127.0.0.1
+    server  127.127.1.0     # local clock
+    fudge   127.127.1.0 stratum 10</code></pre>
+<pre><code>restart service: </code></pre>
+<pre><code>    service ntpd restart   # RedHat
+    service ntp restart    # SLES</code></pre>
+<h2 id="using-ntp"><a href="#TOC">Using NTP</a></h2>
+<p>There are many different ways to configure NTP in your cluster. Two of the common choices are:</p>
+<h3 id="using-xcat-management-node-as-the-ntp-server"><a href="#TOC">Using xCAT management node as the NTP server</a></h3>
+<p>This is the xCAT default support, site.ntpservers/networks.ntpservers is blank by default, this means pointing the node's NTP server to the node's xcatmaster. For the service nodes it would be the management node, for the compute nodes it would be the service node who is managing it.</p>
+<p><strong>Note</strong> normally networks.ntpservers only used when you want to use the different NTP servers for a certain network than the site.ntpservers. If you are using the same NTP servers for the whole cluster, just use site.ntpservers.</p>
+<p>To configure it:</p>
+<ul>
+<li><p>keep site.ntpservers/networks.ntpservers as blank or set to &lt;xcatmaster&gt;. <strong>Note</strong> if you want to set site.ntpservers/networks.ntpservers to &lt;xcatmaster&gt;, for Linux, ensure set it before you run makedhcp.</p></li>
+<li><p>add setupntp to the node's &quot;postscripts&quot; list. To do this you can either modify the &quot;postscripts&quot; attribute for each node individually or you can just modify the definition of a group that all the nodes belong to.</p>
+<p>For example:</p>
+<p>If all your nodes belong to the group &quot;compute&quot; then you can add setupntp to the group definition by running the following command.</p></li>
+</ul>
+<pre><code>        chdef -p -t group -o compute postscripts=setupntp</code></pre>
+<pre><code>If all your service nodes belong to the group &quot;service&quot; then run the following command. </code></pre>
+<pre><code>        chdef -p -t group -o service postscripts=setupntp</code></pre>
+<h3 id="using-the-ntp-server-outside-of-xcat-cluster"><a href="#TOC">Using the NTP server outside of xCAT cluster</a></h3>
+<p>If you already have a NTP server up and running on your site network and you want to use that for your xCAT cluster, you can point all of the nodes to it. Note you must ensure that your nodes have IP connectivity to this outside NTP server.</p>
+<p>To configure it:</p>
+<ul>
+<li>set site.ntpservers/networks.ntpservers to the outside NTP server.</li>
+</ul>
+<pre><code>        chdef -t site ntpservers=9.114.113.251</code></pre>
+<p>Note for Linux, site.ntpservers/networks.ntpservers needs to be set before you run makedhcp.</p>
+<ul>
+<li><p>add setupntp to the node's &quot;postscripts&quot; list. To do this you can either modify the &quot;postscripts&quot; attribute for each node individually or you can just modify the definition of a group that all the nodes belong to.</p>
+<p>For example:</p>
+<p>If all your nodes belong to the group &quot;compute&quot; then you can add setupntp to the group definition by running the following command.</p></li>
+</ul>
+<pre><code>        chdef -p -t group -o compute postscripts=setupntp</code></pre>
+<pre><code>If all your service nodes belong to the group &quot;service&quot; then run the following command. </code></pre>
+<pre><code>        chdef -p -t group -o service postscripts=setupntp</code></pre>
+<h2 id="implementation-hints"><a href="#TOC">Implementation hints</a></h2>
+<p>For AIX: 1. not using makedhcp for the compute nodes, the NTP service setup totally relies on setupntp postscript. 2. only support site.ntpservers, networks.ntpservers not applicable for AIX.</p>
+<p>For Linux: 1. using makedhcp for the compute nodes, so the NTP settings are included in the DHCP server configuration. When the compute nodes are installed, the DHCP client will populate the /etc/ntp.conf automatically based on the DHCP server configuration. setupntp postscript only needs to call ntpdate/ntpd to sync the date and time. 2. support both site.ntpservers and the networks.ntpservers.</p>
+</body>
+</html>

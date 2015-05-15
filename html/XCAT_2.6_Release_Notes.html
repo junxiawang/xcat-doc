@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#limitations-and-known-issues">Limitations and Known Issues</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#limitations-and-known-issues">Limitations and Known Issues</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>This is the summary of what's new in this release. Or you can go straight to [Download_xCAT].</p>
+<h2 id="new-function-and-changes-in-behavior"><a href="#TOC">New Function and Changes in Behavior</a></h2>
+<ul>
+<li>New Commands. See corresponding man pages for details:
+<ul>
+<li><a href="http://xcat.sourceforge.net/man1/lsxcatd.1.html">lsxcatd</a> - List daemon information</li>
+<li>xcsv - Reformat output of rvitals and similar in CSV format</li>
+<li><a href="http://xcat.sourceforge.net/man1/imgcapture.1.html">imgcapture</a> - capture image from running node to create a stateless/statelite image - only for linux</li>
+</ul></li>
+<li>Enhanced Commands. See corresponding man pages for details:
+<ul>
+<li><a href="http://xcat.sourceforge.net/man8/tabdump.8.html">tabdump</a> -w - allows selective dump of table rows</li>
+<li><a href="http://xcat.sourceforge.net/man1/xdcp.1.html">xdcp</a> - now supports the automatic running of postscripts after files are rsync'd to the nodes. See the xdcp man page and Sync-ing_Config_Files_to_Nodes#postscript_support.</li>
+<li><a href="http://xcat.sourceforge.net/man8/makeroutes.8.html">makeroutes</a> - added ability to specify routes for compute nodes</li>
+<li><a href="http://xcat.sourceforge.net/man1/snmove.1.html">snmove</a> - Service node manual failover - added support for AIX and enhancements for linux</li>
+<li><a href="http://xcat.sourceforge.net/man1/monshow.1.html">monshow</a> - Now also shows RMC events (in addition to RMC performance info)</li>
+</ul></li>
+<li>Support for statelite semantics on top of a ramdisk diskless node</li>
+<li>Support for DB2 on RHEL 6</li>
+<li>xCAT now supports the automatic setup of DB2 client on the Service Node during Service Node install.</li>
+<li><a href="Shared_Disks_HA_Mgmt_Node">Documentation</a> of how to manually fail over an xCAT management node to a backup using a shared disk</li>
+<li>Support on AIX for using a <a href="External_NFS_Server_Support_With_AIX_Stateless_And_Statelite">separate NFS server</a> for diskless nodes</li>
+<li>Documented [External_NFS_Server_Support_With_Linux_Statelite]</li>
+<li>HPC integration set up of login nodes - pkg lists, postscripts, etc. for what needs to be installed on/configured for a login node.</li>
+<li>Support for <a href="XCAT_support_for_NIM_alternate_disk_installation">alt_disk install</a> and/or multibos on diskfull AIX nodes</li>
+<li>Exploitation of batched event hierarchical support (attributes on the Condition class that indicate when a batched event file is ready to be processed)</li>
+<li>Documented [Hints_and_Tips_for_Large_Scale_Clusters]</li>
+<li>Support for setting up kdump for linux diskless nodes</li>
+<li>OS dump via iSCSI AIX stateless and statelite nodes. The iscsi dump support is described in <a href="https://sourceforge.net/apps/mediawiki/xcat/index.php?title=XCAT_AIX_Diskless_Nodes#ISCSI_dump_support">section 3 of the &quot;xCAT AIX Diskless Nodes&quot; doc</a>.</li>
+<li>AIX 71B/61N support for p7 &amp; p6</li>
+<li>Added <a href="Managing_the_Infiniband_Network">documentation</a> for IB support on system p on RHEL 6</li>
+<li>Ability to set up the compute node's service node as the default gateway by setting <a href="http://xcat.sourceforge.net/man5/networks.5.html">networks.gateway</a>] to &quot;&lt;xcatmaster&gt;&quot;</li>
+<li>A new attribute, site.excludenodes, to specify a list of nodes/groups that should always be excluded from all xcat commands (e.g. the list of nodes the currently have hardware problems).</li>
+<li>Enhanced IPv6 support
+<ul>
+<li>ddns plugin will now push IPv6 /etc/hosts entries into DNS</li>
+<li>DHCPv6 bindings based on client DUID-UUID for ISC DHCP 4.x (used in RHEL6)</li>
+<li>Windows, ESXi, and RHEL6 support for using DUID-UUID on the client side</li>
+</ul></li>
+<li>Per network dynamic dns suffix allows each network to potentially have a different IPv6 suffix. Useful for dual stack and multihomed nodes in dynamic address use (e.g. node1.cluster.example.com, node1.ib.cluster.example.com, node1.ipv6.cluster.example.com is now possible).</li>
+<li>Enhancements to xcatmon/appstatus to monitor the HPC application (GPFS, LAPI and LoadLeveler) status in xCAT cluster. Added some new sample scripts for lcmd and dcmd. See <a href="Monitoring_an_xCAT_Cluster#Monitoring_HPC_application_status">Monitoring HPC application status</a>.</li>
+<li>Partial support for vSphere 5</li>
+</ul>
+<h2 id="limitations-and-known-issues"><a href="#TOC">Limitations and Known Issues</a></h2>
+<p>For additional issues, see <a href="http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945">Tracker Bugs</a></p>
+</body>
+</html>

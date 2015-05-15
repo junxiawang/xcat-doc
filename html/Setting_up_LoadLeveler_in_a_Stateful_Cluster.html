@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#prepare-for-the-loadleveler-installation">Prepare for the LoadLeveler Installation</a></li>
+<li><a href="#set-up-loadleveler-central-manager">Set up LoadLeveler Central Manager</a></li>
+<li><a href="#linux">Linux</a><ul>
+<li><a href="#add-loadleveler-to-your-stateful-image-definition">Add LoadLeveler to your stateful image definition</a></li>
+<li><a href="#instructions-for-adding-loadleveler-software-to-existing-xcat-nodes">Instructions for adding LoadLeveler Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes">Network boot the nodes</a></li>
+</ul></li>
+<li><a href="#aix">AIX</a><ul>
+<li><a href="#add-loadleveler-to-your-stateful-image">Add LoadLeveler to your stateful image</a></li>
+<li><a href="#instructions-for-adding-loadleveler-software-to-existing-xcat-nodes-1">Instructions for adding LoadLeveler Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes-1">Network boot the nodes</a></li>
+</ul></li>
+<li><a href="#starting-loadleveler-on-cluster-nodes">Starting LoadLeveler on cluster nodes</a><ul>
+<li><a href="#manually-start-loadleveler">Manually start LoadLeveler</a></li>
+<li><a href="#automatic-start-at-node-boot">Automatic start at node boot</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#prepare-for-the-loadleveler-installation">Prepare for the LoadLeveler Installation</a></li>
+<li><a href="#set-up-loadleveler-central-manager">Set up LoadLeveler Central Manager</a></li>
+<li><a href="#linux">Linux</a></li>
+<li><a href="#add-loadleveler-to-your-stateful-image-definition">Add LoadLeveler to your stateful image definition</a></li>
+<li><a href="#instructions-for-adding-loadleveler-software-to-existing-xcat-nodes">Instructions for adding LoadLeveler Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes">Network boot the nodes</a></li>
+<li><a href="#aix">AIX</a></li>
+<li><a href="#add-loadleveler-to-your-stateful-image">Add LoadLeveler to your stateful image</a></li>
+<li><a href="#instructions-for-adding-loadleveler-software-to-existing-xcat-nodes-1">Instructions for adding LoadLeveler Software to existing xCAT nodes</a></li>
+<li><a href="#network-boot-the-nodes-1">Network boot the nodes</a></li>
+<li><a href="#starting-loadleveler-on-cluster-nodes">Starting LoadLeveler on cluster nodes</a></li>
+<li><a href="#manually-start-loadleveler">Manually start LoadLeveler</a></li>
+<li><a href="#automatic-start-at-node-boot">Automatic start at node boot</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="https://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This document assumes that you have already purchased your LoadLeveler product, have the Linux rpms available, and are familiar with the LoadLeveler documentation: <a href="http://publib.boulder.ibm.com/infocenter/clresctr/vxrx/topic/com.ibm.cluster.loadl.doc/llbooks.html">Tivoli Workload Scheduler LoadLeveler library</a></p>
+<p>These instructions are based on LoadLeveler 4.1 and LoadLeveler 5.1. If you are using a different version of LoadLeveler, you may need to make adjustments to the information provided here.</p>
+<p>When installing LoadLeveler in an xCAT cluster, it is assumed that you will be using the xCAT MySQL or DB2 database to store your LoadLeveler configuration data. Different versions of Loadleveler support different operating systems, hardware architectures, and databases. Refer to the LoadLeveler documentation for the support required for your cluster. For example, Power 775 requires LoadLeveler 5.1 on AIX 7.1 or RedHat ELS 6 with DB2.</p>
+<p>Before proceeding with these instructions, you should have the following already completed for your xCAT cluster:</p>
+<ul>
+<li>Your xCAT management node is fully installed and configured.</li>
+<li>You are using MySQL or DB2 for your xCAT database.</li>
+<li>If you are using xCAT hierarchy, your service nodes are installed and running.</li>
+<li>Your compute nodes are defined to xCAT, and you have verified your hardware control capabilities, gathered MAC addresses, and done all the other necessary preparations for a stateful (full-disk) install.</li>
+<li>You should have a test node that you have installed with the base OS and xCAT postscripts to verify that the basic network configuration and installation process are correct.</li>
+</ul>
+<p>Loadleveler requires that userids be common across all nodes in a LoadLeveler cluster, and that the user home directories are shared. There are many different ways to handle user management and to set up a cluster-wide shared home directory (for example, using NFS or through a global filesystem such as GPFS). These instructions assume that the shared home directory has already been created and mounted across the cluster and that the xCAT management node and all xCAT service nodes are also using this directory. You may wish to have xCAT invoke your custom postbootscripts on nodes to help set this up.</p>
+<h2 id="prepare-for-the-loadleveler-installation"><a href="#TOC">Prepare for the LoadLeveler Installation</a></h2>
+<p>Copy the LoadLeveler packages from your distribution media onto the xCAT management node (MN). Suggested target location to put the packages on the xCAT MN:</p>
+<pre><code>    /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/loadl</code></pre>
+<p>For rhels6 ppc64 , the target location is:</p>
+<pre><code>    /install/post/otherpkgs/rhels6/ppc64/loadl</code></pre>
+<p>Note: LoadLeveler 4.1.1 on Linux requires a special Java rpm to run its license acceptance script. This is not required for LoadLeveler 5.1. The correct version of this rpm is identified in the LoadLeveler product documentation (at the time of this writing, the rpm was IBMJava2-142-ppc64-JRE-1.4.2-5.0.ppc64.rpm, but please verify with the LL documentation). Ensure the Java rpm is included in the loadl otherpkgs directory.</p>
+<p>For Linux, you should create repodata in your /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/* directory so that yum or zypper can be used to install these packages and automatically resolve dependencies for you:</p>
+<pre><code>      createrepo /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/loadl</code></pre>
+<p>If the createrepo command is not found, you may need to install the createrepo rpm package that is shipped with your Linux OS. For SLES 11, this is found on the SDK media.</p>
+<p>Following the LoadLeveler Installation Guide, create the loadl group and userid:</p>
+<p>On Linux:</p>
+<pre><code>      groupadd loadl
+      useradd -g loadl loadl</code></pre>
+<p>On AIX:</p>
+<pre><code>      mkgroup -a loadl
+      mkuser pgrp=loadl groups=loadl home=/&lt;user_home&gt;/loadl loadl</code></pre>
+<p>Commonly, the &lt;user_home&gt; is the <strong>/home</strong> directory. When creating the loadl group and userid, the administrator can change this location as needed. It is assumed that you have already created a common home directory in the cluster for all users either in NFS, GPFS, or some other shared filesystem. Also, LoadLeveler requires that its administrative userid have either rsh or ssh access across all nodes in the cluster and to the LL central manager. Make sure you have set this up for the loadl userid. For example, to create a .rhosts file (as root):</p>
+<pre><code>        nodels compute &gt; /&lt;user_home&gt;/loadl/.rhosts
+        echo &quot;&lt;MN hostname&gt;&quot; &gt;&gt; /&lt;user_home&gt;/loadl/.rhosts
+        chown loadl:loadl /&lt;user_home&gt;/loadl/.rhosts</code></pre>
+<p>Or, if you are using ssh for LoadLeveler communications, follow your ssh documentation to set up .ssh keys for the userid. Note: xCAT does not provide any general function for just setting up a user's ssh keys. However, if the user will also be running xCAT xdsh and other commands, the xCAT wiki page on [Granting_Users_xCAT_privileges] includes instructions on how to provide the user with this access, including automatically setting up ssh keys for that user. If the user will not be authorized to run xCAT commands, you can still &quot;cheat&quot; and take advantage of a side-effect of the xdsh command to set up your ssh keys:</p>
+<pre><code>      su - &lt;userid&gt;
+      /opt/xcat/bin/xdsh xxx -K        ## &quot;xxx&quot; can be any string
+      xdsh will prompt you for the user&#39;s password.  Enter the correct password, and then xdsh will fail with:
+      Error: Permission denied for request</code></pre>
+<p>Even though the xdsh command failed, it still created a /&lt;user_home&gt;/&lt;userid&gt;/.ssh directory with ssh keys. Create an authorized_keys file for the user:</p>
+<pre><code>      cat /&lt;user_home&gt;/&lt;userid&gt;/.ssh/id_rsa.pub &gt;&gt; /&lt;user_home&gt;/&lt;userid&gt;/.ssh/authorized_keys</code></pre>
+<p>Since the home directory is shared across the cluster, the userid now has non-password prompted ssh access to all nodes and to the xCAT management node.</p>
+<p>Sync the loadl group and userid to all nodes in the cluster:</p>
+<p>See the step below on &quot;(Optional) Synchronize system configuration files&quot; for more details.</p>
+<h2 id="set-up-loadleveler-central-manager"><a href="#TOC">Set up LoadLeveler Central Manager</a></h2>
+<p><a href="Set_up_LoadlLeveler_DB_access_node_and_Central_Manager">Set_up_LoadlLeveler_DB_access_node_and_Central_Manager</a></p>
+<h2 id="linux"><a href="#TOC">Linux</a></h2>
+<p>To continue to set up LoadLeveler in a Linux stateful cluster, follow these steps:</p>
+<h3 id="add-loadleveler-to-your-stateful-image-definition"><a href="#TOC">Add LoadLeveler to your stateful image definition</a></h3>
+<p>Include LoadLeveler in your stateful image definition:</p>
+<p>Install the optional xCAT-IBMhpc rpm on your xCAT management node and service nodes. This rpm is available with xCAT and should already exist in your zypper or yum repository that you used to install xCAT on your management node. A new copy can be downloaded from: <a href="Download_xCAT">Download xCAT</a>.</p>
+<p>To install the rpm in SLES:</p>
+<pre><code>      zypper refresh
+      zypper install xCAT-IBMhpc
+</code></pre>
+<p>To install the rpm in Redhat:</p>
+<pre><code>      yum install xCAT-IBMhpc</code></pre>
+<ul>
+<li>If you have a hierarchical cluster with service nodes, install the optional xCAT-IBMhpc rpm on all of your xCAT service nodes:
+<ul>
+<li>Add xCAT-IBMhpc to your otherpkgs list:</li>
+</ul></li>
+</ul>
+<pre><code>        vi /install/custom/install/&lt;ostype&gt;/&lt;service-profile&gt;.otherpkgs.pkglist</code></pre>
+<pre><code> If this is a new file, add the following to use the service profile shipped with xCAT:</code></pre>
+<pre><code>       #INCLUDE:/opt/xcat/share/xcat/install/sles/service.&lt;osver&gt;.&lt;arch&gt;.otherpkgs.pkglist</code></pre>
+<p>Either way, add this line:</p>
+<pre><code>        xcat/xcat-core/xCAT-IBMhpc</code></pre>
+<ul>
+<li><ul>
+<li>If your service nodes are already installed and running, update the software on your service nodes:</li>
+</ul></li>
+</ul>
+<pre><code>      updatenode &lt;service-noderange&gt; -S</code></pre>
+<p>You should create repodata in your /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/* directory so that yum or zypper can be used to install these packages and automatically resolve dependencies for you:</p>
+<pre><code>      createrepo /install/post/otherpkgs/&lt;os&gt;/&lt;arch&gt;/loadl</code></pre>
+<p>If the createrepo command is not found, you may need to install the createrepo rpm package that is shipped with your Linux OS. For SLES 11, this is found on the SDK media.</p>
+<p>Add to postscripts:</p>
+<p>Copy the IBMhpc postscript to the xCAT postscripts directory:</p>
+<pre><code>     cp /opt/xcat/share/xcat/IBMhpc/IBMhpc.postscript /install/postscripts</code></pre>
+<p>Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. This script will run after all OS rpms are installed on the node and the xCAT default postscripts have run, but before the node reboots for the first time. Add this script to the postscripts list for your node. For example, if all nodes in your compute nodegroup will be using this script:</p>
+<pre><code>      chdef -t group -o compute -p postscripts=IBMhpc.postscript</code></pre>
+<p>Add to pkglist:</p>
+<p>Edit your /install/custom/install/&lt;ostype&gt;/&lt;profile&gt;.pkglist and add the base IBMhpc pkglist:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/IBMhpc.sles11.ppc64.pkglist#</code></pre>
+<p>For rhels6 ppc64, edit the /install/custom/install/rh/compute.pkglist,</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/IBMhpc.rhels6.ppc64.pkglist#</code></pre>
+<p>Verify that the above sample pkglist contains the correct packages. If you need to make changes, you can copy the contents of the file into your &lt;profile&gt;.pkglist and edit as you wish instead of using the #INCLUDE: ...# entry. Note: This pkglist support is available with xCAT 2.5 and newer releases. If you are using an older release of xCAT, you will need to add the entries listed in these pkglist files to your Kickstart or AutoYaST install template file.</p>
+<p>Add to otherpkgs:</p>
+<p>Edit your /install/custom/install/&lt;ostype&gt;/&lt;profile&gt;.otherpkgs.pkglist and add:</p>
+<pre><code>     #INCLUDE:/opt/xcat/share/xcat/IBMhpc/loadl/loadl-5103.otherpkgs.pkglist#</code></pre>
+<p>Note: If you are using LoadLeveler 5.1.0.2 or below, please use pkglist /opt/xcat/share/xcat/IBMhpc/loadl/loadl.otherpkgs.pkglist Verify that the above sample pkglist contains the correct LoadLeveler packages. If you need to make changes, you can copy the contents of the file into your &lt;profile&gt;.otherpkgs.pkglist and edit as you wish instead of using the #INCLUDE: ...# entry.</p>
+<p>Add to postbootscripts:</p>
+<p>Copy the LoadLeveler postbootscript to the xCAT postscripts directory:</p>
+<pre><code>     cp /opt/xcat/share/xcat/IBMhpc/loadl/loadl_install /install/postscripts</code></pre>
+<p>Review and edit this script to meet your needs. This script will run on the node after OS has been installed, the node has rebooted for the first time, and the xCAT default postbootscripts have run. Note that this script will only install the Loadl-resmgr-full rpm. You will need to edit this script if you wish to also install the LoadL-scheduler rpm on all of your compute nodes. Add this script to the postbootscripts list for your node. For example, if all nodes in your compute nodegroup will be using this script and the nodes' attribute postbootscripts value is otherpkgs:</p>
+<pre><code>      chdef -t group -o compute -p postbootscripts=loadl_install-5103</code></pre>
+<p>If you already have unique postbootscripts attribute settings for some of your nodes (i.e. the value contains more than simply &quot;otherpkgs&quot; and that value is not part of the above group definition), you may need to change those node definitions directly:</p>
+<pre><code>      chdef &lt;noderange&gt; -p postbootscripts=loadl_install-5103</code></pre>
+<p>Note: If you are using LoadLeveler 5.1.0.2 or below, please use postscript loadl_install instead</p>
+<p>(Optional) Synchronize system configuration files:</p>
+<p>LoadLeveler requires that userids be common across the cluster. There are many tools and services available to manage userids and passwords across large numbers of nodes. One simple way is to use common /etc/password files across your cluster. You can do this using xCAT's syncfiles function. Create the following file:</p>
+<pre><code>      vi /install/custom/install/&lt;ostype&gt;/&lt;profile&gt;.synclist</code></pre>
+<pre><code> add the following line:</code></pre>
+<pre><code>       /etc/hosts /etc/passwd /etc/group /etc/shadow -&gt; /etc/</code></pre>
+<p>When the node is installed or 'updatenode &lt;noderange&gt; -F' is run, these files will be copied to your nodes. You can periodically re-sync these files as changes occur in your cluster. See the xCAT documentation for more details: [Sync-ing_Config_Files_to_Nodes]</p>
+<h3 id="instructions-for-adding-loadleveler-software-to-existing-xcat-nodes"><a href="#TOC">Instructions for adding LoadLeveler Software to existing xCAT nodes</a></h3>
+<p>If your nodes are already installed with the correct OS, and you are adding LoadLeveler software to the existing nodes, continue with these instructions and skip the next step to &quot;Network boot the nodes&quot;.</p>
+<p>The updatenode command will be used to add the LoadLeveler software and run the postscripts using the pkglist and otherpkgs.pkglist files created above. Note that support was added to updatenode in xCAT 2.5 to install packages listed in pkglist files (previously, only otherpkgs.pkglist entries were installed). If you are running an older version of xCAT, you may need to add the pkglist entries to your otherpkgs.pkglist file or install those packages in some other way on your existing nodes.</p>
+<p>You will want updatenode to run zypper or yum to install all of the packages. Make sure their repositories have access to the base OS rpms:</p>
+<p>SLES:</p>
+<pre><code>      xdsh &lt;noderange&gt; zypper repos --details  | xcoll</code></pre>
+<p>RedHat:</p>
+<pre><code>      xdsh &lt;noderange&gt; yum repolist -v  | xcoll</code></pre>
+<p>If you installed these nodes with xCAT, you probably still have repositories set pointing to your distro directories on the xCAT MN or SNs. If there is no OS repository listed, add appropriate remote repositories using the zypper ar command or adding entries to /etc/yum/repos.d.</p>
+<p>Also, for updatenode to use zypper or yum to install packages from your /install/post/otherpkgs directories, make sure you have run the createrepo command for each of your otherpkgs directories (see instructions in the &quot;Updating xCAT nodes&quot; document [Using_Updatenode]</p>
+<p>Synchronize configuration files to your nodes (optional):</p>
+<pre><code>      updatenode &lt;noderange&gt; -F</code></pre>
+<p>Update the software on your nodes:</p>
+<pre><code>      updatenode &lt;noderange&gt; -S</code></pre>
+<p>Run postscripts and postbootscripts on your nodes:</p>
+<pre><code>      updatenode &lt;noderange&gt; -P</code></pre>
+<h3 id="network-boot-the-nodes"><a href="#TOC">Network boot the nodes</a></h3>
+<p>Network boot your nodes:</p>
+<ul>
+<li><ul>
+<li>Run &quot;nodeset &lt;noderange&gt; install&quot; for all your nodes</li>
+<li>Run rnetboot to boot and install your nodes</li>
+<li>When the nodes are up, verify that the LoadLeveler rpms are all correctly installed, that your LoadLeveler configuration files are all correct, and that you can start the LoadLeveler daemons on all the nodes.</li>
+</ul></li>
+</ul>
+<h2 id="aix"><a href="#TOC">AIX</a></h2>
+<p>To continue to set up LoadLeveler in an AIX stateful cluster, follow these steps:</p>
+<h3 id="add-loadleveler-to-your-stateful-image"><a href="#TOC">Add LoadLeveler to your stateful image</a></h3>
+<p>Include LoadLeveler in your stateful image:</p>
+<p>Install the optional xCAT-IBMhpc rpm on your xCAT management node. This rpm is available with xCAT and should already exist in the directory that you downloaded your xCAT rpms to. It did not get installed when you ran the instxcat script. A new copy can be downloaded from: <a href="Download_xCAT">Download xCAT</a>.</p>
+<p>To install the rpm:</p>
+<pre><code>
+      cd &lt;your xCAT rpm directory&gt;
+      rpm -Uvh xCAT-IBMhpc*.rpm</code></pre>
+<p>The packages that will be installed by the xCAT HPC Integration support are listed in sample bundle files. Review the following file to verify you have all the product packages you wish to install (instructions are provided below for copying and editing this file if you choose to use a different list of packages):</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/loadl/loadl.bnd</code></pre>
+<p>Add the LoadLeveler packages to the lpp_source used to build your image:</p>
+<pre><code>     inutoc /install/post/otherpkgs/aix/ppc64/loadl
+     nim -o update -a packages=all -a source=/install/post/otherpkgs/aix/ppc64/loadl &lt;lpp_source_name&gt;</code></pre>
+<p>Some of the HPC products require additional AIX packages that may not be part of your default AIX lpp_source. Review the following file to verify all the AIX packages needed by the HPC products are included in your lpp_source (instructions are provided below for copying and editing this file if you choose to use a different list of packages):</p>
+<pre><code>      /opt/xcat/share/xcat/IBMhpc/IBMhpc_base.bnd</code></pre>
+<p>To list the contents of your lpp_source, you can use:</p>
+<pre><code>      nim -o showres &lt;lpp_source_name&gt;</code></pre>
+<p>And to add additional packages to your lpp_source, you can use the nim update command similar to above specifying your AIX distribution media and the AIX packages you need.</p>
+<p>Create NIM bundle resources for base AIX prerequisites and for your LoadLeveler packages:</p>
+<pre><code>     cp /opt/xcat/share/xcat/IBMhpc/IBMhpc_base.bnd /install/nim/installp_bundle
+     nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/IBMhpc_base.bnd IBMhpc_base
+     cp /opt/xcat/share/xcat/IBMhpc/loadl/loadl.bnd /install/nim/installp_bundle
+     nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/loadl.bnd loadl</code></pre>
+<p>Review these sample bundle files and make any changes as desired. Note that the loadl.bnd file will only install the LoadL.resmgr lpp. If you wish to install the full LoadLeveler product on all of your compute nodes, edit this bundle file, and make corresponding changes to the loadl_install postscript below.</p>
+<p>Add the bundle resources to your xCAT image definition:</p>
+<pre><code>     chdef -t osimage -o &lt;image_name&gt; -p installp_bundle=&quot;IBMhpc_base,loadl&quot;</code></pre>
+<p>Add base HPC and LoadLeveler postscripts</p>
+<pre><code>     cp -p /opt/xcat/share/xcat/IBMhpc/IBMhpc.postscript /install/postscripts
+     cp -p /opt/xcat/share/xcat/IBMhpc/loadl/loadl_install-5103 /install/postscripts
+     chdef -t group -o &lt;compute nodegroup&gt; -p postscripts=&quot;IBMhpc.postscript,loadl_install-5103&quot;</code></pre>
+<p>Review these sample scripts carefully and make any changes required for your cluster. Note that some of these scripts may change tuning values and other system settings. The scripts will be run on the node after it has booted as part of the xCAT diskless node postscript processing.</p>
+<p>(Optional) Synchronize system configuration files:</p>
+<p>LoadLeveler requires that userids be common across the cluster. There are many tools and services available to manage userids and passwords across large numbers of nodes. One simple way is to use common /etc/password files across your cluster. You can do this using xCAT's syncfiles function. Create the following file:</p>
+<pre><code>      vi /install/custom/install/aix/&lt;profile&gt;.synclist</code></pre>
+<p>add the following lines:</p>
+<pre><code>       /etc/hosts /etc/passwd /etc/group -&gt; /etc/
+       /etc/security/passwd /etc/security/group /etc/security/limits /etc/security/roles -&gt; /etc/security/</code></pre>
+<p>Add this syncfile to your image:</p>
+<pre><code>      chdef -t osimage -o &lt;imagename&gt; synclists=/install/custom/install/aix/&lt;profile&gt;.synclist</code></pre>
+<p>When the node is installed or 'updatenode &lt;noderange&gt; -F' is run, these files will be copied to the node. You can periodically re-sync these files as changes occur in your cluster. See the xCAT documentation for more details: [Sync-ing_Config_Files_to_Nodes]</p>
+<h3 id="instructions-for-adding-loadleveler-software-to-existing-xcat-nodes-1"><a href="#TOC">Instructions for adding LoadLeveler Software to existing xCAT nodes</a></h3>
+<p>If your nodes are already installed with the correct OS, and you are adding LoadLeveler software to the existing nodes, continue with these instructions and skip the next step to &quot;Network boot the nodes&quot;.</p>
+<p>The updatenode command will be used to synchronize configuration files, add the LoadLeveler software and run the postscripts. To have updatenode install both the OS prereqs and the base LoadLeveler packages, complete the previous instructions to add LoadLeveler software to your image.</p>
+<p>Synchronize configuration files to your nodes (optional):</p>
+<pre><code>      updatenode &lt;noderange&gt; -F</code></pre>
+<p>Update the software on your nodes:</p>
+<pre><code>      updatenode &lt;noderange&gt; -S  installp_flags=&quot;-agQXY&quot;</code></pre>
+<p>Run postscripts and postbootscripts on your nodes:</p>
+<pre><code>      updatenode &lt;noderange&gt; -P</code></pre>
+<h3 id="network-boot-the-nodes-1"><a href="#TOC">Network boot the nodes</a></h3>
+<p>Follow the instructions in the xCAT AIX documentation [XCAT_AIX_RTE_Diskfull_Nodes] to network boot your nodes:</p>
+<ul>
+<li><ul>
+<li>If the nodes are not already defined to NIM, run xcat2nim for all your nodes</li>
+<li>Run nimnodeset for your nodes</li>
+<li>Run rnetboot to boot your nodes</li>
+<li>When the nodes are up, verify that LoadLeveler is correctly installed and you can start the LoadLeveler daemons.</li>
+</ul></li>
+</ul>
+<h2 id="starting-loadleveler-on-cluster-nodes"><a href="#TOC">Starting LoadLeveler on cluster nodes</a></h2>
+<p>There are several ways you can start LoadLeveler on your cluster nodes.</p>
+<h3 id="manually-start-loadleveler"><a href="#TOC">Manually start LoadLeveler</a></h3>
+<p>Use the xCAT xdsh command to run the LoadLeveler llrctl start command individually on all nodes, or use LoadLeveler to distribute the commands by running &quot;llrctl -g start&quot;. Note that for very large clusters, running the llrctl -g command to start the daemons on all the nodes in the cluster can take a long time since this is a serial operation from the LoadLeveler central manager. Therefore, using xdsh with appropriate fanout values may be a better choice.</p>
+<h3 id="automatic-start-at-node-boot"><a href="#TOC">Automatic start at node boot</a></h3>
+<p>You can set up /etc/inittab or /etc/init.d to automatically start LoadLeveler when your node boots. However, if your shared home directory is in GPFS, and this is a large cluster using a network interface that may take a little extra start time at node boot, this may not be a reliable way to start the daemons.</p>
+</body>
+</html>

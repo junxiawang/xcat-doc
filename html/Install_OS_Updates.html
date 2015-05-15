@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#installing-os-updates-by-setting-linuximage.pkgdironly-support-for-rhels-and-sles">Installing OS Updates By Setting linuximage.pkgdir(only support for rhels and sles)</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#installing-os-updates-by-setting-linuximagepkgdironly-support-for-rhels-and-sles">Installing OS Updates By Setting linuximage.pkgdir(only support for rhels and sles)</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h3 id="installing-os-updates-by-setting-linuximage.pkgdironly-support-for-rhels-and-sles"><a href="#TOC">Installing OS Updates By Setting linuximage.pkgdir(only support for rhels and sles)</a></h3>
+<p>The linuximage.pkgdir is the name of the directory where the distro packages are stored. It can be set to multiple paths. The multiple paths must be separated by &quot;,&quot;. The first path is the value of osimage.pkgdir and must be the OS base pkg directory path, such as pkgdir=/install/rhels6.5/x86_64,/install/updates/rhels6.5/x86_64 . In the os base pkg path, there is default repository data. In the other pkg path(s), the users should make sure there is repository data. If not, use &quot;createrepo&quot; command to create them.</p>
+<p>If you have additional os update rpms (rpms may be come directly the os website, or from one of the os supplemental/SDK DVDs) that you also want installed, make a directory to hold them, create a list of the rpms you want installed, and add that information to the osimage definition:</p>
+<ul>
+<li>Create a directory to hold the additional rpms:</li>
+</ul>
+<pre><code>    mkdir -p /install/updates/rhels6.5/x86_64 
+    cd /install/updates/rhels6.5/x86_64 
+    cp /myrpms/* .</code></pre>
+<p>OR, if you have a supplemental or SDK iso image that came with your OS distro, you can use copycds:</p>
+<pre><code>    copycds RHEL6.5-Supplementary-DVD1.iso -n rhels6.5-supp</code></pre>
+<p>If there is no repository data in the directory, you can run &quot;createrepo&quot; to create it:</p>
+<pre><code>    createrepo .</code></pre>
+<p>The createrepo command is in the createrepo rpm, which for RHEL is in the 1st DVD, but for SLES is in the SDK DVD.</p>
+<p><strong>NOTE</strong>: when the management node is rhels6.x, and the otherpkgs repository data is for rhels5.x, we should run createrepo with &quot;-s md5&quot;. Such as:</p>
+<pre><code>    createrepo -s md5 .</code></pre>
+<ul>
+<li>Append the additional packages to install into the corresponding pkglist. For example, in /install/custom/install/rh/compute.rhels6.x86_64.pkglist, append:</li>
+</ul>
+<pre><code>    ...
+    myrpm1
+    myrpm2
+    myrpm3</code></pre>
+<p>Remember, if you add more rpms at a later time, you must run createrepo again.</p>
+<ul>
+<li>If not already specified, set the custom pkglist file in your osimage definition:</li>
+</ul>
+<pre><code>    chdef -t osimage mycomputeimage pkglist=/install/custom/install/rh/compute.rhels6.x86_64.pkglist</code></pre>
+<ul>
+<li>Add the new directory to the list of package directories in your osimage definition:</li>
+</ul>
+<pre><code>    chdef -t osimage mycomputeimage -p pkgdir=/install/updates/rhels6.5/x86_64</code></pre>
+<p>OR, if you used copycds:</p>
+<pre><code>    chdef -t osimage mycomputeimage -p pkgdir=/install/rhels6.5-supp/x86_64</code></pre>
+<p>Note: After making the above changes,</p>
+<ul>
+<li>For diskfull install, run &quot;nodeset &lt;noderange&gt; mycomputeimage&quot; to pick up the changes, and then boot up the nodes</li>
+<li>For diskless or statelite, run genimage to install the packages into the image, and then packimage or liteimg and boot up the nodes.</li>
+<li>If the nodes are up, run &quot;updatenode &lt;noderange&gt; ospkgs&quot; to update the packages.</li>
+<li>These functions are only supported for rhels6.x and sles11.x</li>
+</ul>
+</body>
+</html>

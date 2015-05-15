@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#xcat-2.0-release-notes">xCAT 2.0 Release Notes</a><ul>
+<li><a href="#limitations">Limitations</a></li>
+<li><a href="#not-thoroughly-tested">Not Thoroughly Tested</a></li>
+<li><a href="#known-bugs">Known Bugs</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#xcat-20-release-notes">xCAT 2.0 Release Notes</a></li>
+<li><a href="#limitations">Limitations</a></li>
+<li><a href="#not-thoroughly-tested">Not Thoroughly Tested</a></li>
+<li><a href="#known-bugs">Known Bugs</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h1 id="xcat-2.0-release-notes"><a href="#TOC">xCAT 2.0 Release Notes</a></h1>
+<h2 id="limitations"><a href="#TOC">Limitations</a></h2>
+<ul>
+<li>xCAT 1.3 and 2.0 do not play well together. Please have a dedicated xCAT 2.0 management node. To switch from one xCAT to another disable DHCP and Conserver on unused management node.</li>
+<li>For SLES 10, you must use SP2</li>
+<li>Monitoring: when new MM, RSAII or BM is added or removed from the cluster. You must restart snmp monitoring if snmpmon is turned on in order to have the changes take effect.</li>
+<li>Fedora 9 iSCSI and serial console unimplemented. Consider using Fedora 8 to build F9 image for stateless.</li>
+</ul>
+<p>&gt;</p>
+<h2 id="not-thoroughly-tested"><a href="#TOC">Not Thoroughly Tested</a></h2>
+<ul>
+<li>Full, stateful install with hierarchy (service nodes)</li>
+<li>SLES 10 in hierarchy</li>
+<li>A SLES 10 management node (SLES 10 compute nodes have been tested)</li>
+</ul>
+<h2 id="known-bugs"><a href="#TOC">Known Bugs</a></h2>
+<ul>
+<li>TBD</li>
+</ul>
+</body>
+</html>

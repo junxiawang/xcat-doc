@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#setup-of-gpfs-io-server-nodes">Setup of GPFS I/O Server nodes</a></li>
+<li><a href="#creation-of-power-775-octants-in-xcat-db">Creation of Power 775 Octants in xCAT DB</a></li>
+<li><a href="#creation-of-system-p-lpars-using-hmc">Creation of System P LPARs using HMC</a><ul>
+<li><a href="#define-the-hmcs-as-xcat-nodes"><strong>Define the HMCs as xCAT nodes</strong></a></li>
+<li><a href="#discover-the-lpars-managed-by-the-hmcs"><strong>Discover the LPARs managed by the HMCs</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#setup-of-gpfs-io-server-nodes">Setup of GPFS I/O Server nodes</a></li>
+<li><a href="#creation-of-power-775-octants-in-xcat-db">Creation of Power 775 Octants in xCAT DB</a></li>
+<li><a href="#creation-of-system-p-lpars-using-hmc">Creation of System P LPARs using HMC</a></li>
+<li><a href="#define-the-hmcs-as-xcat-nodes"><strong>Define the HMCs as xCAT nodes</strong></a></li>
+<li><a href="#discover-the-lpars-managed-by-the-hmcs"><strong>Discover the LPARs managed by the HMCs</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h3 id="setup-of-gpfs-io-server-nodes"><a href="#TOC">Setup of GPFS I/O Server nodes</a></h3>
+<p>This is pointer to the GPFS documentation to setup GPFS I/O servers on the Power 775 cluster.</p>
+<h3 id="creation-of-power-775-octants-in-xcat-db"><a href="#TOC">Creation of Power 775 Octants in xCAT DB</a></h3>
+<p>This is a new section in xCAT 2.6 that describes the implementation to create the Power 775 Octants/LPARs used with a Power 775 cluster. It will describe the default Power 775 systems configuration, and will describe which Power 775 octants are designated as xCAT service nodes. This section should provide enough detail for the xCAT administrator to execute xCAT commands for the Power 775 CECs. We should try and provide the commands and should provide sample files that can be referenced.</p>
+<p>At this point we should have all the xCAT Service nodes and compute nodes should be defined in the xCAT DB.</p>
+<h3 id="creation-of-system-p-lpars-using-hmc"><a href="#TOC">Creation of System P LPARs using HMC</a></h3>
+<p>This section explains the xCAT implementation working with HMCs which has been supported with xCAT 2.4. These steps below implement where the HMC has created the LPARs.</p>
+<h4 id="define-the-hmcs-as-xcat-nodes"><a href="#TOC"><strong>Define the HMCs as xCAT nodes</strong></a></h4>
+<p>The xCAT hardware control support requires that the hardware control point for the nodes also be defined as a cluster node.</p>
+<p>The following example will create an xCAT node definition for an HMC with a host name of &quot;<em>hmc01</em>&quot;. The <em>groups, nodetype, hwtype, mgt, username</em>, and <em>password</em> attributes must be set.</p>
+<pre><code>_**mkdef -t node -o hmc01 groups=&quot;all&quot; nodetype=ppc hwtype=hmc mgt=hmc username=hscroot password=abc123**_</code></pre>
+<h4 id="discover-the-lpars-managed-by-the-hmcs"><a href="#TOC"><strong>Discover the LPARs managed by the HMCs</strong></a></h4>
+<p>This step assumes that the partitions are already created using the standard HMC interfaces.</p>
+<p>Use the <strong>rscan</strong> command to gather the LPAR information. This command can be used to display the LPAR information in several formats and can also write the LPAR information directly to the xCAT database. In this example we will use the &quot;-z&quot; option to create a stanza file that contains the information gathered by <strong>rscan</strong> as well as some default values that could be used for the node definitions.</p>
+<p>To write the stanza format output of <strong>rscan</strong> to a file called &quot;<em>mystanzafile&quot;</em> run the following command.</p>
+<pre><code>_**rscan -z hmc01 &amp;gt; mystanzafile**_</code></pre>
+<p>The file will contain stanzas for all the LPARs that have been configured as well as some additional information that must also be defined in the xCAT database. It is not necessary to modify the non-LPAR stanzas in any way.</p>
+<p>This file can then be checked and modified as needed. For example you may need to add a different name for the node definition or add additional attributes and values.</p>
+<p>Since we are using service nodes there are several values that **must be set **for the node definitions. **You can set these values later, after the nodes have been defined, or you can modify the stanzas to include the values now. **(If you have many nodes it would be easier to do this later.)</p>
+</body>
+</html>

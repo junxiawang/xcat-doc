@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview-of-the-xcat-support">Overview of the xCAT Support</a></li>
+<li><a href="#installing-all-ibm-hpc-products">Installing all IBM HPC products</a></li>
+<li><a href="#product-specific-information">Product-Specific Information</a></li>
+<li><a href="#updating-ibm-hpc-product-software">Updating IBM HPC product software</a></li>
+<li><a href="#updating-xcat-software">Updating xCAT software</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview-of-the-xcat-support">Overview of the xCAT Support</a></li>
+<li><a href="#installing-all-ibm-hpc-products">Installing all IBM HPC products</a></li>
+<li><a href="#product-specific-information">Product-Specific Information</a></li>
+<li><a href="#updating-ibm-hpc-product-software">Updating IBM HPC product software</a></li>
+<li><a href="#updating-xcat-software">Updating xCAT software</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<p><em><strong>For all xCAT AIX Releases and for xCAT 2.7.x and older Linux Releases</strong></em></p>
+<p>For xCAT 2.8 and newer releases on Linux clusters, use the xCAT Software Kit Support for the IBM HPC Products: [IBM_HPC_Software_Kits]</p>
+<h2 id="overview-of-the-xcat-support"><a href="#TOC">Overview of the xCAT Support</a></h2>
+<p>xCAT provides basic integration support for the IBM HPC Software Stack consisting of the following products:</p>
+<ul>
+<li>GPFS</li>
+<li>LoadLeveler</li>
+<li>Parallel Environment (PE), including:
+<ul>
+<li>Parallel Operating Environment (POE)</li>
+<li>Low-Level Application Programming Interface (LAPI)</li>
+<li>Protocol Network Services Daemon (PNSD)</li>
+<li>Parallel Debugger (PDB)</li>
+</ul></li>
+<li>ESSL and PESSL</li>
+<li>IBM vacpp and xlf compilers</li>
+<li>RSCT</li>
+</ul>
+<p>xCAT integration support for these products includes the following sample files:</p>
+<ul>
+<li>AIX NIM Bundle files and Linux xCAT package list files</li>
+<li>Linux exclude list files to help reduce the memory footprint of stateless images</li>
+<li>Linux statelite xCAT litefile table entries</li>
+<li>Postscripts to customize the HPC product in a diskless image or on a running node</li>
+</ul>
+<p>This support will use xCAT to do basic product installation and configuration into stateless or statelite diskless images or into statefull nodes. The support is provided as sample files only. Before using this support, you should review all files first and modify them to conform to your environment.</p>
+<p>It is the intention of this implementation to only provide compute node runtime environments for the HPC products. Full compilers, development environment toolkits, and LoadLeveler scheduler software are typically not installed on compute nodes to reduce image sizes. If you require any additional software on your compute nodes, copy the sample files provided and add the desired software packages, configuration scripts, or whatever else you may need.</p>
+<p>In addition to compute nodes, clusters normally also require other &quot;infrastructure&quot; nodes such as xCAT service nodes, GPFS I/O servers, LoadLeveler central manager, resource managers, region managers, and scheduler nodes, login nodes for users to access the cluster, compile jobs, and use development toolkits, and other nodes that may play unique roles in your environment. Each of these types of nodes will have its own unique software, configuration, and tuning requirements, which may not all be currently addressed by the instructions provided in this documentation. You can use the procedures outlined here and sample files provided with xCAT to create and modify additional install images, software package lists, customization scripts, etc., to build custom installations for each of these different types of nodes in your cluster.</p>
+<p>These instructions do NOT include information on installing and configuring support for Infiniband or any other network products. For using IB in your xCAT cluster, see the xCAT documentation: [Managing_the_Infiniband_Network]</p>
+<p>Note: With xCAT 2.6, the filenames for all Redhat support files shipped in the xCAT-IBMhpc rpm were changed from <em>.rhel6.</em> to <em>.rhels6.</em> to correspond with the rest of xCAT Redhat support. This documentation uses the <em>.rhels6.</em> names in all examples.</p>
+<h2 id="installing-all-ibm-hpc-products"><a href="#TOC">Installing all IBM HPC products</a></h2>
+<p>xCAT provides a set of sample files that combine all of the individual HPC product files to allow you to more easily install the entire software stack in an xCAT cluster. Before using these combined packages, it will be helpful for you to review the details of each specific product as outlined below.</p>
+<ul>
+<li>[Setting_up_all_IBM_HPC_products_in_a_Statelite_or_Stateless_Cluster]</li>
+<li>[Setting_up_all_IBM_HPC_products_in_a_Stateful_Cluster]</li>
+<li>[Additional_steps_for_Setting_up_all_IBM_HPC_products_in_a_HA_MN_environment]</li>
+<li><p>[Setting_up_IBM_HPC_Products_on_an_IO_node]</p></li>
+<li>[Setting_Up_IBM_HPC_Products_on_a_Statelite_or_Stateless_Login_Node]</li>
+<li><p>[Setting_Up_IBM_HPC_Products_on_a_Stateful_Login_Node]</p></li>
+</ul>
+<h2 id="product-specific-information"><a href="#TOC">Product-Specific Information</a></h2>
+<ul>
+<li>[Setting_up_GPFS_in_a_Statelite_or_Stateless_Cluster]</li>
+<li><p>[Setting_up_GPFS_in_a_Stateful_Cluster]</p></li>
+<li>[Setting_up_LoadLeveler_in_a_Statelite_or_Stateless_Cluster]</li>
+<li><p>[Setting_up_LoadLeveler_in_a_Stateful_Cluster]</p></li>
+<li>[Setting_up_PE_in_a_Statelite_or_Stateless_Cluster]</li>
+<li><p>[Setting_up_PE_in_a_Stateful_Cluster]</p></li>
+<li>[Setting_up_ESSL_and_PESSL_in_a_Statelite_or_Stateless_Cluster]</li>
+<li><p>[Setting_up_ESSL_and_PESSL_in_a_Stateful_Cluster]</p></li>
+<li>[Setting_up_RSCT_in_a_Statelite_or_Stateless_Cluster]</li>
+<li><p>[Setting_up_RSCT_in_a_Stateful_Cluster]</p></li>
+<li><p>[Setting_up_TEAL_on_xCAT_Management_Node]</p></li>
+</ul>
+<h2 id="updating-ibm-hpc-product-software"><a href="#TOC">Updating IBM HPC product software</a></h2>
+<p>If you have used the xCAT IBM HPC Integration support to initially install HPC software on your cluster nodes, you can apply product updates to the cluster:</p>
+<ul>
+<li>[Updating_IBM_HPC_product_software]</li>
+</ul>
+<h2 id="updating-xcat-software"><a href="#TOC">Updating xCAT software</a></h2>
+<p>If you are updating the xCAT software on your xCAT management node and service nodes, you will need to remember to also update the xCAT-IBMhpc rpm. Depending on the process you use to update the xCAT rpms, this rpm may not automatically get updated.</p>
+<p>Also, if you have copied any files (e.g. postscripts, pkglists, bundle files, etc.) from /opt/xcat/share/xcat/IBMhpc to other locations, you may need to update those copied files when installing a new version of xCAT.</p>
+</body>
+</html>

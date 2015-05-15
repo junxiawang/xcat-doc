@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#service-node-takeover---no-node-reboot"><strong>Service node takeover - no node reboot</strong></a><ul>
+<li><a href="#set-up-an-external-nfs-server"><strong>Set up an external NFS server</strong></a></li>
+<li><a href="#switch-to-the-backup-service-node"><strong>Switch to the backup service node</strong></a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#service-node-takeover---no-node-reboot"><strong>Service node takeover - no node reboot</strong></a></li>
+<li><a href="#set-up-an-external-nfs-server"><strong>Set up an external NFS server</strong></a></li>
+<li><a href="#switch-to-the-backup-service-node"><strong>Switch to the backup service node</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h3 id="service-node-takeover---no-node-reboot"><a href="#TOC"><strong>Service node takeover - no node reboot</strong></a></h3>
+<pre><code>**TBD - work in progress - not yet fully supported!**</code></pre>
+<p>By combining an external NFS server with a backup service node it is possible to have more highly available diskless compute nodes.</p>
+<p>With this combination you can switch nodes to a new backup SN without rebooting the nodes.</p>
+<p>The basic idea is that the NIM resources that are needed for the compute nodes are placed on a separate highly available NFS server instead of the service nodes. If the SN goes down the node will continue to run. As soon as the SN failure is detected you can switch to the backup SN. It will not be necessary to reboot the diskless nodes when you switch them to the backup server.</p>
+<p>The xCAT external NFS support is currently limited to the following NIM diskless resources: SPOT, shared_root, root, paging. It does not support other NIM diskless resources, such as dump, shared_home etc. However, if the node availability is a primary concern and you do not need these other resources then you can manage the service node takeover without rebooting the nodes.</p>
+<p>The service node switch is initiated manually using the xCAT <strong>snmove</strong> command.</p>
+<p>A service node takeover should be initiated as soon as possible after the the current service node failure is detected.</p>
+<p>The service node takeover with no node reboot is supported for AIX diskless nodes including stateful, stateless and statelite configurations.</p>
+<h4 id="set-up-an-external-nfs-server"><a href="#TOC"><strong>Set up an external NFS server</strong></a></h4>
+<p>See <a href="External_NFS_Server_Support_With_AIX_Stateless_And_Statelite">External_NFS_Server_Support_With_AIX_Stateless_And_Statelite</a> for details on using external NFS server with AIX diskless nodes.</p>
+<h4 id="switch-to-the-backup-service-node"><a href="#TOC"><strong>Switch to the backup service node</strong></a></h4>
+<p>As described in a previous section above you can use the xCAT <strong>snmove</strong> command to switch nodes to a backup service node.</p>
+<p>Since the node resources are mounted from the external NFS server it should not be necessary to reboot the nodes.</p>
+<p>For example, if the SN named &quot;SN1P&quot; goes down you could switch all the compute nodes that use it to the backup SN by running a command similar to the following.</p>
+<pre><code>snmove -s SN1P</code></pre>
+</body>
+</html>

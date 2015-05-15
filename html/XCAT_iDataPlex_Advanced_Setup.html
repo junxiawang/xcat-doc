@@ -1,0 +1,506 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#use-the-driver-update-disk"><strong>Use the driver update disk</strong></a></li>
+<li><a href="#db-table-regular-expression-example"><strong>DB Table Regular Expression Example</strong></a></li>
+<li><a href="#understanding-the-chain-table">Understanding the chain table</a><ul>
+<li><a href="#task-type">Task Type</a></li>
+<li><a href="#run-task-list-during-discovery">Run Task List During Discovery</a></li>
+<li><a href="#run-task-list-to-configure-a-node">Run Task List to Configure a Node</a></li>
+</ul></li>
+<li><a href="#automatically-deploying-nodes-after-discovery">Automatically Deploying Nodes After Discovery</a></li>
+<li><a href="#manually-setup-the-node-attributes-instead-of-using-the-templates-or-switch-discovery"><strong>Manually setup the node attributes instead of using the templates or switch discovery</strong></a></li>
+<li><a href="#updating-node-firmware">Updating Node Firmware</a></li>
+<li><a href="#using-asu-to-update-cmos-uefi-or-bios-settings-on-the-nodes">Using ASU to Update CMOS, uEFI, or BIOS Settings on the Nodes</a><ul>
+<li><a href="#download-asu">Download ASU</a></li>
+<li><a href="#determine-cmos-settings-for-your-server-model">Determine CMOS Settings for Your Server Model</a></li>
+<li><a href="#run-asu-out-of-band">Run ASU Out-of-Band</a></li>
+<li><a href="#manually-install-asu-on-the-nodes">Manually Install ASU on the Nodes</a></li>
+<li><a href="#add-asu-to-your-node-image">Add ASU to Your Node Image</a></li>
+<li><a href="#run-asu-via-the-genesis-boot-kernel">Run ASU Via the Genesis Boot Kernel</a></li>
+</ul></li>
+<li><a href="#adding-drivers-to-the-genesis-boot-kernel">Adding Drivers to the Genesis Boot Kernel</a></li>
+<li><a href="#configuring-secondary-adapters"><strong>Configuring Secondary Adapters</strong></a></li>
+<li><a href="#build-a-compressed-image">Build a Compressed Image</a><ul>
+<li><a href="#build-aufs-on-your-sample-node"><strong>Build aufs on Your Sample Node</strong></a></li>
+<li><a href="#check-memory-usage"><strong>Check Memory Usage</strong></a></li>
+</ul></li>
+<li><a href="#network-boot-flows">Network Boot Flows</a><ul>
+<li><a href="#network-installation-of-a-x86_64-stateful-node-using-kickstart">Network Installation of a x86_64 Stateful Node Using Kickstart</a></li>
+<li><a href="#network-installation-of-a-x86_64-stateful-node-using-autoyast">Network Installation of a x86_64 Stateful Node using Autoyast</a></li>
+<li><a href="#network-boot-of-a-x86_64-stateless-ramdisk-node">Network Boot of a x86_64 Stateless (RAMdisk) Node</a></li>
+<li><a href="#network-boot-of-a-statelite-nfs-root-node">Network Boot of a Statelite (NFS root) Node</a></li>
+<li><a href="#network-deployment-diskful-windows-compute-node-using-winpe">Network Deployment Diskful Windows Compute Node Using WinPE</a></li>
+</ul></li>
+<li><a href="#appendix-a-network-table-setup-example"><strong>Appendix A: Network Table Setup Example</strong></a></li>
+<li><a href="#appendix-b-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix B: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-c-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix C: Install your Management Node to a new Release of Linux</strong></a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#use-the-driver-update-disk"><strong>Use the driver update disk</strong></a></li>
+<li><a href="#db-table-regular-expression-example"><strong>DB Table Regular Expression Example</strong></a></li>
+<li><a href="#understanding-the-chain-table">Understanding the chain table</a></li>
+<li><a href="#task-type">Task Type</a></li>
+<li><a href="#run-task-list-during-discovery">Run Task List During Discovery</a></li>
+<li><a href="#run-task-list-to-configure-a-node">Run Task List to Configure a Node</a></li>
+<li><a href="#automatically-deploying-nodes-after-discovery">Automatically Deploying Nodes After Discovery</a></li>
+<li><a href="#manually-setup-the-node-attributes-instead-of-using-the-templates-or-switch-discovery"><strong>Manually setup the node attributes instead of using the templates or switch discovery</strong></a></li>
+<li><a href="#updating-node-firmware">Updating Node Firmware</a></li>
+<li><a href="#using-asu-to-update-cmos-uefi-or-bios-settings-on-the-nodes">Using ASU to Update CMOS, uEFI, or BIOS Settings on the Nodes</a></li>
+<li><a href="#download-asu">Download ASU</a></li>
+<li><a href="#determine-cmos-settings-for-your-server-model">Determine CMOS Settings for Your Server Model</a></li>
+<li><a href="#run-asu-out-of-band">Run ASU Out-of-Band</a></li>
+<li><a href="#manually-install-asu-on-the-nodes">Manually Install ASU on the Nodes</a></li>
+<li><a href="#add-asu-to-your-node-image">Add ASU to Your Node Image</a></li>
+<li><a href="#run-asu-via-the-genesis-boot-kernel">Run ASU Via the Genesis Boot Kernel</a></li>
+<li><a href="#adding-drivers-to-the-genesis-boot-kernel">Adding Drivers to the Genesis Boot Kernel</a></li>
+<li><a href="#configuring-secondary-adapters"><strong>Configuring Secondary Adapters</strong></a></li>
+<li><a href="#build-a-compressed-image">Build a Compressed Image</a></li>
+<li><a href="#build-aufs-on-your-sample-node"><strong>Build aufs on Your Sample Node</strong></a></li>
+<li><a href="#check-memory-usage"><strong>Check Memory Usage</strong></a></li>
+<li><a href="#network-boot-flows">Network Boot Flows</a></li>
+<li><a href="#network-installation-of-a-x86_64-stateful-node-using-kickstart">Network Installation of a x86_64 Stateful Node Using Kickstart</a></li>
+<li><a href="#network-installation-of-a-x86_64-stateful-node-using-autoyast">Network Installation of a x86_64 Stateful Node using Autoyast</a></li>
+<li><a href="#network-boot-of-a-x86_64-stateless-ramdisk-node">Network Boot of a x86_64 Stateless (RAMdisk) Node</a></li>
+<li><a href="#network-boot-of-a-statelite-nfs-root-node">Network Boot of a Statelite (NFS root) Node</a></li>
+<li><a href="#network-deployment-diskful-windows-compute-node-using-winpe">Network Deployment Diskful Windows Compute Node Using WinPE</a></li>
+<li><a href="#appendix-a-network-table-setup-example"><strong>Appendix A: Network Table Setup Example</strong></a></li>
+<li><a href="#appendix-b-migrate-your-management-node-to-a-new-service-pack-of-linux"><strong>Appendix B: Migrate your Management Node to a new Service Pack of Linux</strong></a></li>
+<li><a href="#appendix-c-install-your-management-node-to-a-new-release-of-linux"><strong>Appendix C: Install your Management Node to a new Release of Linux</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="use-the-driver-update-disk"><a href="#TOC"><strong>Use the driver update disk</strong></a></h2>
+<!---
+this is a markdown comment test
+it should not show up in any output
+-->
+
+<p>Linux supplies the driver update disk mechanism to support the devices which cannot be driven by the released distribution during the installation process. &quot;driver update disk&quot; is a media which contains the drivers and related configuration files for certain devices.</p>
+<p>See [Using_Linux_Driver_Update_Disk] for information on using the driver update disk.</p>
+<h2 id="db-table-regular-expression-example"><a href="#TOC"><strong>DB Table Regular Expression Example</strong></a></h2>
+<p>The xCAT database tables support powerful regular expressions for defining a pattern-based configuration. This can make the tables much smaller in large clusters, and can also help for more dynamic configurations or defining a site-standard set of defaults once and applying to multiple clusters.</p>
+<p>Even though the syntax of the regular expressions looks complicated, once you understand the basics of the syntax, it is easy to make changes to the regular expressions to fit your cluster. As an example, we will change the IP addresses of the nodes from <strong>172.20.100+<em>racknum</em>.<em>nodenuminrack</em></strong> to <strong>10.0.0.<em>nodenum</em></strong>. The IP address is defined in the ip attribute and the relevant node group is idataplex, so we first query the regular expression using:</p>
+<pre><code>    mgt# lsdef -t group idataplex -i ip
+    Object name: idataplex
+        ip=|\D+(\d+).*$|172.30.(101+(($1-1)/84)).(($1-1)%84+1)|</code></pre>
+<p>Notice in the expression there are 3 vertical bars. The text between the first 2 vertical bars is what we will match in the node name whose IP address we are trying to get from the database. The pattern match of &quot;\D+(+).*$&quot; means that we expect some non-digit characters, then some digits, then any text, then the end. Because the match of the digits is in parentheses, that value will get put into $1. So if we are matching n2, $1 will equal &quot;2&quot;. The text between the 2nd and 3rd vertical bars represents the value of the attribute (in this case the ip) for this node. Any text in parentheses will be evaluated with the current value of $1. If you do the math, the resulting ip for n2 will be 172.30.101.2 . If we want it to be 10.0.0.2 instead, then change the regular expression like this:</p>
+<pre><code>    chdef -t group idataplex ip=&#39;|\D+(\d+).*$|10.0.0.($1+0)|&#39;</code></pre>
+<p>Note: you could also change this expression using:</p>
+<pre><code>    tabedit hosts</code></pre>
+<p>Now test that the expression is working correctly for n2:</p>
+<pre><code>    mgt# lsdef n2 -i ip
+    Object name: n2
+        ip=10.0.0.2</code></pre>
+<p>Any of the regular expressions can be changed in a similar way to suit your needs. For more details on the table regular expressions, see the <a href="http://xcat.sf.net/man5/xcatdb.5.html">xCAT database object and table descriptions</a>.</p>
+<h2 id="understanding-the-chain-table"><a href="#TOC">Understanding the chain table</a></h2>
+<p>The <strong>chain</strong> mechanism is the xCAT genesis system. Genesis is a customized Linux system, booted on the node, to do the discovery and configuration.</p>
+<p>The <strong>chain</strong> table is designed to store the tasks (For example: 'runcmd=bmcsetup', 'runimage=&lt;URL&gt;', 'osimage=&lt;image name&gt;', 'install', 'netboot', 'shell', 'standby' ...) which are planned to be run automatically during the discovery or configuration of a node. There are three related attributes <strong>currstate</strong>,<strong>currchain</strong> and <strong>chain</strong> in the chain table which are used to perform the <strong>chain</strong> mechanism.</p>
+<p>Genesis when running on the node sends 'get_task/get_next_task' request to xcatd. xcatd copies the <strong>chain</strong> attribute to the <strong>currchain</strong> attribute. xcatd then pops each task from the <strong>currchain</strong> attribute and puts it into the <strong>currstate</strong> attribute. It continues this until all tasks in the <strong>currchain</strong> attribute are completed (removed). The <strong>currstate</strong> attribute will show the current task which is running.</p>
+<h3 id="task-type"><a href="#TOC">Task Type</a></h3>
+<p>xCAT supports following types of task which could be set in the chain:</p>
+<pre><code>
+   runcmd=&lt;cmd&gt;</code></pre>
+<p>Currently only the 'bmcsetup' command is officially supplied by xCAT to run to configure the bmc of the compute node. You can find the 'bmcsetup' in /opt/xcat/share/xcat/netboot/genesis/x86_64/fs/bin/. You also could create your command in this directory and adding it to be run by 'runcmd=&lt;you cmd&gt;'.</p>
+<pre><code>    runcmd=bmcsetup</code></pre>
+<pre><code>   runimage=&lt;URL&gt;</code></pre>
+<p>URL is a string which can be run by 'wget' to download the image from the URL. The example of URL could be:</p>
+<pre><code>    runimage=http://$MASTER/image.tgz</code></pre>
+<p>The image.tgz should can be uncompressed by 'tar xvf image.tgz'. And image.tgz should include a file named 'runme.sh' which is a script to initiate the running of the image. Note: You could try to run 'wget http://$MASTER/image.tgz' manually to make sure the path has been set correctly.</p>
+<pre><code>
+   osimage=&lt;image name&gt; or (install/netboot)</code></pre>
+<p>This task is used to specify that the compute node should run the OS deployment with osimage=&lt;image name&gt;. The install and netboot are also supported, but osimage=xxx is recommended for xCAT which version higher than 2.8.</p>
+<pre><code>    osimage=rhels6.3-x86_64-install-compute</code></pre>
+<ul>
+<li>shell</li>
+</ul>
+<p>Make the genesis gets into the shell for admin to log in and run command.</p>
+<ul>
+<li>standby</li>
+</ul>
+<p>Make the genesis gets into standby and waiting for the task from chain. If the compute node gets into this state, any new task set to chain.currstate will be run immediately.</p>
+<h3 id="run-task-list-during-discovery"><a href="#TOC">Run Task List During Discovery</a></h3>
+<p>If you want to run a list of tasks during the discovery, set the tasks in the chain table by using the chdef command to change the <strong>chain</strong> attribute, before powering on the nodes. For example:</p>
+<pre><code>    chdef &lt;node range&gt; chain=&#39;runcmd=bmcsetup,osimage=&lt;osimage name&gt;&#39;</code></pre>
+<p>These tasks will be run after the discovery.</p>
+<h3 id="run-task-list-to-configure-a-node"><a href="#TOC">Run Task List to Configure a Node</a></h3>
+<p>Run the 'nodeset' command to set the tasks for the compute node and 'rpower reset' the node to initiate the running of tasks.</p>
+<pre><code>    nodeset $node runimage=http://$MASTER/image.tgz,osimage=rhels6.3-x86_64-install-compute
+    rpower $node reset</code></pre>
+<p>In this example, the runimage will be run first, and then the &lt;rhels6.3-x86_64-install-compute&gt; will be deployed to the node.</p>
+<p>During nodeset your request is put into the <strong>currstate</strong> attribute. The <strong>chain</strong> attribute is not used. The task in the <strong>currstate</strong> attribute will be passed to genesis and executed. If additional tasks are defined in the <strong>currchain</strong> attribute, these tasks will be run after the tasks in the <strong>currstate</strong> attribute are run.</p>
+<h2 id="automatically-deploying-nodes-after-discovery"><a href="#TOC">Automatically Deploying Nodes After Discovery</a></h2>
+<p>If you want xCAT to install or diskless boot your nodes immediately after discovering and defining them, do this before kicking off the discovery process:</p>
+<ul>
+<li>Define and configure your osimage object (copycds, pkglist, otherpkglist, genimage, packimage, etc)</li>
+<li>Associate the osimage with your nodes:</li>
+</ul>
+<pre><code>    chdef ipmi provmethod=&lt;osimage&gt;</code></pre>
+<ul>
+<li>Add the deployment step to the chain attribute:</li>
+</ul>
+<pre><code>    chdef ipmi chain=&#39;runcmd=bmcsetup,osimage=&lt;osimage name&gt;:reboot4deploy&#39;</code></pre>
+<p>Now initiate the discovery and deployment by powering on the nodes.</p>
+<h2 id="manually-setup-the-node-attributes-instead-of-using-the-templates-or-switch-discovery"><a href="#TOC"><strong>Manually setup the node attributes instead of using the templates or switch discovery</strong></a></h2>
+<p>If you just have a few nodes and do not want to use the templates to set up the xCAT tables, and do not want to configure your ethernet switches for SNMP access, then the following steps can be used to define your nodes and prepare them for bmcsetup. (For more information, see the <a href="http://xcat.sourceforge.net/man7/node.7.html">node object attribute descriptions</a>.)</p>
+<ul>
+<li>Add the new nodes:</li>
+</ul>
+<pre><code>    nodeadd n1-n20 groups=ipmi,idataplex,compute,all</code></pre>
+<ul>
+<li>Set attributes that are common across all of the nodes:</li>
+</ul>
+<pre><code>    chdef -t group ipmi mgt=ipmi netboot=xnba bmcusername=USERID bmcpassword=PASSW0RD</code></pre>
+<ul>
+<li>For each node, set the node specific attributes (bmc, ip, mac). For example:</li>
+</ul>
+<pre><code>    chdef n1 bmc=10.0.1.1 ip=10.0.2.1 mac=&quot;xx:xx:xx:xx:xx:xx&quot;
+      .
+      .
+      .</code></pre>
+<ul>
+<li>Add the nodes to dhcp service</li>
+</ul>
+<pre><code>    makedhcp idataplex</code></pre>
+<ul>
+<li>Setup the current runcmd to be bmcsetup</li>
+</ul>
+<pre><code>    nodeset idataplex runcmd=bmcsetup</code></pre>
+<ul>
+<li>Then walk over and power on the node. This will set up each BMC with the IP address userid and password that were set in the database above.</li>
+</ul>
+<h2 id="updating-node-firmware"><a href="#TOC">Updating Node Firmware</a></h2>
+<p>The process for updating node firmware during the node discovery phase, or at a later time, is:</p>
+<ul>
+<li>Download the firmware files from the <a href="http://www-933.ibm.com/support/fixcentral/options?selectionBean.selectedTab=find">IBM Fix Central</a> web site. For example: &lt;http://www-933.ibm.com/support/fixcentral/options?selection=Hardware%3bSystems%3bibm%2fsystemx%3bSystem+x+iDataPlex+dx360+M4+server&gt;</li>
+<li>Download the <a href="http://www-947.ibm.com/support/entry/portal/docdisplay?brand=5000016&amp;lndocid=SERV-XPRESS">UpdateXpress System Pack Installer</a> ( ibm_utl_uxspi) and its <a href="http://www-947.ibm.com/support/entry/portal/docdisplay?lndocid=MIGR-5085892">documentation</a>.</li>
+<li>Put into a tarball:
+<ul>
+<li>the firmware files downloaded</li>
+<li>the executable from UpdateXpress that is able to update the firmware on your target machine</li>
+<li>a runme.sh script that you create that runs the executable with appropriate flags</li>
+</ul>
+For example:</li>
+</ul>
+<pre><code>    # cd /install/firmware
+    # ls
+    ibm_fw_imm2_1aoo27b-1.10_anyos_noarch.uxz
+    ibm_fw_imm2_1aoo27b-1.10_anyos_noarch.xml
+    ibm_fw_uefi_tde111a-1.00_anyos_32-64.uxz
+    ibm_fw_uefi_tde111a-1.00_anyos_32-64.xml
+    runme.sh
+    ibm_utl_uxspi_9.21_rhel6_32-64.bin
+    # cat runme.sh
+    ./ibm_utl_uxspi_9.21_rhel6_32-64.bin  up -L -u
+    # chmod +x runme.sh ibm_utl_uxspi_9.21_rhel6_32-64.bin
+    # tar -zcvf firmware-update.tgz .</code></pre>
+<ul>
+<li>For this example, we assume you have a nodegroup called &quot;ipmi&quot; that contains the nodes you want to update.</li>
+<li><strong>Option 1 - update during discovery:</strong> If you want to update the firmware during the node discovery process, ensure you have already added a dynamic range to the networks table and run &quot;makedhcp -n&quot;. Then update the chain table to do both bmcsetup and the firmware update:</li>
+</ul>
+<pre><code>    chdef -t group ipmi chain=&quot;runcmd=bmcsetup,runimage=http://mgmtnode/install/firmware/firmware-update.tgz,shell&quot;</code></pre>
+<ul>
+<li><strong>Option2 - update after node deployment:</strong> If you are updating the firmware at a later time (i.e. <strong>not</strong> during the node discovery process), tell nodeset that you want to do the firmware update, and then set currchain to drop the nodes into a shell when they are done:</li>
+</ul>
+<pre><code>    nodeset ipmi runimage=http://mgmtnode/install/firmware/firmware-update.tgz
+    chdef ipmi currchain=shell</code></pre>
+<ul>
+<li>Then physically power on the nodes (in the discovery case), or if the BMCs are already configured, run: rpower ipmi boot</li>
+<li>To monitor the progress, watch the currstate attribute in the chain table. When they all turn to &quot;shell&quot;, then they are done:</li>
+</ul>
+<pre><code>    watch -d &#39;nodels ipmi chain.currstate|xcoll&#39;</code></pre>
+<ul>
+<li>At this point, you can check the results of the updates by ssh'ing into nodes and looking at /var/log/IBM_Support. (Or you can use psh or xdsh to grep for specific messages on all of the nodes.)</li>
+<li>When you are satisfied with the results, then nodeset the nodes to use whatever osimage you want, and then boot the nodes.</li>
+</ul>
+<h2 id="using-asu-to-update-cmos-uefi-or-bios-settings-on-the-nodes"><a href="#TOC">Using ASU to Update CMOS, uEFI, or BIOS Settings on the Nodes</a></h2>
+<h3 id="download-asu"><a href="#TOC">Download ASU</a></h3>
+<p>If you need to update CMOS/uEFI/BIOS settings on your nodes, download ASU (Advanced Settings Utility) from the IBM Fix Central web site:</p>
+<ul>
+<li>Go to https://www.ibm.com/support/entry/myportal/docdisplay?lndocid=TOOL-ASU</li>
+<li>Scroll down and select the latest version of the linux 64 bit RPM</li>
+<li>You will need an IBM customer ID</li>
+<li>Get the ASU documentation from https://www.ibm.com/support/entry/myportal/docdisplay?lndocid=MIGR-5085890</li>
+</ul>
+<h3 id="determine-cmos-settings-for-your-server-model"><a href="#TOC">Determine CMOS Settings for Your Server Model</a></h3>
+<p>To see what CMOS settings are recommended, visit the <a href="http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=Intelligent+Cluster&amp;product=ibm/systemx/1410&amp;release=All&amp;platform=All&amp;function=all">IBM Intelligent Cluster Best Recipe page</a> and click on the link for your server model and look for a file with &quot;cmos-settings&quot; in the file name.</p>
+<p>Once you have the ASU RPM on your MN (management node), you have several <strong>choices</strong> of how to run it:</p>
+<h3 id="run-asu-out-of-band"><a href="#TOC">Run ASU Out-of-Band</a></h3>
+<p>ASU can be run on the management node (MN) and told to connect to the IMM of a node. First install ASU on the MN:</p>
+<pre><code>    rpm -i ibm_utl_asu_asut78c-9.21_linux_x86-64.rpm</code></pre>
+<p>In xCAT 2.8 and 2.7.7 a new command called <a href="http://xcat.sourceforge.net/man1/pasu.1.html">pasu</a> is available to run the asu utility from the MN in parallel to many nodes at once. (If you are running 2.7.5 or 2.7.6 you can <a href="http://svn.code.sf.net/p/xcat/code/xcat-core/trunk/xCAT-client/bin/pasu">download pasu</a> and save it in /opt/xcat/bin on your MN.)</p>
+<p>To display 1 ASU setting for a set of nodes:</p>
+<pre><code>    pasu &lt;noderang&gt; show uEFI.RemoteConsoleRedirection</code></pre>
+<p>To set 1 ASU setting:</p>
+<pre><code>    pasu &lt;noderange&gt; set uEFI.RemoteConsoleRedirection Enable</code></pre>
+<p>To check if the setting is the same on all nodes:</p>
+<pre><code>    pasu compute show uEFI.RemoteConsoleRedirection | xcoll</code></pre>
+<p>To check if all settings are the same:</p>
+<pre><code>    pasu compute show all | xcoll</code></pre>
+<p>If you want to show or set several settings in a single command, put the ASU commands in a file and use the batch option:</p>
+<pre><code>    pasu -b &lt;settingsfile&gt; &lt;noderange&gt; | xcoll</code></pre>
+<p>If you are <strong>running a version of xCAT earlier than 2.7.5</strong>, you can still run the ASU utility to one node at a time. To do this, first determine the IP address, username, and password of the IMM (BMC):</p>
+<pre><code>    lsdef node1 -i bmc,bmcusername,bmcpasswd
+    tabdump passwd | grep ipmi      # the default if username and password are not set for the node</code></pre>
+<p>Run the ASU tool directly to one node:</p>
+<pre><code>    cd /opt/ibm/toolscenter/asu
+    ./asu64 show all --host &lt;ip&gt; --user &lt;username&gt; --password &lt;pw&gt;
+    ./asu64 show uEFI.ProcessorHyperThreading --host &lt;ip&gt; --user &lt;username&gt; --password &lt;pw&gt;
+    ./asu64 set uEFI.RemoteConsoleRedirection Enable --host &lt;ip&gt; --user &lt;username&gt; --password &lt;pw&gt;  # a common setting that needs to be set</code></pre>
+<p>If you want to set a lot of settings, you can put them in a file and run:</p>
+<pre><code>    ./asu64 batch &lt;settingsfile&gt; --host &lt;ip&gt; --user &lt;username&gt; --password &lt;pw&gt;</code></pre>
+<h3 id="manually-install-asu-on-the-nodes"><a href="#TOC">Manually Install ASU on the Nodes</a></h3>
+<p>Copy the RPM to the nodes:</p>
+<pre><code>    xdcp ipmi ibm_utl_asu_asut78c-9.21_linux_x86-64.rpm /tmp</code></pre>
+<p>Install the RPM:</p>
+<pre><code>    xdsh ipmi rpm -i /tmp/ibm_utl_asu_asut78c-9.21_linux_x86-64.rpm</code></pre>
+<p>Run asu64 with the ASU commands you want to run:</p>
+<pre><code>    xdsh ipmi /opt/ibm/toolscenter/asu/asu64 show uEFI.ProcessorHyperThreading</code></pre>
+<h3 id="add-asu-to-your-node-image"><a href="#TOC">Add ASU to Your Node Image</a></h3>
+<p>Add the ASU RPM to your node image following the instructions in [Install_Additional_Packages].</p>
+<p>If this is a stateless node image, re-run <a href="http://xcat.sourceforge.net/man1/genimage.1.html">genimage</a> and <a href="http://xcat.sourceforge.net/man1/packimage.1.html">packimage</a> and reboot your nodes. (If you don't want to reboot your nodes right now, run <a href="http://xcat.sourceforge.net/man1/updatenode.1.html">updatenode -S</a> to install ASU on the nodes temporarily.</p>
+<p>If this is a stateful node image, run <a href="http://xcat.sourceforge.net/man1/updatenode.1.html">updatenode -S</a> to install ASU on the nodes.</p>
+<h3 id="run-asu-via-the-genesis-boot-kernel"><a href="#TOC">Run ASU Via the Genesis Boot Kernel</a></h3>
+<p>If you want to set ASU settings while discovering the nodes:</p>
+<ul>
+<li>Download the ASU tar file (instead of the RPM)</li>
+<li>Create a runme.sh script that will execute the asu64 commands you want (see above for examples)</li>
+<li>Add runme.sh to the tar file</li>
+<li>Add a runimage entry that references this tar file to the chain attribute</li>
+</ul>
+<p>See <a href="XCAT_iDataPlex_Advanced_Setup/#updating-node-firmware">Updating_Node_Firmware</a> for an example of using a tar file in a runimage statement.</p>
+<h2 id="adding-drivers-to-the-genesis-boot-kernel"><a href="#TOC">Adding Drivers to the Genesis Boot Kernel</a></h2>
+<p>The xCAT genesis boot kernel/initrd has most of the necessary IBM drivers built into it. If you need to add a driver for another type of hardware, you can put the driver on the xCAT MN and rebuild genesis with using the <a href="http://xcat.sourceforge.net/man8/mknb.8.html">mknb</a> command. Here is an example of adding the <a href="https://www.adaptec.com/en-us/speed/raid/aac/linux/aacraid_linux_rpms_v1_2_1-40300_tgz.htm">Adaptec AACRAID driver</a> to genesis:</p>
+<ul>
+<li>Download the tar file and extract the rpm:</li>
+</ul>
+<pre><code>    tar -zxvf aacraid_linux_rpms_v1.2.1-40300.tgz</code></pre>
+<ul>
+<li>Extract aacraid_prebuilt.tgz from the rpm:</li>
+</ul>
+<pre><code>    rpm2cpio aacraid-1.2.1-40300.rpm | cpio -id &#39;*aacraid_prebuilt.tgz&#39;</code></pre>
+<ul>
+<li>List the contents of that tar file and extract the file that matches your arch, distro, and kernel version:</li>
+</ul>
+<pre><code>    tar -ztvf aacraid_prebuilt.tgz
+    tar -zxvf aacraid_prebuilt.tgz aacraid-2.6.32-358.el6.x86_64-x86_64
+</code></pre>
+<ul>
+<li><p>Use modinfo to verify it is a kernel module and rename it:</p>
+<p>modinfo aacraid-2.6.32-358.el6.x86_64-x86_64 mv aacraid-2.6.32-358.el6.x86_64-x86_64 aacraid.ko</p></li>
+<li><p>Make the appropriate sub-directory in the genesis file system and move the kernel module there:</p></li>
+</ul>
+<pre><code>    mkdir -p /opt/xcat/share/xcat/netboot/genesis/x86_64/fs/lib/modules/2.6.32-431.el6.x86_64/kernel/drivers/scsi/aacraid
+    mv aacraid.ko /opt/xcat/share/xcat/netboot/genesis/x86_64/fs/lib/modules/2.6.32-431.el6.x86_64/kernel/drivers/scsi/aacraid
+</code></pre>
+<ul>
+<li>Rebuild the module dependency file in the genesis file system:</li>
+</ul>
+<pre><code>    depmod -b /opt/xcat/share/xcat/netboot/genesis/x86_64/fs  2.6.32-431.el6.x86_64</code></pre>
+<ul>
+<li>Rebuild genesis:</li>
+</ul>
+<pre><code>    mknb x86_64</code></pre>
+<ul>
+<li>Genesis is now ready to use for discovery. To use the new genesis for firmware updates or running other utilities on nodes, run nodeset for the nodes again.</li>
+</ul>
+<p>Note: It's possible to see an error, &quot;module signed with unknown key&quot; either when running mknb or booting the newly rebuilt genesis kernel. If this happens, it is necessary to remove the signature from the kernel module:</p>
+<pre><code>    objcopy -R .note.module.sig module.ko new_module.ko</code></pre>
+<p>After this, replace the old module with the new one, rerun 'depmod' and 'mknb'. In above Adaptec AACRAID driver example, you can do the following:</p>
+<pre><code>    cd /opt/xcat/share/xcat/netboot/genesis/x86_64/fs/lib/modules/2.6.32-431.el6.x86_64/kernel/drivers/scsi/aacraid
+    objcopy -R .note.module.sig aacraid.ko new_ aacraid.ko
+    mv new_ aacraid.ko aacraid.ko</code></pre>
+<h2 id="configuring-secondary-adapters"><a href="#TOC"><strong>Configuring Secondary Adapters</strong></a></h2>
+<p>To configure secondary adapters, see <a href="Configuring_Secondary_Adapters">Configuring_Secondary_Adapters</a>.</p>
+<h2 id="build-a-compressed-image"><a href="#TOC">Build a Compressed Image</a></h2>
+<p><em><strong>The following documentation is old and has not been tested in a long time.</strong></em></p>
+<p><strong>Note:</strong> We have found that aufs is not supported in Redhat6, so the xCAT code and following process will not works on Redhat6 or any other OS that does not support aufs or aufs2.</p>
+<h3 id="build-aufs-on-your-sample-node"><a href="#TOC"><strong>Build aufs on Your Sample Node</strong></a></h3>
+<p>Do this on the same node you generated the image on. Note: if this is a node other than the management node, we assume you still have /install mounted from the MN, the genimage stuff in /root/netboot, etc..</p>
+<pre><code>    yum install kernel-devel gcc squashfs-tools</code></pre>
+<pre><code>    mkdir /tmp/aufs
+    cd /tmp/aufs
+    svn co http://xcat.svn.sf.net/svnroot/xcat/xcat-dep/trunk/aufs</code></pre>
+<p><strong>If your node does not have internet acccess, do that elsewhere and copy</strong></p>
+<pre><code>    tar jxvf aufs-2-6-2008.tar.bz2
+    cd aufs
+    mv include/linux/aufs_type.h fs/aufs/
+    cd fs/aufs/
+    patch -p1 &lt;osimage_name&gt;
+    nodeset blade &lt;osimage_name&gt;
+    rpower blade boot</code></pre>
+<p>Note: If you have a need to unsquash the image:</p>
+<pre><code>    cd /install/netboot/fedora8/x86_64/compute
+    rm -f rootimg.sfs
+    packimage &lt;osimage_name&gt;</code></pre>
+<h3 id="check-memory-usage"><a href="#TOC"><strong>Check Memory Usage</strong></a></h3>
+<pre><code>    # ssh &lt;node&gt; &quot;echo 3 &gt; /proc/sys/vm/drop_caches;free -m;df -h&quot;
+    total used free shared buffers cached
+    Mem: 3961 99 3861 0 0 61
+    -/+ buffers/cache: 38 3922
+    Swap: 0 0 0
+    Filesystem Size Used Avail Use% Mounted on
+    compute_ppc64 100M 220K 100M 1% /
+    none 10M 0 10M 0% /tmp
+    none 10M 0 10M 0% /var/tmp
+    Max for / is 100M, but only 220K being used (down from 225M). But wheres the OS?</code></pre>
+<p>Look at cached. 61M compress OS image. 3.5x smaller As files change in hidden OS they get copied to tmpfs (compute_ppc64) with a copy on write. To reclaim space reboot. The /tmp and /var/tmp is for MPI and other Torque and user related stuff. if 10M is too small you can fix it. To reclaim this space put in epilogue:</p>
+<pre><code>    umount /tmp /var/tmp; mount -a</code></pre>
+<h2 id="network-boot-flows"><a href="#TOC">Network Boot Flows</a></h2>
+<p><strong>Note: this section is still under construction!</strong></p>
+<p>In case you need to understand this to diagnose problems, this is a summary of what happens when xCAT network boots the different types of nodes.</p>
+<h3 id="network-installation-of-a-x86_64-stateful-node-using-kickstart"><a href="#TOC">Network Installation of a x86_64 Stateful Node Using Kickstart</a></h3>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,30,20;
+-->
+
+<p>| Booting Node | &lt;-- Network Transfer --&gt; | Management Node ---------------|--------------------------|----------------- | PXE ROM | DHCP request --&gt; | DHCP server | PXE ROM | &lt;-- IP configuration | DHCP server | PXE ROM | &lt;-- TFTP server IP address | DHCP server | PXE ROM | &lt;-- bootloader file name | DHCP server | PXE ROM | request for bootloader --&gt; | TFTP server | PXE ROM | &lt;-- bootloader executable (xnba.kpxe or xnba.efi) | TFTP server | bootloader (xnba.kpxe/xnba.efi) | DHCP request --&gt; | DHCP server | bootloader (xnba.kpxe/xnba.efi) | &lt;-- bootloader config URL | DHCP server | bootloader (xnba.kpxe/xnba.efi) | request bootloader configuration --&gt; | HTTP server | bootloader (xnba.kpxe/xnba.efi) | &lt;-- bootloader configuration | HTTP server | UEFI bootloader (xnba.efi) only | request elilo (elilo-x64.efi) --&gt; | HTTP server | UEFI bootloader (xnba.efi) only | &lt;-- elilo (/tftpboot/xcat/elilo-x64.efi) | HTTP server | UEFI bootloader (xnba.efi) only | request elilo configuration --&gt; | HTTP server | UEFI bootloader (xnba.efi) only | &lt;-- configuration(/tftpboot/xcat/xnba/nodes/<node>.elilo) | HTTP server | bootloader (xnba/elilo) | request for linux kernel --&gt; | HTTP server | bootloader (xnba/elilo) | &lt;-- linux kernel | HTTP server | bootloader (xnba/elilo) | request for initrd --&gt; | HTTP server | bootloader (xnba/elilo) | &lt;-- initrd.img | HTTP server | initrd | request kickstart file --&gt; | HTTP server | initrd | &lt;-- kickstart file (/install/autoinst/<node>) | HTTP server | initrd | request 2nd stage bootloader --&gt; | DHCP server | initrd | &lt;-- 2nd stage bootloader (/install/<os>/x86_64/images/install.img) | HTTP server | kickstart installer (install.img) | request installation pkgs --&gt; | HTTP server | kickstart installer (install.img) | &lt;-- installation pkgs | HTTP server | kickstart %post (post.xcat) | request postscripts --&gt; | HTTP server | kickstart %post (post.xcat) | &lt;-- postscripts (/install/postscripts/*) | HTTP server | kickstart %post (post.xcat) | execute the postscripts &lt;--&gt; | xCAT server | xCAT postscript (for Power only) | set node to boot from local disk | updateflag.awk | configure bootloader configuration to boot node from hd --&gt; | xCAT server | kickstart installer (install.img) | reboot node | PXE | DHCP request --&gt; | DHCP server | PXE | &lt;-- IP configuration | DHCP server | PXE | &lt;-- TFTP server IP address | DHCP server | PXE | &lt;-- bootfile name (xnba.kpxe) | DHCP server | PXE | request for bootloader (xnba.kpxe) --&gt; | TFTP server | PXE | &lt;-- bootloader executable (xnba.kpxe) | TFTP server | bootloader xnba.kpxe | request bootloader configuration --&gt; | TFTP server | bootloader xnba.kpxe | &lt;-- bootloader configuration (/tftpboot/xcat/xnba/nodes/<node>)(localboot) | TFTPserver | boot from local disk | /etc/init.d/xcatpostinit1 | execute /opt/xcat/xcatinstallpost | /opt/xcat/xcatinstallpost | set &quot;REBOOT=TRUE&quot; in /opt/xcat/xcatinfo | /opt/xcat/xcatinstallpost | execute mypostscript.post in /xcatpost | mypostscript.post | execute postbootscripts in /xcatpost | updateflag.awk | update node status to booted --&gt; | xCAT server</p>
+<!---
+end_xcat_table
+-->
+
+<h3 id="network-installation-of-a-x86_64-stateful-node-using-autoyast"><a href="#TOC">Network Installation of a x86_64 Stateful Node using Autoyast</a></h3>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,30,20;
+-->
+
+<p>| Booting Node | Network Transfer | Management Node ---------------|------------------|----------------- | PXE ROM | DHCP request --&gt; | DHCP server | PXE ROM | &lt;-- IP configuration | DHCP server | PXE ROM | &lt;-- TFTP server IP address | DHCP server | PXE ROM | &lt;-- bootfile name | DHCP server | PXE ROM | request for bootloader --&gt; | TFTP server | PXE ROM | &lt;-- bootloader executable (xnba) | TFTP server | bootloader (xnba.kpxe/xnba.efi) | DHCP request --&gt; | DHCP server | bootloader (xnba.kpxe/xnba.efi) | &lt;-- bootloader config URL | DHCP server | bootloader (xnba.kpxe/xnba.efi) | request bootloader configuration --&gt; | HTTP server | bootloader (xnba.kpxe/xnba.efi) | &lt;-- bootloader configuration | HTTP server | UEFI(xnba.efi) only: bootloader | request elilo (elilo-x64.efi) --&gt; | HTTP server | UEFI(xnba.efi) only: bootloader | &lt;-- elilo (/tftpboot/xcat/elilo-x64.efi) | HTTP server | UEFI(xnba.efi) only: bootloader | request elilo configuration --&gt; | HTTP server | UEFI(xnba.efi) only: bootloader | &lt;-- configuration(/tftpboot/xcat/xnba/nodes/<node>.elilo) | HTTP server | bootloader (xnba/elilo) | request for linux kernel --&gt; | HTTP server | bootloader (xnba/elilo) | &lt;-- linux kernel | HTTP server | bootloader (xnba/elilo) | request for initrd --&gt; | HTTP server | bootloader (xnba/elilo) | &lt;-- initrd | HTTP server | initrd | request node configuration file (autoinst) --&gt; | HTTP server | initrd | &lt;-- configuration file | HTTP server | initrd | request 2nd stage bootloader (install.img) --&gt; | DHCP server | initrd | &lt;-- 2nd stage bootloader | HTTP server | installer (install.img) | request installation pkgs --&gt; | HTTP server | installer | &lt;-- installation pkgs | HTTP server | installer | set node to boot from local disk | | reboot (sles10 only) | boot from local disk directly | | installer postscripts | request postscripts --&gt; | xCAT server | installer postscripts | &lt;-- postscripts | xCAT server | installer postscripts | execute the postscripts &lt;--&gt; | xCAT server | reboot | boot from local disk directly | | /etc/init.d/xcatpostinit1 | execute /opt/xcat/xcatinstallpost | | /opt/xcat/xcatinstallpost | set &quot;REBOOT=TRUE&quot; in /opt/xcat/xcatinfo | | /opt/xcat/xcatinstallpost | execute mypostscript.post in /xcatpost | | mypostscript.post | execute postbootscripts in /xcatpost | | updateflag.awk | update node status to booted --&gt; | xCAT server</p>
+<!---
+end_xcat_table
+-->
+
+<h3 id="network-boot-of-a-x86_64-stateless-ramdisk-node"><a href="#TOC">Network Boot of a x86_64 Stateless (RAMdisk) Node</a></h3>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,30,20;
+-->
+
+<p>| Booting Node | Network Transfer | Management Node ---------------|------------------|----------------- | PXE ROM | DHCP request --&gt; | DHCP server | PXE ROM | &lt;-- IP configuration | DHCP server | PXE ROM | &lt;-- TFTP server IP address | DHCP server | PXE ROM | &lt;-- bootfile name | DHCP server | PXE ROM | request for bootloader --&gt; | TFTP server | PXE ROM | &lt;-- bootloader executable (xnba.kpxe or xnba.efi) | TFTP server | bootloader | request bootloader configuration --&gt; | HTTP server | bootloader | &lt;-- bootloader configuration | HTTP server | bootloader | request for linux kernel --&gt; | HTTP server | bootloader | &lt;-- linux kernel | HTTP server | bootloader | request for initial ramdisk --&gt; | HTTP server | bootloader | &lt;-- initial ramdisk (initrd-stateless.gz) | HTTP server | initrd | request for root image --&gt; | HTTP server | initrd | &lt;-- root image (rootimg.gz) | HTTP server | initrd | &lt;-- switch to root file system | | rootfs | boot up image | | rootfs | xcatpostinit | | xcatpostinit | xcatdsklspost | | xcatdsklspost | request postscripts --&gt; | HTTP server | xcatdsklspost | &lt;-- postscripts | HTTP server | xcatdsklspost | request node postscript list --&gt; | HTTP or xCAT server | xcatdsklspost | &lt;-- node postscript list | HTTP or xCAT server | xcatdsklspost | execute the postscripts | | xcatdsklspost | execute the post BOOT scripts | | xcatdsklspost | update node status --&gt; | xCAT server</p>
+<!---
+end_xcat_table
+-->
+
+<h3 id="network-boot-of-a-statelite-nfs-root-node"><a href="#TOC">Network Boot of a Statelite (NFS root) Node</a></h3>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,30,20;
+-->
+
+<p>| Booting Node | Network Transfer | Management Node ---------------|------------------|----------------- | PXE ROM | DHCP request --&gt; | DHCP server | PXE ROM | &lt;-- IP configuration | DHCP server | PXE ROM | &lt;-- TFTP server IP address | DHCP server | PXE ROM | &lt;-- bootfile name | DHCP server | PXE ROM | request for bootloader --&gt; | TFTP server | PXE ROM | &lt;-- bootloader executable | TFTP server | bootloader | request bootloader configuration --&gt; | HTTP server | bootloader | &lt;-- bootloader configuration | HTTP server | bootloader | request for linux kernel --&gt;| HTTP server | bootloader | &lt;-- linux kernel | HTTP server | bootloader | request for initial ramdisk --&gt; | HTTP server | bootloader | &lt;-- initial ramdisk | HTTP server | initrd | &lt;-- mount root file system | NFS server | initrd | &lt;-- mount persistent directories | NFS server | initrd | &lt;-- Get entries from litefile and litetree tables | xCAT server | initrd | mount litetree directories --&gt; | NFS server | initrd | configure lite files (do local bind mount or link) | NFS server | initrd | &lt;-- switch to root file system | | installer postscripts | request postscripts --&gt; | xCAT server | installer postscripts | &lt;-- postscripts | xCAT server | installer postscripts | execute the postscripts &lt;--&gt; | xCAT server | installer postscripts | execute the post BOOT scripts &lt;--&gt; | xCAT server | | update node status --&gt; | xCAT server</p>
+<!---
+end_xcat_table
+-->
+
+<h3 id="network-deployment-diskful-windows-compute-node-using-winpe"><a href="#TOC">Network Deployment Diskful Windows Compute Node Using WinPE</a></h3>
+<p>NOTE: The deployment process could use proxydhcp or not. If using proxydhcp, ignore the 'NO Proxydhcp Only' part. Otherwise ignore the 'Proxydhcp Only' part. NOTE: The compute node could boot in BIOS or UEFI mode. If booting in BIOS mode, ignore the 'UEFI Only' part. Otherwise ignore the 'BIOS Only' part.</p>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,30,20;
+-->
+
+<p>| Booting Node | Network Transfer | Management Node ---------------|------------------|----------------- | PXE ROM | DHCP request -&gt; | DHCP server | PXE ROM | &lt;-- IP configuration | DHCP server | PXE ROM | &lt;-- TFTP server IP address | DHCP server | PXE ROM (NO Proxydhcp Only) | &lt;-- bootfile name (xNBA) | DHCP server | PXE ROM (NO Proxydhcp Only) | request for bootloader --&gt; | TFTP server | PXE ROM (NO Proxydhcp Only) | &lt;-- bootloader executable | TFTP server | bootloader (NO Proxydhcp Only) | request bootloader configuration --&gt; | HTTP server | bootloader (NO Proxydhcp Only) | &lt;-- bootloader configuration | HTTP server | PXE ROM (Proxydhcp Only) | Proxydhcp configuration --&gt; | Proxydhcp server | PXE ROM (Proxydhcp Only) | &lt;-- Proxydhcp configuration | Proxydhcp server | bootloader (BIOS Only) | request for pxeboot.0 --&gt; | HTTP server | bootloader (BIOS Only) | &lt;-- pxeboot.0 | HTTP server | pxeboot.0 (BIOS Only) | request for bootmgr.exe --&gt; | TFTP server | pxeboot.0 (BIOS Only) | &lt;-- bootmgr.exe | TFTP server | bootmgr.exe (BIOS Only) | request for BCD --&gt; | TFTP server | bootmgr.exe (BIOS Only) | &lt;-- BCD | TFTP server | bootmgr.exe (BIOS Only) | request for WinPE--&gt; | TFTP server | bootmgr.exe (BIOS Only) | &lt;-- WinPE| TFTP server | bootloader (UEFI Only) | request for bootmgfw.efi --&gt; | TFTP server | bootloader (UEFI Only) | &lt;-- bootmgfw.efi | TFTP server | bootmgfw.efi (UEFI Only) | request for BCD --&gt; | TFTP server | bootmgfw.efi (UEFI Only) | &lt;-- BCD | TFTP server | bootmgfw.efi (UEFI Only) | request for WinPE--&gt; | TFTP server | bootmgfw.efi (UEFI Only) | &lt;-- WinPE | TFTP server | WinPE | Run startnet.cmd (Mount MN:/install to I:) | | startnet.cmd | Get autoscript.cmd from I:\autoinst | | autoscript.cmd | Run fixupunattend.vbs to update unattend.xml (disk partition) | | autoscript.cmd | Run Windows setup (deployment) from I:&lt;win ver&gt;\arch\setup | | autoscript.cmd | Get the postscripts and postbootscripts | | WinPE | Configure nics (Through unattend.xml) | | WinPE | Run postscripts (Through unattend.xml) | | Reboot | | | Boot from hard disk | | | Installed Windows System | Run post boot scripts |</p>
+<!---
+end_xcat_table
+-->
+
+
+
+<h2 id="appendix-a-network-table-setup-example"><a href="#TOC"><strong>Appendix A: Network Table Setup Example</strong></a></h2>
+<p>[[img src=Networks_setup.png]]</p>
+<p>And the following table shows all network IP addresses of the cluster:</p>
+<p>Network Table</p>
+<!---
+begin_xcat_table;
+numcols=3;
+colwidths=20,30,20;
+-->
+
+<p>| Machine name | IP Address | Alias ----------------|------------|------ | managementnode.pub.site.net | 10.0.12.53 | managementnode.site.net | managementnode.priv.site.net | 92.168.1.10 | | node01.pub.site.net | 10.0.12.61 | | node02.pub.site.net | 10.0.12.62 | | node01.infiniband.site.net | 10.0.6.236 | | node02.infiniband.site.net | 10.0.6.237 | | node01.10g.site.net |10.0.17.14 | node01.site.net | node02.10g.site.net | 10.0.17.15 | node02.site.net | node01.priv.site.net | 192.168.1.21 | | node02.priv.site.net| 192.168.1.22 |</p>
+<!---
+end_xcat_table
+-->
+
+
+
+
+
+<p>All networks in the cluster must be defined in the networks table which can be modified with the command chtab,chdef or with the command tabedit .</p>
+<p>The xCAT 2 installation ran the command makenetworks which created the following entry:</p>
+<pre><code>    # tabdump networks
+    #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,  -
+    logservers,dynamicrange,nodehostname,comments,disable
+    &quot;10_0_12_0-255_255_255_0&quot;,&quot;192.168.1.0&quot;,&quot;255.255.255.0&quot;,&quot;eth1  -
+    &quot;,,,&quot;192.168.1.10&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,,,,
+    &quot;192_168_1_0-255_255_255_0,&quot;10.0.12.0&quot;,&quot;255.255.255.0&quot;,&quot;eth0  -
+    &quot;,,,&quot;10.0.12.53&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,,,,</code></pre>
+<p>. Update the private network of this table as follow:</p>
+<pre><code>    # chdef -t network -o &quot;pvtnet&quot; net=192.168.1.0 mask=255.255.255.0 mgtifname=eth0\
+    dhcpserver=192.168.1.10 tftpserver=192.168.1.10\
+    nameservers=10.0.12.10,10.0.17.10\
+    dynamicrange=192.168.1.21-192.168.1.22</code></pre>
+<p>. Disable the entry for the public network:</p>
+<pre><code>    # chtab net=10.0.12.0 networks.disable=1
+    # tabdump networks
+    #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,  -
+    logservers,dynamicrange,nodehostname,comments,disable
+    &quot;10_0_12_0-255_255_255_0&quot;,&quot;10.0.12.0&quot;,&quot;255.255.255.0&quot;,&quot;eth1&quot;,,,\
+    &quot;10.0.12.53&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,,,,&quot;1&quot;
+    &quot;pvtnet&quot;,&quot;192.168.1.0&quot;,&quot;255.255.255.0&quot;,&quot;eth0&quot;,,\
+    &quot;192.168.1.10&quot;,&quot;192.168.1.10&quot;,&quot;10.0.12.10,10.0.17.10&quot;,,,&quot;192.168.1.21-19</code></pre>
+<h2 id="appendix-b-migrate-your-management-node-to-a-new-service-pack-of-linux"><a href="#TOC"><strong>Appendix B: Migrate your Management Node to a new Service Pack of Linux</strong></a></h2>
+<p>If you need to migrate your xCAT Management Node with a new SP level of Linux, for example rhels6.1 to rhels6.2 you should as a precautionary measure:</p>
+<ul>
+<li>Backup database and save critical files to be used if needed to reference or restore using xcatsnap. Move the xcatsnap log and *gz file off the Management Node.</li>
+<li>Backup images and custom data in /install and move off the Management Node.</li>
+<li>service xcatd stop</li>
+<li>service xcatd stop on any service nodes</li>
+<li>Migrate to the new SP level of Linux.</li>
+<li>service xcatd start</li>
+</ul>
+<p>If you have any Service Nodes:</p>
+<ul>
+<li>Migrate to the new SP level of linux and reinstall the servicenode with xCAT following normal procedures.</li>
+<li>service xcatd start</li>
+</ul>
+<p>The documentation</p>
+<p><a href="Setting_Up_a_Linux_xCAT_Mgmt_Node/#appendix-d-upgrade-your-management-node-to-a-new-service-pack-of-linux">Setting_Up_a_Linux_xCAT_Mgmt_Node#Appendix_D:_Upgrade_your_Management_Node_to_a_new_Service_Pack_of_Linux</a> gives a sample procedure on how to update the management node or service nodes to a new service pack of Linux.</p>
+<h2 id="appendix-c-install-your-management-node-to-a-new-release-of-linux"><a href="#TOC"><strong>Appendix C: Install your Management Node to a new Release of Linux</strong></a></h2>
+<p>First backup critical xCAT data to another server so it will not be loss during OS install.</p>
+<ul>
+<li>Back up the xcat database using xcatsnap, important config files and other system config files for reference and for restore later. Prune some of the larger tables:</li>
+</ul>
+<pre><code>    * tabprune eventlog -a
+    * tabprune auditlog -a
+    * tabprune isnm_perf -a (Power 775 only)
+    * tabprune isnm_perf_sum -a (Power 775 only)
+    * Run xcatsnap ( will capture database, config files) and copy to another host. By default it will create in /tmp/xcatsnap two files, for example:
+    * xcatsnap.hpcrhmn.10110922.log
+    * xcatsnap.hpcrhmn.10110922.tar.gz
+    * Back up from /install directory, all images, custom setup data that you want to save. and move to another server. xcatsnap will not backup images.
+</code></pre>
+<p>After the OS install:</p>
+<ul>
+<li>Proceed to to setup the xCAT MN as a new xCAT MN using the instructions in this document.</li>
+</ul>
+</body>
+</html>

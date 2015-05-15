@@ -1,0 +1,437 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#note-this-documentation-is-not-tested-use-it-at-your-own-risk">Note: This documentation is not tested, use it at your own risk!!!</a></li>
+<li><a href="#setup-your-developmenttesting-clusters-on-one-physical-machine">Setup your development/testing clusters on one physical machine</a><ul>
+<li><a href="#find-a-physical-machine-with-two-disks-and-enough-memory-and-at-least-three-network-adapters.-will-use-one-disk-for-the-virtual-machines.">1. Find a physical machine with two disks and enough memory, and at least three network adapters. Will use one disk for the virtual machines.</a></li>
+<li><a href="#install-the-kvm-hypervisor-from-another-mn.">2. Install the KVM hypervisor from another MN.</a></li>
+<li><a href="#after-the-kvm-hypervisor-node-is-installed-successfully">3. After the KVM hypervisor node is installed successfully</a></li>
+<li><a href="#install-xcat-on-the-kvm-hypervisor">4. Install xCAT on the KVM hypervisor:</a></li>
+<li><a href="#configure-nat-on-the-kvm-host">5. Configure NAT on the KVM host:</a></li>
+<li><a href="#create-disk-partitions-on-devsdb">6. Create disk partitions on /dev/sdb</a></li>
+<li><a href="#define-the-virtual-machines">7. Define the virtual machines:</a></li>
+<li><a href="#configure-the-password-less-ssh-for-the-kvm-host-to-itself">8. Configure the password-less ssh for the KVM host to itself</a></li>
+<li><a href="#generate-the-virtual-machines">9. Generate the virtual machines:</a></li>
+<li><a href="#install-xcat-on-the-new-mn">10. Install xCAT on the new MN</a></li>
+<li><a href="#define-and-manage-the-vms-on-the-new-mn">11. define and manage the vms on the new MN</a></li>
+<li><a href="#to-add-new-machines">12. To add new machines</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#note-this-documentation-is-not-tested-use-it-at-your-own-risk">Note: This documentation is not tested, use it at your own risk!!!</a></li>
+<li><a href="#setup-your-developmenttesting-clusters-on-one-physical-machine">Setup your development/testing clusters on one physical machine</a></li>
+<li><a href="#1%5C-find-a-physical-machine-with-two-disks-and-enough-memory-and-at-least-three-network-adapters-will-use-one-disk-for-the-virtual-machines">1. Find a physical machine with two disks and enough memory, and at least three network adapters. Will use one disk for the virtual machines.</a></li>
+<li><a href="#2%5C-install-the-kvm-hypervisor-from-another-mn">2. Install the KVM hypervisor from another MN.</a></li>
+<li><a href="#3%5C-after-the-kvm-hypervisor-node-is-installed-successfully">3. After the KVM hypervisor node is installed successfully</a></li>
+<li><a href="#4%5C-install-xcat-on-the-kvm-hypervisor">4. Install xCAT on the KVM hypervisor:</a></li>
+<li><a href="#5%5C-configure-nat-on-the-kvm-host">5. Configure NAT on the KVM host:</a></li>
+<li><a href="#6%5C-create-disk-partitions-on-devsdb">6. Create disk partitions on /dev/sdb</a></li>
+<li><a href="#7%5C-define-the-virtual-machines">7. Define the virtual machines:</a></li>
+<li><a href="#8%5C-configure-the-password-less-ssh-for-the-kvm-host-to-itself">8. Configure the password-less ssh for the KVM host to itself</a></li>
+<li><a href="#9%5C-generate-the-virtual-machines">9. Generate the virtual machines:</a></li>
+<li><a href="#10%5C-install-xcat-on-the-new-mn">10. Install xCAT on the new MN</a></li>
+<li><a href="#11%5C-define-and-manage-the-vms-on-the-new-mn">11. define and manage the vms on the new MN</a></li>
+<li><a href="#12%5C-to-add-new-machines">12. To add new machines</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="note-this-documentation-is-not-tested-use-it-at-your-own-risk"><a href="#TOC">Note: This documentation is not tested, use it at your own risk!!!</a></h2>
+<h2 id="setup-your-developmenttesting-clusters-on-one-physical-machine"><a href="#TOC">Setup your development/testing clusters on one physical machine</a></h2>
+<p>xCAT development/testing team has been using virtualization environment on system x as the development/testing clusters for a while, I summarized the procedure on how to setup your development/testing clusters on one single physical machine, using the virtual machines can bring in several advantages:</p>
+<p>1. Improve the utilization of the servers, and create many virtual machines as your MNs, SNs and CNs</p>
+<p>2. The virtual machines could boot up in seconds, comparing with the several or even 10 minutes for each node reboot for booting a physical server.</p>
+<p>3. These virtual machines are in a pure-private network that will not be affected by any DHCP servers in the development networks.</p>
+<p>4. These virtual machines could access internet through the NAT on the KVM host.</p>
+<p>5. Performance of these virtual machines are fairly good.</p>
+<p>The only problem I am seeing with the virtualization environment is that you will not be able to cover the hw ctrl capabilities testing and EFI boot testing.</p>
+<p>Use the following procedure to setup your development/testing clusters, including RedHat/CentOS, SLES and Ubuntu(TBD) on one physical machine, as long as this physical machine has enough resource to run these virtual machines. These virtual machines are in a pure-private network that will not be affected by any DHCP servers in the development networks, these virtual machines could access internet through the NAT on the KVM host,and the performance of these virtual machines are fairly good.</p>
+<h3 id="find-a-physical-machine-with-two-disks-and-enough-memory-and-at-least-three-network-adapters.-will-use-one-disk-for-the-virtual-machines."><a href="#TOC">1. Find a physical machine with two disks and enough memory, and at least three network adapters. Will use one disk for the virtual machines.</a></h3>
+<p>If you do not have a machine with two disks, you could use the os disk, before installing the KVM hypervisor, change the partitions settings in the kickstart file like this:</p>
+<ol style="list-style-type: decimal">
+<li>TODO: ondisk detection, /dev/disk/by-id/edd-int13_dev80 for legacy maybe, and no idea about efi. at least maybe blacklist SAN if mptsas/mpt2sas/megaraid_sas seen...</li>
+</ol>
+<p>echo &quot;part /boot --size 256 --fstype ext3 --ondisk $instdisk&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part swap --size 20480 --ondisk $instdisk&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part / --size 30720 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part /vm1 --size 20480 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part /vm2 --size 20480 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part /vm3 --size 10240 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part /vm4 --size 10240 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part /vm5 --size 10240 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>echo &quot;part /vm6 --size 10240 --ondisk $instdisk --fstype $FSTYPE&quot; &gt;&gt; /tmp/partitioning</p>
+<p>If you do not have a machine with only one or two network adapters, you could use any network adapter as the bridge, the only difference is that you could not put your virtual machines into a pure-private environment.</p>
+<h3 id="install-the-kvm-hypervisor-from-another-mn."><a href="#TOC">2. Install the KVM hypervisor from another MN.</a></h3>
+<p>On the MN: yum -y install iscsi-initiator-utils bridge-utils kvm perl-Sys-Virt</p>
+<p>Define the node:</p>
+<pre><code> [root@ls21n01 ~]# lsdef -z x3250m4n01
+ # &amp;lt;xCAT data object stanza file&amp;gt;
+
+ x3250m4n01:
+   objtype=node
+   arch=x86_64
+   bmc=10.1.0.137
+   bmcpassword=PASSW0RD
+   bmcusername=USERID
+   cons=ipmi
+   groups=ipmi,all
+   installnic=mac
+   mac=34:40:B5:89:80:2C
+   mgt=ipmi
+   netboot=xnba
+   nodetype=osi
+   os=rhels6.3
+   postscripts=xHRM bridgeprereq
+   primarynic=mac
+   profile=kvm
+   provmethod=rhels6.3-x86_64-install-kvm
+   serialflow=hard
+   serialport=0
+   serialspeed=115200
+ [root@ls21n01 ~]# </code></pre>
+<p>chdef x3250m4n01 -p postscripts=&quot;xHRM bridgeprereq&quot;</p>
+<p>add into /etc/hosts makedns x3250m4n01 makeconservercf x3250m4n01</p>
+<p>nodeset x3250m4n01 osimage=rhels6.3-x86_64-install-kvm</p>
+<p>rsetboot x3250m4n01 net</p>
+<p>rpower x3250m4n01 reset</p>
+<h3 id="after-the-kvm-hypervisor-node-is-installed-successfully"><a href="#TOC">3. After the KVM hypervisor node is installed successfully</a></h3>
+<p>On the KVM host, change the ip addresses to be static</p>
+<p>[root@x3250m4n01 network-scripts]# cat ifcfg-eth5</p>
+<p>DEVICE=&quot;eth5&quot;</p>
+<p>BOOTPROTO=&quot;static&quot;</p>
+<p>HWADDR=&quot;34:40:B5:89:80:2D&quot;</p>
+<p>ONBOOT=&quot;yes&quot;</p>
+<p>TYPE=&quot;Ethernet&quot;</p>
+<p>UUID=&quot;4ce626ef-c78e-424a-bec2-c44978822e0c&quot;</p>
+<p>IPADDR=9.114.34.102</p>
+<p>NETMASK=255.255.255.0</p>
+<p>[root@x3250m4n01 network-scripts]# cat ifcfg-default</p>
+<p>DEVICE=default</p>
+<p>TYPE=Bridge</p>
+<p>ONBOOT=yes</p>
+<p>PEERDNS=yes</p>
+<p>DELAY=0</p>
+<p>BOOTPROTO=static</p>
+<p>IPADDR=10.1.0.181</p>
+<p>NETMASK=255.255.0.0</p>
+<p>[root@x3250m4n01 network-scripts]# cat ifcfg-eth4</p>
+<p>DEVICE=eth4</p>
+<p>ONBOOT=yes</p>
+<p>BRIDGE=default</p>
+<p>HWADDR=34:40:b5:89:80:2c</p>
+<p>Change the default gateway</p>
+<p>[root@idplex04 network-scripts]# cat /etc/sysconfig/network</p>
+<p>NETWORKING=yes</p>
+<p>HOSTNAME=idplex04</p>
+<p>GATEWAY=9.114.34.254</p>
+<p>[root@idplex04 network-scripts]#</p>
+<p>select one NIC for the private network bridge, it does not matter if the NIC has network connection.</p>
+<p>brctl addbr private brctl addif private eth0 brctl setfd private 0</p>
+<p>[root@x3750n01 network-scripts]# cat ifcfg-private</p>
+<p>DEVICE=private</p>
+<p>TYPE=Bridge</p>
+<p>ONBOOT=yes</p>
+<p>PEERDNS=yes</p>
+<p>DELAY=0</p>
+<p>BOOTPROTO=static</p>
+<p>IPADDR=1.1.1.1</p>
+<p>NETMASK=255.255.0.0</p>
+<p>[root@x3750n01 network-scripts]# cat ifcfg-eth0</p>
+<p>DEVICE=&quot;eth0&quot;</p>
+<p>ONBOOT=&quot;yes&quot;</p>
+<p>BRIDGE=private</p>
+<p>[root@x3750n01 network-scripts]#</p>
+<p>update /etc/hosts</p>
+<p>[root@x3250m4n01 network-scripts]# cat /etc/hosts</p>
+<p>127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4</p>
+<pre><code>1 localhost localhost.localdomain localhost6 localhost6.localdomain6 </code></pre>
+<p>10.1.0.181 x3250m4n01-10.clusters.com x3250m4n01-10</p>
+<p>9.114.34.102 x3250m4n01-pub.clusters.com x3250m4n01-pub</p>
+<p>1.1.1.1 x3250m4n01.clusters.com x3250m4n01</p>
+<p>1.1.1.2 rhmn.clusters.com rhmn</p>
+<p>1.1.1.3 rhcn1.clusters.com rhcn1</p>
+<p>1.1.1.4 slesmn.clusters.com slesmn</p>
+<p>1.1.1.5 slescn1.clusters.com slescn1</p>
+<p>[root@x3250m4n01 network-scripts]#</p>
+<p>/etc/init.d/network restart</p>
+<p>Change the nameserver</p>
+<p>Change the syslog redirection Remove the &quot;# xCAT settings&quot; section service rsyslog restart</p>
+<p>(Optional) If the os and virtual machines are using the same disk, you need to make sure the partitions for virtual machines are not mounted.</p>
+<p>[root@hs23n01 ~]# for i in <code>seq -w 1 6</code>; do umount /vm$i; done</p>
+<p>Remove these partitions from /etc/fstab</p>
+<h3 id="install-xcat-on-the-kvm-hypervisor"><a href="#TOC">4. Install xCAT on the KVM hypervisor:</a></h3>
+<p>[root@idplex04 yum.repos.d]# cat xCAT-core.repo xCAT-dep.repo</p>
+<p>[xcat-2-core]</p>
+<p>name=xCAT 2 Core packages</p>
+<p>baseurl=https://sourceforge.net/projects/xcat/files/yum/devel/core-snap</p>
+<p>enabled=1</p>
+<p>gpgcheck=1</p>
+<p>gpgkey=https://sourceforge.net/projects/xcat/files/yum/devel/core-snap/repodata/repomd.xml.key</p>
+<p>[xcat-dep]</p>
+<p>name=xCAT 2 depedencies</p>
+<p>baseurl=https://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh6/x86_64</p>
+<p>enabled=1</p>
+<p>gpgcheck=1</p>
+<p>gpgkey=https://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh6/x86_64/repodata/repomd.xml.key</p>
+<p>[root@idplex04 yum.repos.d]#</p>
+<p>[root@hv16s6ap15 iso]# cd /iso/</p>
+<p>[root@hv16s6ap15 iso]# mkdir 1</p>
+<p>[root@hv16s6ap15 iso]# mount -o loop RHEL6.1-20110510.1-Server-ppc64-DVD1.iso 1</p>
+<p>[root@hv16s6ap15 yum.repos.d]# ls</p>
+<p>rhels6.1.repo xCAT-core.repo xCAT-dep.repo</p>
+<p>[root@hv16s6ap15 yum.repos.d]#</p>
+<p>yum clean metadata</p>
+<p>rpm --import /iso/1/RPM-GPG-KEY-redhat-release</p>
+<p>yum install xCAT</p>
+<p>source /etc/profile.d/xcat.sh tabdump site</p>
+<p>[root@x3250m4n01 network-scripts]# tabdump site</p>
+<ol style="list-style-type: decimal">
+<li>key,value,comments,disable</li>
+</ol>
+<p>&quot;blademaxp&quot;,&quot;64&quot;,,</p>
+<p>&quot;domain&quot;,&quot;clusters.com&quot;,,</p>
+<p>&quot;fsptimeout&quot;,&quot;0&quot;,,</p>
+<p>&quot;installdir&quot;,&quot;/install&quot;,,</p>
+<p>&quot;ipmimaxp&quot;,&quot;64&quot;,,</p>
+<p>&quot;ipmiretries&quot;,&quot;3&quot;,,</p>
+<p>&quot;ipmitimeout&quot;,&quot;2&quot;,,</p>
+<p>&quot;consoleondemand&quot;,&quot;no&quot;,,</p>
+<p>&quot;master&quot;,&quot;1.1.1.1&quot;,,</p>
+<p>&quot;forwarders&quot;,&quot;9.114.8.1 9.114.1.1&quot;,,</p>
+<p>&quot;nameservers&quot;,&quot;1.1.1.1&quot;,,</p>
+<p>&quot;maxssh&quot;,&quot;8&quot;,,</p>
+<p>&quot;ppcmaxp&quot;,&quot;64&quot;,,</p>
+<p>&quot;ppcretry&quot;,&quot;3&quot;,,</p>
+<p>&quot;ppctimeout&quot;,&quot;0&quot;,,</p>
+<p>&quot;powerinterval&quot;,&quot;0&quot;,,</p>
+<p>&quot;syspowerinterval&quot;,&quot;0&quot;,,</p>
+<p>&quot;sharedtftp&quot;,&quot;1&quot;,,</p>
+<p>&quot;SNsyncfiledir&quot;,&quot;/var/xcat/syncfiles&quot;,,</p>
+<p>&quot;nodesyncfiledir&quot;,&quot;/var/xcat/node/syncfiles&quot;,,</p>
+<p>&quot;tftpdir&quot;,&quot;/tftpboot&quot;,,</p>
+<p>&quot;xcatdport&quot;,&quot;3001&quot;,,</p>
+<p>&quot;xcatiport&quot;,&quot;3002&quot;,,</p>
+<p>&quot;xcatconfdir&quot;,&quot;/etc/xcat&quot;,,</p>
+<p>&quot;timezone&quot;,&quot;New York&quot;,,</p>
+<p>&quot;useNmapfromMN&quot;,&quot;no&quot;,,</p>
+<p>&quot;enableASMI&quot;,&quot;no&quot;,,</p>
+<p>&quot;db2installloc&quot;,&quot;/mntdb2&quot;,,</p>
+<p>&quot;databaseloc&quot;,&quot;/var/lib&quot;,,</p>
+<p>&quot;sshbetweennodes&quot;,&quot;ALLGROUPS&quot;,,</p>
+<p>&quot;dnshandler&quot;,&quot;ddns&quot;,,</p>
+<p>&quot;vsftp&quot;,&quot;n&quot;,,</p>
+<p>&quot;cleanupxcatpost&quot;,&quot;no&quot;,,</p>
+<p>&quot;dhcplease&quot;,&quot;43200&quot;,,</p>
+<p>[root@x3250m4n01 network-scripts]#</p>
+<p>copycds /iso/RHEL6.1-20110510.1-Server-ppc64-DVD1.iso</p>
+<p>Use the local os repo:</p>
+<p>[root@hv16s6ap15 yum.repos.d]# cat /etc/yum.repos.d/rhels6.3.repo</p>
+<p>[rhe-6.3-server]</p>
+<p>name=RHEL 6.3 SERVER packages</p>
+<p>baseurl=file:///install/rhels6.3/x86_64/Server</p>
+<p>enabled=1</p>
+<p>gpgcheck=1</p>
+<p>[root@hv16s6ap15 yum.repos.d]#</p>
+<p>makedns</p>
+<h3 id="configure-nat-on-the-kvm-host"><a href="#TOC">5. Configure NAT on the KVM host:</a></h3>
+<p>export pubintf=eth5</p>
+<p>export privateintf=private</p>
+<p>iptables -t nat -A POSTROUTING -o $pubintf -j MASQUERADE</p>
+<p>iptables -A FORWARD -i $privateintf -j ACCEPT</p>
+<p>iptables -A FORWARD -i $privateintf -o $pubintf -m state --state RELATED,ESTABLISHED -j ACCEPT</p>
+<p>iptables-save &gt; /etc/sysconfig/iptables</p>
+<p>service iptables restart</p>
+<p>chkconfig iptables on</p>
+<h3 id="create-disk-partitions-on-devsdb"><a href="#TOC">6. Create disk partitions on /dev/sdb</a></h3>
+<p>parted -s -- /dev/sdb mklabel gpt</p>
+<p>parted -s -- /dev/sdb mkpart logical 0G 40G</p>
+<p>parted -s -- /dev/sdb mkpart logical 40G 60G</p>
+<p>parted -s -- /dev/sdb mkpart logical 60G 100G</p>
+<p>parted -s -- /dev/sdb mkpart logical 100G 120G</p>
+<p>[root@x3250m4n01 network-scripts]# parted -s -- /dev/sdb print</p>
+<p>Model: ATA ST9250610NS (scsi)</p>
+<p>Disk /dev/sdb: 250GB</p>
+<p>Sector size (logical/physical): 512B/512B</p>
+<p>Partition Table: gpt</p>
+<p>Number Start End Size File system Name Flags</p>
+<p>1 1049kB 40.0GB 40.0GB logical</p>
+<p>2 40.0GB 60.0GB 20.0GB logical</p>
+<p>3 60.0GB 100GB 40.0GB logical</p>
+<p>4 100GB 120GB 20.0GB logical</p>
+<p>[root@x3250m4n01 network-scripts]#</p>
+<h3 id="define-the-virtual-machines"><a href="#TOC">7. Define the virtual machines:</a></h3>
+<p>rhmn:</p>
+<pre><code>   objtype=node
+   arch=x86_64
+   groups=kvm,vm,all
+   mgt=kvm
+   netboot=xnba
+   primarynic=eth0
+   profile=compute
+   serialport=0
+   serialspeed=115200
+   vmcpus=2
+   vmhost=x3250m4n01
+   vmmemory=4096
+   vmnics=private,default
+   vmstorage=phy:/dev/sdb1</code></pre>
+<p>rhcn1:</p>
+<pre><code>   objtype=node
+   arch=x86_64
+   groups=kvm,vm,all
+   mgt=kvm
+   netboot=xnba
+   primarynic=eth0
+   profile=compute
+   serialport=0
+   serialspeed=115200
+   vmcpus=2
+   vmhost=x3250m4n01
+   vmmemory=4096
+   vmnics=private
+   vmstorage=phy:/dev/sdb2</code></pre>
+<p>slesmn:</p>
+<pre><code>   objtype=node
+   arch=x86_64
+   groups=kvm,vm,all
+   mgt=kvm
+   netboot=xnba
+   primarynic=eth0
+   profile=compute
+   serialport=0
+   serialspeed=115200
+   vmcpus=2
+   vmhost=x3250m4n01
+   vmmemory=4096
+   vmnics=private,default
+   vmstorage=phy:/dev/sdb3</code></pre>
+<p>slescn1:</p>
+<pre><code>   objtype=node
+   arch=x86_64
+   groups=kvm,vm,all
+   mgt=kvm
+   netboot=xnba
+   primarynic=eth0
+   profile=compute
+   serialport=0
+   serialspeed=115200
+   vmcpus=2
+   vmhost=x3250m4n01
+   vmmemory=4096
+   vmnics=private
+   vmstorage=phy:/dev/sdb4</code></pre>
+<h3 id="configure-the-password-less-ssh-for-the-kvm-host-to-itself"><a href="#TOC">8. Configure the password-less ssh for the KVM host to itself</a></h3>
+<p>[root@x3250m4n01 ~]# cd /root/.ssh</p>
+<p>[root@x3250m4n01 .ssh]# rm -f id_rsa*</p>
+<p>[root@x3250m4n01 .ssh]# ssh-keygen -t rsa</p>
+<p>[root@x3250m4n01 .ssh]# cat id_rsa.pub &gt;&gt; authorized_keys</p>
+<h3 id="generate-the-virtual-machines"><a href="#TOC">9. Generate the virtual machines:</a></h3>
+<p>yum -y install iscsi-initiator-utils bridge-utils kvm perl-Sys-Virt</p>
+<p>[root@x3250m4n01 ~]# mkvm rhmn,rhcn1,slesmn,slescn1</p>
+<p>[root@x3250m4n01 ~]# makeconservercf rhmn,rhcn1,slesmn,slescn1</p>
+<p>tabch key=dhcpinterfaces site.value=&quot;x3250m4n01|private,default&quot;</p>
+<p>chtab key=system passwd.username=root passwd.password=cluster</p>
+<p>chtab key=hmc passwd.username=hscroot passwd.password=abc123</p>
+<p>chtab key=blade passwd.username=USERID passwd.password=PASSW0RD</p>
+<p>chtab key=ipmi passwd.username=USERID passwd.password=PASSW0RD</p>
+<p>nodeset rhmn osimage=rhels6.3-x86_64-install-compute</p>
+<p>rpower rhmn on</p>
+<h3 id="install-xcat-on-the-new-mn"><a href="#TOC">10. Install xCAT on the new MN</a></h3>
+<p>[root@rhmn network-scripts]# cat ifcfg-eth0</p>
+<p>DEVICE=&quot;eth0&quot;</p>
+<p>BOOTPROTO=&quot;static&quot;</p>
+<p>HWADDR=&quot;42:5A:01:01:01:02&quot;</p>
+<p>ONBOOT=&quot;yes&quot;</p>
+<p>TYPE=&quot;Ethernet&quot;</p>
+<p>UUID=&quot;bb6f3500-ee40-4670-bb07-1ed7faad5d5b&quot;</p>
+<p>IPADDR=1.1.1.2</p>
+<p>NETMASK=255.255.0.0</p>
+<p>[root@rhmn network-scripts]# cat ifcfg-eth1</p>
+<p>DEVICE=&quot;eth1&quot;</p>
+<p>BOOTPROTO=&quot;static&quot;</p>
+<p>HWADDR=&quot;42:21:01:01:01:02&quot;</p>
+<p>ONBOOT=&quot;yes&quot;</p>
+<p>TYPE=&quot;Ethernet&quot;</p>
+<p>UUID=&quot;b1e1f7fa-ceed-4166-b957-8283d19010ef&quot;</p>
+<p>IPADDR=10.1.99.1</p>
+<p>NETMASK=255.255.0.0</p>
+<p>[root@rhmn network-scripts]# cat /etc/sysconfig/network</p>
+<p>NETWORKING=yes</p>
+<p>HOSTNAME=rhmn</p>
+<p>GATEWAY=1.1.1.1 [root@rhmn network-scripts]#</p>
+<p>yum -y install iscsi-initiator-utils bridge-utils kvm perl-Sys-Virt</p>
+<p>yum install xCAT</p>
+<p>[root@rhmn ~]# tabdump site</p>
+<ol style="list-style-type: decimal">
+<li>key,value,comments,disable</li>
+</ol>
+<p>&quot;blademaxp&quot;,&quot;64&quot;,,</p>
+<p>&quot;domain&quot;,&quot;clusters.com&quot;,,</p>
+<p>&quot;fsptimeout&quot;,&quot;0&quot;,,</p>
+<p>&quot;installdir&quot;,&quot;/install&quot;,,</p>
+<p>&quot;ipmimaxp&quot;,&quot;64&quot;,,</p>
+<p>&quot;ipmiretries&quot;,&quot;3&quot;,,</p>
+<p>&quot;ipmitimeout&quot;,&quot;2&quot;,,</p>
+<p>&quot;consoleondemand&quot;,&quot;no&quot;,,</p>
+<p>&quot;master&quot;,&quot;1.1.1.2&quot;,,</p>
+<p>&quot;forwarders&quot;,&quot;1.1.1.1&quot;,,</p>
+<p>&quot;nameservers&quot;,&quot;1.1.1.2&quot;,,</p>
+<p>&quot;maxssh&quot;,&quot;8&quot;,,</p>
+<p>&quot;ppcmaxp&quot;,&quot;64&quot;,,</p>
+<p>&quot;ppcretry&quot;,&quot;3&quot;,,</p>
+<p>&quot;ppctimeout&quot;,&quot;0&quot;,,</p>
+<p>&quot;powerinterval&quot;,&quot;0&quot;,,</p>
+<p>&quot;syspowerinterval&quot;,&quot;0&quot;,,</p>
+<p>&quot;sharedtftp&quot;,&quot;1&quot;,,</p>
+<p>&quot;SNsyncfiledir&quot;,&quot;/var/xcat/syncfiles&quot;,,</p>
+<p>&quot;nodesyncfiledir&quot;,&quot;/var/xcat/node/syncfiles&quot;,,</p>
+<p>&quot;tftpdir&quot;,&quot;/tftpboot&quot;,,</p>
+<p>&quot;xcatdport&quot;,&quot;3001&quot;,,</p>
+<p>&quot;xcatiport&quot;,&quot;3002&quot;,,</p>
+<p>&quot;xcatconfdir&quot;,&quot;/etc/xcat&quot;,,</p>
+<p>&quot;timezone&quot;,&quot;New York&quot;,,</p>
+<p>&quot;useNmapfromMN&quot;,&quot;no&quot;,,</p>
+<p>&quot;enableASMI&quot;,&quot;no&quot;,,</p>
+<p>&quot;db2installloc&quot;,&quot;/mntdb2&quot;,,</p>
+<p>&quot;databaseloc&quot;,&quot;/var/lib&quot;,,</p>
+<p>&quot;sshbetweennodes&quot;,&quot;ALLGROUPS&quot;,,</p>
+<p>&quot;dnshandler&quot;,&quot;ddns&quot;,,</p>
+<p>&quot;vsftp&quot;,&quot;n&quot;,,</p>
+<p>&quot;cleanupxcatpost&quot;,&quot;no&quot;,,</p>
+<p>&quot;dhcplease&quot;,&quot;43200&quot;,,</p>
+<p>[root@rhmn ~]#</p>
+<p>update /etc/hosts</p>
+<p>makedns</p>
+<h3 id="define-and-manage-the-vms-on-the-new-mn"><a href="#TOC">11. define and manage the vms on the new MN</a></h3>
+<p>To use SLES MN manage kvm virtual machines, need to copy the SDK ISO, and install:</p>
+<p>zypper ar file:///install/sles11.2/x86_64/1 sles11.2</p>
+<p>zypper ar file:///install/sles11.2/x86_64/sdk1/</p>
+<p>zypper install bridge-utils iscsitarget libvirt libvirt-devel kvm libvirt-devel gcc</p>
+<p>Download Sys::Virt from CPAN http://backpan.perl.org/authors/id/D/DA/DANBERR/Sys-Virt-0.9.5.tar.gz</p>
+<p>tar zxvf Sys-Virt-0.9.5.tar.gz</p>
+<p>cd Sys-Virt-0.9.5</p>
+<p>perl Makefile.PL</p>
+<p>make</p>
+<p>sudo make install</p>
+<p>Enjoy...</p>
+<h3 id="to-add-new-machines"><a href="#TOC">12. To add new machines</a></h3>
+<p>On the KVM host:</p>
+<p>1. define new hosts in /etc/hosts</p>
+<p>2. makedns</p>
+<p>3. create new disk partitions</p>
+<p>4. define new nodes.</p>
+<p>5. run mkvm...</p>
+<p>6. run nodeset</p>
+<p>7. rpower</p>
+</body>
+</html>

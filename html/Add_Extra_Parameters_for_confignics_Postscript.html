@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#requirement">Requirement</a></li>
+<li><a href="#design">Design</a></li>
+<li><a href="#implementation">Implementation</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#requirement">Requirement</a></li>
+<li><a href="#design">Design</a></li>
+<li><a href="#implementation">Implementation</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="requirement"><a href="#TOC">Requirement</a></h2>
+<p>The requirement comes from defect 3567 (http://sourceforge.net/p/xcat/bugs/3567/), &quot;Extend confignics &amp; configib to support connected mode and large MTUs.&quot; The final result the user wants is to set the following for the network configuration file for a specific nic.</p>
+<pre><code> CONNECTED_MODE=yes
+ MTU=65520</code></pre>
+<h2 id="design"><a href="#TOC">Design</a></h2>
+<ol style="list-style-type: decimal">
+<li>As we know, the network configuration is setup by xCAT postscript <em>confignics</em> which in tern calls <em>configeth</em> and <em>configib</em> according to the <em>nictypes</em> defined in the <em>nics</em> table. We can add code in configeth and configib to support CONNECTED_MODE and MTU as environmental variables and put these settings in the nic configuration file.<br /></li>
+<li>CONNECTED_MODE and MTU values may be different for different nics. So we should have the env variables on a per nic base.</li>
+<li>How to pass the environment variables all the way from mn to <em>configeth</em> and configib postscripts on the node?</li>
+</ol>
+<p>Add a new <em>nics</em> table attributes called <strong><em>nicextraparams</em></strong>. It will define the additional environmental variables that will be passed to the nic configuration scripts. The format is:</p>
+<pre><code>nic1!env1=value1 env2=value2,nic2:env1=value1 env2=value2.</code></pre>
+<p>For example,</p>
+<pre><code>ib0!CONNECTED_MODE=yes MTU=65520,eth0!MTU=17000</code></pre>
+<p>The new attribute will be passed down to the postscripts as an environment variable.</p>
+<h2 id="implementation"><a href="#TOC">Implementation</a></h2>
+<ol style="list-style-type: decimal">
+<li>Add a new attribute called <strong><em>nicextraparams</em></strong> in <em>nics</em> table.</li>
+<li>Incorporates it into the <em>def</em> commands</li>
+<li>Add the new attribute in the default postscript template so that it can be passed down to the nodes.</li>
+<li>Handle MTU environment variable in <em>configeth</em> postscript. Ethernet does not have connected mode setting. Handle MTU and CONNECTED_MODE environment variables in <em>configib</em> postscript.</li>
+</ol>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Guang Cheng</li>
+<li><strong>Required approvers</strong>: Guang Cheng</li>
+<li><strong>Database schema changes</strong>: Yes. A new attribute will be added in nics table. The def command will be modified to accept this new attribute.</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: The tabdump -d command will show the format of the new attribute.</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>This is the summary of what's new in this release. Or you can go straight to [Download_xCAT].</p>
+<p>These are the changes since the xCAT 2.6.2 release. Note: for reasons too difficult to explain here, the xCAT version number went straight from 2.6.2 to 2.6.6. There were no releases named 2.6.3, 2.6.4, or 2.6.5.</p>
+<h2 id="new-function-and-changes-in-behavior"><a href="#TOC">New Function and Changes in Behavior</a></h2>
+<ul>
+<li>New Commands. See corresponding man pages for details:
+<ul>
+<li><a href="http://xcat.sourceforge.net/man1/swapnodes.1.html">swapnodes</a> - for Power 775 Availability Plus support</li>
+</ul></li>
+<li>Enhanced Commands. See corresponding man pages for details:
+<ul>
+<li><a href="http://xcat.sourceforge.net/man1/lsdef.1.html">lsdef</a></li>
+<li>&quot;-c&quot; flag to display node information in compressed mode</li>
+<li>&quot;--osimage&quot; flag to list the osimage information for the node</li>
+<li><a href="http://xcat.sourceforge.net/man1/dumpxCATdb.1.html">dumpxCATdb</a> and <a href="http://xcat.sourceforge.net/man1/restorexCATdb.1.html">restorexCATdb</a> will honor a new <a href="http://xcat.sourceforge.net/man5/site.5.html">site</a>.skiptables attribute to limit the tables that are dumped and restored</li>
+<li><a href="http://xcat.sourceforge.net/man1/updatenode.1.html">updatenode</a> added support to just sync files to the service nodes ( -f flag)</li>
+</ul></li>
+<li>Support for Power 775 Clusters:
+<ul>
+<li>Direct FSP Management(DFM) initial release. See [XCAT_Power_775_Hardware_Management#xCAT_Direct_FSP_and_BPA_Management_Capabilities] for more details on its capabilities, and see [XCAT_Power_775_Hardware_Management#Downloading_and_Installing_DFM] for information about installing it.</li>
+<li><a href="http://xcat.sourceforge.net/man1/rpower.1.html">rpower</a> - Transition low power states, exit/enter rack standby, on/off/query of power state for CEC and LPAR</li>
+<li><a href="http://xcat.sourceforge.net/man1/rcons.1.html">rcons</a> - Remote Console</li>
+<li><a href="http://xcat.sourceforge.net/man1/rflash.1.html">rflash</a> - Firmware support for FSP and BPA</li>
+<li><a href="http://xcat.sourceforge.net/man1/rinv.1.html">rinv</a> - Get the firmware level of FSP and BPA; get the deconfigured resource of CEC</li>
+<li><a href="http://xcat.sourceforge.net/man1/rvitals.1.html">rvitals</a> - Display LCD values; Get the rack environmental information</li>
+<li><a href="http://xcat.sourceforge.net/man1/getmacs.1.html">getmacs</a> - HFI MAC Address information collection</li>
+<li><a href="http://xcat.sourceforge.net/man1/mkhwconn.1.html">mkhwconn</a>/<a href="http://xcat.sourceforge.net/man1/rmhwconn.1.html">rmhwconn</a> - Make and remove FSP and BPA hardware connections</li>
+<li><a href="http://xcat.sourceforge.net/man1/lshwconn.1.html">lshwconn</a> - List hardware connection status</li>
+<li><a href="http://xcat.sourceforge.net/man1/rnetboot.1.html">rnetboot</a> - Remote network boot</li>
+<li><a href="http://xcat.sourceforge.net/man1/lsvm.1.html">lsvm</a>/<a href="http://xcat.sourceforge.net/man1/chvm.1.html">chvm</a> - LPAR list, creation and removal; I/O slot assignment, get and set of LPAR name</li>
+<li><a href="http://xcat.sourceforge.net/man1/rbootseq.1.html">rbootseq</a> - Sets the net or hfi device as the first boot device for the specified PPC LPARs</li>
+<li><a href="http://xcat.sourceforge.net/man1/rspconfig.1.html">rspconfig</a> - FSP and BPA password support; get and modify the frame number, get and set of frame name</li>
+<li>Redundancy FSP/BPA support</li>
+<li>Energy management for Power 775 servers. FFO (Fixed Frequency Override) for Power 775 servers that the accurate CPU frequency can be set to the server. See the <a href="http://xcat.sourceforge.net/man1/renergy.1.html">renergy</a> command.</li>
+<li>Boot over HFI for AIX 7.1 and RHEL6</li>
+<li>Power 775 HFI mac address failover support</li>
+<li>Hardware replacement procedure for Power 775 Availability Plus. See [Power_775_Cluster_Recovery]</li>
+</ul></li>
+<li>DB2 WSE support. See [Setting_Up_DB2_as_the_xCAT_DB]</li>
+<li>iSCSI dump on AIX 7.1, kdump on RHEL6</li>
+<li>HA MN support(experimental). See [Shared_Disks_HA_Mgmt_Node]</li>
+<li>External NFS server support (experimental). See [External_NFS_Server_Support_With_Linux_Statelite]</li>
+<li>Service node manual failover (experimental)</li>
+<li>Locating all of the node deployment related files using nodetype.provmethod=osimage on Linux. So far, this has only been fully tested for stateless nodes. Statelite is supported per the instructions in the Statelite documentation, [XCAT_Linux_Statelite]. We will test it for full disk install and more statelite testing in the future. See [Using_Provmethod=osimagename]</li>
+<li>HPC integration enhancements:
+<ul>
+<li>Support for latest IBM HPC software</li>
+<li>HPC integration support with AIX statelite. See [IBM_HPC_Stack_in_an_xCAT_Cluster]</li>
+<li>Set up of diskless login nodes. See [Setting_Up_IBM_HPC_Products_on_a_Statelite_or_Stateless_Login_Node]</li>
+<li>Set up of LoadLeveler central manager on xCAT service node. See [Setting_up_LoadLeveler_in_a_Statelite_or_Stateless_Cluster] and [Setting_up_LoadLeveler_in_a_Stateful_Cluster]</li>
+<li>HPC toolkit support</li>
+<li>TEAL GPFS monitoring support. See [Setting_up_TEAL_on_xCAT_Management_Node]</li>
+</ul></li>
+<li>Rolling Update support for pLinux clusters and AIX clusters. See [Rolling_Update_Support]</li>
+<li>ddns plugin is the default dns handler. See [Cluster_Name_Resolution]
+<ul>
+<li>The optional ddns plugin available for dynamic DNS support from xCAT 2.5 is not optional anymore. It is the only one shipped, and supported as of 2.6. The bind.pm plugin has been removed. If you want to keep the existing DNS settings made by xCAT BIND, then you should not run any &quot;makedns&quot; commands. If you want to use the Dynamic DNS feature then you must run &quot;makedns -n&quot; to refresh the DNS settings.</li>
+<li>makedns needs the /etc/resolv.conf on management node to have the mn's IP address specified as nameserver (from site.master) and cluster domain ( from site.domain) as a search path. If the compute nodes also needs to have name resolution to hosts outside the cluster, add the external nameservers addresses to the site table forwarders attribute.</li>
+<li>A warning will be issued when running makedns, if the nameserver or search paths are not set in /etc/resolv.conf. For AIX, this message is in error and should be checking for <strong>domain site.domain</strong> clause, and not <strong>search site.domain</strong>. It is just a warning and processing will continue.</li>
+<li>xCAT sets site.dnshandler to ddns automatically for two scenarios:</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Fresh install for xCAT 2.6</li>
+<li>Update install for xCAT 2.6 from an existing lower level xCAT version.</li>
+</ol>
+<ul>
+<li>If you restored xCATdb from a earlier backup(xCAT 2.5.x or earlier) after xCAT 2.6 is installed, it would overwrite or remove site.dnshandler, you need to manually set site.dnshandler=ddns after the restore, otherwise, makedns can not work.</li>
+</ul></li>
+<li>DNS hierarchical support: DNS on the service nodes forward unknown DNS request to management node</li>
+<li>Automatic creation of resolv.conf files on AIX nodes when using DNS.</li>
+<li>Use /etc/hosts as the name resolution when site.nameservers is blank</li>
+<li>New node attribute 'hwtype'. See <a href="http://xcat.sourceforge.net/man7/node.7.html">node definition</a></li>
+<li>Disk mirroring setup in xCAT Linux cluster. [Use_RAID1_In_xCAT_Cluster]</li>
+<li>xCAT web interface initial release(experimental).</li>
+<li>Soft mount option support for statelite persistent files/directories.</li>
+<li>SLES 11 SDK iso image support</li>
+<li>Support pattern in genimage and updatenode</li>
+<li>genimage generic command (/opt/xcat/bin/genimage) now runs under the xcatd daemon as a plugin. You may notice changes in the interface and output displayed. If there is any prompting, for example acceptance of licenses, during your genimage; you can no longer run the generic genimage command, and must run the specific genimage script from the /opt/xcat/share/xcat/netboot/&lt;os&gt;/genimage directory.</li>
+<li>genimage specific commands ( /opt/xcat/share/xcat/netboot/&lt;os&gt;) creates the ifcfg-* file only if the -i flag is used, and has been changed to create with ONBOOT=no</li>
+<li>Support for preserving ODM data on diskless-stateless AIX nodes.</li>
+<li>Support for the use of dhcp for AIX installs. (Includes makedhcp enhancements.)</li>
+<li>A new sample postscript, (&quot;make_sn_fs&quot;), that may be used to create and mount local filesystems on the xCAT service nodes when they are installed.</li>
+</ul>
+<h2 id="restrictions-and-known-problems"><a href="#TOC">Restrictions and Known Problems</a></h2>
+<ul>
+<li>genimage generic command (/opt/xcat/bin/genimage) now runs under the xcatd daemon as a plugin. If there is any prompting, for example acceptance of licenses, during your genimage; you can no longer run the generic genimage command, and must run the specific genimage script from the /opt/xcat/share/xcat/netboot/&lt;os&gt;/genimage directory.</li>
+<li><p>DNS fowarders can not work on AIX - <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3391271&amp;group_id=208749&amp;atid=1006945|">bug 3391271</a></p>
+<p>The workaround is to dig the forwarder's dns records into /var/named/db.cache file and restart named service. For example: If your forwarder is 9.114.1.1, then run commands below on your xcat management node: dig @9.114.1.1 . ns &gt;&gt;/var/named/db.cache stopsrc -s named startsrc -s named</p></li>
+<li><p>Power 775 support - On AIX after reboot of the EMS, the ISNM software will not automatically start and LoadLeveler will fail to start. In fact any 32 bit application that uses the DB2 database will have problems connecting to the database. This is a DB2 APAR, it is referenced in the defect and the problem will be fixed when V9.7.5 fix pack is available and applied.</p>
+<p>See the following for instructions to restart the HPC stack: [Setting_Up_DB2_as_the_xCAT_DB#Power_775_Special_instructions_for_Reboot_of_EMS_on_AIX] See the following defect for details: <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=3391193&amp;group_id=208749&amp;atid=1006945|">bug 3391193</a></p></li>
+</ul>
+</body>
+</html>

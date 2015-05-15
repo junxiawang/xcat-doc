@@ -1,0 +1,18 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Change a VM.</p>
+<p>Currently uses generic parameters for most fields.</p>
+<p>Required Parameters:<br />nodeRange - the nodes</p>
+<p>Optional Parameters:<br />field - any number of these is allowed</p>
+<p>Example:</p>
+<pre><code>PUT https://myserver/xcatws/vms/n1-n4</code></pre>
+<p>with data:<br />[&quot;min_mem=2048&quot;, &quot;desired_mem=4096&quot;]</p>
+</body>
+</html>

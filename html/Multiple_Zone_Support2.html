@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#required-reviewers">Required Reviewers</a></li>
+<li><a href="#required-approvers">Required Approvers</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#multiple-zone-support">Multiple zone support</a><ul>
+<li><a href="#root-ssh-keys">root ssh keys</a><ul>
+<li><a href="#compute-nodes">compute nodes</a></li>
+<li><a href="#switches-hardware-control"><strong>switches, hardware control</strong></a></li>
+<li><a href="#management-node"><strong>Management Node</strong></a></li>
+<li><a href="#service-nodes"><strong>Service Nodes</strong></a></li>
+</ul></li>
+<li><a href="#xcat-changes">xCAT changes</a><ul>
+<li><a href="#table-changes"><strong>Table Changes</strong></a></li>
+<li><a href="#new-commands"><strong>New Commands</strong></a><ul>
+<li><a href="#mkzone"><strong>mkzone</strong></a></li>
+<li><a href="#mkzone-implementation"><strong>mkzone Implementation</strong></a></li>
+<li><a href="#rmzone"><strong>rmzone</strong></a></li>
+<li><a href="#chzone"><strong>chzone</strong></a></li>
+</ul></li>
+<li><a href="#listing-zone-information">listing zone information</a></li>
+</ul></li>
+<li><a href="#code-changes">Code changes</a></li>
+<li><a href="#rules-for-handling-zone">Rules for handling zone</a></li>
+<li><a href="#issues">Issues</a></li>
+<li><a href="#migration">Migration</a></li>
+<li><a href="#documentation">Documentation</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#required-reviewers">Required Reviewers</a></li>
+<li><a href="#required-approvers">Required Approvers</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#multiple-zone-support">Multiple zone support</a></li>
+<li><a href="#root-ssh-keys">root ssh keys</a>
+<ul>
+<li><a href="#compute-nodes">compute nodes</a></li>
+<li><a href="#switches-hardware-control"><strong>switches, hardware control</strong></a></li>
+<li><a href="#management-node"><strong>Management Node</strong></a></li>
+<li><a href="#service-nodes"><strong>Service Nodes</strong></a></li>
+</ul></li>
+<li><a href="#xcat-changes">xCAT changes</a>
+<ul>
+<li><a href="#table-changes"><strong>Table Changes</strong></a></li>
+<li><a href="#new-commands"><strong>New Commands</strong></a></li>
+<li><a href="#mkzone"><strong>mkzone</strong></a></li>
+<li><a href="#mkzone-implementation"><strong>mkzone Implementation</strong></a></li>
+<li><a href="#rmzone"><strong>rmzone</strong></a></li>
+<li><a href="#chzone"><strong>chzone</strong></a></li>
+<li><a href="#listing-zone-information">listing zone information</a></li>
+</ul></li>
+<li><a href="#code-changes">Code changes</a></li>
+<li><a href="#rules-for-handling-zone">Rules for handling zone</a></li>
+<li><a href="#issues">Issues</a></li>
+<li><a href="#migration">Migration</a></li>
+<li><a href="#documentation">Documentation</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<p>This document is the current design for Multiple zone support.</p>
+<h3 id="required-reviewers"><a href="#TOC">Required Reviewers</a></h3>
+<ul>
+<li>Linda Mellor</li>
+<li>Bin XA Xu (Platform)</li>
+</ul>
+<h3 id="required-approvers"><a href="#TOC">Required Approvers</a></h3>
+<ul>
+<li>Guang Cheng Li</li>
+</ul>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>A new customer requirement is covered by this design.</p>
+<p>The requirement is to be able to take an xCAT Cluster managed by one xCAT Management Node and divide it into multiple zones. The nodes in each zone will share common root ssh keys. This allows the nodes in a zone to be able to ssh to each other without password, but cannot do the same to any node in another zone. You might even call them secure zones.</p>
+<p>Note:These zones share a common xCAT Management Node and database including the site table, which defines the attributes of the entire cluster.</p>
+<p>There will be no support for AIX.</p>
+<h2 id="multiple-zone-support"><a href="#TOC">Multiple zone support</a></h2>
+<p>The multiple zone support requires several enhancements to xCAT.</p>
+<h3 id="root-ssh-keys"><a href="#TOC">root ssh keys</a></h3>
+<p>Currently xCAT changes root ssh keys on the service nodes (SN) and compute nodes (CN) that are generated at install time to the root ssh keys from the Management node. It also changes the ssh hostkeys on the SN and CN to a set of pre-generated hostkeys from the MN. Putting the public key in the authorized-keys file on the service nodes and compute nodes allows passwordless ssh to the Service Nodes (SN) and the compute nodes from the Management Node (MN). This setup also allowed for passwordless ssh between all compute nodes and servicenodes. The pre-generated hostkey makes all nodes look like the same to ssh, so you are never prompted for updates to known_hosts</p>
+<h4 id="compute-nodes"><a href="#TOC">compute nodes</a></h4>
+<p>Having zones that cannot passwordless ssh to nodes in other zones requires xCAT to generate a set of root ssh keys for each zone and install them on the compute nodes in that zone. In addition the MN public key must still be put in the authorized_keys file on all the nodes in the non-hierarchical cluster or the Service Node public key on all the nodes that it services for hierarchical support.</p>
+<h4 id="switches-hardware-control"><a href="#TOC"><strong>switches, hardware control</strong></a></h4>
+<p>We will still use the MN root ssh keys on any devices, switches, hardware control. All ssh access to these is done from the MN or SN, so they will not be part of any zone.</p>
+<h4 id="management-node"><a href="#TOC"><strong>Management Node</strong></a></h4>
+<p>The management node cannot be assigned to a zone. xdsh -K and updatenode -k are already not allowed to the Management node.</p>
+<h4 id="service-nodes"><a href="#TOC"><strong>Service Nodes</strong></a></h4>
+<p>Service nodes may be assigned to a zone. We need to document that if they are not in the same zone, then they will not be able to ssh passwordless to each other - service node pools will not work for example.</p>
+<h3 id="xcat-changes"><a href="#TOC">xCAT changes</a></h3>
+<p>To support multiple zones we have the proposed changes:</p>
+<h4 id="table-changes"><a href="#TOC"><strong>Table Changes</strong></a></h4>
+<p>A new table <strong>zone</strong> will be created.</p>
+<p>key:zone name</p>
+<p>sshkeydir - directory containing root ssh RSA keys.</p>
+<p>defaultzone - yes/1 or no/0</p>
+<p>Note: defaultzone, if not set, default is no. Only one defaultzone=yes is allowed and there must exist one default.</p>
+<p>sshbetweennodes - yes/1 or no/0, default is yes and that means we setup to allow passwordless root ssh between nodes</p>
+<p>The <strong>nodelist</strong> table will have a new attribute:</p>
+<p>zonename - this will be the name of the zone that the node is currently assigned to.</p>
+<h4 id="new-commands"><a href="#TOC"><strong>New Commands</strong></a></h4>
+<p>For this implementation we are proposing we can do the following:</p>
+<ul>
+<li>make a new zone</li>
+<li>remove an existing zone</li>
+<li>add nodes to a zone</li>
+<li>remove nodes from a zone</li>
+</ul>
+<p>Note: these command will be packaged in xCAT-client rpm. They must run on the Linux Management Node. There will be no support for AIX in this release. I think checking that the MN is Linux is enough for now when the command runs. We will check if any node in the noderange is AIX ( mixed clusters).</p>
+<h5 id="mkzone"><a href="#TOC"><strong>mkzone</strong></a></h5>
+<p>mkzone will be used to do the following:</p>
+<ul>
+<li>define a zone name</li>
+<li>optionally make it the default zone</li>
+<li>optionally assign nodes to the zone
+<ul>
+<li>optionally add group &lt;zonename&gt;to the nodes in the noderange</li>
+</ul></li>
+<li>if root ssh private key provided then
+<ul>
+<li>generated root ssh public key using input private key</li>
+</ul></li>
+<li>else
+<ul>
+<li>generated the root ssh keys (RSA)</li>
+</ul></li>
+</ul>
+<h5 id="mkzone-implementation"><a href="#TOC"><strong>mkzone Implementation</strong></a></h5>
+<p>mkzone will have the following interface:</p>
+<pre><code>mkzone &amp;lt;zonename &amp;gt;  [ --defaultzone] [-k &amp;lt;full path to the ssh RSA private key&amp;gt;] [ -a &amp;lt;noderange&amp;gt;] [-g] [-f] [-s &amp;lt;yes|no&amp;gt;]  [-V]
+mkzone &amp;lt;zonename&amp;gt;/.ssh.</code></pre>
+<ul>
+<li><ul>
+<li>if --defaultzone is input, then it will set the zone.defaultzone attribute to yes; otherwise it will set to no. if --defaultzone is input and another zone is currently the default, then the -f flag must be used to force a change to the new defaultzone. If -f flag is not use an error will be returned and no change made.</li>
+</ul></li>
+<li>if -a &lt;noderange&gt; is defined
+<ul>
+<li>For each node in the noderange it will add to the nodelist.zonename attribute for that node the zonename.</li>
+<li>if -g is defined</li>
+<li>it will add the group name zonename to each node in the noderange.</li>
+</ul></li>
+<li>If a ssh private key is supplied (-k), it will generate the ssh public key and store both in /etc/xcat/sshkeys/&lt;zonename&gt;/.ssh directory.</li>
+<li>If no (-k) then it will generate a set of root ssh keys for the zone and store them in /etc/xcat/sshkeys/&lt;zonename&gt;/.ssh.</li>
+<li>if -f is input with --defaultzone, then we will force a change of what is currently defined as the defaultzone to the current zone. Otherwise we will error out, if there is currently a defined default in the zone table.</li>
+</ul>
+<p>If there is no currently defined default zone, an error will be reported. There must be one default zone in the zone table.</p>
+<ul>
+<li>If -s entered, the zone.sshbetweennodes will be set to yes or no. It defaults to yes.</li>
+<li>If -h, displays usage</li>
+<li>If -v, displays release and build date</li>
+<li>if -V, verbose mode.</li>
+</ul>
+<h5 id="rmzone"><a href="#TOC"><strong>rmzone</strong></a></h5>
+<pre><code>rmzone  zonename [-g] [-f] [-V]
+rmzone &amp;lt;zonename&amp;gt;  on MN .</code></pre>
+<p>Note: Checks for id_rsa and id_rsa.pub in the directory. If not there will not remove the directory. This is to make sure that the rm -rf on the directory does not remove some arbitrary directory, since the directory will be taken from the zone table sshkeydir attribute. Also if the directory is /root/.ssh, I will not remove the id_rsa or id_rsa.pub file. That will be left to the admin.</p>
+<ul>
+<li>remove zone.zonename entry from the zone table.</li>
+<li>For each node with nodelist.zonename=zonename
+<ul>
+<li>set nodelist.zonename=undefined</li>
+</ul></li>
+</ul>
+<p>Note:This means if there is a default zone still in the zone table that will be used as the nodes new zone. If the zone table is empty then it goes back to using &lt;roothome&gt;.ssh keys</p>
+<ul>
+<li><ul>
+<li>if -g entered, remove the zonename group from each of the nodes</li>
+</ul></li>
+<li>Checks you can only remove the defalultzone, if it is the last zone table entry.</li>
+<li>if rmzone is used to remove the defaultzone then the -f flag must be used.</li>
+<li>If -h, displays usage</li>
+<li>If -v, displays release and build date</li>
+<li>if -V, verbose mode.</li>
+</ul>
+<p>Note: If -f is not used then you will get an error and the zone will not be removed. Removing the default zone means that any node that does not have a zonename defined will not have ssh keys assigned. The admin should define a new default zone using chzone or mkzone before removing the default.</p>
+<h5 id="chzone"><a href="#TOC"><strong>chzone</strong></a></h5>
+<pre><code>chzone  zonename [-k &amp;lt;fullpath to the ssh private key&amp;gt;] [-K] [-a &amp;lt;noderange&amp;gt; | -r &amp;lt;noderange&amp;gt;] [-g] [-f] {--default] [-s &amp;lt;yes|no&amp;gt;]  [-V]
+chzone &amp;lt;noderange&amp;gt; entered,  add nodes to zone </code></pre>
+<ul>
+<li><ul>
+<li>change nodelist.zonename attribute to the zonename</li>
+<li>If -g entered add a group=zonename to the nodes</li>
+</ul></li>
+<li>If -r &lt;zonename&gt;/.ssh.</li>
+<li>(-a) will add the nodes in the noderange to the zone by changing the nodelistzonename to the nodes.
+<ul>
+<li>(-g) will for each node add the group=zonename from the nodelist.groups attribute.</li>
+</ul></li>
+<li>(-r) will remove the nodes in the noderange from the zone by changing the nodelist.zonename attribute to the new zone name.
+<ul>
+<li>(-g) will for each node remove the group=zonename from the nodelist.groups attribute.</li>
+</ul></li>
+<li>(--defaultzone) will cause the zone.defaultzone attribute for the input zonename to be set to yes.
+<ul>
+<li>If another zone in the zone table is the current default, it's zone.defaultzone attribute will be set to no.</li>
+</ul></li>
+</ul>
+<p>Note: When you add and and remove node, it will not take affect until reinstall or xdsh -k / updatenode -K is run to update the ssh keys.</p>
+<h4 id="listing-zone-information"><a href="#TOC">listing zone information</a></h4>
+<p>With this implementation, the existing xCAT command can list needed zone information.</p>
+<ul>
+<li>lsdef -t zone - will list all defined zones</li>
+<li>lsdef -t zone -l - will list each zone and its attrbutes from the zone table (sshkeydir, defaultzone setting)</li>
+<li>lsdef -t node -w zonename=myzone will list all the nodes in the myzone.</li>
+<li>if you have used the -g flag to define the nodes in the group=zonename, then
+<ul>
+<li>nodels zonename - gives you all the nodes in the zone</li>
+</ul></li>
+</ul>
+<h3 id="code-changes"><a href="#TOC">Code changes</a></h3>
+<p>This support affects several existing xCAT components:</p>
+<ul>
+<li>xdsh -K
+<ul>
+<li>pick up zone keys</li>
+<li>sync zone keys to the service nodes</li>
+</ul></li>
+<li>updatenode -k
+<ul>
+<li>should be covered by xdsh -K work</li>
+</ul></li>
+<li>getcredentials
+<ul>
+<li>pick up zone keys - it will accept a zonename for to find out the path to the keys for ssh_root_key</li>
+<li>also need to add to return id_rsa.pub (ssh_root_key_pub). Only returns id_rsa (pvt) today.</li>
+</ul></li>
+<li>remoteshell - send zonename ( if set) to getcredentials request. Also request both public and private key if zonename.</li>
+<li>Postage.pm
+<ul>
+<li>zone name will be added to the mypostscript table ZONENAME env variable.</li>
+<li>ENABLESSHBETWEENNODES must be set based on zone table setting and fix current code. See https://sourceforge.net/p/xcat/bugs/3994/</li>
+</ul></li>
+<li>rspconfig - think no impact, hardware ssh is from MN or SN's.</li>
+<li>makeknownhosts - no change this works from the generated ssh host keys and we are not changing this.</li>
+</ul>
+<h3 id="rules-for-handling-zone"><a href="#TOC">Rules for handling zone</a></h3>
+<ul>
+<li>A node's nodelist.zonename attribute defines which zone it is currently assigned. Only one zone is supported.</li>
+<li>If a node's nodelist.zonename attribute is defined, the ssh keys of that zone will be used. If the zone is not in the zone table, it is an error.</li>
+<li>If a node's nodelist.zonename attribute is undefined:
+<ul>
+<li>The zone which is the current defaultzone in the zone table will be used. If no defaultzone, report error.</li>
+</ul></li>
+</ul>
+<h3 id="issues"><a href="#TOC">Issues</a></h3>
+<p>Some of the issues discussed:</p>
+<ul>
+<li>Moving nodes from one zone to another. Security concerns? This has to do with when you move a node from one zone to another for a period of time, it still have passwordless access to the nodes in the other zone until updated.</li>
+<li>Are there problems running commands across zones, that is a noderange that span zones?</li>
+<li>Should Service Nodes be limited to servicing one zone?</li>
+<li>Hardware control, any issues/restrictions?</li>
+</ul>
+<p>Hierarchy support</p>
+<ul>
+<li>Hierarchy, the keys are put in /etc/xcat/sshkeys/&lt;zonename&gt;/.ssh by this design. To distribute them from a service node using remoteshell, they are going to need to exist on the service nodes in that same directory. They cannot be in a mounted directory because there is a private key. I would suggest that we use xdcp rsync to sync the /etc/xcat/sshkeys to the service nodes when the zone commands run and sync up this directory /etc/xcat/sshkeys with what is on the MN. Again though, we can have the issue of it being sync'd before the admin is ready and the next reboot of a node would pick up the wrong keys. Probably need another flag on the zone commands to sync service nodes.</li>
+</ul>
+<h3 id="migration"><a href="#TOC">Migration</a></h3>
+<p>If a node is not defined in a zone, root ssh keys and passwords must work as today. This makes sure that a xCAT upgrade does not disrupt an existing xCAT installation. This should work with this design. This is accomplished by the fact, we come up with an empty zone table. As long as no zones are defined, we use the old code paths and the site table sshbetweennodes attribute. Once they start using zones, we no longer support the site table sshbetweennodes attribute. You will set the zone table sshbetweennodes attribute for each zone. The groups option supported in the site table sshbetweennodes attribute will not be supported in the zone table.</p>
+<p>Would like to have all customers using a generated root ssh key. I think with this support documented, the mkzone command gives them the ability to switch from using root/.ssh keys to a new generated key. They can define their zone as all the compute nodes in their cluster. They can use the --defaultzone option. This leaves the change under their control.</p>
+<h3 id="documentation"><a href="#TOC">Documentation</a></h3>
+<p>We would need a new document on setting this type of cluster up and managing it. Hierarchy adds even more complexity.</p>
+</body>
+</html>

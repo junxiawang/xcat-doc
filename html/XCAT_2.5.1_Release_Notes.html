@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-in-2.5.1-since-2.5">New Function in 2.5.1 Since 2.5</a></li>
+<li><a href="#bugs-fixed-in-2.5.1">Bugs Fixed in 2.5.1</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-in-251-since-25">New Function in 2.5.1 Since 2.5</a></li>
+<li><a href="#bugs-fixed-in-251">Bugs Fixed in 2.5.1</a></li>
+<li><a href="#known-issues-and-work-arounds">Known Issues and Work Arounds</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>These are changes since the 2.5 release. Also see the [XCAT_2.5_Release_Notes].</p>
+<h2 id="new-function-in-2.5.1-since-2.5"><a href="#TOC">New Function in 2.5.1 Since 2.5</a></h2>
+<ul>
+<li>Official support for RHEL 6</li>
+<li>Statelite support on AIX</li>
+<li>Reorganized, revamped [XCAT_Documentation]</li>
+<li>OS dump via iSCSI is now provided for AIX stateless and statelite nodes as an experimental feature. The iscsi dump support is described in <a href="https://sourceforge.net/apps/mediawiki/xcat/index.php?title=XCAT_AIX_Diskless_Nodes#ISCSI_dump_support">section 3 of the &quot;xCAT AIX Diskless Nodes&quot; doc</a>.</li>
+</ul>
+<h2 id="bugs-fixed-in-2.5.1"><a href="#TOC">Bugs Fixed in 2.5.1</a></h2>
+<p>Many bugs were fixed in 2.5.1. For details see the <a href="http://sourceforge.net/tracker2/?func=browse&amp;group_id=208749&amp;atid=1006945">Tracker Bugs</a>, or check the subversion commit history for the 2.5 branch.</p>
+<h2 id="known-issues-and-work-arounds"><a href="#TOC">Known Issues and Work Arounds</a></h2>
+<ul>
+<li>The AIX support for the &quot;notify&quot; option when defining a NIM dump resource is not currently working. In an xCAT cluster this option would be specified with the mknimimage command. Do not attempt to use this option at this time.</li>
+</ul>
+</body>
+</html>

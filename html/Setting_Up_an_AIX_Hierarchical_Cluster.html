@@ -1,0 +1,1004 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#switch-to-a-relational-database">Switch to a relational database</a></li>
+<li><a href="#setup-for-power-775-cluster">Setup for Power 775 Cluster</a></li>
+<li><a href="#defining-cluster-nodes">Defining Cluster Nodes</a></li>
+<li><a href="#install-the-service-nodes">Install the Service Nodes</a><ul>
+<li><a href="#assign-the-nodes-to-their-service-nodes">Assign the nodes to their Service Nodes</a></li>
+<li><a href="#specify-the-services-provided-by-the-service-nodes">Specify the services provided by the service nodes</a><ul>
+<li><a href="#add-ntp-setup-script-optional">Add NTP setup script (optional)</a></li>
+</ul></li>
+<li><a href="#add-ip-addresses-and-hostnames-to-etchosts">Add IP addresses and hostnames to /etc/hosts</a></li>
+<li><a href="#create-a-service-node-operating-system-image">Create a Service Node operating system image</a></li>
+<li><a href="#create-an-image_data-resource-optional">Create an image_data resource (optional)</a></li>
+<li><a href="#add-required-service-node-software">Add required service node software</a><ul>
+<li><a href="#xcat-and-prerequisite-software">XCAT and prerequisite software</a></li>
+<li><a href="#additional-diskless-dump-software-optional">Additional diskless dump software (optional)</a></li>
+<li><a href="#additional-power-775-software-optional">Additional Power 775 software (optional)</a></li>
+<li><a href="#include-additional-files-for-power-775-support">Include additional files for Power 775 support</a></li>
+<li><a href="#using-nim-installp_bundle-resources">Using NIM installp_bundle resources</a></li>
+<li><a href="#check-the-osimage-optional">Check the osimage (optional)</a></li>
+</ul></li>
+<li><a href="#define-xcat-networks">Define xCAT networks</a></li>
+<li><a href="#create-additional-nim-network-definitions-optional">Create additional NIM network definitions (optional)</a></li>
+<li><a href="#define-an-xcat-service-group">Define an xCAT service group</a></li>
+<li><a href="#set-service-node-attributes-optional">Set Service Node Attributes (optional)</a></li>
+<li><a href="#include-customization-scripts">Include customization scripts</a><ul>
+<li><a href="#add-servicenode-script-for-service-nodes">Add &quot;servicenode&quot; script for service nodes</a></li>
+<li><a href="#add-ntp-setup-script-optional-1">Add NTP setup script (optional)</a></li>
+<li><a href="#add-additional-adapters-configuration-script-optional">Add additional adapters configuration script (optional)</a><ul>
+<li><a href="#configuring-secondary-adapter">Configuring Secondary Adapter</a></li>
+<li><a href="#configuring-xcat-sn-hierarchy-ethernet-adapterspower-775-dfm-only">Configuring xCAT SN Hierarchy Ethernet Adapters(Power 775 DFM Only)</a></li>
+</ul></li>
+<li><a href="#power-775-configuration-scripts">Power 775 configuration scripts</a></li>
+<li><a href="#add-disk-mirroring-script-optional">Add disk mirroring script (optional)</a></li>
+</ul></li>
+<li><a href="#create-the-connections-between-hdwr_svr-and-sn-cecpower-775-dfm-only">Create the connections between hdwr_svr and sn-CEC(Power 775 DFM only)</a></li>
+<li><a href="#gather-mac-information-for-the-install-adapters">Gather MAC information for the install adapters</a></li>
+<li><a href="#create-nim-client-group-definitions">Create NIM client &amp; group definitions</a></li>
+<li><a href="#p775-and-hpc-integration">P775 and HPC Integration</a></li>
+<li><a href="#create-prescripts-optional">Create prescripts (optional)</a></li>
+<li><a href="#initialize-the-aixnim-nodes">Initialize the AIX/NIM nodes</a></li>
+<li><a href="#open-a-remote-console-optional">Open a remote console (optional)</a></li>
+<li><a href="#initiate-a-network-boot">Initiate a network boot</a><ul>
+<li><a href="#network-boot-for-power-775">Network boot for Power 775</a></li>
+</ul></li>
+<li><a href="#verify-the-deployment">Verify the deployment</a><ul>
+<li><a href="#retry-and-troubleshooting-tips">Retry and troubleshooting tips</a></li>
+</ul></li>
+<li><a href="#configure-additional-adapters-on-the-service-nodes-optional">Configure additional adapters on the service nodes (optional)</a></li>
+<li><a href="#verify-service-node-configuration">Verify Service Node configuration</a></li>
+</ul></li>
+<li><a href="#setup-of-gpfs-io-server-nodes">Setup of GPFS I/O Server nodes</a></li>
+<li><a href="#install-the-cluster-nodes">Install the cluster nodes</a><ul>
+<li><a href="#planning-for-external-nfs-serveroptional">Planning for external NFS server(optional)</a></li>
+<li><a href="#create-a-diskless-image">Create a diskless image</a></li>
+<li><a href="#update-the-image---spot">Update the image - SPOT</a></li>
+<li><a href="#set-up-statelite-support-for-diskless-stateless-nodes-only">Set up statelite support (for diskless-stateless nodes only)</a></li>
+<li><a href="#define-xcat-networks-1">Define xCAT networks</a></li>
+<li><a href="#set-conserver-and-monserver">Set conserver and monserver</a></li>
+<li><a href="#create-the-connections-between-hdwr_svr-and-non-sn-cecpower-775-dfm-only">Create the connections between hdwr_svr and non-sn-CEC(Power 775 DFM only)</a></li>
+<li><a href="#gather-mac-information-for-the-node-boot-adapters">Gather MAC information for the node boot adapters</a></li>
+<li><a href="#define-xcat-groups-optional">Define xCAT groups (optional)</a></li>
+<li><a href="#add-ip-addresses-and-hostnames-to-etchosts-1">Add IP addresses and hostnames to /etc/hosts</a></li>
+<li><a href="#verify-the-node-definitions">Verify the node definitions</a></li>
+<li><a href="#verify-the-node-definitions-for-boot-over-hfi-on-power-775">Verify the node definitions for boot over HFI on Power 775</a></li>
+<li><a href="#set-up-post-boot-scripts-optional">Set up post boot scripts (optional)</a></li>
+<li><a href="#power-775-configuration-scripts-optional">Power 775 configuration scripts (optional)</a></li>
+<li><a href="#set-up-prescripts-optional">Set up prescripts (optional)</a></li>
+<li><a href="#initialize-the-aixnim-diskless-nodes">Initialize the AIX/NIM diskless nodes</a><ul>
+<li><a href="#verifying-the-node-initialization-before-booting-optional">Verifying the node initialization before booting (optional)</a></li>
+</ul></li>
+<li><a href="#open-a-remote-console-optional-1">Open a remote console (optional)</a></li>
+<li><a href="#initiate-a-network-boot-1">Initiate a network boot</a></li>
+<li><a href="#initiate-a-network-boot-for-power-775-support">Initiate a network boot for Power 775 support</a></li>
+<li><a href="#verify-the-deployment-1">Verify the deployment</a></li>
+</ul></li>
+<li><a href="#switching-to-a-backup-service-node">Switching to a backup service node</a><ul>
+<li><a href="#initial-deployment">Initial deployment</a></li>
+<li><a href="#synchronizing-statelite-persistent-files">Synchronizing statelite persistent files</a></li>
+<li><a href="#monitoring-the-service-nodes">Monitoring the service nodes</a></li>
+<li><a href="#switch-to-a-backup-sn">Switch to a backup SN</a><ul>
+<li><a href="#move-the-nodes-to-the-new-service-nodes">Move the nodes to the new service nodes</a></li>
+<li><a href="#statelite-migration">Statelite migration</a></li>
+<li><a href="#initialize-the-nodes-on-the-new-sn-optional">Initialize the nodes on the new SN (optional)</a></li>
+<li><a href="#shut-down-the-node">Shut down the node</a></li>
+<li><a href="#reboot-the-diskless-nodes">Reboot the diskless nodes</a></li>
+</ul></li>
+<li><a href="#switching-back">Switching back</a></li>
+</ul></li>
+<li><a href="#cleanup">Cleanup</a><ul>
+<li><a href="#removing-nim-machine-definitions">Removing NIM machine definitions</a></li>
+<li><a href="#removing-nim-resources">Removing NIM resources</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#switch-to-a-relational-database">Switch to a relational database</a></li>
+<li><a href="#setup-for-power-775-cluster">Setup for Power 775 Cluster</a></li>
+<li><a href="#defining-cluster-nodes">Defining Cluster Nodes</a></li>
+<li><a href="#install-the-service-nodes">Install the Service Nodes</a></li>
+<li><a href="#assign-the-nodes-to-their-service-nodes">Assign the nodes to their Service Nodes</a></li>
+<li><a href="#specify-the-services-provided-by-the-service-nodes">Specify the services provided by the service nodes</a>
+<ul>
+<li><a href="#add-ntp-setup-script-optional">Add NTP setup script (optional)</a></li>
+</ul></li>
+<li><a href="#add-ip-addresses-and-hostnames-to-etchosts">Add IP addresses and hostnames to /etc/hosts</a></li>
+<li><a href="#create-a-service-node-operating-system-image">Create a Service Node operating system image</a></li>
+<li><a href="#create-an-image_data-resource-optional">Create an image_data resource (optional)</a></li>
+<li><a href="#add-required-service-node-software">Add required service node software</a>
+<ul>
+<li><a href="#xcat-and-prerequisite-software">XCAT and prerequisite software</a></li>
+<li><a href="#additional-diskless-dump-software-optional">Additional diskless dump software (optional)</a></li>
+<li><a href="#additional-power-775-software-optional">Additional Power 775 software (optional)</a></li>
+<li><a href="#include-additional-files-for-power-775-support">Include additional files for Power 775 support</a></li>
+<li><a href="#using-nim-installp_bundle-resources">Using NIM installp_bundle resources</a></li>
+<li><a href="#check-the-osimage-optional">Check the osimage (optional)</a></li>
+</ul></li>
+<li><a href="#define-xcat-networks">Define xCAT networks</a></li>
+<li><a href="#create-additional-nim-network-definitions-optional">Create additional NIM network definitions (optional)</a></li>
+<li><a href="#define-an-xcat-service-group">Define an xCAT service group</a></li>
+<li><a href="#set-service-node-attributes-optional">Set Service Node Attributes (optional)</a></li>
+<li><a href="#include-customization-scripts">Include customization scripts</a>
+<ul>
+<li><a href="#add-servicenode-script-for-service-nodes">Add &quot;servicenode&quot; script for service nodes</a></li>
+<li><a href="#add-ntp-setup-script-optional-1">Add NTP setup script (optional)</a></li>
+<li><a href="#add-additional-adapters-configuration-script-optional">Add additional adapters configuration script (optional)</a>
+<ul>
+<li><a href="#configuring-secondary-adapter">Configuring Secondary Adapter</a></li>
+<li><a href="#configuring-xcat-sn-hierarchy-ethernet-adapterspower-775-dfm-only">Configuring xCAT SN Hierarchy Ethernet Adapters(Power 775 DFM Only)</a></li>
+</ul></li>
+<li><a href="#power-775-configuration-scripts">Power 775 configuration scripts</a></li>
+<li><a href="#add-disk-mirroring-script-optional">Add disk mirroring script (optional)</a></li>
+</ul></li>
+<li><a href="#create-the-connections-between-hdwr_svr-and-sn-cecpower-775-dfm-only">Create the connections between hdwr_svr and sn-CEC(Power 775 DFM only)</a></li>
+<li><a href="#gather-mac-information-for-the-install-adapters">Gather MAC information for the install adapters</a></li>
+<li><a href="#create-nim-client-&amp;amp-group-definitions">Create NIM client &amp; group definitions</a></li>
+<li><a href="#p775-and-hpc-integration">P775 and HPC Integration</a></li>
+<li><a href="#create-prescripts-optional">Create prescripts (optional)</a></li>
+<li><a href="#initialize-the-aixnim-nodes">Initialize the AIX/NIM nodes</a></li>
+<li><a href="#open-a-remote-console-optional">Open a remote console (optional)</a></li>
+<li><a href="#initiate-a-network-boot">Initiate a network boot</a>
+<ul>
+<li><a href="#network-boot-for-power-775">Network boot for Power 775</a></li>
+</ul></li>
+<li><a href="#verify-the-deployment">Verify the deployment</a>
+<ul>
+<li><a href="#retry-and-troubleshooting-tips">Retry and troubleshooting tips</a></li>
+</ul></li>
+<li><a href="#configure-additional-adapters-on-the-service-nodes-optional">Configure additional adapters on the service nodes (optional)</a></li>
+<li><a href="#verify-service-node-configuration">Verify Service Node configuration</a></li>
+<li><a href="#setup-of-gpfs-io-server-nodes">Setup of GPFS I/O Server nodes</a></li>
+<li><a href="#install-the-cluster-nodes">Install the cluster nodes</a></li>
+<li><a href="#planning-for-external-nfs-serveroptional">Planning for external NFS server(optional)</a></li>
+<li><a href="#create-a-diskless-image">Create a diskless image</a></li>
+<li><a href="#update-the-image---spot">Update the image - SPOT</a></li>
+<li><a href="#set-up-statelite-support-for-diskless-stateless-nodes-only">Set up statelite support (for diskless-stateless nodes only)</a></li>
+<li><a href="#define-xcat-networks-1">Define xCAT networks</a></li>
+<li><a href="#set-conserver-and-monserver">Set conserver and monserver</a></li>
+<li><a href="#create-the-connections-between-hdwr_svr-and-non-sn-cecpower-775-dfm-only">Create the connections between hdwr_svr and non-sn-CEC(Power 775 DFM only)</a></li>
+<li><a href="#gather-mac-information-for-the-node-boot-adapters">Gather MAC information for the node boot adapters</a></li>
+<li><a href="#define-xcat-groups-optional">Define xCAT groups (optional)</a></li>
+<li><a href="#add-ip-addresses-and-hostnames-to-etchosts-1">Add IP addresses and hostnames to /etc/hosts</a></li>
+<li><a href="#verify-the-node-definitions">Verify the node definitions</a></li>
+<li><a href="#verify-the-node-definitions-for-boot-over-hfi-on-power-775">Verify the node definitions for boot over HFI on Power 775</a></li>
+<li><a href="#set-up-post-boot-scripts-optional">Set up post boot scripts (optional)</a></li>
+<li><a href="#power-775-configuration-scripts-optional">Power 775 configuration scripts (optional)</a></li>
+<li><a href="#set-up-prescripts-optional">Set up prescripts (optional)</a></li>
+<li><a href="#initialize-the-aixnim-diskless-nodes">Initialize the AIX/NIM diskless nodes</a>
+<ul>
+<li><a href="#verifying-the-node-initialization-before-booting-optional">Verifying the node initialization before booting (optional)</a></li>
+</ul></li>
+<li><a href="#open-a-remote-console-optional-1">Open a remote console (optional)</a></li>
+<li><a href="#initiate-a-network-boot-1">Initiate a network boot</a></li>
+<li><a href="#initiate-a-network-boot-for-power-775-support">Initiate a network boot for Power 775 support</a></li>
+<li><a href="#verify-the-deployment-1">Verify the deployment</a></li>
+<li><a href="#switching-to-a-backup-service-node">Switching to a backup service node</a></li>
+<li><a href="#initial-deployment">Initial deployment</a></li>
+<li><a href="#synchronizing-statelite-persistent-files">Synchronizing statelite persistent files</a></li>
+<li><a href="#monitoring-the-service-nodes">Monitoring the service nodes</a></li>
+<li><a href="#switch-to-a-backup-sn">Switch to a backup SN</a>
+<ul>
+<li><a href="#move-the-nodes-to-the-new-service-nodes">Move the nodes to the new service nodes</a></li>
+<li><a href="#statelite-migration">Statelite migration</a></li>
+<li><a href="#initialize-the-nodes-on-the-new-sn-optional">Initialize the nodes on the new SN (optional)</a></li>
+<li><a href="#shut-down-the-node">Shut down the node</a></li>
+<li><a href="#reboot-the-diskless-nodes">Reboot the diskless nodes</a></li>
+</ul></li>
+<li><a href="#switching-back">Switching back</a></li>
+<li><a href="#cleanup">Cleanup</a></li>
+<li><a href="#removing-nim-machine-definitions">Removing NIM machine definitions</a></li>
+<li><a href="#removing-nim-resources">Removing NIM resources</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>In an xCAT cluster the single point of control is the xCAT management node. However, in order to provide sufficient scaling and performance for large clusters, it may also be necessary to have additional servers to help handle the deployment and management of the cluster nodes. In an xCAT cluster these additional servers are referred to as service nodes.</p>
+<p>For an xCAT on AIX cluster there is a primary NIM master which is on the xCAT management node(MN). The service nodes(SN) are configured as additional NIM masters. All commands are run on the management node. The xCAT support automatically handles the NIM setup on the low level service nodes and the distribution of the NIM resources. All installation resources for the cluster are managed from the primary NIM master. The NIM resources are automatically replicated on the low level masters when they are needed.</p>
+<p>Important All xCAT service nodes must be at the same release/ version as the xCAT Management Node. This version can be checked by running nodels -v.</p>
+<pre><code>nodels -v
+Version 2.3 (svn r4039, built Mon Aug 24 13:51:18 EDT 2009)</code></pre>
+<p>You can set up one or more service nodes in an xCAT cluster. The number you need will depend on many factors including the number of nodes in the cluster, the type of node deployment, the type of network etc.</p>
+<p>A service node may also be used to run user applications in most cases.</p>
+<p>For reliability, availability, and serviceability purposes users may wish to configure backup service nodes in hierarchical cluster environments.</p>
+<p>The backup service node will be configured to be able to quickly take over from the original service node if a problem occurs.</p>
+<p>This is not an automatic failover feature. You will have to initiate the switch from the primary service node to the backup manually. The xCAT support will handle most of the setup and transfer of the nodes to the new service node.</p>
+<p>See Section 5, &quot;Using a backup service node&quot;, later in this document for details on how to set this up.</p>
+<p>An xCAT service node must be installed with xCAT software as well as additional prerequisite software.</p>
+<p>AIX service nodes must be diskfull (NIM standalone) systems. Diskless xCAT service nodes are not currently supported for AIX.</p>
+<p>In the process described below the service nodes will be deployed using a standard AIX/NIM &quot;rte&quot; network installation. If you are using multiple service nodes you may want to consider creating a &quot;golden&quot; mksysb image that you can use as a common image for all the service nodes. See the xCAT document named &quot;Cloning AIX nodes (using an AIX mksysb image)&quot; for more information on using mksysb images. See [XCAT_AIX_mksysb_Diskfull_Nodes].</p>
+<p>In this document it is assumed that the cluster nodes will be diskless. The cluster nodes will be deployed using a common diskless image. It is also possible to deploy the cluster nodes using &quot;rte&quot; or &quot;mksysb&quot; type installs.</p>
+<p>By default NIM uses bootp to install remote systems. However, you can switch to using dhcp if needed. See the description of how to do this in [XCAT_AIX_Cluster_Overview_and_Mgmt_Node]. If you are managing a Power 775 cluster you will have to set up dhcp on your management node to do hardware discovery. The current recommendation is to also use dhcp to install the service nodes. The service nodes can be left to use th default bootp when installing the compute nodes over HFI.</p>
+<p>The hardware management steps included in this document all refer to the Power 775 hardware. I you are using another hardware platform refer to [XCAT_System_p_Hardware_Management_for_HMC_Managed_Systems] for hardware management details.</p>
+<p>Before starting this process it is assumed you have configured an xCAT management node by following the process described in the AIX overview document. [XCAT_AIX_Cluster_Overview_and_Mgmt_Node]</p>
+<h2 id="switch-to-a-relational-database"><a href="#TOC">Switch to a relational database</a></h2>
+<p>When using service nodes you must switch to a database that supports remote access. XCAT currently supports MySQL, PostgreSQL, and DB2. As a convenience, the xCAT site provides downloads for MySQL and PostreSQL. The default SQlite database cannot be used.</p>
+<p>( <a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX/xcat-postgresql-snap201007150920.tar.gz/download">xcat-postgresql-snap201007150920.tar.gz</a> and <a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX/xcat-mysql-201007271215.tar.gz/download">xcat-mysql-201007271215.tar.gz</a> )</p>
+<p>If you are using Power 775 hardware in your cluster you must use DB2.</p>
+<p>See the following xCAT documents for instructions on how to configure these databases.</p>
+<p>[Setting_Up_MySQL_as_the_xCAT_DB]</p>
+<p>[Setting_Up_PostgreSQL_as_the_xCAT_DB]</p>
+<p>[Setting_Up_DB2_as_the_xCAT_DB]</p>
+<p>When configuring the database you will need to add access for each of your service nodes. The process for this is described in the documentation mentioned above.</p>
+<p>The sample xCAT installp_bundle files mentioned below contain commented-out entries for each of the supported databases. You must edit the bundle file you use to un-comment the appropriate database rpms. If the required database packages are not installed on the service node then the xCAT configuration will fail.</p>
+<p>The database tar files that are available on the xCAT web site may contain multiple versions of RPMs - one for each AIX operating system level. When you are copying required software to your lpp_source resource make sure you copy the rpm that coincides with your OS level. Do not copy multiple versions of the same rpm to the NIM lpp_source directory.</p>
+<h2 id="setup-for-power-775-cluster"><a href="#TOC">Setup for Power 775 Cluster</a></h2>
+<pre><code>NOTE: This support will be available in xCAT 2.6 and beyond.</code></pre>
+<p><a href="Power_775_Cluster_on_MN">Power_775_Cluster_on_MN</a></p>
+<h2 id="defining-cluster-nodes"><a href="#TOC">Defining Cluster Nodes</a></h2>
+<p>Note: At this point your hardware components should be defined in the xCAT database.</p>
+<p>The steps for defining nodes in a Power 775 cluster are discussed in [XCAT_Power_775_Hardware_Management]. See the section named &quot;Define the LPAR Nodes and Create the Service/Utility LPARS&quot;.</p>
+<p>For more information on methods you can use to define xCAT nodes refer to the following document. ([Defining_cluster_nodes_on_System_P] )</p>
+<h2 id="install-the-service-nodes"><a href="#TOC">Install the Service Nodes</a></h2>
+<p>Modify the xCAT node definitions to indicate if the node is a service node, and if not, indicate the server for the node.</p>
+<p>For service nodes:</p>
+<ul>
+<li>Add &quot;service&quot; to the &quot;groups&quot; attribute of all the service nodes.</li>
+<li>Specify the services that the service nodes will be providing. At a minimum, the &quot;setupnameserver&quot; attribute of the service nodes must be explicitly set to &quot;yes&quot; or &quot;no&quot;. (Ex. &quot;setupnameserver=no&quot;)</li>
+</ul>
+<pre><code>    chdef cl2sn01 -p groups=service setupnameserver=no</code></pre>
+<h3 id="assign-the-nodes-to-their-service-nodes"><a href="#TOC">Assign the nodes to their Service Nodes</a></h3>
+<p>For non-service nodes:</p>
+<ul>
+<li>Add the name of the service node to the node definition. (Ex. &quot;servicenode=xcatSN01&quot;) This is the name of the service node as it is known by the management node.</li>
+<li>Set the &quot;xcatmaster&quot; attribute. This must be the name of the service node as it is known by the node. This may or may not be the same value as the &quot;servicenode &quot; attribute.</li>
+</ul>
+<pre><code>    chdef cl2cn27 servicenode=cl2sn01 xcatmaster=cl2sn01-hfi</code></pre>
+<p>Note: if the &quot;servicenode&quot; and &quot;xcatmaster&quot; values are not set then xCAT will default to use the value of the &quot;master&quot; attribute in the xCAT &quot;site&quot; definition.</p>
+<p>Other part of the service node definition and configuration , refer to the following documentation. It is the same for Linux or AIX.</p>
+<p><a href="Setting_Up_a_Linux_Hierarchical_Cluster/#define-the-service-nodes-in-the-database">Setting_Up_a_Linux_Hierarchical_Cluster/#define-the-service-nodes-in-the-database</a></p>
+<h3 id="specify-the-services-provided-by-the-service-nodes"><a href="#TOC">Specify the services provided by the service nodes</a></h3>
+<p>Distributing services to your service nodes will help alleviate the load on your management node and prevent potential bottlenecks from occurring in your cluster. You choose the services that you would like started on your service node by setting the attributes in the servicenode table. When the xcatd daemon is started or restarted on the service node, a check will be made by the xCAT code that the services from this table are configured on the service node and running, and will stop and start the service as appropriate.</p>
+<p>This check will be done each time the xcatd is restarted on the service node. If you do not wish this check to be done, and the service not to be restarted, use the reload option when starting the daemon on the service node:</p>
+<pre><code>     xcatd -r</code></pre>
+<p>For example, the following command will setup the service node group to start the named (DNS),conserver, NFS and ipforwarding automatically on the service nodes. You may want to setup other services such as the monitoring server on the service node. For a description of the services and what is setup see:</p>
+<pre><code>    tabdump -d servicenode</code></pre>
+<p>or the servicenode table manpage:</p>
+<p>http://xcat.sourceforge.net/man5/servicenode.5.html</p>
+<pre><code>     chdef -t group -o service setupnameserver=1 setupnfs=1 setupconserver=1 setupipforward=1</code></pre>
+<p>For Power775 clusters, as a you should set the following:</p>
+<pre><code>    chdef -t group -o service   setupipforward=1</code></pre>
+<p>Note: When using the chdef commands, the attributes names for setting these server values do not match the actual names in the servicenode table. This is to avoid conflicts with corresponding attribute names in the noderes table. To see the correct attribute names to use with chdef:</p>
+<pre><code>    chdef -h -t node</code></pre>
+<p>and search for attributes that begin with &quot;setup&quot;.</p>
+<p>If you do not want any service started on the service nodes, then run the following command to define the service nodes but start no services:</p>
+<pre><code>     chdef -t group -o service setupnameserver=0</code></pre>
+<h4 id="add-ntp-setup-script-optional"><a href="#TOC">Add NTP setup script (optional)</a></h4>
+<p>Note the setupntp attribute in the servicenode table is not use. You must use the setupntp postscripts and add it to the postscripts to be run on the service nodes and cluster nodes. For example:</p>
+<p>To have xCAT automatically set up ntp on the cluster nodes or servicenodes you must add the setupntp script to the list of postscripts that are run on the nodes. What this does is points to the nodes master as it's ntp server. For the service nodes it would be the Management Node, for the compute node it would be it's service node.</p>
+<p>To do this you can either modify the &quot;postscripts&quot; attribute for each node individually or you can just modify the definition of a group that all the nodes belong to.</p>
+<p>For example, if all your nodes belong to the group &quot;compute&quot; then you could add setupntp to the group definition by running the following command.</p>
+<pre><code>    chdef -p -t group -o compute postscripts=setupntp</code></pre>
+<p>If all your service nodes belong to the group &quot;service&quot; then run the following command.</p>
+<pre><code>    chdef -p -t group -o service postscripts=setupntp</code></pre>
+<p>Note:In hierarchy cluster, the ntpserver for the compute nodes will be pointed to the their service nodes, so if you want to set up ntp on the compute nodes, make sure the ntp server is set up correctly on the service nodes, the setupntp postscript can set up both the ntp client and the ntp server.</p>
+<h3 id="add-ip-addresses-and-hostnames-to-etchosts"><a href="#TOC">Add IP addresses and hostnames to /etc/hosts</a></h3>
+<p>Make sure all node hostnames are added to /etc/hosts. Refer to the section titled &quot;Add cluster nodes to the /etc/hosts file&quot; in the following document for details:</p>
+<p>[XCAT_AIX_Cluster_Overview_and_Mgmt_Node]</p>
+<p>If you are working on a Power 775 cluster, to bring up all the HFI interfaces on service nodes, make sure IP/hostnames for all the HFI interfaces on service nodes have been added to /etc/hosts.</p>
+<h3 id="create-a-service-node-operating-system-image"><a href="#TOC">Create a Service Node operating system image</a></h3>
+<p>Reminder: If you wish to create separate file systems for your NIM resources you should do that before continuing. For example, you might want to create a separate file system for /install and one for any dump resources you may need. This is described in [XCAT_AIX_Cluster_Overview_and_Mgmt_Node]</p>
+<p>Install the bos.sysmgt.nim.spot and bos.sysmgt.nim.master filesets.</p>
+<p>Use the xCAT mknimimage command to create an xCAT osimage definition as well as the required NIM installation resources.</p>
+<p>An xCAT osimage definition is used to keep track of a unique operating system image and how it will be deployed.</p>
+<p>In order to use NIM to perform a remote network boot of a cluster node the NIM software must be installed, NIM must be configured, and some basic NIM resources must be created.</p>
+<p>The mknimimage will handle all the NIM setup as well as the creation of the xCAT osimage definition. It will not attempt to reinstall or reconfigure NIM if that process has already been completed. See the mknimimage man page for additional details.</p>
+<p>Note: If you wish to install and configure NIM manually you can run the AIX nim_master_setup command (Ex. &quot;nim_master_setup -a mk_resource=no -a device=&lt;source directory&gt;&quot;) or use other NIM commands such as nimconfig.</p>
+<p>By default, the mknimimage command will create the NIM resources in sub-directories of /install. Some of the NIM resources are quite large (1-2G) so it may be necessary to increase the file size limit.</p>
+<p>For example, to set the file size limit to &quot;unlimited&quot; for the user &quot;root&quot; you could run the following command.</p>
+<pre><code>     /usr/bin/chuser fsize=-1 root</code></pre>
+<p>When you run the command you must provide a source for the installable images. This could be the AIX product media, a directory containing the AIX images, or the name of an existing NIM lpp_source resource. You must also provide a name for the osimage you wish to create. This name will be used for the NIM SPOT resource that is created as well as the name of the xCAT osimage definition. The naming convention for the other NIM resources that are created is the osimage name followed by the NIM resource type, (ex. &quot; 61cosi_lpp_source&quot;).</p>
+<p>In this example we need resources for installing a NIM &quot;standalone&quot; type machine using the NIM &quot;rte&quot; install method. (This type and method are the defaults for the mknimimage command but you can specify other values on the command line.)</p>
+<p>For example, to create an osimage named &quot;610SNimage&quot; using the images contained in the /myimages directory you could issue the following command.</p>
+<pre><code>     mknimimage -s /myimages 610SNimage</code></pre>
+<p>(Creating the NIM resources could take a while!)</p>
+<p>Note: To populate the /myimages directory you could copy the software from the AIX product media using the AIX gencopy command. For example you could run &quot;gencopy -U -X -d /dev/cd0 -t /myimages all&quot;.</p>
+<p>By default the command will create NIM lpp_source, spot, and bosinst_data resources. You can also specify alternate or additional resources on the command line using the &quot;attr=value&quot; option, (&quot;&lt;nim resource type&gt;=&lt;resource name&gt;&quot;).</p>
+<p>For example:</p>
+<pre><code>     mknimimage -s /myimages 610SNimage resolv_conf=my_resolv_conf
+</code></pre>
+<p>Any additional NIM resources specified on the command line must be previously created using NIM interfaces. (Which means NIM must already have been configured. )</p>
+<p>Note: Another alternative is to run mknimimage without the additional resources and then simply add them to the xCAT osimage definition later. You can add or change the osimage definition at any time. When you initialize and install the nodes xCAT will use whatever resources are specified in the osimage definition.</p>
+<p>When the command completes it will display the osimage definition which will contain the names of all the NIM resources that were created. The naming convention for the NIM resources that are created is the osimage name followed by the NIM resource type, (ex. &quot; 610SNimage_lpp_source&quot;), except for the SPOT name. The default name for the SPOT resource will be the same as the osimage name.</p>
+<p>The xCAT osimage definition can be listed using the lsdef command, modified using the chdef command and removed using the rmnimimage command. See the man pages for details.</p>
+<p>In some cases you may also want to modify the contents of the NIM resources. For example, you may want to change the bosinst_data file or add to the resolv_conf file etc. For details concerning the NIM resources refer to the NIM documentation.</p>
+<p>You can list NIM resource definitions using the AIX lsnim command. For example, if the name of your SPOT resource is &quot;610SNimage&quot; then you could get the details by running:</p>
+<pre><code>    lsnim -l 610SNimage</code></pre>
+<p>To see the actual contents of a NIM resource use</p>
+<pre><code>    nim -o showres &lt;resource name&gt;</code></pre>
+<p>For example, to get a list of the software installed in your SPOT you could run:</p>
+<pre><code>    nim -o showres 610SNimage</code></pre>
+<h3 id="create-an-image_data-resource-optional"><a href="#TOC">Create an image_data resource (optional)</a></h3>
+<p>If you are using PostgreSQL or DB2 you must make sure the node starts out with enough file system space to install the database software. This can be done using the NIM image_data resource.</p>
+<p>A NIM image_data resource is a file that contains stanzas of information that is used when creating file systems on the node. To use this support you must create the file , define it as a NIM resource, and add it to the xCAT osimage definition.</p>
+<p>To help simplify this process xCAT ships a sample image_data file called</p>
+<pre><code>    /opt/xcat/share/xcat/image_data/xCATsnData</code></pre>
+<p>This file assumes you will have at least 70G of disk space available. It also sets the physical partition size to 128M.</p>
+<p>It sets the following default file system sizes.</p>
+<pre><code>    /var -&gt; 5G
+    /opt -&gt; 10G
+    / -&gt; 30G
+    /usr -&gt; 4G
+    /tmp -&gt; 3G
+    /home -&gt; 0.12G
+    /admin -&gt; 0.12 G
+    /livedump -&gt; 0.25G
+</code></pre>
+<p>If you need to change any of these be aware that you must change two stanzas for each file system. One is the fs_data and the other is the corresponding lv_data.</p>
+<p>Once you have settled on a final version of the image_data file you can copy it to the location that will be used when defining NIM resources.</p>
+<pre><code>(ex. /install/nim/image_data/myimage_data)</code></pre>
+<p>To define the NIM resource you could use the SMIT interfaces or run a command similer to the following.</p>
+<pre><code>    nim -o define -t image_data -a server=master -a location=/install/nim/image_data/myimage_data myimage_data
+</code></pre>
+<p>To add these bundle resources to your xCAT osimage definition run:</p>
+<pre><code>    chdef -t osimage -o 610SNimage image_data=myimage_data</code></pre>
+<h3 id="add-required-service-node-software"><a href="#TOC">Add required service node software</a></h3>
+<h4 id="xcat-and-prerequisite-software"><a href="#TOC">XCAT and prerequisite software</a></h4>
+<p>An xCAT AIX service node must also be installed with additional xCAT and prerequisite software.</p>
+<p>The required software is specified in the sample bundle files discussed below.</p>
+<p>To simplify this process xCAT includes all required xCAT and open source dependent software in the following files:</p>
+<pre><code>    core-aix-&lt;version&gt;.tar.gz
+    dep-aix-&lt;version&gt;.tar.gz tar</code></pre>
+<p>The required software must be copied to the NIM lpp_source that is being used for the service node image. The easiest way to do this is to use the following command:</p>
+<pre><code>    nim -o update</code></pre>
+<p>NOTE: The latest xCAT dep-aix package actually includes multiple sub-directories corresponding to different versions of AIX. Be sure to copy the correct versions of the rpms to your lpp_source directory.</p>
+<p>For example, assume all the required xCAT rpm software has been copied and unwrapped in the /tmp/images directory.</p>
+<p>Assuming you are using AIX 6.1 you could copy all the appropriate rpms to your lpp_source resource (ex. 610SNimage_lpp_source) using the following commands:</p>
+<pre><code>    nim -o update -a packages=all -a source=/tmp/images/xcat-dep/6.1 610SNimage_lpp_source
+    nim -o update -a packages=all -a source=/tmp/images/xcat-core/  610SNimage_lpp_source</code></pre>
+<p>For Power 775 Clusters, you should add the DFM and hdwr_svr into the list of packages to be installed on the SN:</p>
+<p>~~~~ mkdir -p /install/post/otherpkgs/aix/ppc64/dfm ~~~~ Copy the DFM and hdwr_svr the packages to the suggested target location on the xCAT MN:</p>
+<pre><code>
+ /install/post/otherpkgs/aix/ppc64/dfm
+</code></pre>
+<p>Edit the bundle for AIX Service Node. Assuming you are using AIX 71, you should edit the file:</p>
+<pre><code>
+ /opt/xcat/share/xcat/installp_bundles/xCATaixSN71.bnd</code></pre>
+<p>And add the following into the bundle file:</p>
+<pre><code>
+ I:isnm.hdwr_svr
+ R:xCAT-dfm*</code></pre>
+<p>The required software must be copied to the NIM lpp_source that is being used for the service node image. Assuming you are using AIX 7.1 you could copy all the appropriate rpms to your lpp_source resource (ex. 710SNimage_lpp_source) using the following commands:</p>
+<pre><code> nim -o update packages=all -a source=/install/post/otherpkgs/aix/ppc64/dfm 710SNimage_lpp_source</code></pre>
+<p>The NIM command will find the correct directories and update the appropriate lpp_source resource directories.</p>
+<p>After Initiate a network boot in [Setting_Up_an_AIX_Hierarchical_Cluster] or Initiate a network boot for Power 775 support in [Setting_Up_an_AIX_Hierarchical_Cluster], the DFM and hdwr_svr will be installed on the AIX SN automatically.</p>
+<p>The NIM command will find the correct directories and update the appropriate lpp_source resource directories.</p>
+<h4 id="additional-diskless-dump-software-optional"><a href="#TOC">Additional diskless dump software (optional)</a></h4>
+<p>The AIX ISCSI dump support requires the devices.tmiscw fileset. This is currently available from the AIX Expansion Pack.</p>
+<p>If you plan to create dump resources for your diskless nodes you must have this software installed on you management node and service nodes.</p>
+<p>You can use standard AIX support to install this on the management node.</p>
+<p>For the service nodes you should copy this fileset to your lpp_source resources (as mentioned above) and then include it in the installp_bundle file (described below).</p>
+<h4 id="additional-power-775-software-optional"><a href="#TOC">Additional Power 775 software (optional)</a></h4>
+<p>The Power 775 cluster requires additional software to support HFI. These additional installp file sets must also be copied to the NIM lpp_source resource you are using. This includes HFI and related ML0 device drivers.</p>
+<p>The following is a list of the required software.</p>
+<pre><code>    devices.chrp.IBM.HFI
+    devices.common.IBM.hfi
+    devices.common.IBM.ml
+    devices.msg.en_US.chrp.IBM.HFI
+    devices.msg.en_US.common.IBM.hfi
+    devices.msg.en_US.common.IBM.ml
+</code></pre>
+<p>Note: This software is not yet generally available. It can be provided on request.</p>
+<p>Copy the filesets to your lpp_source resource directory.</p>
+<p>You could do this by placing the required packages into a directory (ex. /hfi) and then execute the &quot;nim -o update&quot; command to copy images to lpp_source directory.</p>
+<p>For example:</p>
+<pre><code>    nim -o update -a packages=all -a source=/hfi/ 71BSNimage_lpp_source
+
+
+</code></pre>
+<p>Create an installp_bundle containing the require HFI filesets.</p>
+<p>For example you could create the bundle file xCATaixHFIdd.bnd in the /install/nim/installp_bundle directory. The contents would be something like the following:</p>
+<pre><code>    # HFI and ML installp packages
+    I:devices.chrp.IBM.HFI.rte
+    I:devices.common.IBM.hfi.rte
+    I:devices.common.IBM.ml
+    I:devices.msg.en_US.chrp.IBM.HFI.rte
+    I:devices.msg.en_US.common.IBM.hfi.rte
+    I:devices.msg.en_US.common.IBM.ml
+</code></pre>
+<p>Define the NIM isntallp_bundle resource using the &quot;nim -o define&quot; command.</p>
+<pre><code>nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/xCATaixHFIdd.bnd xCATaixHFIdd</code></pre>
+<p>Add the name of the HFI installp_bundle resource to the osimage definition that is being used for the service nodes.</p>
+<pre><code>    chdef -t osimage -o 71BSNimage installp_bundle=xCATaixHFIdd
+</code></pre>
+<h4 id="include-additional-files-for-power-775-support"><a href="#TOC">Include additional files for Power 775 support</a></h4>
+<p>The xCAT administrator may want to include additional files that they want to be synchronized on the Power 775 service nodes. These additional files and postscripts can be included in the /install/postscripts/synclist file.</p>
+<p>To include the synclist file to the xCAT osimage used for the service nodes, you can run a command similar to the following.</p>
+<pre><code>    chdef -t osimage -o 610SNimage synclists=/install/postscripts/synclist</code></pre>
+<h4 id="using-nim-installp_bundle-resources"><a href="#TOC">Using NIM installp_bundle resources</a></h4>
+<p>To get all this additional software installed we need a way to tell NIM to include it in the installation. To facilitate this, xCAT provides sample NIM installp bundle files. (Always make sure that the contents of the bundle files you use are the packages you want to install and that they are all in the appropriate lpp_source directory.)</p>
+<p>Starting with xCAT version 2.4.3 there will be a set of bundle files to use for installing a service node. They will be in:</p>
+<pre><code>    /opt/xcat/share/xcat/installp_bundles</code></pre>
+<p>There is a version corresponding to the different AIX OS levels. (xCATaixSN71.bnd, xCATaixSN61.bnd etc.) Just use the one that corresponds to the version of AIX you are running.</p>
+<p>Note: For earlier version of xCAT the sample bundle files are shipped as part of the xCAT tarball file.</p>
+<p>To use the bundle file you need to define it as a NIM resource and add it to the xCAT osimage definition.</p>
+<p>Copy the bundle file ( say xCATaixSN61.bnd ) to a location where it can be defined as a NIM resource, for example &quot;/install/nim/installp_bundle&quot;.</p>
+<p>To define the NIM resource you can run the following command.</p>
+<pre><code>nim -o define -t installp_bundle -a server=master -a location=/install/nim/installp_bundle/xCATaixSN61.bnd xCATaixSN61</code></pre>
+<p>To add this bundle resources to your xCAT osimage definition run:</p>
+<pre><code>    chdef -t osimage -o 610SNimage installp_bundle=&quot;xCATaixSN61&quot;</code></pre>
+<p>Important Note: The sample xCAT bundle files mentioned above contain commented-out entries for each of the supported databases. You must edit the bundle file you use to uncomment the appropriate database rpms. If the required database packages are not installed on the service node then the xCAT configuration will fail.</p>
+<h4 id="check-the-osimage-optional"><a href="#TOC">Check the osimage (optional)</a></h4>
+<p>To avoid potential problems when installing a node it is adviseable to verify that all the additional software that you wish to install has been copied to the appropriate NIM lpp_source directory.</p>
+<p>Any software that is specified in the &quot;otherpkgs&quot; or the &quot;installp_bundle&quot; attributes of the xCAT osimage definition must be available in the lpp_source directories.</p>
+<p>To find the location of the lpp_source directories run the &quot;lsnim -l &lt;lpp_source_name&gt;&quot; command:</p>
+<pre><code>    lsnim -l 610SNimage_lpp_source</code></pre>
+<p>If the location of your lpp_source resource is &quot;/install/nim/lpp_source/610SNimage_lpp_source/&quot; then you would find rpm packages in &quot;/install/nim/lpp_source/610SNimage_lpp_source/RPMS/ppc&quot; and you would find your installp and emgr packages in &quot;/install/nim/lpp_source/610SNimage_lpp_source/installp/ppc&quot;.</p>
+<p>To find the location of the installp_bundle resource files you can use the NIM &quot;lsnim -l&quot; command. For example,</p>
+<pre><code>    lsnim -l xCATaixSN61</code></pre>
+<p>Starting with xCAT version 2.4.3 you can use the xCAT chkosimage command to do this checking. For example:</p>
+<pre><code>    chkosimage -V 610SNimage</code></pre>
+<p>In addition to letting you know what software is missing from your lpp_source the chkosimage command will also indicate if there are multiple files that match the entries in your bundle file. This can happen when you use wild cards in the packages names added to the bundle file. In this case you must remove any old packages so that there is only one rpm selected for each entry in the bundle file.</p>
+<p>To automate this process you may be able to use the &quot;-c&quot; (clean) option of the chkosimage command. This option will keep the rpm that was most recently written to the directory and remove the others. (Be careful when using this option!)</p>
+<p>For example,</p>
+<pre><code>    chkosimage -V -c 610SNimage
+</code></pre>
+<h3 id="define-xcat-networks"><a href="#TOC">Define xCAT networks</a></h3>
+<p>Create an xCAT network definition for each Ethernet or HFI network that contains cluster nodes. You will need a name for the network and values for the following attributes.</p>
+<p>net The network address.</p>
+<p>mask The network mask.</p>
+<p>gateway The network gateway.</p>
+<p>You can use the xCAT mkdef command to define the network.</p>
+<p>For example, to define an ethernet network called net1:</p>
+<pre><code>    mkdef -t network -o net1 net=9.114.0.0 mask=255.255.255.224 gateway=9.114.113.254</code></pre>
+<p>To create an HFI network definition called &quot;hfinet&quot; you could run a command similar to the following.</p>
+<pre><code>    mkdef -t network -o hfinet net=20.0.0.0  mask=255.0.0.0 gateway=20.7.4.5</code></pre>
+<h3 id="create-additional-nim-network-definitions-optional"><a href="#TOC">Create additional NIM network definitions (optional)</a></h3>
+<p>Depending on your specific cluster setup, you may need to create additional NIM network and route definitions.</p>
+<p>NIM network definitions represent the networks used in the NIM environment. When you configure NIM, the primary network associated with the NIM master is automatically defined. You need to define additional networks only if there are nodes that reside on other local area networks or subnets. If the physical network is changed in any way, the NIM network definitions need to be modified.</p>
+<p>To create the NIM network definitions corresponding to the xCAT network definitions you can use the xCAT xcat2nim command.</p>
+<p>For example, to create the NIM definitions corresponding to the xCAT &quot;clstr_net&quot; network you could run the following command.</p>
+<pre><code>    xcat2nim -V -t network -o clstr_net</code></pre>
+<p>Manual method</p>
+<p>The following is an example of how to define a new NIM network using the NIM command line interface.</p>
+<p>Step 1</p>
+<p>Create a NIM network definition. Assume the NIM name for the new network is &quot;clstr_net&quot;, the network address is &quot;10.0.0.0&quot;, the network mask is &quot;255.0.0.0&quot;, and the default gateway is &quot;10.0.0.247&quot;.</p>
+<pre><code>    nim -o define -t ent -a net_addr=10.0.0.0 -a snm=255.0.0.0 -a routing1=&#39;default 10.0.0.247&#39; clstr_net</code></pre>
+<p>Step 2</p>
+<p>Create a new interface entry for the NIM &quot;master&quot; definition. Assume that the next available interface index is &quot;2&quot; and the hostname of the NIM master is &quot;xcataixmn&quot;. This must be the hostname of the management node interface that is connected to the &quot;clstr_net&quot; network.</p>
+<pre><code>    nim -o change -a if2=&#39;clstr_net xcataixmn 0&#39; -a cable_type2=N/A master</code></pre>
+<p>Step 3 - (optional)</p>
+<p>If the new subnet is not directly connected to a NIM master network interface then you should create NIM routing information</p>
+<p>The routing information is needed so that NIM knows how to get to the new subnet. Assume the next available routing index is &quot;2&quot;, and the IP address of the NIM master on the &quot;master_net&quot; network is &quot;8.124.37.24&quot;. Assume the IP address on the NIM master on the &quot;clstr_net&quot; network is &quot; 10.0.0.241&quot;. This command will set the route from &quot;master_net&quot; to &quot;clstr_net&quot; to be &quot; 10.0.0.241&quot; and it will set the route from &quot;clstr_net&quot; to &quot;master_net&quot; to be &quot;8.124.37.24&quot;.</p>
+<pre><code>    nim -o change -a routing2=&#39;masternet 10.0.0.241 8.124.37.24&#39; clstrnet_</code></pre>
+<p>Step 4</p>
+<p>Verify the definitions by running the following commands.</p>
+<pre><code>    lsnim -l master
+    lsnim -l master_net
+    lsnim -l clstr_net</code></pre>
+<p>See the NIM documentation for details on creating additional network and route definitions. (<em>IBM AIX Installation Guide and Reference</em>. &lt;http://www-03.ibm.com/servers/aix/library/index.html&gt;)</p>
+<h3 id="define-an-xcat-service-group"><a href="#TOC">Define an xCAT service group</a></h3>
+<p>If you did not already create the xCAT &quot;service&quot; group when you defined your nodes then you can do it now using the mkdef or chdef command.</p>
+<p>There are two basic ways to create xCAT node groups. You can either set the &quot;groups&quot; attribute of the node definition or you can create a group directly. You can set the &quot;groups&quot; attribute of the node definition when you are defining the node with the mkdef command or you can modify the attribute later using the chdef command. For example, if you want to create the group called &quot;service&quot; with the members sn01 and sn02 you could run chdef as follows.</p>
+<pre><code>    chdef -t node -p -o sn01,sn02 groups=service</code></pre>
+<p>The &quot;-p&quot; option specifies that &quot;service&quot; be added to any existing value for the &quot;groups&quot; attribute.</p>
+<p>The second option would be to create a new group definition directly using the mkdef command as follows.</p>
+<pre><code>    mkdef -t group -o service members=&quot;sn01,sn02&quot;</code></pre>
+<p>These two options will result in exactly the same definitions and attribute values being created.</p>
+<h3 id="set-service-node-attributes-optional"><a href="#TOC">Set Service Node Attributes (optional)</a></h3>
+<p>In some cases it may be necessary to set server-related attributes for the service nodes.</p>
+<p>This includes the nfserver, tftpserver, monserver, xcatmaster, and servicenode attributes.</p>
+<p>The default values for these attributes is the IP address of the management node.</p>
+<p>For example, you might want to boot the service node from some other service node rather than the management. Or you might want your nfs server to be something other than the management node. Etc.</p>
+<p>You can use the chdef command to set these attributes.</p>
+<p>For example, to set the xcatmaster and servicenode attributes of the service node named sn42 you could run the following command.</p>
+<pre><code>    chdef sn42  servicenode=10.0.0.214 xcatmaster=10.0.0.214</code></pre>
+<p>There are additional service node attributes that can be set to automatically start and setup services on the service nodes.</p>
+<pre><code>    tabdump -d servicenode</code></pre>
+<p>to see AIX supported attributes.</p>
+<h3 id="include-customization-scripts"><a href="#TOC">Include customization scripts</a></h3>
+<p>xCAT supports the running of customization scripts on the nodes when they are installed.</p>
+<p>This support includes:</p>
+<ul>
+<li>The running of a set of default customization scripts that are required by xCAT. You can see what scripts xCAT will run by default by looking at the &quot;xcatdefaults&quot; entry in the xCAT &quot;postscripts&quot; database table. ( I.e. Run &quot;tabdump postscripts&quot;.). You can change the default setting by using the xCAT chtab or tabedit command. The scripts are contained in the /install/postscripts directory on the xCAT management node.</li>
+<li>The optional running of customization scripts provided by xCAT. There is a set of xCAT customization scripts provided in the /install/postscripts directory that can be used to perform optional tasks such as additional adapter configuration.</li>
+<li>The optional running of user-provided customization scripts.</li>
+</ul>
+<p>To have your script run on the nodes:</p>
+<ol style="list-style-type: decimal">
+<li>Put a copy of your script in /install/postscripts on the xCAT management node. (Make sure it is executable.)</li>
+<li>When using service nodes make sure the postscripts are copied to the /install/postscripts directories on each service node.</li>
+<li>Set the &quot;postscripts&quot; attribute of the node definition to include the comma separated list of the scripts that you want to be executed on the nodes. The order of the scripts in the list determines the order in which they will be run. For example, if you want to have your two scripts called &quot;foo&quot; and &quot;bar&quot; run on node &quot;node01&quot; you could use the chdef command as follows.</li>
+</ol>
+<pre><code>    chdef -t node -o node01 -p postbootscripts=foo,bar</code></pre>
+<p>(The &quot;-p&quot; means to add these to whatever is already set.)</p>
+<p>The customization scripts are run during the post boot process ( during the processing of /etc/inittab).</p>
+<p>Note: For diskfull installs if you wish to have a script run after the install but before the first reboot of the node you can create a NIM script resource and add it to your osimage definition.</p>
+<h4 id="add-servicenode-script-for-service-nodes"><a href="#TOC">Add &quot;servicenode&quot; script for service nodes</a></h4>
+<p>You must add the &quot;servicenode&quot; script to the postbootscripts attribute of all the service node definitions. To do this you could modify each node definition individually or you could simply modify the definition of the &quot;service&quot; group.</p>
+<p>For example, to have the &quot;servicenode&quot; postscript run on all nodes in the group called &quot;service&quot; you could run the following command.</p>
+<pre><code>    chdef -p -t group service postbootscripts=servicenode</code></pre>
+<p>Note: There is a sample postscript called &quot;make_sn_fs&quot; in /install/postscripts that may be used to automatically create file systems when installing a service node. If you wish to use this script, (or a modified version), you should make sure this script is run before the &quot;servicenode&quot; script. You could do this by setting the &quot;postbootscripts&quot; attribute of the service node definitions as follows:</p>
+<pre><code>chdef -p -t group service postbootscripts=&quot;make_sn_fs,servicenode&quot;</code></pre>
+<h4 id="add-ntp-setup-script-optional-1"><a href="#TOC">Add NTP setup script (optional)</a></h4>
+<p>To have xCAT automatically set up ntp on the cluster nodes you must add the setupntp script to the list of postscripts that are run on the nodes.</p>
+<p>To do this you can either modify the &quot;postscripts&quot; attribute for each node individually or you can just modify the definition of a group that all the nodes belong to.</p>
+<p>For example, if all your nodes belong to the group &quot;compute&quot; then you could add setupntp to the group definition by running the following command.</p>
+<pre><code>    chdef -p -t group -o compute postscripts=setupntp</code></pre>
+<p>Note: In hierarchy cluster, the ntpserver for the compute nodes will be pointed to the their service nodes, so if you want to set up ntp on the compute nodes, make sure the ntp server is set up correctly on the service nodes, the setupntp postscript can set up both the ntp client and the ntp server.</p>
+<h4 id="add-additional-adapters-configuration-script-optional"><a href="#TOC">Add additional adapters configuration script (optional)</a></h4>
+<p>It is possible to have additional adapter interfaces automatically configured when the nodes are booted. XCAT provides sample configuration scripts for both Ethernet and IB adapters. These scripts can be used as-is or they can be modified to suit you particular environment. The Ethernet sample is /install/postscript/configeth. When you have the configuration script that you want you can add it to the &quot;postscripts&quot; attribute as mentioned above. Make sure your script is in the /install/postscripts directory and that it is executable.</p>
+<p>Note: If you plan to support DFM hardware control working through the xCAT SN, it is important that the xCAT SN has the proper ethernet network adapters configured working with the xCAT HW service VLAN. The admin can automatically configure these network adapters as part of the secondary adapter configuration script.</p>
+<p>Note: AIX user in xCAT 2.8.3 or later should use postscript configeth_aix instead of configeth.</p>
+<h6 id="configuring-secondary-adapter"><a href="#TOC">Configuring Secondary Adapter</a></h6>
+<p>To configure secondary adapters, see <a href="Configuring_Secondary_Adapters">Configuring_Secondary_Adapters</a>.</p>
+<h6 id="configuring-xcat-sn-hierarchy-ethernet-adapterspower-775-dfm-only"><a href="#TOC">Configuring xCAT SN Hierarchy Ethernet Adapters(Power 775 DFM Only)</a></h6>
+<p>See the following documentation <a href="Configuring_xCAT_SN_Hierarchy_Ethernet_Adapter_DFM_Only">Configuring_xCAT_SN_Hierarchy_Ethernet_Adapter_DFM_Only</a>.</p>
+<h4 id="power-775-configuration-scripts"><a href="#TOC">Power 775 configuration scripts</a></h4>
+<p>There are several post scripts required for the Power 775 cluster that are used to update the xCAT service nodes. They are used to configure NIM, HFI interfaces, and setup the xCAT DB2 client environment.</p>
+<p>The following postscripts should be available in the /install/postscripts/ directory on the management node.</p>
+<pre><code>    confighfi
+    db2install
+    odbcsetup</code></pre>
+<p>The names of the scripts listed above must be added to the &quot;postbootscripts&quot; attribute of the the service node (or service group) definitions.</p>
+<p>The order of the scripts is important.</p>
+<p>The &quot;db2install&quot; script must come before the &quot;servicenode&quot; script and the &quot;odbcsetup&quot; script must come after.</p>
+<p>To set the postscripts attribute you can run a command similar to the following.</p>
+<pre><code>    chdef -t group service postbootscripts=confighfi,db2install,servicenode,odbcsetup</code></pre>
+<p>Verify the &quot;postbootscripts&quot; setting by listing the service node definitions.</p>
+<pre><code>    lsdef service</code></pre>
+<p>Make sure the scripts are all listed and in the correct order.</p>
+<p>Some scripts are included by default or by setting other attributes. It may be useful to check the xCAT &quot;postscripts&quot; table if you are having difficulty getting the list of postscripts correct.</p>
+<pre><code>    tabedit postscripts</code></pre>
+<p>The Power 775 service node requires additional files. These are all specified in the /install/postscripts/synclist file.</p>
+<p>To include them in the xCAT osimage used for the xCAT service nodes you can run a command similar to the following.</p>
+<pre><code>    chdef -t osimage -o 71BSNimage synclists=/install/postscripts/synclist</code></pre>
+<pre><code>Note: Currently the xCAT for AIX support does not distinguish between the &quot;postscripts&quot; and &quot;postbootscripts&quot; attributes.    Both are treated as post boot scripts and are run after the initial boot of the node.</code></pre>
+<h4 id="add-disk-mirroring-script-optional"><a href="#TOC">Add disk mirroring script (optional)</a></h4>
+<p>To automatically set up disk mirroring on the service nodes when they are installed you can use the &quot;aixvgsetup&quot; sample script provided by xCAT.</p>
+<p>This script is available in the /install/postscripts directory on the management node. It can be copied and modified to include the the disks you wish to include in the rootvg volume group.</p>
+<p>You must add the aixvgsetup script to the list of postscripts that are run on the nodes.</p>
+<p>To do this you can either modify the &quot;postscripts&quot; attribute for each service node individually or you can just modify the definition of a group that all the service nodes belong to.</p>
+<p>For example, if all your service nodes belong to the group &quot;service&quot; then you could add aixvgsetup to the group definition by running the following command.</p>
+<pre><code>    chdef -p -t group -o service postscripts=aixvgsetup</code></pre>
+<p>This script assumes that the disk(s) is available and usable as a boot disk.</p>
+<p>It will run the AIX extendvg, mirrorvg, bosboot, and bootlist commands.</p>
+<h3 id="create-the-connections-between-hdwr_svr-and-sn-cecpower-775-dfm-only"><a href="#TOC">Create the connections between hdwr_svr and sn-CEC(Power 775 DFM only)</a></h3>
+<p><a href="Configuring_xCAT_SN_Hierarchy_Ethernet_Adapter_DFM_Only">Configuring_xCAT_SN_Hierarchy_Ethernet_Adapter_DFM_Only</a></p>
+<h3 id="gather-mac-information-for-the-install-adapters"><a href="#TOC">Gather MAC information for the install adapters</a></h3>
+<p>[NOTE] you should get the MAC information for the service node firstly. After finishing the OS provision for service node, and create the connections between the hdwr_svr on the service node and the non-sn-CEC, you can get the MAC information for the compute node.</p>
+<p><a href="Gather_MAC_information_for_the_node_boot_adapters">Gather_MAC_information_for_the_node_boot_adapters</a></p>
+<h3 id="create-nim-client-group-definitions"><a href="#TOC">Create NIM client &amp; group definitions</a></h3>
+<p>You can use the xCAT xcat2nim command to automatically create NIM machine and group definitions based on the information contained in the xCAT database. By doing this you synchronize the NIM and xCAT names so that you can use the same target names when running either an xCAT or NIM command.</p>
+<p>To create NIM machine definitions for your service nodes you could run the following command.</p>
+<pre><code>    xcat2nim -t node service</code></pre>
+<p>To create NIM group definition for the group &quot;service&quot; you could run the following command.</p>
+<pre><code>    xcat2nim -t group -o service</code></pre>
+<p>To check the NIM definitions you could use the NIM lsnim command or the xCAT xcat2nim command. For example, the following command will display the NIM definitions of the nodes contained in the xCAT group called &quot;service&quot;, (from data stored in the NIM database).</p>
+<pre><code>    xcat2nim -t node -l service</code></pre>
+<h3 id="p775-and-hpc-integration"><a href="#TOC">P775 and HPC Integration</a></h3>
+<p>If you are working with High Performance Computing (HPC) or with the P775 cluster, you will need to execute additional setup procedures where you need to specify additional post scripts for the xCAT SN. At this time time you should reference the HPC Integration documentation, and pay close attention to the HPC LPPs that need to be configured on the xCAT SN.</p>
+<ul>
+<li>[Setting_up_all_IBM_HPC_products_in_a_Stateful_Cluster]</li>
+</ul>
+<p>The expectation is that xCAT software will automatically setup the xCAT DB2 client environment on the P775 xCAT SN. It is important that you setup the proper DB2 environment to be exported from the xCAT EMS. Please reference the xCAT DB2 documentation where you should focus on the requirements needed for the xCAT SN.</p>
+<ul>
+<li>[Setting_Up_DB2_as_the_xCAT_DB]</li>
+</ul>
+<h3 id="create-prescripts-optional"><a href="#TOC">Create prescripts (optional)</a></h3>
+<p>The xCAT prescript support is provided to to run user-provided scripts during the node initialization process. These scripts can be used to help set up specific environments on the servers that handle the cluster node deployment. The scripts will run on the install server for the nodes. (Either the management node or a service node.) A different set of scripts may be specified for each node if desired.</p>
+<p>One or more user-provided prescripts may be specified to be run either at the beginning or the end of node initialization. The node initialization on AIX is done either by the nimnodeset command (for diskfull nodes) or the mkdsklsnode command (for diskless nodes.)</p>
+<p>You can specify a script to be run at the beginning of the nimnodeset or mkdsklsnode command by setting the prescripts-begin node attribute.</p>
+<p>You can specify a script to be run at the end of the commands using the prescripts-end node attribute.</p>
+<p>See the following for the format of the prescript table: [Postscripts_and_Prescripts]</p>
+<p>The attributes may be set using the chdef command.</p>
+<p>For example, if you wish to run the foo and bar prescripts at the beginning of the nimnodeset command you would run a command similar to the following.</p>
+<pre><code>    chdef -t node -o node01 prescripts-begin=&quot;standalone:foo,bar&quot;</code></pre>
+<p>When you run the nimnodeset command it will start by checking each node definition and will run any scripts that are specified by the prescripts-begin attributes.</p>
+<p>Similarly, the last thing the command will do is run any scripts that were specified by the prescripts-end attributes.</p>
+<h3 id="initialize-the-aixnim-nodes"><a href="#TOC">Initialize the AIX/NIM nodes</a></h3>
+<p>You can use the xCAT nimnodeset command to initialize the AIX standalone nodes. This command uses information from the xCAT osimage definition and default values to run the appropriate NIM commands.</p>
+<p>For example, to set up all the nodes in the group &quot;service&quot; to install using the osimage named &quot;610SNimage&quot; you could issue the following command.</p>
+<pre><code>    nimnodeset -i 610SNimage service</code></pre>
+<p>To verify that you have allocated all the NIM resources that you need you can run the &quot;lsnim -l&quot; command. For example, to check the node &quot;clstrn01&quot; you could run the following command.</p>
+<pre><code>    lsnim -l clstrn01
+</code></pre>
+<p>The command will also set the &quot;profile&quot; attribute in the xCAT node definitions to &quot;610SNimage &quot;. Once this attribute is set you can run the nimnodeset command without the &quot;-i&quot; option.</p>
+<h3 id="open-a-remote-console-optional"><a href="#TOC">Open a remote console (optional)</a></h3>
+<p>You can open a remote console to monitor the boot progress using the xCAT rcons command. This command requires that you have conserver installed and configured.</p>
+<p>If you wish to monitor a network installation you must run rcons before initiating a network boot.</p>
+<p>To configure conserver run:</p>
+<pre><code>    makeconservercf</code></pre>
+<p>To start a console:</p>
+<pre><code>    rcons node01</code></pre>
+<p>Note: You must always run makeconservercf after you define new cluster nodes.</p>
+<h3 id="initiate-a-network-boot"><a href="#TOC">Initiate a network boot</a></h3>
+<p>Initiate a remote network boot request using the xCAT rnetboot command. For example, to initiate a network boot of all nodes in the group &quot;service&quot; you could issue the following command.</p>
+<pre><code>    rnetboot service</code></pre>
+<p>Note: If you receive timeout errors from the rnetboot command, you may need to increase the default 60-second timeout to a larger value by setting ppctimeout in the site table:</p>
+<pre><code>    chdef -t site -o clustersite ppctimeout=180</code></pre>
+<h4 id="network-boot-for-power-775"><a href="#TOC">Network boot for Power 775</a></h4>
+<p>This xCAT support is available starting with xCAT 2.6.</p>
+<p>With the Power 775 support xCAT includes an additional method for performing a network boot of the nodes.</p>
+<p>For p775 systems you can run the xCAT rbootseq command to set the boot device, and then run xCAT rpower command to power on or reset the nodes to boot from the HFI network.</p>
+<p>The rbootseq/rpower command sequence actually provides better performance and is recommended for p775 systems booting of nodes over the HFI network.</p>
+<p>To initiate a network boot of the service nodes you could run the following commands.</p>
+<pre><code>    rbootseq aixnodes net
+    rpower aixnodes boot</code></pre>
+<h3 id="verify-the-deployment"><a href="#TOC">Verify the deployment</a></h3>
+<ul>
+<li>If you opened a remote console using rcons you can watch the progress of the installation.</li>
+<li>For p6 lpars, it may be helpful to bring up the HMC web interface in a browser and watch the lpar status and reference codes as the node boots.</li>
+<li>You can use the AIX lsnim command to see the state of the NIM installation for a particular node, by running the following command on the NIM master:</li>
+</ul>
+<pre><code>    lsnim -l &lt;clientname&gt;</code></pre>
+<ul>
+<li>When the node is booted you can log in and check if it is configured properly. For example, is the password set?, is the timezone set?, can you xdsh to the node etc.</li>
+</ul>
+<h4 id="retry-and-troubleshooting-tips"><a href="#TOC">Retry and troubleshooting tips</a></h4>
+<ul>
+<li>If a node did not boot up:</li>
+<li>Verify network connections.</li>
+<li>For dhcp, check /etc/dhcpsd.cnf to make sure an entry exists for the node</li>
+<li>Stop and restart tftp:</li>
+</ul>
+<pre><code>    stopsrc -s tftpd
+    startsrc -s tftpd</code></pre>
+<ul>
+<li>Verify NFS is running properly and mounts can be performed with this NFS server:</li>
+<li>View /etc/exports for correct mount information.</li>
+<li>Run the showmount and exportfs commands.</li>
+<li>Stop and restart the NFS and related daemons:</li>
+</ul>
+<pre><code>    stopsrc -g nfs
+    startsrc -g nfs
+</code></pre>
+<ul>
+<li>Attempt to mount a filesystem from another system on the network.</li>
+<li>You may need to reset the NIM client definition and start over.</li>
+</ul>
+<pre><code>    nim -Fo reset node01
+    nim -o deallocate -a subclass=all node01</code></pre>
+<ul>
+<li>If the node booted but one or more customization scripts did not run correctly:</li>
+<li>You can check the /var/log/messages file on the management node and the var/log/xcat/xcat.log file on the node (if it is up) to see if any error messages were produced during the installation.</li>
+<li>Restart the xcatd daemon (xcatstop &amp; xcatstart (xCAT2.4 restartxcatd)) and then re-run the customization scripts either manually or by using updatenode.</li>
+</ul>
+<h3 id="configure-additional-adapters-on-the-service-nodes-optional"><a href="#TOC">Configure additional adapters on the service nodes (optional)</a></h3>
+<p>If additional adapter configuration is required on the service nodes you could either use the xdsh command to run the appropriate AIX commands on the nodes or you may want to use the updatenode command to run a configuration script on the nodes.</p>
+<p>XCAT provides sample adapter interface configuration scripts for Ethernet and IB. The Ethernet sample is /install/postscripts/configeth. It illustrate how to use a specific naming convention to automatically configure interfaces on the node. You can modify this script for your environment and then run it on the node using updatenode. First copy your script to the /install/postscripts directory and make sure it is executable. Then run a command similar to the following.</p>
+<pre><code>    updatenode clstrn01 myconfigeth</code></pre>
+<p>If you wish to configure IB interfaces please refer to: [Managing_the_Infiniband_Network]</p>
+<p>Note: AIX user in xCAT 2.8.3 or later should use postscript configeth_aix instead of configeth.</p>
+<h3 id="verify-service-node-configuration"><a href="#TOC">Verify Service Node configuration</a></h3>
+<p>During the node boot up there are several xCAT post scripts that are run that will configure the node as an xCAT service node. It is advisable to check the service nodes to make sure they are configured correctly before proceeding.</p>
+<p>There are several things that can be done to verify that the service nodes have been configured correctly.</p>
+<ol style="list-style-type: decimal">
+<li>Check if NIM has been installed and configured by running &quot;lsnim&quot; or some other basic NIM command on the service node.</li>
+<li>Check to see if all the additional software has been installed. For example, Run &quot;rpm -qa&quot; to see if the xCAT and dependency software is installed.</li>
+<li>Try running some xCAT commands such as &quot;lsdef -a&quot;to see if the xcatd daemon is running and if data can be retrieved from the xCAT database on the management node.</li>
+<li>If using SSH for your remote shell try to ssh to the service nodes from the management node.</li>
+<li>Check the system services, as mentioned earlier in this document, to make sure the service node can respond to a network boot request.</li>
+</ol>
+<h2 id="setup-of-gpfs-io-server-nodes"><a href="#TOC">Setup of GPFS I/O Server nodes</a></h2>
+<pre><code>TBD - This is pointer to the GPFS documentation to setup GPFS I/O servers on the Power 775 cluster.</code></pre>
+<h2 id="install-the-cluster-nodes"><a href="#TOC">Install the cluster nodes</a></h2>
+<h3 id="planning-for-external-nfs-serveroptional"><a href="#TOC">Planning for external NFS server(optional)</a></h3>
+<p>xCAT AIX stateless/statelite compute nodes need to mount NFS directories from the service node, the failure on the service node will immediately bring down all the compute nodes served by the service node, external NFS server can be used to provide high availability NFS service for the AIX stateless/statelite compute nodes to avoid single point of failure by the service node. Refer to [External_NFS_Server_Support_With_AIX_Stateless_And_Statelite] for more details.</p>
+<h3 id="create-a-diskless-image"><a href="#TOC">Create a diskless image</a></h3>
+<p><a href="Create_an_AIX_Diskless_Image">Create_an_AIX_Diskless_Image</a></p>
+<h3 id="update-the-image---spot"><a href="#TOC">Update the image - SPOT</a></h3>
+<p><a href="Update_the_image_-_SPOT">Update_the_image<em>-</em>SPOT</a></p>
+<h3 id="set-up-statelite-support-for-diskless-stateless-nodes-only"><a href="#TOC">Set up statelite support (for diskless-stateless nodes only)</a></h3>
+<p>This support is available in xCAT version 2.5 and beyond.</p>
+<p>The xCAT statelite support for AIX provides the ability to &quot;overlay&quot; specific files or directories over the standard diskless-stateless support.</p>
+<p>There is a complete description of the statelite support in : <a href="XCAT_AIX_Diskless_Nodes/#aix_statelite_support">XCAT_AIX_Diskless_Nodes#AIX_statelite_support</a>.</p>
+<p>To set up the statelite support you must:</p>
+<ol style="list-style-type: decimal">
+<li>fill in one or more to the statelite tables in the xCAT database.</li>
+<li>Run the &quot;mknimimage -u&quot; command which will use that information to modify the SPOT resource.</li>
+</ol>
+<p>Note: You could also fill in the statelite tables before initially running the mknimimage to create the osimage. (Rather than doing the setup later with the &quot;-u&quot; option.)</p>
+<h3 id="define-xcat-networks-1"><a href="#TOC">Define xCAT networks</a></h3>
+<p>Create a network definition for each network that contains cluster nodes. You will need a name for the network and values for the following attributes.</p>
+<p>net The network address.</p>
+<p>mask The network mask.</p>
+<p>gateway The network gateway.</p>
+<p>This &quot;How-To&quot; assumes that all the cluster node management interfaces and the xCAT management node interface are on the same network. You can use the xCAT mkdef command to define the network.</p>
+<p>For example:</p>
+<pre><code>    mkdef -t network -o net1 net=9.114.113.224 mask=255.255.255.224 gateway=9.114.113.254</code></pre>
+<p>If you want to set the nodes' xcatmaster as the default gateway for the nodes, the gateway can be set to keyword &quot;&lt;xcatmaster&gt;&quot;, xCAT code will automatically interpret the keyword to corresponding ip address or hostname. Here is an example:</p>
+<pre><code>    mkdef -t network -o net1 net=9.114.113.224 mask=255.255.255.224 gateway=&lt;xcatmaster&gt;</code></pre>
+<p>Please be aware that the ipforwarding should be enabled on all the xcatmaster nodes that will be acting as default gateway, you can set the ipforward to 1 in the servicenode table or run AIX command &quot;no -o ipforwarding=1&quot; manually to enable the ipforwarding.</p>
+<p>Note: If the cluster node management interfaces and the xCAT management node interface are on the different networks, you need to define the cluster network manually on the service nodes.</p>
+<p>For example: Assume the NIM name for the cluster network is &quot;clstr_net&quot;, the network address is &quot;10.0.0.0&quot;, the network mask is &quot;255.0.0.0&quot;, and the default gateway is &quot;10.0.0.247&quot;.</p>
+<pre><code>     nim -o define -t ent -a net_addr=10.0.0.0 -a snm=255.0.0.0 -a routing1=&#39;default 10.0.0.247&#39; clstr_net</code></pre>
+<h3 id="set-conserver-and-monserver"><a href="#TOC">Set conserver and monserver</a></h3>
+<p>If the service nodes will be running the conserver or monserver daemons for the compute nodes instead of the xCAT managment node running the daemons for all of the nodes, set these attributes to the node's service node:</p>
+<pre><code>     chdef compute1 conserver=sn1 monserver=sn1
+     chdef compute2 conserver=sn2 monserver=sn2
+</code></pre>
+<h3 id="create-the-connections-between-hdwr_svr-and-non-sn-cecpower-775-dfm-only"><a href="#TOC">Create the connections between hdwr_svr and non-sn-CEC(Power 775 DFM only)</a></h3>
+<p>In Power 775 DFM environment, all the hardware control commands are sent to the CEC through hdwr_svr. So before running hardware control commands, you should create the connections between the hdwr_svr and the CEC. In hierarchical cluster, you should create the connections between the hdwr_svr and sn-CEC, and after the service node has been installed, and then create the connections between the hdwr_svr and non-sn-CEC. Please refer to :</p>
+<p>[Configuring_xCAT_SN_Hierarchy_Ethernet_Adapter_DFM_Only]</p>
+<h3 id="gather-mac-information-for-the-node-boot-adapters"><a href="#TOC">Gather MAC information for the node boot adapters</a></h3>
+<p><a href="Gather_MAC_information_for_the_node_boot_adapters">Gather_MAC_information_for_the_node_boot_adapters</a></p>
+<h3 id="define-xcat-groups-optional"><a href="#TOC">Define xCAT groups (optional)</a></h3>
+<p>XCAT supports both static and dynamic node groups. See the section titled &quot;xCAT node group support&quot; in the &quot;xCAT2 Top Doc&quot; document for details on using xCAT groups.</p>
+<p>See the following doc for nodegroup support: [Node_Group_Support]</p>
+<h3 id="add-ip-addresses-and-hostnames-to-etchosts-1"><a href="#TOC">Add IP addresses and hostnames to /etc/hosts</a></h3>
+<p>Make sure all node hostnames are added to /etc/hosts. Refer to the section titled &quot;Add cluster nodes to the /etc/hosts file&quot; in the following document for details: [XCAT_AIX_Cluster_Overview_and_Mgmt_Node]</p>
+<p>If you are working on a Power 775 cluster, to bring up all the HFI interfaces on service nodes, make sure IP/hostnames for all the HFI interfaces on service nodes have been updated in /etc/hosts.</p>
+<h3 id="verify-the-node-definitions"><a href="#TOC">Verify the node definitions</a></h3>
+<p>Verify that the node definitions include the required information.</p>
+<p>To get a listing of the node definition you can use the lsdef command. For example to display the definitions of all nodes in the group &quot;aixnodes&quot; you could run the following command.</p>
+<pre><code>    lsdef -t node -l -o aixnodes</code></pre>
+<p>The output for one diskless node might look something like the following:</p>
+<pre><code>    Object name: clstrn02
+    cons=hmc
+    groups=lpar,all
+    servicenode=clstrSN1
+    xcamaster=clstrSN1-en1
+    hcp=clstrhmc01
+    hostnames=clstrn02.mycluster.com
+    id=2
+    ip=10.1.3.2
+    mac=001a64f9bfc9
+    mgt=hmc
+    nodetype=ppc,osi
+    hwtype=lpar
+    os=AIX
+    parent=clstrf1fsp03-9125-F2A-SN024C352
+    pprofile=compute
+
+</code></pre>
+<p>Most of these attributes should have been filled in automatically by xCAT.</p>
+<p>Note: The length of a NIM object name must be no longer than 39 characters. Since the xCAT definitions will be used to create the NIM object definitions you should limit your xCAT names accordingly.</p>
+<p>Note: xCAT supports many different cluster environments and the attributes that may be required in a node definition will vary. For diskless nodes using a servicenode, the node definition should include at least the attributes listed in the above example.</p>
+<p>Make sure &quot;servicenode&quot; is set to the name of the service node as known by the management node and &quot;xcatmaster&quot; is set to the name of the service node as known by the node.</p>
+<p>To modify the node definitions you can use the chdef command.</p>
+<p>For example to set the xcatmaster attribute for node &quot;clstrn01&quot; you could run the following.</p>
+<pre><code>    chdef -t node -o clstrn01 xcatmaster=clstrSN1-en1</code></pre>
+<h3 id="verify-the-node-definitions-for-boot-over-hfi-on-power-775"><a href="#TOC">Verify the node definitions for boot over HFI on Power 775</a></h3>
+<p>Most of the node attributes to boot over HFI are the same as boot over ethernet above. Following is an example as an output of lsdef command.</p>
+<pre><code>    lsdef -t node -l -o aixnodes
+
+
+    Object name: clstrn02
+    arch=ppc64
+    cons=fsp
+    groups=lpar,all
+    hcp=Server-9125-F2C-SNP7IH019-A
+    id=9
+    ip=20.4.32.224
+    mac=020004030004
+    mgt=fsp
+    nodetype=ppc,osi
+    hwtype=lpar
+    os=AIX
+    parent=Server-9458-100-SNBPCF007-A
+    pprofile=compute
+    servicenode=clstrSN1
+    xcatmaster=clstrSN1-hf0
+</code></pre>
+<p>Note: xcatmaster attribute is setting to the hostname which is a HFI interface hostname on services, it should has been updated in /etc/hosts and synchronized to service node already.</p>
+<p>Note: mac attribute is an HFI MAC address that got from compute node.</p>
+<p>Note: ip attribute is setting to the HFI IP address that works on compute node.</p>
+<h3 id="set-up-post-boot-scripts-optional"><a href="#TOC">Set up post boot scripts (optional)</a></h3>
+<p>xCAT supports the running of customization scripts on the nodes when they are installed. For diskless nodes these scripts are run when the /etc/inittab file is processed during the node boot up.</p>
+<p>This support includes:</p>
+<ul>
+<li>The running of a set of default customization scripts that are required by xCAT. You can see what scripts xCAT will run by default by looking at the &quot;xcatdefaults&quot; entry in the xCAT &quot;postscripts&quot; database table. ( I.e. Run &quot;tabdump postscripts&quot;.). You can change the default setting by using the xCAT chtab or tabedit command. The scripts are contained in the /install/postscripts directory on the xCAT management node.</li>
+<li>The optional running of customization scripts provided by xCAT. There is a set of xCAT customization scripts provided in the /install/postscripts directory that can be used to perform optional tasks such as additional adapter configuration. (See the &quot;configiba&quot; script for example.)</li>
+<li>The optional running of user-provided customization scripts.</li>
+</ul>
+<p>To have your script run on the nodes:</p>
+<ol style="list-style-type: decimal">
+<li>Put a copy of your script in /install/postscripts on the xCAT management node. (Make sure it is executable.)</li>
+<li>When using service nodes make sure the postscripts are copied to the /install/postscripts directories on each service node.</li>
+<li>Set the &quot;postscripts&quot; attribute of the node definition to include the comma separated list of the scripts that you want to be executed on the nodes. The order of the scripts in the list determines the order in which they will be run. For example, if you want to have your two scripts called &quot;foo&quot; and &quot;bar&quot; run on node &quot;node01&quot; you could use the chdef command as follows.</li>
+</ol>
+<pre><code>    chdef -t node -o node01 -p postscripts=foo,bar</code></pre>
+<p>(The &quot;-p&quot; means to add these to whatever is already set.)</p>
+<p>Note: The customization scripts are run during the boot process (out of /etc/inittab).</p>
+<h3 id="power-775-configuration-scripts-optional"><a href="#TOC">Power 775 configuration scripts (optional)</a></h3>
+<p>Thee are additional post scripts required to configure HFI interfaces when working with Power 775 configuration. You will need to make sure that the xCAT HFI scripts confighfi is properly copied into the /install/postscript/ directory. You will then need to allocate the postscripts to the proper xCAT OS images being used with installation for xCAT SN and xCAT CN.</p>
+<pre><code>    chdef clstrn02 postscripts=confighfi</code></pre>
+<p>Note: There is a design limitation in AIX HFI driver implementation that hf0 is always left in &quot;Defined&quot; state on diskless compute nodes. xCAT provides a workaround as following in confighfi postscript to configure interface hf0 to be &quot;Available&quot; state:</p>
+<p>Change line 126 in confighfi from:</p>
+<pre><code>     for i in 1 2 3</code></pre>
+<p>To:</p>
+<pre><code>     for i in 0 1 2 3</code></pre>
+<h3 id="set-up-prescripts-optional"><a href="#TOC">Set up prescripts (optional)</a></h3>
+<p>The xCAT prescript support is provided to to run user-provided scripts during the node initialization process. These scripts can be used to help set up specific environments on the servers that handle the cluster node deployment. The scripts will run on the install server for the nodes. (Either the management node or a service node.) A different set of scripts may be specified for each node if desired.</p>
+<p>One or more user-provided prescripts may be specified to be run either at the beginning or the end of node initialization. The node initialization on AIX is done either by the nimnodeset command (for diskfull nodes) or the mkdsklsnode command (for diskless nodes.)</p>
+<p>For more information about using the xCAT prescript support refer: <a href="Postscripts_and_Prescripts">Postscripts_and_Prescripts</a>.</p>
+<h3 id="initialize-the-aixnim-diskless-nodes"><a href="#TOC">Initialize the AIX/NIM diskless nodes</a></h3>
+<p>You can set up NIM to support a diskless boot of nodes by using the xCAT <a href="http://xcat.sourceforge.net/man1/mkdsklsnode.1.html">mkdsklsnode</a> command. This command uses information from the xCAT database and default values to run the appropriate NIM commands.</p>
+<p>When using xCAT service nodes the mkdsklsnode command will also take care of the NIM configuration on those systems. It will set up NIM, replicate the NIM resources that are needed, define the NIM clients etc. It will also copy over any additional postscripts that may be needed.</p>
+<p>Note: After running mkdsklsnode, if you change a postscript or some other file that must be updated on the service nodes you must manually copy them to the service nodes. To do this you could use the xCAT <a href="http://xcat.sourceforge.net/man1/prsync.1.html">prsync</a> command.</p>
+<p>For example, to set up all the nodes in the group &quot;aixnodes&quot; to boot using the SPOT named &quot;61cosi&quot; you could issue the following command.</p>
+<pre><code>    mkdsklsnode -i 61cosi aixnodes</code></pre>
+<p>The command will define and initialize the NIM machines. It will also set the &quot;provmethod&quot; attribute in the xCAT node definitions to &quot;61cosi &quot;.</p>
+<p>To verify that NIM has allocated the required resources for a node and that the node is ready for a network boot you can run the &quot;lsnim -l&quot; command. For example, to check node &quot;node01&quot; you could run the following command.</p>
+<pre><code>    lsnim -l node01</code></pre>
+<p>Note:</p>
+<p>The NIM initialization of multiple nodes is done sequentially and takes approximately three minutes per node to complete. If you are planning to initialize multiple nodes you should plan accordingly.</p>
+<h4 id="verifying-the-node-initialization-before-booting-optional"><a href="#TOC">Verifying the node initialization before booting (optional)</a></h4>
+<p>Once the mkdsklsnode command completes you can log on to the service node and verify that it has been configured correctly.</p>
+<p>The things to check include the following:</p>
+<ul>
+<li>See if the NIM resources and client definitions have been created. (&quot;lsnim -l&quot;)</li>
+<li>If using dhcp check /etc/dhcpsd.cnf for the correct node entries.</li>
+<li>If using bootp check /etc/bootptab for the correct node entries.</li>
+<li>Check /etc/exports to see if the resource directories have been added.</li>
+<li>Check /tftpboot/&lt;nodename&gt;.info to see if the entries are correct.</li>
+<li>List the NIM node definitions to see if they are correct and if the correct resources have been allocated. (&quot;lsnim -l &lt;nodename&gt;&quot;)</li>
+</ul>
+<h3 id="open-a-remote-console-optional-1"><a href="#TOC">Open a remote console (optional)</a></h3>
+<p>You can open a remote console to monitor the boot progress using the xCAT rcons command. This command requires that you have conserver installed and configured.</p>
+<p>If you wish to monitor a network installation you must run rcons before initiating a network boot.</p>
+<p>To configure conserver run:</p>
+<pre><code>    makeconservercf</code></pre>
+<p>To start a console:</p>
+<pre><code>    rcons node01</code></pre>
+<p>Note: You must always run makeconservercf after you define new cluster nodes.</p>
+<h3 id="initiate-a-network-boot-1"><a href="#TOC">Initiate a network boot</a></h3>
+<p>Initiate a remote network boot request using the xCAT rnetboot command. For example, to initiate a network boot of all nodes in the group &quot;aixnodes&quot; you could issue the following command.</p>
+<pre><code>    rnetboot aixnodes</code></pre>
+<p>Note: If you receive timeout errors from the rnetboot command, you may need to increase the default 60-second timeout to a larger value by setting ppctimeout in the site table:</p>
+<pre><code>    chdef -t site -o clustersite ppctimeout=180</code></pre>
+<h3 id="initiate-a-network-boot-for-power-775-support"><a href="#TOC">Initiate a network boot for Power 775 support</a></h3>
+<p>Starting from xCAT 2.6 and working in Power 775 cluster, there are two ways to initialize a network boot to the compute nodes: one way is that using xCAT rbootseq command to setup the boot device as network adapter for the compute nodes, and after that, you can issue xCAT rpower command to power on or reset the compute node to boot from network, another way is to use xCAT rnetboot command directly. Comparing these two ways, rbootseq/rpower commands don't require the console support and operate in the console, so it has a better performance. It is recommended to use rbootseq/rpower to setup the boot device to network adapter and initialize the network boot in Power 775 cluster.</p>
+<pre><code>    rbootseq aixnodes hfi
+    rpower aixnodes boot</code></pre>
+<h3 id="verify-the-deployment-1"><a href="#TOC">Verify the deployment</a></h3>
+<ul>
+<li>Retry and troubleshooting tips:</li>
+<li>Verify network connections</li>
+<li>For dhcp, view /etc/dhcpsd.cnf to make sure an entry exists for the node.</li>
+<li>Stop and restart tftp:</li>
+</ul>
+<pre><code>    stopsrc -s tftp
+    startsrc -s tftp</code></pre>
+<ul>
+<li>Verify NFS is running properly and mounts can be performed with this NFS server:</li>
+<li>View /etc/exports for correct mount information.</li>
+<li>Run the showmount and exportfs commands.</li>
+<li>Stop and restart the NFS and related daemons:</li>
+</ul>
+<pre><code>    stopsrc -g nfs
+    startsrc -g nfs</code></pre>
+<ul>
+<li>Attempt to mount a file system from another system on the network.</li>
+<li>If that doesn't work, you may need to re-initialize the diskless node and start over. You can use the rmdsklsnode command to uninitialize an AIX diskless node. This will deallocate and remove the NIM definition but it will not remove the xCAT node definition.</li>
+</ul>
+<h2 id="switching-to-a-backup-service-node"><a href="#TOC">Switching to a backup service node</a></h2>
+<p>For reliability, availability, and serviceability purposes you may wish to use backup service nodes in your hierarchical cluster.</p>
+<p>The backup service node will be set up to quickly take over from the original service node if a problem occurs.</p>
+<p>This is not an automatic fail over feature. You will have to initiate the switch from the primary service node to the backup manually. The xCAT support will handle most of the setup and transfer of the nodes to the new service node.</p>
+<p>Note: This procedure could also be used to simply switch the cluster diskless compute nodes to a new service node.</p>
+<p>Abbreviations used below:</p>
+<p>MN : - management node. SN : - service node. CN : - compute node.</p>
+<h3 id="initial-deployment"><a href="#TOC">Initial deployment</a></h3>
+<p>Integrate the following steps into the hierarchical deployment process described above.</p>
+<ol style="list-style-type: decimal">
+<li>Make sure both the primary and backup service nodes are installed, configured, and can access the MN database.</li>
+<li>When defining the CNs add the necessary service node values to the &quot;servicenode&quot; and &quot;xcatmaster&quot; attributes of the node definitions.</li>
+<li>(Optional) Create an xCAT group for the nodes that are assigned to each SN. This will be useful when setting node attributes as well as providing an easy way to switch a set of nodes back to their original server.</li>
+</ol>
+<p>Note-</p>
+<p>xcatmaster: : The hostname of the xCAT service node as known by the node. servicenode: : The hostname of the xCAT service node as known by the management node.</p>
+<p>To specify a backup service node you must specify a comma-separated list of two service nodes for the &quot;servicenode&quot; value. The first one will be the primary and the second will be the backup (or new SN) for that node.</p>
+<p>For the &quot;xcatmaster&quot; value you should only include the primary name of the service node as known by the node.</p>
+<p>In the simplest case the management node, service nodes, and compute nodes are all on the same network and the interface name of the service nodes will be same for either the management node or the compute node.</p>
+<p>For this case you could set the attributes as follows:</p>
+<pre><code>    chdef &lt;noderange&gt;  servicenode=&quot;xcatsn1,xcatsn2&quot; xcatmaster=&quot;xcatsn1&quot;</code></pre>
+<p>However, in some network environments the name of the SN as known by the MN may be different than the name as known by the CN. (If they are on different networks.)</p>
+<p>In the following example assume the SN interface to the MN is on the &quot;a&quot; network and the interface to the CN is on the &quot;b&quot; network. To set the attributes you would run a command similar to the following.</p>
+<pre><code>    chdef &lt;noderange&gt;  servicenode=&quot;xcatsn1a,xcatsn2a&quot; xcatmaster=&quot;xcatsn1b&quot;
+</code></pre>
+<p>The process can be simplified by creating xCAT node groups to use as the &lt;noderange&gt; in the chdef command.</p>
+<p>To create an xCAT node group containing all the nodes that have the service node &quot;SN27&quot; you could run a command similar to the following.</p>
+<pre><code>    mkdef -t group -o SN27group -w  servicenode=SN27
+</code></pre>
+<p>Note: When using backup service nodes you should consider splitting the CNs between the two service nodes. This way if one fails you only need to move half your nodes to the other service node.</p>
+<p>When you run themkdsklsnode command to define and initialize the CNs, it will automatically replicate the required NIM resources on the SN used by the CN. If you have a backup SN specified then the replications and NIM definition will also be done on the backup SN. This will make it possible to do a quick takeover without having to wait for replication when you need to switch.</p>
+<p>In some cases the commands will also create unique NIM resolv_conf resources on the primary and backup service nodes. For more information on setting up cluster name resolution see: [Cluster_Name_Resolution]</p>
+<p>The <a href="http://xcat.sourceforge.net/man1/mkdsklsnode.1.html">mkdsklsnode</a>, and <a href="http://xcat.sourceforge.net/man1/rmdsklsnode.1.html">rmdsklsnode</a> commands also support the &quot;-p|--primarySN&quot; and &quot;- b|--backupSN&quot; options. You can use these options to target either the primary or backup service nodes in case you do not wish to update both. These option could be used to initialize the primary service node first, to get the nodes booted and running, and then initialized the backup SN later while the nodes are running.</p>
+<h3 id="synchronizing-statelite-persistent-files"><a href="#TOC">Synchronizing statelite persistent files</a></h3>
+<p>If you are using the xCAT AIX &quot;statelite&quot; support you may need to replicate your statelite files to the backup (or new) service node.</p>
+<p>This would be the case if you are using the service node as the server for the statelite persistent directory.</p>
+<p>In this case you need to copy your statelite files and directories to the backup service node and keep them synchronized over time.</p>
+<p>An easy and efficient way to do this would be to use the xCAT <a href="http://xcat.sourceforge.net/man1/prsync.1.html">prsync</a> command.</p>
+<p>For example, to copy and/or update the /nodedata directory on the backup service node &quot;SN28&quot; you could run the following command.</p>
+<pre><code>    prsync -o &quot;rlHpEAogDz&quot; /nodedata SN28:/</code></pre>
+<p>The xCAT <a href="http://xcat.sourceforge.net/man1/snmove.1.html">snmove</a> command may also be used to synchronize files from the primary service node to the backup service node.</p>
+<p>This option for the snmove command is available in xCAT 2.6.10 and beyond.</p>
+<p>If you run this command with the &quot;-l&quot; option it will attempt to use prsync to update the statelite persistent directory on the backup service node. This will only be done if the server specified in the &quot;statelite&quot; table is the primary service node.</p>
+<p>For example, to synchronize any AIX statelite files from the primary server for compute03 to the backup server you could run the following command.</p>
+<pre><code>    snmove compute03 -V -l</code></pre>
+<p>See <a href="XCAT_AIX_Diskless_Nodes/#aix-statelite-support">XCAT_AIX_Diskless_Nodes#AIX_statelite_support</a> for details on using the xCAT statelite support.</p>
+<h3 id="monitoring-the-service-nodes"><a href="#TOC">Monitoring the service nodes</a></h3>
+<p>In most cluster environments it is very important to monitor the state of the service nodes. If a SN fails for some reason you should switch nodes to the backup service node as soon as possible.</p>
+<p>See [Monitor_and_Recover_Service_Nodes#Monitoring_Service_Nodes] for details on monitoring your service nodes.</p>
+<h3 id="switch-to-a-backup-sn"><a href="#TOC">Switch to a backup SN</a></h3>
+<h4 id="move-the-nodes-to-the-new-service-nodes"><a href="#TOC">Move the nodes to the new service nodes</a></h4>
+<p>Use the xCAT <a href="http://xcat.sourceforge.net/man1/snmove.1.html">snmove</a> to make the database updates necessary to move a set of nodes from one service node to another.</p>
+<p>In some cases this command will also synchronize statelite persistent directories and make configuration modifications to the nodes.</p>
+<p>For example, if you want to switch all the compute nodes that use service node &quot;SN27&quot; to the backup SN you could run the following command.</p>
+<pre><code>    snmove -s SN27</code></pre>
+<p>Modified database attributes</p>
+<p>The snmove command will check and set several node attribute values.</p>
+<p>servicenode: : This will be set to either the second server name in the servicenode attribute list or the value provided on the command line. xcatmaster: : Set with either the value provided on the command line or it will be automatically determined from the servicenode attribute. nfsserver: : If the value is set with the source service node then it will be set to the destination service node. tftpserver: : If the value is set with the source service node then it will be reset to the destination service node. monserver: : If set to the source service node then reset it to the destination servicenode and xcatmaster values. conserver: : If set to the source service node then reset it to the destination servicenode and run makeconservercf.</p>
+<p>Synchronize statelite persistent directories</p>
+<p>In some cases, if you are using the xCAT AIX statelite support, the snmove command will synchronize the persistent statelite directories from the nodes primary service node to it's backup service node. This will only be done if the server specified in the &quot;statelite&quot; table is the primary service node.</p>
+<p>This feature for the snmove command is available in xCAT 2.6.10 and beyond.</p>
+<p>Run postscripts on the nodes</p>
+<p>If the node is up at the time the snmove command is run then it will run postscripts on the node. The &quot;syslog&quot; postscript is always run. The &quot;mkresolvconf&quot; and &quot;setupntp&quot; scripts will be run IF they were included in the nodes postscript list.</p>
+<p>You can also specify an additional list of postscripts to run.</p>
+<p>Modify system configuration on the nodes</p>
+<p>If the node is up the snmove command will also perform some configuration on the node such as setting the default gateway and modifying some configuration files used by xCAT.</p>
+<h4 id="statelite-migration"><a href="#TOC">Statelite migration</a></h4>
+<p>If you are using the xCAT statelite support you may need to modify the statelite and litetree tables.</p>
+<p>This would be necessary if any of the entries in the tables include the name of the primary service node as the server for the file or directory. In this case you would have to change those entries to the name of the backup service node.</p>
+<p>The snmove command mentioned above will check the &quot;statelite&quot; table and make any necessary changes.</p>
+<p>This option for the snmove command is available in xCAT 2.6.10 and beyond. If you are using an earlier version of xCAT you will have to make these changes manually.</p>
+<p>If you are using the &quot;litetree&quot; table you will have to make any required changes manually and also make sure any files that are available on the primary service node are also available on the backup service node.</p>
+<p>For example, if you specify the service node in a &quot;litetree&quot; entry as follows:</p>
+<pre><code>    #priority,image,directory,comments,disable
+    &quot;1&quot;,&quot;71Bdskls&quot;,&quot;SNprimary:/statelite/&quot;,,</code></pre>
+<p>you would have to change the entry to point to the backup service node.</p>
+<pre><code>    #priority,image,directory,comments,disable
+    &quot;1&quot;,&quot;71Bdskls&quot;,&quot;SNbackup:/statelite/&quot;,,</code></pre>
+<p>Note that these table changes could have been avoided by using variables in the table entries.</p>
+<p>For example, if you use &quot;$noderes.xcatmaster&quot; in the statelite table then it will always be evaluated as the &quot;xcatmaster&quot; value of the node. (Which is the name of the SN as known by the node.)</p>
+<h4 id="initialize-the-nodes-on-the-new-sn-optional"><a href="#TOC">Initialize the nodes on the new SN (optional)</a></h4>
+<p>If the NIM replication hasn't been run on the new SN, or you had to do statelite migration then you must run the xCAT commands to get the new SN configured properly. For diskless nodes you must run mkdsklsnode. For diskful nodes you must run xcat2nim and nimnodeset. (See the man pages for details.)</p>
+<p>For example, if you wish to initialize the diskless compute node named &quot;compute02&quot; on its new service node you could run a command similar to the following. (Note that the primary service node was set when the snmove command was run in a previous step.)</p>
+<pre><code>    mkdsklsnode -p -i 710dskls compute02</code></pre>
+<p>The mkdsklsnode may be run while the node is currently running to reduce node downtime.</p>
+<h4 id="shut-down-the-node"><a href="#TOC">Shut down the node</a></h4>
+<p>To shut down the nodes you can use xdsh to run the shutdown command on the nodes.</p>
+<pre><code>    xdsh SN27group &quot;shutdown -F &amp;&quot;</code></pre>
+<p>If the node is down or not responding you can use the rpower command to shut the nodes down.</p>
+<pre><code>shutdown SN27group off</code></pre>
+<h4 id="reboot-the-diskless-nodes"><a href="#TOC">Reboot the diskless nodes</a></h4>
+<p>Diskless CNs will have to be re-booted to have them switch to the new SN. You can use the xCAT rnetboot command to boot the nodes from the backup SN.</p>
+<p>The rnetboot command will get the new SN information from the xCAT database and perform a directed boot request from the node to the new SN. When the node boots up it will be configured as a client of the NIM master on the new SN. For example, to reboot all the nodes that are in the xCAT group &quot;SN27group&quot; you could run the following command.</p>
+<pre><code>    rnetboot SN27group</code></pre>
+<p>You could also use the combination of the rbootseq and rpower commands to reboot the nodes if you are using P775 hardware.</p>
+<p>However, DO NOT try to use the rpower command alone to reboot the nodes. This would cause the node to try to reboot from the old SN.</p>
+<h3 id="switching-back"><a href="#TOC">Switching back</a></h3>
+<p>The process for switching nodes back will depend on what must be done to recover the original service node. Essentially the SN must have all the NIM resources and definitions restored and operations completed before you can use it.</p>
+<p>If you are using the xCAT statelite support then you must make sure you have the latest files and directories copied over and that you make any necessary changes to the statelite and/or litetree tables.</p>
+<p>If all the configuration is still intact you can simply use the snmove command to switch the nodes back.</p>
+<p>If the configuration must be restored then you will have to run the mkdsklsnode (diskless) command. This command will re-configure the SN using the common osimages defined on the xCAT management node.</p>
+<p>For example:</p>
+<pre><code>    mkdsklsnode SN27group</code></pre>
+<p>This command will check each node definition to get the osimage it is using. It will then check for the primary and backup service nodes and do the required configuration for the one that needs to be configured.</p>
+<p>Once the SN is ready you can run the snmove command to switch the node definitions to point to it. For example, if you assume the nodes are currently managed by the &quot;SN28&quot; service node then could could switch them back to the &quot;SN27&quot; SN with the following command.</p>
+<pre><code>    svmove SN27group -d SN27</code></pre>
+<p>If your compute nodes are diskless and you are NOT using an external NFS server then they must be rebooted using the rnetboot command in order to switch to the other service node.</p>
+<h2 id="cleanup"><a href="#TOC">Cleanup</a></h2>
+<p>The NIM definitions and resources that are created by xCAT commands are not automatically removed. It is therefore up to the system administrator to do some clean up of unused NIM definitions and resources from time to time. (The NIM lpp_source and SPOT resources are quite large.) There are xCAT commands that can be used to assist in this process.</p>
+<h3 id="removing-nim-machine-definitions"><a href="#TOC">Removing NIM machine definitions</a></h3>
+<p>Use the xCAT rmdsklsnode command to remove all the NIM diskless machine definitions that were created for the specified xCAT nodes. This command will not remove the xCAT node definitions.</p>
+<p>For example, to remove the NIM machine definition corresponding to the xCAT diskless node named &quot;node01&quot; you could run the command as follows.</p>
+<pre><code>    rmdsklsnode node01</code></pre>
+<p>Use the xCAT xcat2nim command to remove all the NIM standalone machine definitions that were created for the specified xCAT nodes. This command will not remove the xCAT node definitions.</p>
+<p>For example, to remove the NIM machine definition corresponding to the xCAT node named &quot;node01&quot; you could run the command as follows.</p>
+<pre><code>    xcat2nim -t node -r node01</code></pre>
+<p>The xcat2nim and rmdsklsnode command are intended to make it easier to clean up NIM machine definitions that were created by xCAT. You can also use the AIX nim command directly. See the AIX/NIM documentation for details.</p>
+<h3 id="removing-nim-resources"><a href="#TOC">Removing NIM resources</a></h3>
+<p>Use the xCAT rmnimimage command to remove all the NIM resources associated with a given xCAT osimage definition. The command will only remove a NIM resource if it is not allocated to a node. You should always clean up the NIM node definitions before attempting to remove the NIM resources. The command will also remove the xCAT osimage definition that is specified on the command line.</p>
+<p>For example, to remove the &quot;610image&quot; osimage definition along with all the associated NIM resources run the following command.</p>
+<pre><code>    rmnimimage 610image</code></pre>
+<p>If necessary, you can also remove the NIM definitions directly by using NIM commands. See the AIX/NIM documentation for details.</p>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#test-environment">Test Environment</a></li>
+<li><a href="#key-bug-fixes">Key Bug fixes</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a><ul>
+<li><a href="#upgrade-of-2.7-to-2.8-on-sles">Upgrade of 2.7 to 2.8 on SLES</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#test-environment">Test Environment</a></li>
+<li><a href="#key-bug-fixes">Key Bug fixes</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+<li><a href="#upgrade-of-27-to-28-on-sles">Upgrade of 2.7 to 2.8 on SLES</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>This page documents all of the changes and notes for</p>
+<pre><code> xCAT 2.8.4 </code></pre>
+<p>Released on</p>
+<pre><code> May 23, 2014 </code></pre>
+<p>A combined summary of all recent xCAT release notes can be viewed at <a href="[XCAT_Release_Notes]">XCAT Release Notes</a></p>
+<p>**Notice: We repackaged xCAT 2.8.4 on May 29, 2014 for <a href="https://sourceforge.net/p/xcat/bugs/4145/">defect 4145</a>. The code is the same. We only added a file /etc/httpd/conf.d/xcat.conf into xCAT-server package. **</p>
+<h2 id="new-function-and-changes-in-behavior"><a href="#TOC">New Function and Changes in Behavior</a></h2>
+<ul>
+<li>rhels6.5 and rhels5.10 are now supported</li>
+<li>AIX 7100-03-02 support</li>
+<li>xCAT cluster zones, see documentation for details <a href="Setting_Up_Zones">Setting_Up_Zones</a>.</li>
+<li>tabprune -a can be used on any xCAT table to remove all entries in the table.</li>
+<li>The xCAT version from lsxcatd -v and the other commands now includes the git commit information. For example: Version 2.8.4 (git commit bb06e4479e68e71723c4c4769fb0837304c90a0e, built Wed Apr 2 05:28:30 EDT 2014)</li>
+<li>xCAT OpenStack baremetal driver, see documentation for details [Using_xCAT_in_OpenStack_Baremetal_Node_Deployment]</li>
+<li>makedns master/slave support, see documentation for details [Cluster_Name_Resolution]</li>
+<li>A new flag '--ignorekernelchk' for commands genimage,geninitrd and nodeset to skip the kernel version checking when injecting drivers from driver rpm to initrd.</li>
+<li>Windows support enhancements:
+<ul>
+<li>Secondary adapters support</li>
+<li>Multiple partitions support</li>
+<li>Multiple WinPE</li>
+<li>Documentation updates</li>
+<li>postscript support</li>
+</ul></li>
+<li>DFM enhancements:
+<ul>
+<li>Support VIOS-based partitioning on PowerLinux machines, see documentation for details [XCAT_PowerLinux_Hardware_Management]</li>
+<li>DFM on system x</li>
+<li>Location of DFM packages [<a href="http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=Cluster%2Bsoftware&amp;product=ibm/Other+software/IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all">http://www-933.ibm.com/support/fixcen.../IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all</a>]</li>
+</ul></li>
+<li>Support static network configuration during node provisioning, can be enabled by setting &quot;site.managedaddressmode=static&quot;. Currently, this feature is only available for diskfull installation of redhat and sles.</li>
+<li>REST-API restructure(experimental). See documentation for details [WS_API]</li>
+<li>Ubuntu 14.04 diskful installation support (experimental)</li>
+<li>Statelite enhancement that 'persistent' directory will mount to the node specific directory on the nfs server from the compute node so that one node can NOT see the file/dirs of other nodes in the persistent mount directory.</li>
+</ul>
+<h2 id="test-environment"><a href="#TOC">Test Environment</a></h2>
+<p>The following list summarizes the specific details of the test environments used for this release of xCAT. Although not specifically tested, xCAT will continue to be supported and work correctly for other environments. We just do not have the resources to test all possible operating systems and hardware for each release.</p>
+<p>For a combined summary of all test environments for recent releases of xCAT, see: <a href="XCAT_Test_environment_Summary">XCAT Test environment Summary</a></p>
+<ul>
+<li>xCAT dependency package verified with this xCAT release:
+<ul>
+<li>Linux: xcat-dep-201405120531.tar.bz2<a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Linux/xcat-dep-201405120531.tar.bz2/download">http://sourceforge.net/projects/xcat/.../download</a></li>
+<li>AIX: dep-aix-201403110451.tar.gz<a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX/dep-aix-201403110451.tar.gz/download">http://sourceforge.net/projects/xcat/.../download</a></li>
+<li>Ubuntu:xcat-dep-ubuntu.tar.bz<a href="http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_Ubuntu/xcat-dep-ubuntu.tar.bz/download">http://sourceforge.net/projects/xcat/.../download</a></li>
+</ul></li>
+<li>DFM package verified with this xCAT release:
+<ul>
+<li>Linux: DFM-2.8.3.71-power-Linux<a href="http://www-933.ibm.com/support/fixcentral/swg/selectFixes?parent=Cluster%2Bsoftware&amp;product=ibm/Other+software/IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all">http://www-933.ibm.com/support/fixcen.../IBM+direct+FSP+management+plug-in+for+xCAT&amp;release=All&amp;platform=All&amp;function=all</a></li>
+</ul></li>
+<li>Operating systems verified with this xCAT release:
+<ul>
+<li>RHELS 6.4</li>
+<li>RHELS 6.5</li>
+<li>SLES 11.3</li>
+<li>RH5.10 (UT cover)</li>
+<li>Ubuntu 12.04.01</li>
+<li>AIX 7100-03-02</li>
+</ul></li>
+<li>Hw platform verified with this xCAT release:
+<ul>
+<li>Power 6</li>
+<li>Power 7</li>
+<li>dx360m3</li>
+<li>dx360m4</li>
+<li>x3550m3</li>
+<li>x3650m4</li>
+<li>Flex systems x240, x440, p260, p460</li>
+</ul></li>
+</ul>
+<h2 id="key-bug-fixes"><a href="#TOC">Key Bug fixes</a></h2>
+<ul>
+<li>xdsh -e -E not working correctly in hierarchical environment. <a href="https://sourceforge.net/p/xcat/bugs/4112/">bug 4112</a></li>
+<li>xdcp rsync issues with (merge,append, execute, executealways) in hierarchical environment. <a href="https://sourceforge.net/p/xcat/bugs/4061/">bug 4061</a></li>
+<li>xcatd restart on service node hits invalid error check when it runs nodeset on the servicenode. <a href="https://sourceforge.net/p/xcat/bugs/3942/">bug 3942</a></li>
+<li>Add vlan support for configeth. <a href="https://sourceforge.net/p/xcat/bugs/4025/">bug 4025</a></li>
+<li>makedhcp -n to add bridges into dhcpd.conf <a href="https://sourceforge.net/p/xcat/bugs/3902/">bug 3902</a></li>
+<li>Sysclone enhancements to support golden client with extended and logical partitions <a href="https://sourceforge.net/p/xcat/bugs/3940">bug 3940</a></li>
+<li>node reinstall loop when site.nodestatus=0 <a href="http://sourceforge.net/p/xcat/bugs/3997/">bug 3997</a></li>
+<li>stateless and statelite netboot failed for kvm virtual machine <a href="https://sourceforge.net/p/xcat/bugs/4096/">bug 4096</a></li>
+<li>Additional 2.8.4 fixed defects <a href="https://sourceforge.net/p/xcat/bugs/search/?q=_milestone%3A2.8.4">2.8.4 bugs</a></li>
+</ul>
+<h2 id="restrictions-and-known-problems"><a href="#TOC">Restrictions and Known Problems</a></h2>
+<ul>
+<li>rhels6.4 NFS based statelite is currently unusable on both ppc64 and x86_64 due to a rhels6.4 kernel bug: <a href="https://sourceforge.net/p/xcat/bugs/3559/">bug 3535</a>. This bug has been fixed in kernel-2.6.32-431.el6.ppc64.rpm shipped in rhels6.5.</li>
+</ul>
+<h3 id="upgrade-of-2.7-to-2.8-on-sles"><a href="#TOC">Upgrade of 2.7 to 2.8 on SLES</a></h3>
+<ul>
+<li><p>When updating xCAT from 2.7 to 2.8 on a SLES x86_64 MN, using the command <em><em>zypper update -t package '</em>xCAT</em>' **, zypper will ask the following question:</p>
+<p>Problem: xCAT-2.8-snap201302071009.x86_64 requires xCAT-genesis-scripts-x86_64, but this requirement cannot be provided uninstallable providers: xCAT-genesis-scripts-x86_64-1:2.8-snap201302071009.noarch[xcat28] Solution 1: replacement of xCAT-genesis-x86_64-1:2.7.7-snap201301100842.noarch with xCAT-genesis-scripts-x86_64-1:2.8-snap201302071009.noarch Solution 2: do not install xCAT-2.8-snap201302071009.x86_64 Solution 3: break xCAT by ignoring some of its dependencies</p>
+<p>Choose from above solutions by number or cancel [1/2/3/c] (c):</p></li>
+<li>Choose solution # 1. The new xCAT-genesis-scripts-x86_64 rpm replaces the xCAT-genesis-x86_64 rpm. It gets combined with the xCAT-genesis-base-x86_64 rpm from xcat-dep when mknb is run and forms the new genesis boot kernel.</li>
+<li><p>If you have a hierarchical SLES x86_64 cluster, you will hit this same problem when upgrading the services nodes. Since the choice needs to be responded to interactively, you must upgrade xCAT on the SNs manually, instead of having xCAT's otherpkgs support do it for you.</p></li>
+<li>sles11.2 nfs_based statelite on x86 deployment fails. See SF <a href="https://sourceforge.net/p/xcat/bugs/3038/">bug 3038</a> for workaround.</li>
+<li>Perl errors on sles when perl-IO-Socket-INET6 rpm is installed on SLES SP2. See SF defects: <a href="https://sourceforge.net/p/xcat/bugs/3173/">bug 3173</a>. You only see the messages in some commands when not running under the daemon, like xcatconfig and if you export XCATBYPASS=y and run tabdump &lt;tablename&gt;. To get rid of the warnings remove the rpm. Cause of problem under investigation.</li>
+<li>When &quot;site.managedaddressmode=static&quot;, sles provisioning on system X might hang, the details and workaround can be found in <a href="https://sourceforge.net/p/xcat/bugs/4132/">bug #4132</a>.</li>
+<li><p>on ubuntu MN, &quot;lsxcatd -v&quot; and &quot;-v&quot; option of other xcat commands failed to get xcat release info. See <a href="https://sourceforge.net/p/xcat/bugs/4128/">bug #4128</a></p></li>
+</ul>
+</body>
+</html>

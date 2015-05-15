@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p><a href="Howto_Warning">Howto_Warning</a></p>
+<p>For additional IB information, see also [Managing_the_Infiniband_Network].</p>
+<p>Add IB to a stateless node</p>
+<p>Typically we use the OFED stack. You can also try the default drivers that come with the operating system. We downloaded the distribution and extracted into /install/src/ofed1.4.</p>
+<p>Don't forget to copy the .mlnx or .&lt;something&gt; configuration file into that directory too.</p>
+<p>Then we just install the OFED package in the distro:</p>
+<pre><code>IMGROOT=/install/netboot/rhels5.3/x86_64/compute-ib/rootimg
+yum --installroot=$IMGROOT -y install bind-utils rpm tcl tk glibc-devel.i386 pciutils expat
+IBROOT=/install/src/ofed1.4
+mount -o bind /proc $IMGROOT/proc
+mount -o bind /sys $IMGROOT/sys
+mount -o bind $IBROOT $IMGROOT/mnt
+chroot $IMGROOT /mnt/mlnxofedinstall --basic --without-ib-bonding
+umount $IMGROOT/mnt
+umount $IMGROOT/sys
+umount $IMGROOT/proc</code></pre>
+<p>Then you need to make a script that will bring up the IB interface. You can add something to rc.local to do that:</p>
+<pre><code>vim $IMGROOT/etc/rc.local
+
+        ip_ib=`host $HOSTNAME-ib | awk &#39;{ print $4 }&#39;`
+        ifconfig ib0 $ip_ib netmask 255.255.0.0</code></pre>
+<p>Pack your image and off you go!</p>
+</body>
+</html>

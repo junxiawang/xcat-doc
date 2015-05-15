@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#key-bug-fixes">Key Bug fixes</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#new-function-and-changes-in-behavior">New Function and Changes in Behavior</a></li>
+<li><a href="#key-bug-fixes">Key Bug fixes</a></li>
+<li><a href="#restrictions-and-known-problems">Restrictions and Known Problems</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h2 id="new-function-and-changes-in-behavior"><a href="#TOC">New Function and Changes in Behavior</a></h2>
+<ul>
+<li>SLES 11 SP2 support on System x and System p servers</li>
+<li>Firmware assisted dump support for Power 775 servers</li>
+<li>Support for IBM Flex system x compute nodes</li>
+<li>Improved IPMI reliability and performance for large systems (~5,000 servers in 30 seconds)</li>
+<li>The statelite &quot;litetree&quot; table now supports a mount options attribute.</li>
+</ul>
+<h2 id="key-bug-fixes"><a href="#TOC">Key Bug fixes</a></h2>
+<ul>
+<li>updatenode -F and xdcp -F could not handle hierarchical running synclists when the nodes on the Service Node did not have the same synclist. https://sourceforge.net/tracker/?func=detail&amp;aid=3552171&amp;group_id=208749&amp;atid=1006945</li>
+<li>Document procedure for changing HMC password. https://sourceforge.net/tracker/?func=detail&amp;aid=3549975&amp;group_id=208749&amp;atid=1006945</li>
+<li>xdcp entire directory copy in a hierarchical environment did not work. https://sourceforge.net/tracker/?func=detail&amp;aid=3538653&amp;group_id=208749&amp;atid=1006945</li>
+<li>Support multiple commands in the commands attribute of the policy table. https://sourceforge.net/tracker/?func=detail&amp;aid=3530574&amp;group_id=208749&amp;atid=1006945</li>
+<li>Should not set conserver to start on reboot during upgrade of xCAT. This should be done only once during install. https://sourceforge.net/tracker/?func=detail&amp;aid=3510989&amp;group_id=208749&amp;atid=1006945</li>
+<li>PMR 29187,066,866: lsslp wrong output. https://sourceforge.net/tracker/?func=detail&amp;aid=3554903&amp;group_id=208749&amp;atid=1006945</li>
+<li>For the rest of the bug fixes in 2.7.4, see the <a href="https://sourceforge.net/tracker/?limit=100&amp;func=&amp;group_id=208749&amp;atid=1006945&amp;assignee=&amp;status=&amp;category=&amp;artgroup=2955289&amp;keyword=&amp;submitter=&amp;artifact_id=0&amp;assignee=&amp;status=&amp;category=&amp;artgroup=2955289&amp;submitter=&amp;keyword=&amp;artifact_id=0&amp;submit=Filter&amp;mass_category=&amp;mass_priority=&amp;mass_resolution=&amp;mass_assignee=&amp;mass_artgroup=&amp;mass_status=&amp;mass_cannedresponse=&amp;_visit_cookie=1c48c54524376afa1c40112d3d4960ea">list of 2.7.4 bugs fixed</a>.</li>
+</ul>
+<h2 id="restrictions-and-known-problems"><a href="#TOC">Restrictions and Known Problems</a></h2>
+<ul>
+<li>After you reset, restart a CMM or update CMM firmware, you shall run the command &quot;rspconfig cmm sshcfg=enable snmpcfg=enable&quot; to avoid the 'Unsupported security level' issue.</li>
+<li>Issue with nfs-based statelite on x86_64 SLES 11 SP2, the statelite nodes could not boot up, with error &quot;mount.nfs: Protocol not supported&quot;. See https://sourceforge.net/tracker/index.php?func=detail&amp;aid=3558922&amp;group_id=208749&amp;atid=1006945 for more details and the workaroud.</li>
+<li>The installation of the xCAT-IBMhpc-2.7.4-snap201208232241.noarch rpm will fail on Linux unless you have ksh installed. See defect https://sourceforge.net/tracker/?func=detail&amp;aid=3563735&amp;group_id=208749&amp;atid=1006945</li>
+</ul>
+</body>
+</html>

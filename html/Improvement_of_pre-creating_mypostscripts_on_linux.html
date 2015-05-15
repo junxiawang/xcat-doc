@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#required-reviewers">Required Reviewers</a></li>
+<li><a href="#required-approvers">Required Approvers</a></li>
+<li><a href="#background">Background</a></li>
+<li><a href="#design">Design</a><ul>
+<li><a href="#updatenode">updatenode</a></li>
+<li><a href="#xcatpostagecreate_mypostscript_or_not">xCAT::Postage::create_mypostscript_or_not</a></li>
+<li><a href="#nodeset">nodeset</a></li>
+<li><a href="#template.pmpostage.pm">template.pm/postage.pm</a></li>
+<li><a href="#xcatdsklspost">xcatdsklspost</a></li>
+<li><a href="#getpostscript.pm">getpostscript.pm</a></li>
+<li><a href="#getpostscript.pm-changes">getpostscript.pm changes</a></li>
+<li><a href="#other-considerations">Other considerations</a></li>
+</ul></li>
+<li><a href="#alternate-design-considered">Alternate Design Considered</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#required-reviewers">Required Reviewers</a></li>
+<li><a href="#required-approvers">Required Approvers</a></li>
+<li><a href="#background">Background</a></li>
+<li><a href="#design">Design</a></li>
+<li><a href="#updatenode">updatenode</a></li>
+<li><a href="#xcatpostagecreate_mypostscript_or_not">xCAT::Postage::create_mypostscript_or_not</a></li>
+<li><a href="#nodeset">nodeset</a></li>
+<li><a href="#templatepmpostagepm">template.pm/postage.pm</a></li>
+<li><a href="#xcatdsklspost">xcatdsklspost</a></li>
+<li><a href="#getpostscriptpm">getpostscript.pm</a></li>
+<li><a href="#getpostscriptpm-changes">getpostscript.pm changes</a></li>
+<li><a href="#other-considerations">Other considerations</a></li>
+<li><a href="#alternate-design-considered">Alternate Design Considered</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h3 id="required-reviewers"><a href="#TOC">Required Reviewers</a></h3>
+<ul>
+<li>Ling Gao</li>
+<li>Jie Hua Jin</li>
+<li>Kerry Bosworth</li>
+</ul>
+<h3 id="required-approvers"><a href="#TOC">Required Approvers</a></h3>
+<ul>
+<li>Bruce Potter</li>
+</ul>
+<h2 id="background"><a href="#TOC">Background</a></h2>
+<p>In xCAT 2.8, site.precreatemypostscripts was added to enhance the performance. The logic is this:</p>
+<p>1. when site.precreatemypostscripts=1, nodeset/updatenode creates mypostscritps and save it on the server as /tftpboot/mypostscripts/mypostscrtipt.$nodename. The Linux node uses &quot;wget http&quot; to download it and then run it. The AIX node, tftp.</p>
+<p>2. when site.precreatemypostscripts=0,nodeset/updatenode does not create the file on the server. The node calls &quot;getpostscritpts.awk version 2&quot; to have it created on the server as /tftpboot/mypostscripts/mypostscrtipt.$nodename.tmp. The Linux node uses &quot;wget http&quot; to download it and then runs it. AIX uses tftp.</p>
+<p>With defect 3398 fix which is related to wget part in xcatdsklspost. In xcatdsklspost, before running wget, it has to figure out the $nodename as well as site.precreatemypostscripts so that it can get the correct mypostscrtipt file on the server. Here is the logic I have used:</p>
+<ol style="list-style-type: decimal">
+<li><p>get the server name</p></li>
+<li><p>figure out the node name: (we consider the situation that the hostname is not the same as the node name)</p></li>
+</ol>
+<p>2.1)use &quot;ip route get&quot; to figure out which nic/ip on the node can get to the server.</p>
+<p>2.2)use &quot;getent hosts &lt;ip&gt;&quot; to figure out the possible node name. It may give you two names, a long name and a short name.</p>
+<p>2.3)If above fails, use &quot;hostname -s&quot; to get the short node name and use &quot;hostname&quot; to get the long node name.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><p>use &quot;wget&quot; with the short name to get mypostscritps.$shortname</p></li>
+<li><p>if failed, use &quot;wget&quot; with long name to get mypostscritps.$longname</p></li>
+<li><p>if failed, the assume site.precreatemypostscripts=0, run &quot;getpostscripts.awk version 2&quot;</p></li>
+<li><p>use &quot;wget&quot; with the short name to get mypostscritps.$shortname</p></li>
+<li><p>if failed, use &quot;wget&quot; with long name to get mypostscritps.$longname</p></li>
+</ol>
+<p>This logic helps the case when site.precreatemypostscripts=1, but make the performance worse when it is 0 which is used by most of customers. It has to go through 3 wgets and one getpostsctipts.awk to get the mypostscript file. In the old way, we only made one call (getpostsctipts.awk) to get it. It is because of this performance problem, we are coming up with a new design.</p>
+<h2 id="design"><a href="#TOC">Design</a></h2>
+<p>The new design of generating and downloading the mypostscript files will be as follows.</p>
+<ul>
+<li>xdsh/xdcp will export an environment variable NODE on the ssh call which will contain the nodename as defined in the xCAT database. This will enable xcatdsklspost and xcataixpost to have a definitive way to know the node name. This nodename will be put in the /opt/xcat/xcatinfo file during updatenode execution by xcatdsklspost/xcataixpost.</li>
+<li>For install, a kernal parameter must be added to define the NODE parameter, which will be the node name as defined in the database. This nodename will be put in the /opt/xcat/xcatinfo file during install by xcatdsklspost.</li>
+</ul>
+<h3 id="updatenode"><a href="#TOC">updatenode</a></h3>
+<ul>
+<li>updatenode will no longer create the mypostscript.&lt;nodename&gt;.tmp file. It will create a mypostscript.&lt;nodename&gt; file as does nodeset in the /tftpboot/mypostscripts directory.
+<ul>
+<li>If the site.precreatemypostscripts = 0, the /tftpboot/mypostscripts/my* files will be removed. Then updatenode will create the mypostscript* files for the noderange. They will be removed at the end of the updatenode execution.</li>
+<li>If site.precreatemypostscripts =1, it will create the mypostscripts files for the noderange, and remove at the end of the execution. This will require a new interface to <strong>xCAT::Postage::create_mypostscript_or_not</strong>.</li>
+</ul></li>
+</ul>
+<h3 id="xcatpostagecreate_mypostscript_or_not"><a href="#TOC">xCAT::Postage::create_mypostscript_or_not</a></h3>
+<p>Understand that the call is from updatenode and will create the mypostscript.node files even if site.precreatemypostscripts=0. Two new flags input that are passed on to xCAT::Postage::makescript . $notmpfile and $nofiles are the new flags. If $notmpfile=1, then not files with the .tmp extension will be created. If $nofiles=1, then not mypostscript.&lt;nodename&gt; files will be created at all and the data will be returned in an array. nofiles is used by getpostscript.awk. notmpfiles is used by updatenote.</p>
+<h3 id="nodeset"><a href="#TOC">nodeset</a></h3>
+<ul>
+<li>nodeset will check
+<ul>
+<li>if site.precreatemypostscripts=0, if true it will remove all the /tftpboot/mypostscripts/my* files.</li>
+<li>If site.precreatemyposcripts=1, then it will create the /tftpboot/mypostscript/my* files for the input noderange and not remove any of the other files.</li>
+</ul></li>
+</ul>
+<h3 id="template.pmpostage.pm"><a href="#TOC">template.pm/postage.pm</a></h3>
+<ul>
+<li>All code that does creation of the /tfptboot/mypostscript/my* files is moved out of Templage.pm and into Postage.pm. The one exception is sub enablesshbetweennodes in Template.pm because it is referenced in the mypostscript template file in 2.8 and 2.8.1 and would cause of migration problem, if someone had already modified it and put it in /install/postscripts.</li>
+<li>The code that does the creation of /tftpboot/mypostcript/my* files must honor hierarchy. If sharedtftp=1, then they can just be created locally. If sharedtftp=0 or not set, then they must be created on the service node /tftpboot/mypostscripts directory for the nodes in the noderange.</li>
+</ul>
+<h3 id="xcatdsklspost"><a href="#TOC">xcatdsklspost</a></h3>
+<p>xcatdsklspost will do the following:</p>
+<ul>
+<li>first call wget with the NODE name supplied from the kernel parm or the Env Variable to get the mypostscript.&lt;NODE&gt; file, if available. If the file is return, then it is used on the wget.</li>
+<li>On an updatenode call to xcatdsklspost,the mypostscripts file should be there since updatenode just created it. The NODE should be correct since this is on the xdsh call. I am planning to just stop with error, if wget does not succeed. It seems that continuing to try a getpostscript.awk call is not relevant on this path.
+<ul>
+<li>It will update the /opt/xcat/xcatinfo file with NODE information. Should it update XCATSERVER information - No because of SN pools support.</li>
+</ul></li>
+<li>On a non-updatenode call to xcatdsklspost, if wget fails or the NODE information is not available to xcatdsklspost then
+<ul>
+<li>it will look in xcatinfo file for the NODE information. If it exists, it will use the information from xcatinfo to call wget.</li>
+<li>If the wget fails for that NODE, it will try to determine the hostname with the current logic and try wget again.</li>
+<li>If that fails, then it will go the getpostscript.awk call where no nodename is required.</li>
+<li>First it contact xcatd to determine if the xcatd is ready using the new interface.</li>
+<li>If ready, it will use getpostscript.awk to download the mypostscript file. The version number is no longer needed. getpostscripts.awk calls getpostscripts, which can determine the correct file name to return.</li>
+</ul></li>
+<li>xcatdsklspost calling getpostscript.awk (version2 ) will no longer be used. The function in getpostscript.pm will still need to support the call, if an xcatdsklspost (2.8 and 2.8.1) has been built into the image for installs.</li>
+<li>xcatdsklspost will update the /opt/xcat/xcatinfo file with the nodename from the NODE env var or kernel parm, if supplied on the call.</li>
+</ul>
+<h3 id="getpostscript.pm"><a href="#TOC">getpostscript.pm</a></h3>
+<p>getpostscript.pm - Still support version2 but update the no version number path so that it can be the default for 2.8.1 and yet not break 2.7 and earlier code.</p>
+<p><strong>Template.pm and Postage.pm -</strong> An attempt will be made, to make the AIX and Linux processing the same. We will therefore support precreatemypostscripts for both AIX and Linux. We will also add supporting long hostnames in the xCAT database. the mypostscripts.&lt;longhostname&gt; file will be generated for these long hostnames.</p>
+<p><strong>TBD: Work with Jarrod on nodename determination and &quot;per node certificates&quot;.</strong></p>
+<h3 id="getpostscript.pm-changes"><a href="#TOC">getpostscript.pm changes</a></h3>
+<p>On the server, getpostscript reads the site.precreatemypostscripts setting and determine the name of the file to return.</p>
+<ul>
+<li>If precreatemypostscript = 1: it reads the existing file for the node, and return the content of the /tftpboot/mypostscripts/mypostscript.$nodename file. If the file does not exist, generate the file and return the content.</li>
+<li>If precreatemypostscript not 1 or not set: it generates the file and return the content of the file</li>
+</ul>
+<h3 id="other-considerations"><a href="#TOC">Other considerations</a></h3>
+<ul>
+<li>FQDN hostnames</li>
+</ul>
+<p>In current xcatd code, we support long hostname in the database. We will need to add support for long hostnames in the xCAT database and in the postscripts interface.</p>
+<ul>
+<li>Performance</li>
+</ul>
+<p>After performance test, it was decide to go with wget first and use getpostscript.awk as a last choice. Need to check if there is room for performance improvements in getpostscript.pm, getpostscript.awk, Template.pm and Postage.pm.</p>
+<p>Should we change AIX to use wget and ship wget in the deps package.</p>
+<ul>
+<li>Migration</li>
+</ul>
+<p>Another item to consider is backward compatibility. For pre-release 2.8, if the user has old stateless/statelite image, that means the 2.7 or older /opt/xcat/xcatdsklspost is in the image and is used when the node reboot, (same is true for diskful case when site.runbootscripts=yes). Will it still work? The answer is yes, because getpostscripts.pm supports calls with no version and that is how it will be called with this new design.</p>
+<p>For release 2.8, if images are built with the xcatdsklspost from 2.8, then the version2 option will still be honored by getpostscripts. The logic will remain the same.</p>
+<p>updatenode is not a problem because it pushed the new xcatdsklspost down to the node.</p>
+<ul>
+<li>AIX and Linux</li>
+</ul>
+<p>This design will try and merge the logic of building the Linux and AIX mypostscript file. Currently Linux uses logic in Template.pm and AIX uses logic in Postage.pm. An attempt will be made to use the same code for both. In doing that we will can support precreatemypostscript on AIX.</p>
+<h2 id="alternate-design-considered"><a href="#TOC">Alternate Design Considered</a></h2>
+<p>Let xcatdsklspost know the setting of site.precreatemypostscripts before hand</p>
+<p>(Considered but will not be implemented)</p>
+<p>This is a chicken-and-egg problem. The setting is contained in mypostscript file. But we need it to get mypostscript file using that setting. The thought is to pass this value down to xcatdsklspost through a kernel parameter in the deployment case and as a parameter in the updatenode case. Let's make sure we cover everything:</p>
+<p>1.1) stateless and statelite deployment, use kernel parameter</p>
+<p>1.2) stateful deployment: both node name and site.precreatemypostscripts is known by the server, so only one call is needed to put in the kick start/autoyast configuration file.</p>
+<p>1.3) updatenode: pass it down as a parameter to xcatdsklspost</p>
+<p>1.4) running postbootscripts for diskfull node reboot when site.runbootscripts=yes: no way to know the current site.precreatemypostscripts setting. Have to try the mypostscrtipt.<span class="math"><em>n</em><em>o</em><em>d</em><em>e</em><em>n</em><em>a</em><em>m</em><em>e</em><em>a</em><em>n</em><em>d</em><em>t</em><em>h</em><em>e</em><em>n</em><em>t</em><em>r</em><em>y</em><em>m</em><em>y</em><em>p</em><em>o</em><em>s</em><em>t</em><em>s</em><em>c</em><em>r</em><em>t</em><em>i</em><em>p</em><em>t</em>. </span>nodename.tmp</p>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>: Bruce, Lissa ,Ling , Guang Cheng, Jie hua</li>
+<li><strong>Required approvers</strong>: Bruce Potter</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

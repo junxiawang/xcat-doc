@@ -1,0 +1,16 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Change the boot state of the nodes.</p>
+<p>Parameters:<br />boot - sets the boot state to boot. Has no value.<br />install - sets the boot state to install. If a value is set for this parameter, it will be taken as the profile name<br />netboot - sets the boot state to netboot. If a value is set for this parameter, it will be taken as the profile name<br />statelite - sets the boot state to statelite. If a value is set for this parameter, it will be taken as the profile name<br />bmcSetup - instructs the node to boot to the xCAT nbfs environment and proceed to configure BMC for basic remote access. This causes the IP, netmask, gateway, username, and password to be programmed according to the configuration table. Has no value.</p>
+<p>Example:</p>
+<pre><code>PUT https://127.0.0.1/xcatws/nodes/b1-b4/bootstat?userName=xxx&amp;password=xxx</code></pre>
+<p>With data:<br />[&quot;install&quot;] / [&quot;netboot&quot;] /...</p>
+</body>
+</html>

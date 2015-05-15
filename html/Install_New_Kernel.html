@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#install-a-new-kernel-on-the-nodes">Install a new Kernel on the nodes</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#install-a-new-kernel-on-the-nodes">Install a new Kernel on the nodes</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h3 id="install-a-new-kernel-on-the-nodes"><a href="#TOC">Install a new Kernel on the nodes</a></h3>
+<p>Using a postinstall script ( you could also use the updatenode method):</p>
+<pre><code>mkdir /install/postscripts/data
+cp &amp;lt;kernel&amp;gt; /install/postscripts/data</code></pre>
+<p>Create the postscript updatekernel:</p>
+<pre><code>vi /install/postscripts/updatekernel</code></pre>
+<p>Add the following lines to the file</p>
+<pre><code>#!/bin/bash
+rpm -Uivh data/kernel-*rpm</code></pre>
+<p>Change the permission on the file</p>
+<pre><code>chmod 755 /install/postscripts/updatekernel</code></pre>
+<p>Add the script to the postscripts table and run the install:</p>
+<pre><code>chdef -p -t group -o compute postscripts=updatekernel
+rnetboot compute</code></pre>
+</body>
+</html>

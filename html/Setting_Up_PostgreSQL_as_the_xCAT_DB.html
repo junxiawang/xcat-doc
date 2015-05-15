@@ -1,0 +1,406 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#switching-to-postgresql-database-on-management-node">Switching to PostgreSQL Database on Management Node</a><ul>
+<li><a href="#installing-postgresql">Installing PostgreSQL</a><ul>
+<li><a href="#install-postgresql-on-linux"><strong>Install Postgresql on Linux</strong></a></li>
+<li><a href="#install-postgresql-on-aix-mn-xcat-2.5-release-or-later"><strong>Install PostgreSQL on AIX MN ( xCAT 2.5 release or later)</strong></a></li>
+</ul></li>
+<li><a href="#setup-postgresql-on-aix-and-linux">Setup PostgreSQL on AIX and Linux</a><ul>
+<li><a href="#using-the-pgsqlsetup-script-xcat-2.5-or-later">Using the pgsqlsetup script (xCAT 2.5 or later)</a></li>
+<li><a href="#setting-up-the-service-nodes-hierarchy"><strong>Setting up the Service Nodes (Hierarchy)</strong></a></li>
+<li><a href="#manually-setup-postgresql"><strong>Manually setup PostgreSQL</strong></a></li>
+</ul></li>
+<li><a href="#migrate-your-database-to-postgresql"><strong>Migrate your database to PostgreSQL</strong></a></li>
+</ul></li>
+<li><a href="#using-postgresql-psql-command-line-interface"><strong>Using Postgresql ( psql command line interface)</strong></a></li>
+<li><a href="#migrate-to-aix-7.1"><strong>Migrate to AIX 7.1</strong></a></li>
+<li><a href="#useful-postgresql-commands"><em>Useful Postgresql Commands</em></a></li>
+<li><a href="#command-references">Command references:</a></li>
+<li><a href="#setup-odbc"><strong>Setup ODBC</strong></a><ul>
+<li><a href="#automatic-setup-of-odbc">Automatic setup of ODBC</a></li>
+<li><a href="#manually-setup-odbc">Manually setup ODBC</a><ul>
+<li><a href="#create-odbc-setup-files">Create odbc setup files</a></li>
+</ul></li>
+<li><a href="#create-root-role">create root role</a></li>
+<li><a href="#test-odbc">Test ODBC</a></li>
+</ul></li>
+<li><a href="#removing-postgresql-database">Removing Postgresql Database</a></li>
+<li><a href="#document-test-record">Document Test Record</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#switching-to-postgresql-database-on-management-node">Switching to PostgreSQL Database on Management Node</a></li>
+<li><a href="#installing-postgresql">Installing PostgreSQL</a>
+<ul>
+<li><a href="#install-postgresql-on-linux"><strong>Install Postgresql on Linux</strong></a></li>
+<li><a href="#install-postgresql-on-aix-mn--xcat-25-release-or-later"><strong>Install PostgreSQL on AIX MN ( xCAT 2.5 release or later)</strong></a></li>
+</ul></li>
+<li><a href="#setup-postgresql-on-aix-and-linux">Setup PostgreSQL on AIX and Linux</a>
+<ul>
+<li><a href="#using-the-pgsqlsetup-script-xcat-25-or-later">Using the pgsqlsetup script (xCAT 2.5 or later)</a></li>
+<li><a href="#setting-up-the-service-nodes-hierarchy"><strong>Setting up the Service Nodes (Hierarchy)</strong></a></li>
+<li><a href="#manually-setup-postgresql"><strong>Manually setup PostgreSQL</strong></a></li>
+</ul></li>
+<li><a href="#migrate-your-database-to-postgresql"><strong>Migrate your database to PostgreSQL</strong></a></li>
+<li><a href="#using-postgresql--psql-command-line-interface"><strong>Using Postgresql ( psql command line interface)</strong></a></li>
+<li><a href="#migrate-to-aix-71"><strong>Migrate to AIX 7.1</strong></a></li>
+<li><a href="#_useful-postgresql-commands_"><em>Useful Postgresql Commands</em></a></li>
+<li><a href="#command-references">Command references:</a></li>
+<li><a href="#setup-odbc"><strong>Setup ODBC</strong></a></li>
+<li><a href="#automatic-setup-of-odbc">Automatic setup of ODBC</a></li>
+<li><a href="#manually-setup-odbc">Manually setup ODBC</a>
+<ul>
+<li><a href="#create-odbc-setup-files">Create odbc setup files</a></li>
+</ul></li>
+<li><a href="#create-root-role">create root role</a></li>
+<li><a href="#test-odbc">Test ODBC</a></li>
+<li><a href="#removing--postgresql--database">Removing Postgresql Database</a></li>
+<li><a href="#document-test-record">Document Test Record</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<div class="figure">
+<img src="http://sourceforge.net/p/xcat/wiki/XCAT_Documentation/attachment/Official-xcat-doc.png" /><p class="caption"></p>
+</div>
+<h2 id="switching-to-postgresql-database-on-management-node"><a href="#TOC">Switching to PostgreSQL Database on Management Node</a></h2>
+<p>One reason to migrate from the xCAT default SQLite database to PostgreSQL is for xCAT hierarchy using Service Nodes. PostgreSQL provides the ability for remote access to the database on the xCAT Management Node; a requirement for Service Nodes. PostgreSQL also support IPV6.</p>
+<p><strong>Note: If using postgresql-9.0, the paths have changed from /var/lib/pgsql/... to /var/lib/pgsql/9.0/...<br />The postgresql service name has changed to postgresql-9.0 (service postgresql-9.0 stop/start)</strong></p>
+<p>This following documentation assumes:</p>
+<ul>
+<li>11.16.0.1 : IP of management node (cluster-facing NIC)</li>
+<li>xcatdb : database name</li>
+<li>xcatadm : database role (aka user)</li>
+<li>cluster : database password</li>
+<li>11.16.1.230 &amp; 11.16.2.230: service nodes (mgmt node facing NIC)</li>
+</ul>
+<p>Substitute your IP addresses, userid, password, and database name as appropriate.</p>
+<h3 id="installing-postgresql"><a href="#TOC">Installing PostgreSQL</a></h3>
+<h4 id="install-postgresql-on-linux"><a href="#TOC"><strong>Install Postgresql on Linux</strong></a></h4>
+<p>The PostgreSQL rpms are part of the base Linux OS. Please verify the following rpms are installed:</p>
+<pre><code>    postgresql-libs-*
+    postgresql-server-*
+    postgresql-*
+
+    perl-DBD-Pg*    </code></pre>
+<p>Note: in SLES the Perl-DBD is located in the SDK</p>
+<p>You may also want to install the following:</p>
+<pre><code>    postgresql-odbc*
+    postgresql-plpython
+    postgresql-plperl</code></pre>
+<p>On Debian/Ubuntu. Should install following packages:</p>
+<pre><code>    postgresql
+    libdbd-pg-perl</code></pre>
+<h4 id="install-postgresql-on-aix-mn-xcat-2.5-release-or-later"><a href="#TOC"><strong>Install PostgreSQL on AIX MN ( xCAT 2.5 release or later)</strong></a></h4>
+<p><strong>Space Required for database install:</strong></p>
+<ul>
+<li>PostgreSQL will be installed in /var/lib/pgsql and needs about 24 mgbytes for the code and add the size needed for the xCAT database. You may also need to increase /etc and /usr.</li>
+</ul>
+<p><strong>As root:</strong></p>
+<ul>
+<li>Download PostgreSQL rpms package from the following location:</li>
+</ul>
+<p>http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX</p>
+<ul>
+<li>Unzip and untar in the location of your choice.</li>
+</ul>
+<pre><code>    gunzip xcat-postgresql*.gz
+    tar -xvf xcat-postgresql*.tar</code></pre>
+<p><strong>Read the README</strong> file for installation instructions, and install the two rpms on the AIX Management Node that are appropriate for your OS level.</p>
+<p>*<em>Note: as of Oct 2010, the AIX deps package will automatically install the perl-DBD-Pg , and unixODBC-</em> when installed on the Management or Service Nodes. You may find these already installed. **</p>
+<h3 id="setup-postgresql-on-aix-and-linux"><a href="#TOC">Setup PostgreSQL on AIX and Linux</a></h3>
+<h4 id="using-the-pgsqlsetup-script-xcat-2.5-or-later"><a href="#TOC">Using the pgsqlsetup script (xCAT 2.5 or later)</a></h4>
+<p><strong>You should use the pgsqlsetup script to setup xCAT on PostgreSQL instead of following steps under &quot;Manually setup PostgreSQL&quot; section</strong></p>
+<p>See the pgsqlsetup man page for more information on the script. The script will complete all actions described in the &quot;Manually setup PostgreSQL&quot; section, including the addition of the Management Nodes IP address in the pg_hba.conf file.</p>
+<p>The script will prompt you for an xCAT admin password for the database. As of xCAT2.8, you can bypass this prompt by setting XCATPGPW=<password> in the environment.</p>
+<p>To setup the PostgreSQL database, run</p>
+<pre><code>     pgsqlsetup -i -V</code></pre>
+<h4 id="setting-up-the-service-nodes-hierarchy"><a href="#TOC"><strong>Setting up the Service Nodes (Hierarchy)</strong></a></h4>
+<p>After the automatic setup is complete, to support Service Nodes you need to</p>
+<ul>
+<li>add additional IP addresses to the /var/lib/pgsql/data/pg_hba.conf file for each Service Node.</li>
+</ul>
+<pre><code>    host    all          all        11.16.1.230/32      md5
+    host    all          all        11.16.2.230/32      md5</code></pre>
+<ul>
+<li>Stop and start PostgreSQL when you edit those files.</li>
+</ul>
+<p>Look in the &quot;Setup the PostgreSQL configuration files&quot; section for more information in changing the pg_hba.conf and postgresql.conf files.</p>
+<ul>
+<li>When the Service Node is installed by xCAT, it will transfer the correct /etc/xcat/cfgloc file and the necessary credentials for the xCAT daemon on the Service Node to access the database on the Management Node.</li>
+<li>The PostgreSQL rpms and perl-DBD must be installed on the Service Node. For Linux, this is shipped with the OS distribution. For AIX, you must installed the one provided by xCAT. See Install PostgreSQL on AIX MN (xCAT 2.5 release or later) for the location of the rpms. These should be added to the AIX install_bundle resource for the Service Node.</li>
+<li>On AIX, you will need to increase the default install sizes of the filesystems to accommodate installing the PostgreSQL rpms on the Service Nodes when installing.</li>
+</ul>
+<pre><code>    * /var - 131072 bytes 
+    * / - 2818048 bytes 
+    * /opt - 52428 bytes </code></pre>
+<h4 id="manually-setup-postgresql"><a href="#TOC"><strong>Manually setup PostgreSQL</strong></a></h4>
+<p><strong>STOP: If using xCAT 2.5 or later, you can use pgsqlsetup to do this work. See above for instructions.</strong></p>
+<p><strong>As root</strong>: Stop the xcatd daemon during the database migration:</p>
+<p>AIX:</p>
+<pre><code>stopsrc -s xcatd </code></pre>
+<p>Linux:</p>
+<pre><code>
+service xcatd stop </code></pre>
+<p><strong>On AIX create the needed postgreSQL ids:</strong></p>
+<ul>
+<li>Create the postgres id that will administer the PostgreSQL server</li>
+</ul>
+<pre><code>    mkgroup postgres
+    mkuser pgrp=postgres home=/var/lib/pgsql postgres
+    passwd postgres ( assign a password this is optional)</code></pre>
+<ul>
+<li>Create the xcatadm id that will own the xcatdb in PostgreSQL</li>
+</ul>
+<pre><code>    mkuser xcatadm
+    passwd xcatadm ( assign temp password with root)
+    su - xcatadm
+    passwd ( assign permanent password that will be used in the /etc/xcat/cfgloc file)</code></pre>
+<ul>
+<li>Create the directory for the databases and make postgres the owner</li>
+</ul>
+<p>as root:</p>
+<pre><code>    mkdir /var/lib/pgsql/data
+    chown postgres /var/lib/pgsql/data
+    chgrp postgres /var/lib/pgsql/data
+    su - postgres
+    pwd ( are you in /var/lib/pgsql)</code></pre>
+<ul>
+<li>Setup .profile</li>
+</ul>
+<p>Add paths needing to run DB commands to the .profile</p>
+<pre><code>    MANPATH=/usr/local/pgsql/man:$MANPATH
+    export MANPATH
+    PATH=/usr/local/pgsql/bin:$PATH
+    export PATH</code></pre>
+<p><strong>On AIX as postgres Create a database installation by running the following:</strong></p>
+<pre><code>    /var/lib/pgsql/bin/initdb -D /var/lib/pgsql/data</code></pre>
+<p>You should get the following message &quot;Success. You can now start the database...&quot;</p>
+<p><strong>On Linux as root run the following to create the Database installation:</strong></p>
+<pre><code>    service postgresql initdb</code></pre>
+<p>Setup the PostgreSQL configuration files</p>
+<p>On AIX or Linux as root:</p>
+<pre><code>    vi /var/lib/pgsql/data/pg_hba.conf</code></pre>
+<p>Lines should look like this (with your IP addresses substituted). Add all nodes that need to access the database.</p>
+<pre><code>    local all all ident sameuser
+    # IPv4 local connections:
+    host all all 127.0.0.1/32 md5
+    host all all 11.16.0.1/32 md5
+    host all all 11.16.1.230/32 md5
+    host all all 11.16.2.230/32 md5</code></pre>
+<p>For example, where 11.16.0.1 is the MN and 11.16.1.230 and 11.16.2.230 are service nodes.</p>
+<pre><code>    
+    vi /var/lib/pgsql/data/postgresql.conf
+    set listen_addresses = &#39;*&#39; # This allows remote access from all ips</code></pre>
+<p><strong>Note: be sure and un-comment the line.</strong></p>
+<p>The following logging setup is the default on Linux, but should be set on AIX also.</p>
+<pre><code>    logging_collector = on
+    log_directory = &#39;pg_log&#39;
+    log_filename = &#39;postgresql-%a.log&#39;
+    log_truncate_on_rotation = on
+    log_rotation_age = 1d
+    log_rotation_size = 0
+    log_min_messages = notice</code></pre>
+<p>If you are working on large systems, you may need to set the max_connections attribute in the file. This is the number of connections that can be make to the database at one time. If you are using service nodes, it is recommended that you</p>
+<pre><code>    set max_connections = 1000</code></pre>
+<p>Start/Stop the PostgreSQL server</p>
+<p>start the server:</p>
+<p>AIX:</p>
+<pre><code>     su - postgres
+     /var/lib/pgsql/bin/pg_ctl -D /var/lib/pgsql/data start</code></pre>
+<p>Linux:</p>
+<pre><code>    service postgresql start</code></pre>
+<p>If you need to stop the server:</p>
+<p>AIX:</p>
+<pre><code>    su - postgres
+    /var/lib/pgsql/bin/pg_ctl -D /var/lib/pgsql/data stop</code></pre>
+<p>Linux:</p>
+<pre><code>    service postgresql stop</code></pre>
+<p>Note: you can get the message $ LOG: could not bind IPv6 socket: Address already in use HINT: Is another postmaster already running on port 5432? If not, wait a few seconds and retry after setting listen_addresses = '*' , it can be ignored.</p>
+<p><strong>On AIX and Linux:</strong></p>
+<pre><code>    su - postgres:</code></pre>
+<p>Create the xcatadm userid in the database and set to own xcatdb</p>
+<p>AIX:</p>
+<pre><code>    /var/lib/pgsql/bin/createuser -SDRP xcatadm</code></pre>
+<p>Linux:</p>
+<pre><code>    /usr/bin/createuser -SDRP xcatadm</code></pre>
+<p>( Will prompt for a password, use the same one that you input for the AIX xcatadm id. Note: this xcatadm unix id does not have to exist on Linux, only in the database.).</p>
+<p>Create the xcatdb database owned by xcatadm</p>
+<p>AIX:</p>
+<pre><code>    /var/lib/pgsql/bin/createdb -O xcatadm xcatdb</code></pre>
+<p>Linux:</p>
+<pre><code>    /usr/bin/createdb -O xcatadm xcatdb</code></pre>
+<pre><code>exit ( back to root)</code></pre>
+<h3 id="migrate-your-database-to-postgresql"><a href="#TOC"><strong>Migrate your database to PostgreSQL</strong></a></h3>
+<p><strong>Note: the pgsqlsetup script will do this for you also, if you choose to use it.</strong></p>
+<p>Backup your database to migrate to the new database. (This is required even if you have not added anything to your xCAT database yet. Required default entries were created when the xCAT RPMs were installed on the management node which, and they must be migrated to the new postgresql database.)</p>
+<pre><code>    mkdir -p ~/xcat-dbback
+    XCATBYPASS=1 dumpxCATdb -p ~/xcat-dbback</code></pre>
+<ul>
+<li>/etc/xcat/cfgloc file should contain the following line, substituting your specific info. This points the xCAT database access code to the new database.</li>
+</ul>
+<pre><code>    Pg:dbname=xcatdb;host=11.16.0.1|xcatadm|cluster</code></pre>
+<p>change to allow only root access:</p>
+<pre><code>    chmod 0600 /etc/xcat/cfgloc</code></pre>
+<ul>
+<li>Restore your database to postgresql (bypass mode runs the command without xcatd):</li>
+</ul>
+<pre><code>    XCATBYPASS=1 restorexCATdb -p ~/xcat-dbback</code></pre>
+<ul>
+<li>Start the xcatd daemon using the postgresql database</li>
+</ul>
+<p>AIX:</p>
+<pre><code>    startsrc -s xcatd</code></pre>
+<p>Linux:</p>
+<pre><code>    service xcatd start</code></pre>
+<h2 id="using-postgresql-psql-command-line-interface"><a href="#TOC"><strong>Using Postgresql ( psql command line interface)</strong></a></h2>
+<p>If you want to access the database through the Postgresql (psql) command, to check the database, enter the following:</p>
+<pre><code>    su - postgres
+    psql -h &lt;hostname&gt; -U xcatadm -d xcatdb</code></pre>
+<p>( note hostname must match ip in the pg_hba.conf file) and you will be prompted for the password ( cluster).</p>
+<p>You can then run sql commands on the database.</p>
+<pre><code>    
+    Run \h for a list of commands
+    Run \g so SQL commands can end in ;</code></pre>
+<p>Then</p>
+<pre><code>    select * from nodelist; to see table entries
+    \dt    will list all tables;
+    \q to quit</code></pre>
+<h2 id="migrate-to-aix-7.1"><a href="#TOC"><strong>Migrate to AIX 7.1</strong></a></h2>
+<p>AIX 7.1 uses a new level of Perl ( 5.10.1). A new level for AIX 7.1 of the perl-DBD rpm and the postgresql rpm must be installed to replaced the AIX 6.x rpms that was installed previously.</p>
+<p>During the migration:</p>
+<p>Backup your xcat database ( dumpxCATdb)</p>
+<p>The xcatd daemon should be stopped.</p>
+<p>After the OS migration:</p>
+<p>The new rpms can be obtained from the xcat postgresql package on the web:</p>
+<p>http://sourceforge.net/projects/xcat/files/xcat-dep/2.x_AIX/xcat-postgresql-snap201007280900.tar.gz/download</p>
+<ul>
+<li>Download the xCAT postgresql package</li>
+<li>To to the 7.1 subdirectory</li>
+<li>rpm -Uvh perl-DBD-Pg-2-17.2.aix7.1.ppc.rpm xcat-postgresql-8.4-4.aix7.1.ppc.rpm</li>
+<li>start the xcatd daemon</li>
+</ul>
+<h2 id="useful-postgresql-commands"><a href="#TOC"><em>Useful Postgresql Commands</em></a></h2>
+<ul>
+<li>Show create statement for a table, for example prescripts table.</li>
+</ul>
+<pre><code>    /usr/bin/pg_dump xcatdb -U xcatadm -t prescripts</code></pre>
+<ul>
+<li>Drop the database</li>
+</ul>
+<pre><code>    su - postgres
+    dropdb xcatdb - drops the database
+    dropuser xcatadm -  removes the xcatadm database owner
+    cd /var/lib/pgsql/data
+    rm -rf *    (need to remove the data if you want to recreate)</code></pre>
+<ul>
+<li>List databases</li>
+</ul>
+<pre><code>    su - postgres
+    psql -l</code></pre>
+<ul>
+<li>Access database</li>
+</ul>
+<pre><code>    su - postgres
+    psql xcatdb
+    SELECT * FROM &quot;pg_user&quot;;    Select all users
+    SELECT * FROM &quot;site&quot;;   Select the site table
+    SELECT MAX(recid) from &quot;auditlog&quot;;
+    SELECT MIN(recid) from &quot;auditlog&quot;;
+    drop table zvm;   Removes a table
+    \dt    Select all tables
+    \?  help
+    \q   exit</code></pre>
+<p>You can get a nice list of useful commands from here:</p>
+<pre><code>  http://www.linuxweblog.com/postgresql-reference </code></pre>
+<h2 id="command-references"><a href="#TOC">Command references:</a></h2>
+<ul>
+<li>http://www.thegeekstuff.com/2009/04/15-practical-postgresql-database-adminstration-commands/</li>
+<li>http://www.faqs.org/docs/ppbook/c22759.htm</li>
+</ul>
+<h2 id="setup-odbc"><a href="#TOC"><strong>Setup ODBC</strong></a></h2>
+<p>Install:</p>
+<pre><code>    postgresql-odbc-*
+    unixODBC-*</code></pre>
+<p>On Debian/Ubuntu install:</p>
+<pre><code>    unixodbc
+    odbc-postgresql</code></pre>
+<h3 id="automatic-setup-of-odbc"><a href="#TOC">Automatic setup of ODBC</a></h3>
+<p>As of xCAT 2.8, the pgsqlsetup script will automatically setup the ODBC interface for Linux after xCAT has been setup to use postgreSQL. AIX is not supported. To setup the ODBC on the Management Node, run the following command and then you can skip the &quot;Manually setup ODBC&quot; section.</p>
+<pre><code>    pgsqlsetup -o -V</code></pre>
+<h3 id="manually-setup-odbc"><a href="#TOC">Manually setup ODBC</a></h3>
+<h4 id="create-odbc-setup-files"><a href="#TOC">Create odbc setup files</a></h4>
+<pre><code>    cat /root/.odbc.ini
+    [xCATDB]
+    SERVER = x.xx.xx.xx
+    DATABASE = xcatdb
+    USER     = xcatadm
+    PASSWORD = xcat20
+    
+    chmod 0600 /root/.odbc.ini
+    
+    
+    cat /etc/odbc.ini
+    [xCATDB]
+    Driver   = PostgreSQL
+    SERVER   = xx.xx.xx.xx
+    PORT     = 3306
+    DATABASE = xcatdb
+    
+    
+    cat /etc/odbcinst.ini
+    # Driver from the postgresql-odbc package
+    # Setup from the unixODBC package
+    [PostgreSQL]
+    Description     = ODBC for PostgreSQL
+    Driver          = /usr/lib/psqlodbc.so
+    Setup           = /usr/lib/libodbcpsqlS.so
+    Driver64        = /usr/lib64/psqlodbc.so
+    Setup64         = /usr/lib64/libodbcpsqlS.so
+    FileUsage       = 1</code></pre>
+<h3 id="create-root-role"><a href="#TOC">create root role</a></h3>
+<pre><code>su - postgres
+createuser -SDRP root
+Enter password for new role:
+Enter it again:</code></pre>
+<h3 id="test-odbc"><a href="#TOC">Test ODBC</a></h3>
+<pre><code>isql -v xcatdb</code></pre>
+<h2 id="removing-postgresql-database"><a href="#TOC">Removing Postgresql Database</a></h2>
+<p>To remove the database, first run a backup:</p>
+<pre><code>    mkdir -p ~/xcat-dbback
+    dumpxCATdb -p ~/xcat-dbback</code></pre>
+<p>Stop the xcatd daemon on the Management Node. Note if you are using Service Nodes, they will no longer work. SQLite does not support Service Node. You should stop xcatd on the service node. After you run this process which takes you to SQLite, you will need to pick another database such as MySQL and follow the procedure for setting up MySQL for xCAT.</p>
+<p>On AIX:</p>
+<pre><code>    stopsrc -s xcatd</code></pre>
+<p>On Linux:</p>
+<pre><code>service xcatd stop</code></pre>
+<p>Now remove the xcatdb database from Postgresql.</p>
+<pre><code>    su - postgres
+    dropdb xcatdb - drops the database
+    dropuser xcatadm -  removes the xcatadm database owner
+    cd /var/lib/pgsql/data
+    rm -rf *    (need to remove the data if you want to recreate)
+</code></pre>
+<p>Move /etc/xcat/cfgloc file (it points xCAT to Postgresql). Move it on the Management Node and Service Nodes. Service Nodes will no longer work at this point. With no /etc/xcat/cfgloc, xcat runs on the default SQLite datbase.</p>
+<pre><code>mv /etc/xcat/cfgloc /etc/xcat/cfgloc.pg</code></pre>
+<p>Restore the Postgresql database into SQLite. xCAT will run from SQlite database now as the default.</p>
+<pre><code>
+XCATBYPASS=1 restorexCATdb -p ~/xcat-dbback</code></pre>
+<p>Start xcatd</p>
+<p>On AIX:</p>
+<pre><code>restartxcatd</code></pre>
+<p>On Linux:</p>
+<pre><code>service xcatd start</code></pre>
+<h2 id="document-test-record"><a href="#TOC">Document Test Record</a></h2>
+<p>Tested by Ting Ting Li on Aug. 6 2014 against xCAT 2.8.5</p>
+</body>
+</html>

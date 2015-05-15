@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#main-points">Main Points</a></li>
+<li><a href="#osimage-definition-and-enhancement-in-ospkgs">osimage definition and enhancement in ospkgs</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#background">Background</a></li>
+<li><a href="#main-points">Main Points</a></li>
+<li><a href="#osimage-definition-and-enhancement-in-ospkgs">osimage definition and enhancement in ospkgs</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<p>The Mini-design of the item ospkgs enhancements to install/upgrade OS packages from Updates is as following:</p>
+<h2 id="background"><a href="#TOC">Background</a></h2>
+<p>In xCAT, there are two methods to support osimage definition:</p>
+<p>(1)The first method is that when the provmethod is set to install/netboot/statelite, copycds will generate the default osimages as following: rhels6.2-ppc64-install-compute, rhels6.2-ppc64-netboot-compute, rhels6.2-ppc64-statelite-compute and so on.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>The second method is that when the provmethod is set to one osimage, such as testimage which is defined by the users</li>
+</ol>
+<p>It's flexible to use the second method in xCAT. Actually, we recommend the customers to define the osimage, and set the provmethod to one osimage, instead of install/netboot/statelite.</p>
+<p>Currently, the pkgdir in the ospkgs scripts only supports one package path, and the kerneldir isn't support in the ospkgs.</p>
+<h2 id="main-points"><a href="#TOC">Main Points</a></h2>
+<p>There are two parts in this item which will support for the second method of the osimage which is set to the provmethod, not support for the first method:</p>
+<p>1. Support pkgdir with multiple paths in the ospkgs</p>
+<p>2. Support kerneldir in the ospkgs</p>
+<p><strong>[NOTE:]</strong>We will support this item in sles11 and rhels6.</p>
+<h2 id="osimage-definition-and-enhancement-in-ospkgs"><a href="#TOC">osimage definition and enhancement in ospkgs</a></h2>
+<p>At present, the osimage definition may be as following:</p>
+<pre><code>Object name: testimg
+   exlist=/opt/xcat/share/xcat/netboot/rh/compute.exlist
+   imagetype=linux
+   osarch=ppc64
+   osname=Linux
+   osvers=rhels6.2
+   otherpkgdir=/install/post/otherpkgs/rhels6.2/ppc64
+   permission=755
+   pkgdir=/install/rhels6.2/ppc64
+   pkglist=/install/custom/netboot/rh/compute.rhels6.ppc64.pkglist
+   postinstall=/opt/xcat/share/xcat/netboot/rh/compute.rhels6.ppc64.postinstall
+   profile=compute
+   provmethod=netboot
+   rootimgdir=/install/netboot/rhels6.2/ppc64/testimg</code></pre>
+<p>To support the multiple paths of pkgdir and the kerneldir in the ospkgs, the osimage will be defined as following:</p>
+<pre><code>Object name: testimg
+   exlist=/opt/xcat/share/xcat/netboot/rh/compute.exlist
+   imagetype=linux
+   kerneldir=/install/kernels
+   osarch=ppc64
+   osname=Linux
+   osvers=rhels6.2
+   otherpkgdir=/install/post/otherpkgs/rhels6.2/ppc64
+   permission=755
+   pkgdir=/install/rhels6.2/ppc64/Server,/install/rhels6.2-updates/ppc64/Server
+   pkglist=/install/custom/netboot/rh/compute.rhels6.ppc64.pkglist
+   postinstall=/opt/xcat/share/xcat/netboot/rh/compute.rhels6.ppc64.postinstall
+   profile=compute
+   provmethod=netboot
+   rootimgdir=/install/netboot/rhels6.2/ppc64/testimg</code></pre>
+<p>The ospkgs script will create the repos files for the kerneldir, and for each paths in the pkgdir. And when install/upgrade os packages, the repos files will be used.</p>
+</body>
+</html>

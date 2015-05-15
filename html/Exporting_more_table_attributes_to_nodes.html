@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>{{:Design Warning}}</p>
+<p>This is a low priority item, we just like the put the design here so that it will not be lost.</p>
+<p>During the node deployment or updatenode -P command is called, a file called /xcatpost/mypostscripts (/xcatpost/myxcatpost_nodename for AIX) will be generated on the node which contains a list of postscripts to be run and some environmental variables. These environmental variables are mostly the node attributes that are defined in the xCAT tables. This file will be invoked on the node to run the given list of postscripts.</p>
+<p>Currently the following table attributes are exported in this file:</p>
+<ul>
+<li>site table</li>
+<li>noderes: nfsserver, installnic, primarynic, routenames, xcatmaster</li>
+<li>routes: net, mask, gateway, ifname</li>
+<li>nodetype: os, arch, profile, provmethod</li>
+<li>postscripts: postscripts, postbootscripts</li>
+<li>osimage: postscripts, postbootscripts</li>
+<li>linuximage: pkglist, pkgdir, otherpkglist, otherpkgdir</li>
+<li>mac: mac</li>
+<li>switch: vlan</li>
+<li>networks: vlanid, net, mask, gateway (for vlan)</li>
+<li>hosts: otherinterfaces (for vlan)</li>
+<li>vm: nics (for vlan)</li>
+<li>noderes.monserver (for monitoring)</li>
+<li>monsetting table (for monitoring)</li>
+</ul>
+<p>However, sometimes the user requests more attribute to be exported. This design provides a plugable way to allow them to do so without making code changes. A file called /install/custom/&lt;os&gt;/&lt;arch&gt;/&lt;profile&gt;.envlist will be used. The format of the file will be:</p>
+<pre><code>table_name,attribute_name,selection_string,env_name</code></pre>
+<p>For example:</p>
+<pre><code> vpd,serial,,SERIAL
+ vpd,uuid,
+ vpd,mgm,,MYENV   
+ networks,mgtifname,net=mynet,MNIC
+   when env_name is omitted, it will be the same as the attribute name with call capital letters.
+   when selection_string is omitted, it will default to node=&amp;lt;this node&amp;gt;
+   when multi-lines are returned from a selection string, the environmental variables will be env_name_1, env_name_2 etc.</code></pre>
+<p>The Postage.pm will read this file, parse the contents and get the attributes from the tables efficiently.</p>
+</body>
+</html>

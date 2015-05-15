@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#node-deployment-packages"><strong>Node Deployment Packages</strong></a></li>
+<li><a href="#network-services-configuration-files"><strong>Network Services Configuration Files</strong></a></li>
+<li><a href="#additional-customization-files-and-production-files"><strong>Additional Customization Files and Production files</strong></a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#node-deployment-packages"><strong>Node Deployment Packages</strong></a></li>
+<li><a href="#network-services-configuration-files"><strong>Network Services Configuration Files</strong></a></li>
+<li><a href="#additional-customization-files-and-production-files"><strong>Additional Customization Files and Production files</strong></a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<h3 id="node-deployment-packages"><a href="#TOC"><strong>Node Deployment Packages</strong></a></h3>
+<p>The node deployment packages are under the directory specified by the &quot;installdir&quot; attribute in the xCAT site table. The default location is /install directory. The node deployment packages need to be synchronized to the standby management node.</p>
+<p>For Linux, it will be easy to achieve this by copying the whole /install directory from the primary management node to the standby management node. However, copying the whole /install directory is not enough for AIX; we will have to create the NIM resources on the standby management node. Some manual steps are required to create the NIM resources on the backup management node.</p>
+<p>Here is an example of the crontab entries for synchronizing the node deployment packages:</p>
+<pre><code>0 2 * * * /usr/bin/rsync -Lprogtz /install aixmn2:/</code></pre>
+<p>If you do not want to do the manual steps on the standby management node to re-create the NIM resources, the AIX feature High Availability Network Installation Manager(HANIM) can be used for keeping the NIM resources synchronized between the primary management node and standby management node. Please refer to the AIX redbook &quot;NIM from A to Z in AIX 5L&quot; at http://www.redbooks.ibm.com/redbooks/pdfs/sg247296.pdf for more details about HANIM.</p>
+<h3 id="network-services-configuration-files"><a href="#TOC"><strong>Network Services Configuration Files</strong></a></h3>
+<p>A lot of network services are configured on the management node, such as DNS, DHCP and HTTP. The network services are mainly controlled by configuration files. However, some of the network services configuration files contain the local hostname/ipaddresses related information, so simply copying these network services configuration files to the standby management node may not work. Generating these network services configuration files is very easy and quick by running xCAT commands such as makedhcp, makedns or nimnodeset, as long as the xCAT database contains the correct information.</p>
+<p>While it is easier to configure the network services on the standby management node by running xCAT commands when failing over to the standby management node, a couple of exceptions are the /etc/hosts and /etc/resolve files; the /etc/hosts and /etc/resolv.conf may be modified on your primary management node as ongoing cluster maintenance occurs. Since the /etc/hosts and /etc/resolv.conf are very important for xCAT commands, the /etc/hosts and /etc/resolv.conf will be synchronized between the primary management node and standby management node. Here is an example of the crontab entries for synchronizing the /etc/hosts and /etc/resolv.conf:</p>
+<pre><code>0 2 * * * /usr/bin/rsync -Lprogtz /etc/hosts /etc/resolv.conf aixmn2:/etc/</code></pre>
+<h3 id="additional-customization-files-and-production-files"><a href="#TOC"><strong>Additional Customization Files and Production files</strong></a></h3>
+<p>Besides the files mentioned above, there may be some additional customization files and production files that need to be copied over to the standby management node, depending on your local unique requirements. You should always try to keep the standby management node as an identical clone of the primary management node. Here are some example files that can be considered:</p>
+<pre><code>/.profile
+/.rhosts
+/etc/auto_master
+/etc/auto/maps/auto.u
+/etc/motd
+/etc/security/limits
+/etc/resolv.conf
+/etc/netscvc.conf
+/etc/ntp.conf
+/etc/inetd.conf
+/etc/passwd
+/etc/security/passwd
+/etc/group
+/etc/security/group
+/etc/exports
+/etc/dhcpsd.cnf
+/etc/sevices
+/etc/inittab
+(and more)</code></pre>
+<p>Note: if the IBM HPC software stack is configured in your environment, please refer to the xCAT wiki page [IBM_HPC_Stack_in_an_xCAT_Cluster] for additional steps required for HAMN setup.</p>
+</body>
+</html>

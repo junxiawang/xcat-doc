@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#interface">Interface</a><ul>
+<li><a href="#the-format-of-osimage.partitionfile">The format of osimage.partitionfile</a></li>
+<li><a href="#change-the-setting">Change the setting</a></li>
+</ul></li>
+<li><a href="#implementation">Implementation</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#interface">Interface</a></li>
+<li><a href="#the-format-of-osimagepartitionfile">The format of osimage.partitionfile</a></li>
+<li><a href="#change-the-setting">Change the setting</a></li>
+<li><a href="#implementation">Implementation</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#other-design-considerations">Other Design Considerations</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<h2 id="overview"><a href="#TOC">Overview</a></h2>
+<p>Current code in xCAT only supports to create one partition (UEFI mode will create 3 partitions) on first disk for Windows deployment. This design is used to describe how to support multiple disks and partitions configuration during Windows deployment.</p>
+<h2 id="interface"><a href="#TOC">Interface</a></h2>
+<p>Two attributes are added in osimage object to specify the partition configuration and the target disk/partition for deployment.</p>
+<p>osimage.installto - The disk and partition that the Windows will be deployed to. The valid format is &lt;disk&gt;:&lt;partition&gt;. If not set, default value is 0:1 for bios boot mode(legacy) and 0:3 for uefi boot mode; If setting to 1, it means 1:1 for bios boot and 1:3 for uefi boot;</p>
+<p>osimage.partitionfile - The path of partition configuration file. Since the partition configuration for bios boot mode and uefi boot mode are different, this configuration file should include two parts if customer wants to support both bios and uefi mode. If customer just wants to support one of the modes, specify one of them anyway.</p>
+<p>To simplify the setting, the [INSTALLTO] section also can be added in the partitionfile as an alternative setting of osimage.installto. The installto setting in partitionfile has high priority.</p>
+<h3 id="the-format-of-osimage.partitionfile"><a href="#TOC">The format of osimage.partitionfile</a></h3>
+<p>[INSTALLTO]0:1 (OPTIONAL of osimage.installto)</p>
+<p>[BIOS] &lt;CreatePartitions&gt;&lt;CreatePartition&gt;&lt;Order&gt;1&lt;/Order&gt;&lt;Type&gt;Primary&lt;/Type&gt;&lt;Size&gt;30000&lt;/Size&gt;&lt;/CreatePartition&gt;&lt;CreatePartition&gt;&lt;Order&gt;2&lt;/Order&gt;&lt;Type&gt;Primary&lt;/Type&gt;&lt;Size&gt;200&lt;/Size&gt;&lt;/CreatePartition&gt;&lt;CreatePartition&gt;&lt;Order&gt;3&lt;/Order&gt;&lt;Type&gt;Extended&lt;/Type&gt;&lt;Size&gt;300&lt;/Size&gt;&lt;/CreatePartition&gt;&lt;CreatePartition&gt;&lt;Order&gt;4&lt;/Order&gt;&lt;Type&gt;Logical&lt;/Type&gt;&lt;Size&gt;40&lt;/Size&gt;&lt;/CreatePartition&gt;&lt;CreatePartition&gt;&lt;Order&gt;5&lt;/Order&gt;&lt;Type&gt;Logical&lt;/Type&gt;&lt;Size&gt;50&lt;/Size&gt;&lt;/CreatePartition&gt;&lt;/CreatePartitions&gt;</p>
+<p>[EFI] xxxx</p>
+<h3 id="change-the-setting"><a href="#TOC">Change the setting</a></h3>
+<pre><code>chdef -t osimage win2k8r2-x86_64-install-enterprise installto=&#39;1:1&#39;
+chdef -t osimage win2k8r2-x86_64-install-enterprise paritionfile=&amp;lt;path of configuration file&amp;gt;</code></pre>
+<p>Run nodeset command will make the setting take effect.</p>
+<pre><code>nodeset &amp;lt;node&amp;gt; osimage=win2k8r2-x86_64-install-enterprise</code></pre>
+<p>Note: Refer to the design of 'Multiple WinPEs support' to get information of how to install in UEFI mode.</p>
+<h2 id="implementation"><a href="#TOC">Implementation</a></h2>
+<p>When running nodeset, the variables of installto and partition configuration file will be added in /install/autoinst/&lt;node&gt;.cmd. Them will be exported out in WinPE running environment so that fixupunattend.vbs (It's a tool of xCAT that is used to update unattend.xml) could use the variables to update unattend.xml.</p>
+<p>In current code logic, we have following section in windows template file. fixupunattend.vbs will replace keyword ==BOOTPARTITIONS== base on the boot mode (bios mode or uefi mode) during deployment.</p>
+<pre><code>               &amp;lt;Disk&amp;gt;
+                   &amp;lt;DiskID&amp;gt;==INSTALLTODISK==&amp;lt;/DiskID&amp;gt;
+                   &amp;lt;WillWipeDisk&amp;gt;true&amp;lt;/WillWipeDisk&amp;gt;
+                   ==BOOTPARTITIONS==
+               &amp;lt;/Disk&amp;gt;</code></pre>
+<p>In this feature, the above part will be changed to a new keyword '==DISKCONFIG==' in template files.</p>
+<p>The fixupunattend.vbs tool will be changed that can run to replace the keyword '==DISKCONFIG==' to the disk/partition configuration which is set in winimage.parititionfile.</p>
+<p>It's same for handling the 'installto' variable that update the deployment target '&lt;disk&gt; and &lt;partition&gt;' in unattend.xml by fixupunattend.vbs.</p>
+<h2 id="example"><a href="#TOC">Example</a></h2>
+<p>Following is an example of content in partitionfile which can be used to create 2 primary partitions, 1 extended partition and 1 logic partition on disk 0, and create 2 primary partitions on disk 1.</p>
+<p>Note: It only includes the configuration for BIOS mode.</p>
+<p>Refer to http://technet.microsoft.com/en-us/library/ff715671.aspx for the format of unattend.xml.</p>
+<p>Partitionfile:</p>
+<pre><code>[INSTALLTO]1:2
+
+
+[BIOS]
+&amp;lt;Disk&amp;gt;
+&amp;lt;DiskID&amp;gt;0&amp;lt;/DiskID&amp;gt;&amp;lt;WillWipeDisk&amp;gt;true&amp;lt;/WillWipeDisk&amp;gt;
+   &amp;lt;CreatePartitions&amp;gt;
+     &amp;lt;CreatePartition wcm:action=&quot;add&quot;&amp;gt;
+       &amp;lt;Order&amp;gt;1&amp;lt;/Order&amp;gt;
+       &amp;lt;Type&amp;gt;Primary&amp;lt;/Type&amp;gt;
+       &amp;lt;Size&amp;gt;200000&amp;lt;/Size&amp;gt;
+     &amp;lt;/CreatePartition&amp;gt;
+     &amp;lt;CreatePartition wcm:action=&quot;add&quot;&amp;gt;
+       &amp;lt;Order&amp;gt;2&amp;lt;/Order&amp;gt;
+       &amp;lt;Type&amp;gt;Primary&amp;lt;/Type&amp;gt;
+       &amp;lt;Size&amp;gt;2000&amp;lt;/Size&amp;gt;
+     &amp;lt;/CreatePartition&amp;gt;
+     &amp;lt;CreatePartition wcm:action=&quot;add&quot;&amp;gt;
+       &amp;lt;Order&amp;gt;3&amp;lt;/Order&amp;gt;
+       &amp;lt;Type&amp;gt;Extended&amp;lt;/Type&amp;gt;
+       &amp;lt;Extend&amp;gt;true&amp;lt;/Extend&amp;gt;
+     &amp;lt;/CreatePartition&amp;gt;
+     &amp;lt;CreatePartition wcm:action=&quot;add&quot;&amp;gt;
+       &amp;lt;Order&amp;gt;4&amp;lt;/Order&amp;gt;
+       &amp;lt;Type&amp;gt;Logical&amp;lt;/Type&amp;gt;
+       &amp;lt;Size&amp;gt;2000&amp;lt;/Size&amp;gt;
+     &amp;lt;/CreatePartition&amp;gt;
+   &amp;lt;/CreatePartitions&amp;gt;
+&amp;lt;/Disk&amp;gt;
+
+&amp;lt;Disk&amp;gt;
+&amp;lt;DiskID&amp;gt;1&amp;lt;/DiskID&amp;gt;&amp;lt;WillWipeDisk&amp;gt;true&amp;lt;/WillWipeDisk&amp;gt;
+   &amp;lt;CreatePartitions&amp;gt;
+     &amp;lt;CreatePartition wcm:action=&quot;add&quot;&amp;gt;
+       &amp;lt;Order&amp;gt;1&amp;lt;/Order&amp;gt;
+       &amp;lt;Type&amp;gt;Primary&amp;lt;/Type&amp;gt;
+       &amp;lt;Size&amp;gt;200000&amp;lt;/Size&amp;gt;
+     &amp;lt;/CreatePartition&amp;gt;
+     &amp;lt;CreatePartition wcm:action=&quot;add&quot;&amp;gt;
+       &amp;lt;Order&amp;gt;2&amp;lt;/Order&amp;gt;
+       &amp;lt;Type&amp;gt;Primary&amp;lt;/Type&amp;gt;
+       &amp;lt;Extend&amp;gt;true&amp;lt;/Extend&amp;gt;
+     &amp;lt;/CreatePartition&amp;gt;
+   &amp;lt;/CreatePartitions&amp;gt;
+&amp;lt;/Disk&amp;gt;</code></pre>
+<h2 id="other-design-considerations"><a href="#TOC">Other Design Considerations</a></h2>
+<ul>
+<li><strong>Required reviewers</strong>:</li>
+<li><strong>Required approvers</strong>: Bruce Potter, William, Jarrod</li>
+<li><strong>Database schema changes</strong>: N/A</li>
+<li><strong>Affect on other components</strong>: N/A</li>
+<li><strong>External interface changes, documentation, and usability issues</strong>: N/A</li>
+<li><strong>Packaging, installation, dependencies</strong>: N/A</li>
+<li><strong>Portability and platforms (HW/SW) supported</strong>: N/A</li>
+<li><strong>Performance and scaling considerations</strong>: N/A</li>
+<li><strong>Migration and coexistence</strong>: N/A</li>
+<li><strong>Serviceability</strong>: N/A</li>
+<li><strong>Security</strong>: N/A</li>
+<li><strong>NLS and accessibility</strong>: N/A</li>
+<li><strong>Invention protection</strong>: N/A</li>
+</ul>
+</body>
+</html>

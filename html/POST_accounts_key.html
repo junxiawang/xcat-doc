@@ -1,0 +1,15 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<p>Create an account. This can be in the passwd table or in the active directory</p>
+<p>Active Directory required fields:<br />clusterUser - a flag to indicate this is an active directory account<br />userName - the user name<br />userPass - the user password</p>
+<p>Passwd required fields:<br />key - the key field to uniquely identify the account<br />field - a passwd table field to update with a value</p>
+<p>Examples:<br />https://myserver/xcatws/accounts?clusterUser&amp;userName=foo&amp;userPass=bar<br />https://myserver/xcatws/accounts?key=system&amp;field=username=foo&amp;field=password=bar</p>
+</body>
+</html>

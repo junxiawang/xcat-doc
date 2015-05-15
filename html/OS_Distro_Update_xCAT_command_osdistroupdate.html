@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#external-of-osdistroupdate">External of osdistroupdate</a><ul>
+<li><a href="#syntax">syntax</a></li>
+<li><a href="#description">Description</a></li>
+<li><a href="#output-of-the-osdistroupdate">Output of the osdistroupdate</a><ul>
+<li><a href="#create-os-distro-update-from-network">Create os distro update from network</a></li>
+<li><a href="#create-os-distro-update-from-local">Create os distro update from local</a></li>
+<li><a href="#list-the-distro-update-on-the-management-node">List the distro update on the management node</a></li>
+<li><a href="#delete-the-distro-update">Delete the distro update</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#internal-of-osdistroupdate">Internal of osdistroupdate</a><ul>
+<li><a href="#the-osdistroupdate-command">the osdistroupdate command</a></li>
+<li><a href="#the-osdistroupdate.pm-plugin">the osdistroupdate.pm plugin</a><ul>
+<li><a href="#preprocess_request-in-the-osdistroupdate.pm-plugin">preprocess_request() in the osdistroupdate.pm plugin</a></li>
+<li><a href="#process_request-in-the-osdistroupdate.pm-plugin">process_request() in the osdistroupdate.pm plugin</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#external-of-osdistroupdate">External of osdistroupdate</a></li>
+<li><a href="#syntax">syntax</a></li>
+<li><a href="#description">Description</a></li>
+<li><a href="#output-of-the-osdistroupdate">Output of the osdistroupdate</a>
+<ul>
+<li><a href="#create-os-distro-update-from-network">Create os distro update from network</a></li>
+<li><a href="#create-os-distro-update-from-local">Create os distro update from local</a></li>
+<li><a href="#list-the-distro-update-on-the-management-node">List the distro update on the management node</a></li>
+<li><a href="#delete-the-distro-update">Delete the distro update</a></li>
+</ul></li>
+<li><a href="#internal-of-osdistroupdate">Internal of osdistroupdate</a></li>
+<li><a href="#the-osdistroupdate-command">the osdistroupdate command</a></li>
+<li><a href="#the-osdistroupdatepm-plugin">the osdistroupdate.pm plugin</a>
+<ul>
+<li><a href="#preprocess_request-in-the-osdistroupdatepm-plugin">preprocess_request() in the osdistroupdate.pm plugin</a></li>
+<li><a href="#process_request-in-the-osdistroupdatepm-plugin">process_request() in the osdistroupdate.pm plugin</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p>{{:Design Warning}}</p>
+<p>This min-design is to provide the xCAT command interfaces which are for OS Distro Update. This osdistroupdate command is not exposed to end user, just for internal use. So there is no manpage, and only usage. The osdistroupdate command will provide creating/deleting/listing os distro update functions. This min-design is responsible for the the xCAT command interfaces and xCAT plugin. The xCAT plugin will invoke the function subroutines which Xu Xian implements. Wu Xian is responsible for the basic functions, such as download the os updates online and create the repodata on the mn.</p>
+<h2 id="external-of-osdistroupdate"><a href="#TOC">External of osdistroupdate</a></h2>
+<h3 id="syntax"><a href="#TOC">syntax</a></h3>
+<pre><code>osdistroupdate [-h|--help|-v|--version]
+osdistroupdate -l [&amp;lt;osdistro-name&amp;gt;]
+osdistroupdate -d &amp;lt;osdistroupdate-name&amp;gt;
+osdistroupdate -c &amp;lt;osdistro-name&amp;gt; [-p &amp;lt;package directory&amp;gt;]</code></pre>
+<h3 id="description"><a href="#TOC">Description</a></h3>
+<pre><code> -h   Show the help message
+ -v   Show the version.
+ -l   List OS distro update with specified OS distro name, if no OS distro specified, all OS distro updates in system will be listed. The osdistro-name value will be &amp;lt;osver&amp;gt;-&amp;lt;arh&amp;gt;, such as rhels6.2-x86_64 .
+ -d   Delete an OS distro update in system
+ -c   Create an OS distro updates in system
+ -p   Specify local directory which contains packages downloaded from distro official site. This option is used to create OS update from local.</code></pre>
+<h3 id="output-of-the-osdistroupdate"><a href="#TOC">Output of the osdistroupdate</a></h3>
+<h4 id="create-os-distro-update-from-network"><a href="#TOC">Create os distro update from network</a></h4>
+<pre><code>bash#osdistroupdate -c rhels6.2-x86_64
+Creating the distro update for rhels6.2-x86_64 from internet, please wait...
+Success! Please check the updates in /&amp;lt;distro-name&amp;gt;-&amp;lt;arch&amp;gt;-&amp;lt;downloaded time&amp;gt;-update/</code></pre>
+<h4 id="create-os-distro-update-from-local"><a href="#TOC">Create os distro update from local</a></h4>
+<pre><code>bash#osdistroupdate -c rhels6.2-x86_64 -p /root/rhels6.2-x86_64-updates
+Creating the distro update for rhels6.2-x86_64 from the directory /root/rhels6.2-x86_64-updates, please wait...
+Success! Please check the updates in /&amp;lt;distro-name&amp;gt;-&amp;lt;arch&amp;gt;-&amp;lt;downloaded time&amp;gt;-update/</code></pre>
+<h4 id="list-the-distro-update-on-the-management-node"><a href="#TOC">List the distro update on the management node</a></h4>
+<pre><code>bash#osdistroupdate -l 
+osdistroupdate name: rhels6.2-x86_64-update1
+        osdistroname=rhels6.2-x86_64
+        osupdatedir=/install/osdistroupdates/rhels6.2-x86_64-20120828-update/
+        timestamp=2012.08.28 12:30:00</code></pre>
+<h4 id="delete-the-distro-update"><a href="#TOC">Delete the distro update</a></h4>
+<pre><code>bash#osdistroupdate -d rhels6.2-x86_64-update1
+Removing the distro update rhels6.2-x86_64-update1 for rhels5.5-x86_64, please wait...
+Success!</code></pre>
+<h2 id="internal-of-osdistroupdate"><a href="#TOC">Internal of osdistroupdate</a></h2>
+<h3 id="the-osdistroupdate-command"><a href="#TOC">the osdistroupdate command</a></h3>
+<p>The internal commands in xCAT are put into /<span class="math"><em>i</em><em>n</em><em>s</em><em>t</em><em>a</em><em>l</em><em>l</em> / <em>x</em><em>c</em><em>a</em><em>t</em> / <em>s</em><em>b</em><em>i</em><em>n</em>, <em>s</em><em>u</em><em>c</em><em>h</em><em>a</em><em>s</em><em>f</em><em>s</em><em>p</em> − <em>a</em><em>p</em><em>i</em>, <em>l</em><em>p</em><em>a</em><em>r</em><sub><em>n</em></sub><em>e</em><em>t</em><em>b</em><em>o</em><em>o</em><em>t</em>. <em>e</em><em>x</em><em>p</em><em>e</em><em>c</em><em>t</em>, <em>g</em><em>a</em><em>t</em><em>h</em><em>e</em><em>r</em><em>f</em><em>i</em><em>p</em>. <em>C</em><em>o</em><em>n</em><em>s</em><em>i</em><em>d</em><em>e</em><em>r</em><em>i</em><em>n</em><em>g</em><em>t</em><em>h</em><em>e</em><em>o</em><em>s</em><em>d</em><em>i</em><em>s</em><em>t</em><em>r</em><em>o</em><em>u</em><em>p</em><em>d</em><em>a</em><em>t</em><em>e</em><em>i</em><em>s</em><em>a</em><em>n</em><em>i</em><em>n</em><em>t</em><em>e</em><em>r</em><em>n</em><em>a</em><em>l</em><em>c</em><em>o</em><em>m</em><em>m</em><em>a</em><em>n</em><em>d</em>, <em>a</em><em>n</em><em>d</em><em>w</em><em>e</em><em>w</em><em>i</em><em>l</em><em>l</em><em>p</em><em>u</em><em>t</em><em>t</em><em>h</em><em>e</em><em>o</em><em>s</em><em>d</em><em>i</em><em>s</em><em>t</em><em>r</em><em>o</em><em>u</em><em>p</em><em>d</em><em>a</em><em>t</em><em>e</em><em>c</em><em>o</em><em>m</em><em>m</em><em>a</em><em>n</em><em>d</em><em>i</em><em>n</em> / </span>install/xcat/sbin. osdistroupdate will be a link to ../bin/xcatclientnnr . This link will be created in the xCAT-client.spec file, such as:</p>
+<p>ln -sf ../bin/xcatclientnnr $RPM_BUILD_ROOT/%{prefix}/sbin/osdistroupdate</p>
+<h3 id="the-osdistroupdate.pm-plugin"><a href="#TOC">the osdistroupdate.pm plugin</a></h3>
+<p>The osdistroupdate.pm plugin will be in the /$install/xcat/lib/perl/xCAT_plugin directory. Almost all the functions will be implemented in the osdistroupdate.pm plugin.</p>
+<h4 id="preprocess_request-in-the-osdistroupdate.pm-plugin"><a href="#TOC">preprocess_request() in the osdistroupdate.pm plugin</a></h4>
+<p>In the preprocess_request() of the osdistroupdate.pm plugin, there is a parse_args() subroutine. And the parse_args() subroutine will parse the arguments of the osdistroupdate command. The result will be stored in the %opt hash. This hash will be set to $request-&gt;{opt}.</p>
+<h4 id="process_request-in-the-osdistroupdate.pm-plugin"><a href="#TOC">process_request() in the osdistroupdate.pm plugin</a></h4>
+<p>The process_request() of the osdistroupdate.pm plugin is the main function. In the process_request(), the procedure is as following:</p>
+<pre><code>(1)get the option from the hash $request, such as  my $opt = $request-&amp;gt;{opt};
+(2) If $opt-&amp;gt;{l}== 1 , it will invoke the list_updates( $request, $callback)
+    If $opt-&amp;gt;{c} exists, it will invoke the create_updates(  $request, $callback)
+    If $opt-&amp;gt;{d} exists, it will invoke the delete_update( $request, $callback)
+   Note: the $request is one basic hash variable in xCAT.  $callback is used to return the msg immediately.
+
+
+   $opt = $request-&amp;gt;{opt};</code></pre>
+<p>In the list_updates($request, $callback), the $opt will look like:</p>
+<pre><code>  $opt = {
+         &#39;osdistroupdate_name&#39; =&amp;gt; undef,
+         &#39;l&#39; =&amp;gt; 1
+       };</code></pre>
+<p>or</p>
+<pre><code>  $opt = {
+         &#39;osdistroupdate_name&#39; =&amp;gt; &#39;rhels6.2&#39;,
+         &#39;l&#39; =&amp;gt; 1
+       };</code></pre>
+<p>For create_updates($request, $callback), the $opt will look like:</p>
+<pre><code>  $opt = {
+         &#39;c&#39; =&amp;gt; &#39;rhels6.2_x86_64&#39;
+       };</code></pre>
+<p>or</p>
+<pre><code>  $opt = {
+         &#39;p&#39; =&amp;gt; &#39;/root/test&#39;,
+         &#39;c&#39; =&amp;gt; &#39;rhels6.2_x86_64&#39;
+       };</code></pre>
+<p>For delete_updates($request, $callback), the $opt will look like:</p>
+<pre><code>  $opt = {
+         &#39;d&#39; =&amp;gt; &#39;rhels6.2_x86_64&#39;
+       };</code></pre>
+<p>About the 3 subroutines(list_updates,create_updates and delete_update), the return value will be an array,such as [$rc, $data]. The first element of the array will be the return code of the subroutine: 1 and 0. 0 -- success, 1 -- failed. The second element will be the return content of the subroutine.</p>
+<p>For example, we will use the list_updates() as follows:</p>
+<pre><code>  my $results = &amp;list_updates($request, $callback);
+  $rc = shift(@$results); //$rc will be 0 or 1.
+  $data= $results;</code></pre>
+<p>For list_updates, if $rc = 1, the $data will be an array, and looks like [msg1, msg2, msg3,...];</p>
+<p>if $rc = 0, the data will be an array, and looks like [h1, h2, h3...]. And h1,h2,h3 will look like:</p>
+<pre><code>  h1= {
+          &#39;osupdatename&#39; =&amp;gt; &#39;rhels6.2-x86_64-update12125&#39;,
+          &#39;osdistroname&#39; =&amp;gt; &#39;rhels6.2-x86_64&#39;,
+          &#39;dirpath&#39; =&amp;gt; &#39;/install/osdistroupdates/rhels6.2-x86_64-20120228-update12125/&#39;,
+          &#39;downloadtime&#39; =&amp;gt; &#39;1330402626&#39;,
+          &#39;comments&#39; =&amp;gt; undef,
+          &#39;disable&#39; =&amp;gt; &#39;0&#39;,
+      }</code></pre>
+<p>For create_updates/delete_update, if $rc=0 or 1, the data will be an array, and looks like [msg1, msg2, msg3 ...];</p>
+<p>The 3 subroutines will be implemented by PCM.</p>
+</body>
+</html>

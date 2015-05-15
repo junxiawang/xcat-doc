@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#context">Context</a></li>
+<li><a href="#cluster-config-file-contents">Cluster Config File Contents</a><ul>
+<li><a href="#xcat-site">xcat-site</a></li>
+<li><a href="#xcat-service-lan">xcat-service-lan</a></li>
+<li><a href="#xcat-hmcs">xcat-hmcs</a></li>
+<li><a href="#xcat-frames">xcat-frames</a></li>
+<li><a href="#xcat-cecs">xcat-cecs</a></li>
+<li><a href="#xcat-building-blocks">xcat-building-blocks</a></li>
+<li><a href="#xcat-lpars">xcat-lpars</a></li>
+<li><a href="#ll-config">ll-config</a></li>
+</ul></li>
+</ul>
+</div>
+<p><!-- START doctoc generated TOC please keep comment here to allow auto update --> <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --> Table of Contents</p>
+<ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#context">Context</a></li>
+<li><a href="#cluster-config-file-contents">Cluster Config File Contents</a></li>
+<li><a href="#xcat-site">xcat-site</a></li>
+<li><a href="#xcat-service-lan">xcat-service-lan</a></li>
+<li><a href="#xcat-hmcs">xcat-hmcs</a></li>
+<li><a href="#xcat-frames">xcat-frames</a></li>
+<li><a href="#xcat-cecs">xcat-cecs</a></li>
+<li><a href="#xcat-building-blocks">xcat-building-blocks</a></li>
+<li><a href="#xcat-lpars">xcat-lpars</a></li>
+<li><a href="#ll-config">ll-config</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+<p><a href="Design_Warning">Design_Warning</a></p>
+<h2 id="intro"><a href="#TOC">Intro</a></h2>
+<p>The cluster config file provides a convenient way for the user to give xcat (and potentially other software) high level info about the cluster. Using the xcatsetup cmd, xcat will read the file and prime the db so that it is ready for the discovery process. The contents of the cluster config file is organized into stanzas. Several of the stanzas contain xcat info (see below), but other stanzas can be added for other cluster software. These stanzas will be ignored by xcat. The other cluster software components should each read this file too and process only the stanzas they recognize. In this way, the user can specify all the high level info about the cluster in a single file, but we don't need one monolithic piece of software to process it all.</p>
+<p><strong>Note</strong>: for more specific info about the actual implementation, see the <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup man page</a>.</p>
+<p>The general format of the config file is:</p>
+<pre><code>xcat-site:
+  domain = cluster.com
+
+xcat-service-lan:
+  dhcp-dynamic-range = 10.200.100.1-10.200.100.254
+  # this is a comment
+  hostname-range = service-switch[1-3]
+  starting-ip = 10.200.0.1
+...</code></pre>
+<p>The xcat command that will read and process this file for all of the xcat-specific stanzas is:</p>
+<p><strong>xcatsetup</strong> [<strong>-v</strong>|<strong>--version</strong>] [<strong>-?</strong>|<strong>-h</strong>|<strong>--help</strong>] <em>cluster-config-file</em></p>
+<p>Other cluster software components should have their own command that the admin can run to have it read the config file.</p>
+<p>For reference for some of the other aspects of cluster set up, see:</p>
+<ul>
+<li>[CRHS-like_function_enhancements]</li>
+<li><a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2pHWManagement.pdf">xCAT2pHWManagement Cookbook</a></li>
+<li><a href="http://xcat.sourceforge.net/man5/ppc.5.html">xCAT DB</a></li>
+<li><a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-server/lib/xcat/plugins/setup.pm">xcatsetup command code</a></li>
+</ul>
+<h2 id="context"><a href="#TOC">Context</a></h2>
+<p>The overall cluster set up process is:</p>
+<ol style="list-style-type: decimal">
+<li>Follow chapters 1 &amp; 2 of <a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2top.pdf">xCAT Top Cookbook</a></li>
+<li>Create cluster config file</li>
+<li>Run xcatsetup, passing it the cluster config file</li>
+<li>Put the necessary passwords into the db</li>
+<li>Pick up in chapter 2 of <a href="http://xcat.svn.sourceforge.net/viewvc/xcat/xcat-core/trunk/xCAT-client/share/doc/xCAT2pHWManagement.pdf">xCAT2pHWManagement Cookbook</a>, except that most of the db tables have already been filled in.</li>
+<li>Configure and start the services using makehosts, makedns, makedhcp, mkconserver.cf, etc.</li>
+<li>Run mkvm commands to create the LPARs</li>
+<li>Run commands from other software components to read the cluster config file</li>
+<li>Follow the xCAT IBM HPC stack set up wiki page to load the HPC software and postscripts</li>
+<li>Continue with the platform-specific cookbook to do node deployment</li>
+</ol>
+<h2 id="cluster-config-file-contents"><a href="#TOC">Cluster Config File Contents</a></h2>
+<p>The config file is organized into stanzas. What follows below is each stanza name, what attributes are specified by the user in that stanza, and what xcatsetup will do with it.</p>
+<p><strong>Note</strong>: some of these keywords and the resulting actions have changed. See the <a href="http://xcat.sourceforge.net/man8/xcatsetup.8.html">xcatsetup man page</a> for more accurate info about the keywords supported and the database attributes that are filled in.</p>
+<h3 id="xcat-site"><a href="#TOC">xcat-site</a></h3>
+<pre><code>xcat-site:
+ domain = cluster.com</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>write domain in site.domain</li>
+<li>set site.nameservers to the MN IP</li>
+</ol>
+<h3 id="xcat-service-lan"><a href="#TOC">xcat-service-lan</a></h3>
+<p>This section will be implemented in a later phase.</p>
+<pre><code>xcat-service-lan:
+ dhcp-dynamic-range = 10.200.100.1-10.200.100.254
+ # The rest of the attributes in this stanza are optional.  If you do not
+ # specify them, then you must specify the vpd-file attribute in the
+ # xcat-frames stanza.
+ hostname-range = service-switch[1-3]
+ starting-ip = 10.200.0.1
+ num-ports-per-switch = 40
+ switch-port-prefix = Gi6/
+ switch-port-sequence = hmc:*, bpa:*, fsp:*</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>using hostname-range, write: nodelist.node, nodelist.groups, switches.switch</li>
+<li>using hostname-range and starting-ip, write regex for: hosts.node, hosts.ip</li>
+<li>using num-ports-per-switch, switch-port-prefix, switch-port-sequence, write: switch.node, switch.switch, switch.port</li>
+<li>using dhcp-dynamic-range, write: networks.dynamicrange for the service network.
+<ul>
+<li>Note: for AIX the permanent IPs for HMCs/FSPs/BPAs (specified in later stanzas) should be within this dynamic range, at the high end. For linux the permanent IPs should be outside this dynamic range.</li>
+<li>use the first IP in the specified dynamic range to locate the service network in the networks table</li>
+</ul></li>
+<li>on aix stop bootp - see section 2.2.1.1 of p hw mgmt doc</li>
+<li>run makedhcp -n</li>
+</ol>
+<h3 id="xcat-hmcs"><a href="#TOC">xcat-hmcs</a></h3>
+<pre><code>xcat-hmcs:
+ hostname-range = hmc01-hmc15
+ starting-ip = 10.201.0.1</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>using hostname-range, write: nodelist.node, nodelist.groups</li>
+<li>using hostname-range and starting-ip, write regex for: hosts.node, hosts.ip</li>
+<li>using hostname-range, write regex for: ppc.node, nodetype.nodetype</li>
+</ol>
+<h3 id="xcat-frames"><a href="#TOC">xcat-frames</a></h3>
+<pre><code>xcat-frames:
+ # these are the connections to the BPCs
+ hostname-range = bpc01-bpc15
+ starting-ip = 10.202.0.1
+ num-frames-per-hmc = 3
+ # The vpd-file should be in stanza format accepted by the chdef cmd, and contain the following vpd table attributes:
+ #   node
+ #   serial
+ #   mtm
+ #   side
+ vpd-file = /tmp/frame-vpd-order.stanza</code></pre>
+<p>Example vpd-file:</p>
+<pre><code>bpc01:
+  objtype=node
+  serial=99200G1
+  mtm=9A00-100
+  side=A
+
+bpc02:
+  objtype=node
+  serial=99200D1
+  mtm=9A00-100
+  side=A</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>using hostname-range, write: nodelist.node, nodelist.groups</li>
+<li>using hostname-range and starting-ip, write regex for: hosts.node, hosts.ip</li>
+<li>using hostname-range, num-frames-per-hmc, hmc hostname-range, write regex for: ppc.node, ppc.hcp, ppc.id, nodetype.nodetype, nodehm.mgt</li>
+<li>using vpd-file, write vpd table</li>
+</ol>
+<h3 id="xcat-cecs"><a href="#TOC">xcat-cecs</a></h3>
+<pre><code>xcat-cecs:
+ # these are the connections to the FSPs
+ hostname-range = cec01-cec60
+ starting-ip = 10.203.0.1
+ supernode-list = /tmp/supernodelist.txt</code></pre>
+<p>The supernode-list file that can be optionally specified should have the format:</p>
+<pre><code>bpc01: 0, 1, 16
+bpc02: 17, 32
+bpc03: 33, 48, 49
+bpc04: 64 , 65, 80
+bpc05: 81, 96
+bpc06: 97(1), 112(1), 113(1)</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>using hostname-range, write: nodelist.node, nodelist.groups</li>
+<li>using hostname-range and starting-ip, write regex for: hosts.node, hosts.ip</li>
+<li>using hostname-range, write regex for: ppc.node, ppc.hcp??, ppc.id (cage id)??, ppc.parent??, nodetype.nodetype, nodehm.mgt</li>
+<li>using supernode-list, write ppc.supernode</li>
+</ol>
+<h3 id="xcat-building-blocks"><a href="#TOC">xcat-building-blocks</a></h3>
+<pre><code>xcat-building-blocks:
+ num-frames-per-bb = 3</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>set site.sharedtftp=1</li>
+<li>using num-frames-per-bb, write regex for ppc.parent for bpas</li>
+</ol>
+<h3 id="xcat-lpars"><a href="#TOC">xcat-lpars</a></h3>
+<pre><code>xcat-lpars:
+ # This is for the ethernet NIC on each SN
+ service-node-hostname-range-facing-mn = sn01-sn20
+ service-node-starting-ip-facing-mn = 10.200.1.1
+ service-node-hostname-range-facing-cn = sn[01-20]-hfi
+ service-node-starting-ip-facing-cn = 10.201.1.1
+ storage-node-hostname-range = stor01-stor40
+ storage-node-starting-ip = 10.202.1.1
+ # do we need a login-node range???
+ # This is the application network.  For each CN, the hostname will be combined with each interface name.
+ compute-node-hostname-range = n001-n800
+ compute-node-interface-names = hf0, hf1, hf2, hf3, ml0 (or bond0 for linux)
+ compute-node-starting-ips = 10.10.1.1, 10.11.1.1, 10.12.1.1, 10.13.1.1, 10.14.1.1
+ num-lpars-per-cec = 8
+ #todo: do we need any other info to create the lpars, e.g. pprofile?</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>using service-node-hostname-range, write: nodelist.node, nodelist.groups</li>
+<li>using storage-node-hostname-range, write: nodelist.node, nodelist.groups</li>
+<li>using compute-node-hostname-range, write: nodelist.node, nodelist.groups</li>
+<li>using service-node-hostname-range, write regex for: nodetype.nodetype, nodetype.arch, nodehm.mgt, nodehm.cons, noderes.netboot</li>
+<li>using storage-node-hostname-range, write regex for: nodetype.nodetype, nodetype.arch, nodehm.mgt, nodehm.cons, noderes.netboot</li>
+<li>using compute-node-hostname-range, write regex for: nodetype.nodetype, nodetype.arch, nodehm.mgt, nodehm.cons, noderes.netboot</li>
+<li>using service-node-hostname-range, and num-lpars-per-cec, write regex for: ppc.node, ppc.id, ppc.parent, ppc.pprofile?</li>
+<li>using storage-node-hostname-range, and num-lpars-per-cec, write regex for: ppc.node, ppc.id, ppc.parent, ppc.pprofile?</li>
+<li>using compute-node-hostname-range, and num-lpars-per-cec, write regex for: ppc.node, ppc.id, ppc.parent, ppc.pprofile?</li>
+<li>using service-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-hmc, write regex for: ppc.hcp</li>
+<li>using storage-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-hmc, write regex for: ppc.hcp</li>
+<li>using compute-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-hmc, write regex for: ppc.hcp</li>
+<li>using storage-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-bb, service-node-hostname-range, write regex for: noderes.xcatmaster, noderes.servicenode</li>
+<li>using compute-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-bb, service-node-hostname-range, write regex for: noderes.xcatmaster, noderes.servicenode</li>
+<li>using service-node-hostname-range, write regex for: servicenode table</li>
+<li>using service-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-bb, starting-subnet-ip, write regex for: hosts.node, hosts.ip</li>
+<li>using storage-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-bb, starting-subnet-ip, application-nic-hostname-range, application-nic-starting-ip, write regex for: hosts.node, hosts.ip, hosts.otherinterfaces</li>
+<li>using compute-node-hostname-range, num-lpars-per-cec, num-cecs-per-frame, num-frames-per-bb, starting-subnet-ip, application-nic-hostname-range, application-nic-starting-ip, write regex for: hosts.node, hosts.ip, hosts.otherinterfaces</li>
+</ol>
+<h3 id="ll-config"><a href="#TOC">ll-config</a></h3>
+<pre><code>ll-config:
+ central_manager_list = hmc01 hmc02
+ resource_mgr_list = hmc01 hmc02
+ loadl_admin = loadl root loadladmin
+ schedd_list = sn01 sn02 sn03 sn04
+ LOG = /tmp/$(HOST)/log
+ EXECUTE = /tmp/$(HOST)/execute
+ SPOOL = /tmp/$(HOST)/spool</code></pre>
+<p>xcatsetup actions:</p>
+<ol style="list-style-type: decimal">
+<li>xcat will set up the following groups in support of rolling updates:
+<ol style="list-style-type: decimal">
+<li>nodes in cec (e.g. cec01nodes), nodes in sn (e.g. sn01nodes), storage nodes in bb (e.g. bb01storage), sn in bb (e.g. bb01service)</li>
+</ol></li>
+<li>xcat will fill in the postscripts table: llserver.sh in service row, llcompute.sh in compute row</li>
+</ol>
+<p>llconfig -i actions:</p>
+<ol style="list-style-type: decimal">
+<li>The ll-config section of the cluster configuration file will be used as a small LoadL_config file for setting up LoadLeveler configuration.</li>
+</ol>
+</body>
+</html>
