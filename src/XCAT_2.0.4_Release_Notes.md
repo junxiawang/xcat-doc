@@ -1,0 +1,7 @@
+-Fix problem where lsdef would not display attributes with value '0'
+    -Provide warning when psh child reaping has a process slip through (only has been seen so far in RHEL4 series)
+    -Fix packimage problem where squashfs hybrid images didn't work with non-root users
+    -Fix makedhcp setup for service nodes
+    -Have bmcsetup retry commands for BMCs that are erratically unavailable during the set of commands needed.
+    -Fix IPMI interpretation of certain sensors that erroneously always were relayed as '0'
+    -Fix a check for stunnel to include more possible locations

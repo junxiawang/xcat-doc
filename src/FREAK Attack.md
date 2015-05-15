@@ -1,0 +1,2 @@
+FREAK vulnerability CVE-2015-0204 is involved when 'RSA_EXPORT' ssl cipher suit is used in ssl server/client. xCAT does not use RSA_EXPORT ciphers for ssl communication by default. However, xCAT does allow user to choose the ciphers from the site.xcatsslciphers attribute. Please make sure you do not put RSA_EXPORT related ciphers in this attribute. 
+It is recommended that you upgrade openssl to 1.0.1L and upper version for the fix of this problem. Please go to the os distribution to get the latest openssl package.

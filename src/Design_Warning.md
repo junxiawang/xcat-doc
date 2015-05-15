@@ -1,0 +1,1 @@
+**Note: this is an xCAT _design document_, not an xCAT user document. If you are an xCAT user, you are welcome to glean information from this design, but be aware that it may not have complete or up to date procedures.**

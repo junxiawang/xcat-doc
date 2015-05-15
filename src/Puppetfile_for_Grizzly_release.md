@@ -1,0 +1,38 @@
+ forge "http://forge.puppetlabs.com"
+    
+     mod 'puppetlabs/openstack', :git =&gt; 'git://github.com/stackforge/puppet-openstack'
+     mod 'puppetlabs/nova', :git =&gt; 'git://github.com/stackforge/puppet-nova'
+     mod 'puppetlabs/glance', :git =&gt; 'git://github.com/stackforge/puppet-glance'
+     mod 'puppetlabs/keystone', :git =&gt; 'git://github.com/stackforge/puppet-keystone'
+     mod 'puppetlabs/horizon', :git =&gt; 'git://github.com/stackforge/puppet-horizon'
+     mod 'puppetlabs/swift', :git =&gt; 'git://github.com/stackforge/puppet-swift'
+     mod 'puppetlabs/cinder', :git =&gt; 'git://github.com/stackforge/puppet-cinder'
+     mod 'puppetlabs/tempest', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-tempest'
+     mod 'puppet/quantum', :git =&gt; 'git://github.com/stackforge/puppet-quantum/'
+     # openstack middleware
+     mod 'puppet/vswitch', :git =&gt; 'git://github.com/bodepd/puppet-vswitch'
+     mod 'puppetlabs/rabbitmq', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-rabbitmq'
+     mod 'puppetlabs/mysql', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-mysql'
+     mod 'puppetlabs/git', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-git'
+     mod 'puppetlabs/vcsrepo', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-vcsrepo'
+     mod 'saz/memcached', :git =&gt; 'git://github.com/saz/puppet-memcached'
+     mod 'puppetlabs/rsync', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-rsync'
+     mod 'puppetlabs/apache', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-apache', :ref =&gt; '94ebca3aaaf2144a7b9ce7ca6a13837ec48a7e2a'
+     # other deps
+     mod 'puppetlabs/xinetd', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-xinetd'
+     mod 'saz/ssh', :git =&gt; 'git://github.com/saz/puppet-ssh'
+     mod 'saz/sudo', :git =&gt; 'git://github.com/saz/puppet-sudo'
+     mod 'puppetlabs/stdlib', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-stdlib'
+     mod 'puppetlabs/apt', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-apt'
+     mod 'puppetlabs/firewall', :git =&gt; 'git://github.com/puppetlabs/puppetlabs-firewall'
+     mod 'ripienaar/concat', :git =&gt; 'git://github.com/ripienaar/puppet-concat'
+     mod 'duritong/sysctl', :git =&gt; 'git://github.com/duritong/puppet-sysctl.git'
+     mod 'cprice404/inifile', :git =&gt; 'git://github.com/cprice-puppet/puppetlabs-inifile'
+     # puppet related modules
+     # mod 'ripienaar/hiera_puppet', :git =&gt; 'https://github.com/ripienaar/hiera-puppet'
+     mod 'puppetlabs/ruby'
+     mod 'puppet/puppet',         :git =&gt; 'git://github.com/stephenrjohnson/puppetlabs-puppet.git', :ref =&gt; '6244079f8ce37901a167f45fadd5d9cc055f83db'
+     mod 'puppetlabs/puppetdb',       :git =&gt; 'git://github.com/bodepd/puppetlabs-puppetdb.git'
+     mod 'puppetlabs/postgresql', :git =&gt; 'git://github.com/bodepd/puppet-postgresql.git'
+     mod 'ripienaar/ruby-puppetdb', :git =&gt; 'git://github.com/ripienaar/ruby-puppetdb'
+    
