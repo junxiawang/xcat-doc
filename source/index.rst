@@ -4,7 +4,7 @@ xCAT 3
 What is xCAT
 ------------
 
-xCAT stands for Extreme Cloud/Cluster Administration Toolkit.
+xCAT stands for E\ **x**\ treme **C**\ loud/\ **C**\ luster **A**\ dministration **T**\ oolkit.
 
 xCAT offers complete management of clouds, clusters (HPC), grids, datacenters, 
 renderfarms, online gaming infrastructure, and whatever tomorrows next buzzword may be.
@@ -20,6 +20,7 @@ Guide
 .. toctree::
    :maxdepth: 2
 
+   confluent
    help
 
 
