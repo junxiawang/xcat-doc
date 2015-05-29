@@ -159,34 +159,3 @@ Download the content of that directory to ``/var/www/html/confluent`` and point 
     http://<server ip>/confluent/consoles.html
 
 
-Videos
-------
-
-Confluent Console Daemon Demo
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-.. raw:: html
-
-        <object width="560" height="315"><param name="movie"
-        value="https://www.youtube.com/v/G_lDaktYnsQ"></param><param
-        name="allowFullScreen" value="true"></param><param
-        name="allowscriptaccess" value="always"></param><embed
-        src="https://www.youtube.com/v/G_lDaktYnsQ"
-        type="application/x-shockwave-flash" allowscriptaccess="always"
-        allowfullscreen="true" width="560"
-        height="315"></embed></object>
-
-
-Confluent Introduction
-^^^^^^^^^^^^^^^^^^^^^^
-.. raw:: html
-
-        <object width="420" height="315"><param name="movie"
-        value="https://www.youtube.com/v/8NEgyH_4gfo"></param><param
-        name="allowFullScreen" value="true"></param><param
-        name="allowscriptaccess" value="always"></param><embed
-        src="https://www.youtube.com/v/8NEgyH_4gfo"
-        type="application/x-shockwave-flash" allowscriptaccess="always"
-        allowfullscreen="true" width="420"
-        height="315"></embed></object>
