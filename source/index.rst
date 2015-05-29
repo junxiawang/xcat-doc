@@ -20,7 +20,6 @@ Guide
 .. toctree::
    :maxdepth: 2
 
-   confluent
    help
 
 
