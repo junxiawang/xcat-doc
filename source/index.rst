@@ -4,6 +4,8 @@ xCAT 3
 What is xCAT
 ------------
 
+Test: [master branch]
+
 xCAT stands for E\ **x**\ treme **C**\ loud/\ **C**\ luster **A**\ dministration **T**\ oolkit.
 
 xCAT offers complete management of clouds, clusters (HPC), grids, datacenters, 
