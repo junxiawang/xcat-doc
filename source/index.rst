@@ -24,6 +24,7 @@ Guide
 
    confluent
    help
+   developers
 
 
 Indices and tables
