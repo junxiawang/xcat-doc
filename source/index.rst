@@ -25,7 +25,7 @@ Guide
 
    diskful
    diskless
-   mixed_ppc64_mgmt
+   mixed_cluster
    confluent
    help
    developers
