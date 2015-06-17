@@ -4,7 +4,7 @@ xCAT
 What is xCAT
 ------------
 
-Test: [master branch]
+Branch: [master]
 
 xCAT stands for E\ **x**\ treme **C**\ loud/\ **C**\ luster **A**\ dministration **T**\ oolkit.
 
