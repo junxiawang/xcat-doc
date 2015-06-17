@@ -1,4 +1,4 @@
-xCAT 3
+xCAT
 =================================
 
 What is xCAT
@@ -22,6 +22,9 @@ Guide
 .. toctree::
    :maxdepth: 1
 
+   diskful
+   diskless
+   mixed_ppc64_mgmt
    confluent
    help
    developers
