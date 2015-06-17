@@ -14,7 +14,8 @@ renderfarms, online gaming infrastructure, and whatever tomorrows next buzzword 
 xCAT enables the administrator to:
 
 * provision operating systems on physical (“bare metal”) or virtual machines
-* blah blah
+* 
+* another bullet
 
 Guide
 -----
