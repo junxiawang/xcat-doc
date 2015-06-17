@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# xCAT3 documentation build configuration file, created by
+# xCAT documentation build configuration file, created by
 # sphinx-quickstart on Thu May 28 14:34:34 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'xCAT3'
+project = u'xCAT'
 copyright = u'2015, IBM Corporation'
 author = u'IBM Corporation'
 
@@ -208,7 +208,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'xCAT3doc'
+htmlhelp_basename = 'xCATdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -274,8 +274,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'xCAT3', u'xCAT3 Documentation',
-   author, 'xCAT3', 'One line description of project.',
+  (master_doc, 'xCAT', u'xCAT Documentation',
+   author, 'xCAT', 'One line description of project.',
    'Miscellaneous'),
 ]
 
