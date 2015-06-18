@@ -16,6 +16,9 @@ xCAT enables the administrator to:
 * provision operating systems on physical (“bare metal”) or virtual machines
 * 
 * another bullet
+* another bullet
+* another bullet
+* another bullet
 
 Guide
 -----
