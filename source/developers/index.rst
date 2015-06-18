@@ -1,5 +1,7 @@
-For Developers
-==============
+Developers
+==========
+
+This page is for developers interested in working with xCAT and Confluent
 
 Git
 ---

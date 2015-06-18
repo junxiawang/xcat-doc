@@ -1,19 +1,8 @@
-Confluent
-=========
-
-Confluent is a new codebase with a few goals in mind:
-
-* Augment xCAT 2.X series 
-* Potentially serve in place of xCAT-server for the next generation of xCAT
-
-**Disclaimer:** *confluent with xCAT is currently in beta*
-
 Getting Started 
 ---------------
 
 For xCAT 2.9.1 and later, confluent is intended to be used in conjunction with xCAT. 
 The following documentation assumes that xCAT is already installed and configured on the management node.
-
 
 Download
 --------
