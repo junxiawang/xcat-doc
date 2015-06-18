@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# xCAT3 documentation build configuration file, created by
+# xCAT documentation build configuration file, created by
 # sphinx-quickstart on Thu May 28 14:34:34 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'xCAT3'
+project = u'xCAT'
 copyright = u'2015, IBM Corporation'
 author = u'IBM Corporation'
 
