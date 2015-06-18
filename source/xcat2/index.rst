@@ -9,16 +9,15 @@ renderfarms, online gaming infrastructure, and whatever tomorrows next buzzword 
 xCAT enables the administrator to:
 
 * provision operating systems on physical (“bare metal”) or virtual machines
-* 
-* another bullet
-* another bullet
-* another bullet
-* another bullet
-
+* provision machines using scripted install, stateless, statelite, iSCSI, or cloning
+* remotely manage systems (lights out management, remote console support, distributed shell support)
+* quickly configure and control management nodes services: dns, http, dhcp, tftp, nfs, etc.
 
 .. toctree::
    :maxdepth: 2
 
-   diskful
-   diskless
+   getting_started
+   installing
+   configuring
+   provision
    mixed_cluster
