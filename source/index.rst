@@ -14,8 +14,8 @@ xCAT enables the administrator to:
 
 Enjoy!
 
-Guide
-=====
+Content
+=======
 
 .. toctree::
    :maxdepth: 2
