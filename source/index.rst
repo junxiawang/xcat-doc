@@ -8,8 +8,8 @@ Guide
    :maxdepth: 2
 
    xcat2/index
-   confluent/index
    developers/index
+   advanced/index
    help
 
 
