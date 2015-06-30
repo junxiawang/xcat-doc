@@ -16,8 +16,4 @@ xCAT enables the administrator to:
 .. toctree::
    :maxdepth: 2
 
-   getting_started
-   installing
-   configuring
-   provision
    mixed_cluster
