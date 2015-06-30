@@ -1,5 +1,5 @@
-Mixed Cluster
-=============
+Mixed Cluster Management
+========================
 
 ppc64 mgmt node
 ---------------

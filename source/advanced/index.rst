@@ -6,3 +6,4 @@ Advanced Topics
 
    confluent/index
    docker/index
+   mixed_cluster
