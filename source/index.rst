@@ -7,7 +7,8 @@ Guide
 .. toctree::
    :maxdepth: 2
 
-   xcat2/index
+   install/index
+   hw_mgmt/index
    developers/index
    advanced/index
    help
