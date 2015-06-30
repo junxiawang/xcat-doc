@@ -7,7 +7,7 @@ Guide
 .. toctree::
    :maxdepth: 2
 
-   install/index
+   guides/index 
    hw_mgmt/index
    developers/index
    advanced/index

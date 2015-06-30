@@ -2,7 +2,7 @@ Install Guides
 ==============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    yum/index
    zypper/index
