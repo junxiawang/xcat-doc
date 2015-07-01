@@ -97,10 +97,6 @@ Use ``rcons`` as before to start the console session.::
     <singlenode> [15:05]
     
 
-Confetty
---------
-
-TODO - write some text here about  confetty 
 
 Web Browser access
 ------------------

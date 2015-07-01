@@ -13,5 +13,3 @@ Confluent is a new codebase with a few goals in mind:
    :maxdepth: 2
 
    confluent.rst
-
-
