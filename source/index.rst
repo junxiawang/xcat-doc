@@ -20,7 +20,8 @@ Content
 .. toctree::
    :maxdepth: 2
 
-   guides/index 
+   guides/install-guides/index 
+   guides/user-guides/index 
    hw_mgmt/index
    developers/index
    advanced/index
