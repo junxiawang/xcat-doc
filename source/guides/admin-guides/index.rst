@@ -4,4 +4,4 @@ Admin Guide
 .. toctree::
    :maxdepth: 1
 
-   large_clusters.rst
+   large_clusters/index.rst

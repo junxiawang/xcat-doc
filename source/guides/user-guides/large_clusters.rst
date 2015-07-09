@@ -1,5 +1,0 @@
-Managing Large Clusters
-=======================
-
-Databases
----------
