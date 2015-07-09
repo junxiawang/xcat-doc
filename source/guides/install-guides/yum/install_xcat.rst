@@ -154,8 +154,8 @@ You can easily start, stop, restart, and check xCAT status using Linux systemd o
     systemctl xcatd.service status
 
 
-Updating xCAT build code
-------------------------
+Updating xCAT 
+-------------
 
 If at a later date you want to update xCAT, simply update the software repository and run: ::
 
