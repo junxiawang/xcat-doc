@@ -21,7 +21,7 @@ Content
    :maxdepth: 2
 
    guides/install-guides/index 
-   guides/user-guides/index 
+   guides/admin-guides/index 
    developers/index
    advanced/index
    help
