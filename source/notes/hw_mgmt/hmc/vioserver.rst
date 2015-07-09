@@ -222,3 +222,85 @@ vdisk00n06          jfs        350     350     2    open/syncd    N/A <=========
 vdisk00n07          jfs        44      44      1    open/syncd    N/A
 vdisk00n11          jfs        4       4       1    open/syncd    N/A
 
+
+Create multiple SCSI profile for an LPAR
+----------------------------------------
+
+In this scenario, we are going to create another virtual SCSI profile for our management node  ``c910f02c06p23`` so that we are able to switch profiles between AIX and Linux. 
+
+#. The current vhost for the server holding the AIX partition is: ::
+
+        SVSA            Physloc                                      Client Partition ID
+        --------------- -------------------------------------------- ------------------
+        vhost21         U8233.E8B.100E58P-V1-C23                     0x00000017
+
+        VTD                   vtdisk_p23
+        Status                Available
+        LUN                   0x8100000000000000
+        Backing device        vg5lv1
+        Physloc               
+        Mirrored              N/A
+ 
+#. Locate a physical volume to create the new volume group for LINUX.  ::
+
+        $ lspv
+        NAME             PVID                                 VG               STATUS
+        hdisk0           00f60e589feeb90a                     rootvg           active
+        hdisk1           00f60e58afa65a6e                     vdiskvg          active
+        hdisk2           00f60e58286f497c                     vdisk2vg         active
+        hdisk3           00f60e5828740e18                     vdisk3vg         active
+        hdisk4           00f60e5828755bf1                     vdisk4vg         active
+        hdisk5           00f60e582875fcbd                     vdisk5vg         active
+        hdisk6           none                                 None              
+        hdisk7           none                                 None              
+
+   Will be using ``hdisk6`` to create the volume group
+
+
+#. Create the new volume group using the ``mkvg`` command: ::
+
+        $ mkvg -vg vdisk6vg hdisk6
+        vdisk6vg
+        0516-1254 mkvg: Changing the PVID in the ODM. 
+
+    Verify the volume group was created: ::
+
+        $ lspv
+        NAME             PVID                                 VG               STATUS
+        hdisk0           00f60e589feeb90a                     rootvg           active
+        ...
+        hdisk6           00f60e586479d7ec                     vdisk6vg         active
+        hdisk7           none                                 None              
+
+#. Create a logical volume of 1GB using 400PP: ::
+
+        $ mklv -lv vg6p23 vdisk6vg 400 
+        vg6p23
+
+        $ lsvg -lv vdisk6vg
+        vdisk6vg:
+        LV NAME             TYPE       LPs     PPs     PVs  LV STATE      MOUNT POINT
+        vg6p23              jfs        400     400     1    closed/syncd  N/A
+
+
+
+#. From the HMC GUI:
+
+
+Went into VIOSERVER profile
+- create new virtual adapter, and save the profile, number 32
+
+Go to the LPAR profile, Virtual Adapter
+- duplicated the AIX to Linux
+- increased the max virtual adapter to 20
+- assigned the CLIENT SCSI to 12, and set the adapter to 32, which was the new virtual adapter ID created in the virtual server 
+
+Back in the vioserver profile, -> virtual adapter
+
+- Only selected client partition can connect, select client partition p23 and give it client adapter 12
+
+Select "this adapter is required for partition activition" so the "required=yes"
+
+
+lsdev -virtual 
+

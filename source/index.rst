@@ -22,10 +22,10 @@ Content
 
    guides/install-guides/index 
    guides/user-guides/index 
-   hw_mgmt/index
    developers/index
    advanced/index
    help
+   notes/index
 
 
 Indices and tables
