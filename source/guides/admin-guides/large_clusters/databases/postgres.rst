@@ -1,2 +1,0 @@
-Configure postgreSQL on RHEL
-============================
