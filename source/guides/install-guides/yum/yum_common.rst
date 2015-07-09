@@ -18,15 +18,12 @@ xCAT uses the yum package manager on RHEL Linux distributions to install and res
 #. Create the local repository configuration file pointing to mounted iso image. ::
 
      cat /etc/yum/yum.repos.d/rhels71-base.repo
-     [rhe-5-server]
-     name=RHEL 5 SERVER packages
-     baseurl=file:///iso/rhels5.2/Server
+     [rhel-7-server]
+     name=RHEL 7 SERVER packages
+     baseurl=file:///mnt/iso/rhels71/Server
      enabled=1
      gpgcheck=1
 
-
-
-# Setting up OS Repository on Mgmt Node 
 
 .. END_configure_base_os_repository
 
