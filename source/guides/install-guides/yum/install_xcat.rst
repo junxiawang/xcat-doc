@@ -93,7 +93,6 @@ Install xCAT with the following command: ::
 
 **Note:** During the install, you will need to accept the *xCAT Security Key* to proceed: ::
 
-        warning: rpmts_HdrFromFdno: Header V4 DSA/SHA1 Signature, key ID c6565bc9: NOKEY
         Retrieving key from file:///root/xcat/xcat-dep/rh6/ppc64/repodata/repomd.xml.key
         Importing GPG key 0xC6565BC9:
          Userid: "xCAT Security Key <xcat@cn.ibm.com>"
