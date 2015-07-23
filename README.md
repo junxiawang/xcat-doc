@@ -12,7 +12,7 @@ To build the docs locally:
 ~~~~
 * Build the Docs
 ~~~~  
-cd xcat-docs/docs
-make html
+    cd xcat-docs/docs
+    make html
 ~~~~
 * View the docs by opening index.html from a web browser under xcat-docs/docs/build/html/index.html
